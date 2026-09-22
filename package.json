@@ -1,0 +1,31 @@
+{
+  "name": "mcpe-ts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Minecraft PE 0.6.1 behavioral reimplementation in pure TypeScript",
+  "scripts": {
+    "dev:web": "pnpm --filter @mcpe/web dev",
+    "dev:server": "pnpm --filter @mcpe/server dev",
+    "build": "pnpm -r --if-present build",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "ci": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@eslint/js": "latest",
+    "@types/node": "latest",
+    "eslint": "latest",
+    "eslint-config-prettier": "latest",
+    "prettier": "latest",
+    "tsx": "latest",
+    "typescript": "6.0.3",
+    "typescript-eslint": "latest",
+    "vite": "latest",
+    "vitest": "latest"
+  }
+}

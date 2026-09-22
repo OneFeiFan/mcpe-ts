@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+.vite/
+.cache/
+*.log
+.DS_Store
+Thumbs.db
+
+.bootstrap-backup/
+
+.env
+.env.*
+!.env.example

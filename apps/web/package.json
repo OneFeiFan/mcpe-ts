@@ -1,0 +1,17 @@
+{
+  "name": "@mcpe/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@mcpe/core": "workspace:*",
+    "@mcpe/input-core": "workspace:*",
+    "@mcpe/renderer-core": "workspace:*",
+    "@mcpe/simulation": "workspace:*"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}
