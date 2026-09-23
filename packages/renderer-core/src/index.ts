@@ -1,4 +1,4 @@
-import type { Vec3 } from '@mcpe/math';
+import type { Vec3 } from '@mcpe/world';
 
 export interface CameraState {
   readonly position: Vec3;

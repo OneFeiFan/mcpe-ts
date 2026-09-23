@@ -2,6 +2,8 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
+    "lib": ["ESNext"],
+    "types": ["node"],
     "moduleResolution": "Bundler",
     "strict": true,
     "noImplicitOverride": true,

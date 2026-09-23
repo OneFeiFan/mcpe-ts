@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@mcpe/math": "workspace:*"
+    "@mcpe/world": "workspace:*"
   },
   "exports": {
     ".": "./dist/index.js"

@@ -4,11 +4,13 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": "..",
     "paths": {
-      "@mcpe/math": ["packages/math/src/index.ts"],
       "@mcpe/core": ["packages/core/src/index.ts"],
+      "@mcpe/client": ["packages/client/src/index.ts"],
+      "@mcpe/platform": ["packages/platform/src/index.ts"],
+      "@mcpe/input-core": ["packages/input-core/src/index.ts"],
       "@mcpe/simulation": ["packages/simulation/src/index.ts"],
       "@mcpe/renderer-core": ["packages/renderer-core/src/index.ts"],
-      "@mcpe/input-core": ["packages/input-core/src/index.ts"]
+      "@mcpe/world": ["packages/world/src/index.ts"]
     },
     "types": ["node", "vitest/globals"],
     "noEmit": true

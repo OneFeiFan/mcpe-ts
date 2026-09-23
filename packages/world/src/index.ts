@@ -1,3 +1,5 @@
+export * from "./phys/Vec3.js";
+
 // export interface Vec3 {
 //   readonly x: number;
 //   readonly y: number;
