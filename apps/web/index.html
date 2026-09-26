@@ -3,15 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MCPE TS Runtime</title>
+    <title>MCPE-TS</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+      #game { display: block; width: 100vw; height: 100vh; }
+      #status { position: fixed; left: 8px; top: 6px; margin: 0; color: #fff; font: 13px/1.4 system-ui, sans-serif; text-shadow: 0 1px 2px #000; }
+    </style>
   </head>
   <body>
-    <main>
-      <h1>MCPE TypeScript Runtime</h1>
-      <p id="status">正在初始化...</p>
-      <button id="tick">执行 1 Tick</button>
-      <button id="ticks20">执行 20 Tick</button>
-    </main>
+    <canvas id="game"></canvas>
+    <p id="status">正在初始化…</p>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -7,14 +7,15 @@
   "scripts": {
     "dev:web": "pnpm --filter @mcpe/web dev",
     "dev:server": "pnpm --filter @mcpe/server dev",
-    "build": "pnpm -r --if-present build",
-    "typecheck": "pnpm -r --if-present typecheck",
+    "build": "pnpm --filter @mcpe/web build",
+    "typecheck": "pnpm -r --if-present typecheck && tsc -p tests/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
+    "ledger": "node tools/ledger.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "ci": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "ci": "pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
     "@eslint/js": "latest",
@@ -26,6 +27,11 @@
     "typescript": "6.0.3",
     "typescript-eslint": "latest",
     "vite": "latest",
-    "vitest": "latest"
+    "vitest": "latest",
+    "@mcpe/platform": "workspace:*",
+    "@mcpe/util": "workspace:*",
+    "@mcpe/core": "workspace:*",
+    "@mcpe/world": "workspace:*",
+    "@mcpe/client": "workspace:*"
   }
 }

@@ -1,7 +1,15 @@
-import { DecorationMaterial } from "./DecorationMaterial"
-import { GasMaterial } from "./GasMaterial";
-import { LiquidMaterial } from "./LiquidMaterial";
-import { WebMaterial } from "./WebMaterial";
+import type { DecorationMaterial } from "./DecorationMaterial";
+import type { GasMaterial } from "./GasMaterial";
+import type { LiquidMaterial } from "./LiquidMaterial";
+import type { WebMaterial } from "./WebMaterial";
+/** 由 MaterialInclude.ts 注入的子类构造器（见该文件说明）。 */
+export interface MaterialClasses {
+    readonly GasMaterial: new () => GasMaterial;
+    readonly LiquidMaterial: new () => LiquidMaterial;
+    readonly DecorationMaterial: new () => DecorationMaterial;
+    readonly WebMaterial: new () => WebMaterial;
+}
+
 export class Material {
     private _flammable: boolean;
     private _neverBuildable: boolean;
@@ -36,34 +44,34 @@ export class Material {
     public static cake: Material;
     public static web: Material;
 
-    public static initMaterials() {
-        Material.air = new GasMaterial();
+    public static initMaterials(c: MaterialClasses) {
+        Material.air = new c.GasMaterial();
         Material.dirt = new Material();
         Material.wood = (new Material()).flammable();
         Material.stone = (new Material()).notAlwaysDestroyable();
         Material.metal = (new Material()).notAlwaysDestroyable();
-        Material.water = new LiquidMaterial();
-        Material.lava = new LiquidMaterial();
+        Material.water = new c.LiquidMaterial();
+        Material.lava = new c.LiquidMaterial();
         Material.leaves = (new Material()).flammable().neverBuildable();
-        Material.plant = new DecorationMaterial();
-        Material.replaceable_plant = (new DecorationMaterial()).replaceable().flammable();
+        Material.plant = new c.DecorationMaterial();
+        Material.replaceable_plant = (new c.DecorationMaterial()).replaceable().flammable();
         Material.sponge = new Material();
         Material.cloth = (new Material()).flammable();
-        Material.fire = new GasMaterial();
+        Material.fire = new c.GasMaterial();
         Material.sand = new Material();
-        Material.decoration = new DecorationMaterial();
+        Material.decoration = new c.DecorationMaterial();
         Material.glass = (new Material()).neverBuildable();
         Material.explosive = (new Material()).flammable().neverBuildable();
         Material.coral = new Material();
         Material.ice = (new Material()).neverBuildable();
-        Material.topSnow = (new DecorationMaterial()).neverBuildable().notAlwaysDestroyable().replaceable();
+        Material.topSnow = (new c.DecorationMaterial()).neverBuildable().notAlwaysDestroyable().replaceable();
         Material.snow = (new Material()).notAlwaysDestroyable();
         Material.cactus = (new Material()).neverBuildable();
         Material.clay = new Material();
         Material.vegetable = new Material();
         Material.portal = new Material();
         Material.cake = new Material();
-        Material.web = (new WebMaterial());
+        Material.web = (new c.WebMaterial());
     }
 
     public isLiquid(): boolean {

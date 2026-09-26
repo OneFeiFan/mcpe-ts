@@ -11,6 +11,21 @@ importers:
       '@eslint/js':
         specifier: latest
         version: 10.0.1(eslint@10.11.0)
+      '@mcpe/client':
+        specifier: workspace:*
+        version: link:packages/client
+      '@mcpe/core':
+        specifier: workspace:*
+        version: link:packages/core
+      '@mcpe/platform':
+        specifier: workspace:*
+        version: link:packages/platform
+      '@mcpe/util':
+        specifier: workspace:*
+        version: link:packages/util
+      '@mcpe/world':
+        specifier: workspace:*
+        version: link:packages/world
       '@types/node':
         specifier: latest
         version: 26.6.2
@@ -44,48 +59,44 @@ importers:
       '@mcpe/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@mcpe/simulation':
+      '@mcpe/platform':
         specifier: workspace:*
-        version: link:../../packages/simulation
+        version: link:../../packages/platform
 
   apps/web:
     dependencies:
+      '@mcpe/client':
+        specifier: workspace:*
+        version: link:../../packages/client
       '@mcpe/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@mcpe/input-core':
+      '@mcpe/platform':
         specifier: workspace:*
-        version: link:../../packages/input-core
-      '@mcpe/renderer-core':
-        specifier: workspace:*
-        version: link:../../packages/renderer-core
-      '@mcpe/simulation':
-        specifier: workspace:*
-        version: link:../../packages/simulation
+        version: link:../../packages/platform
 
   packages/client:
+    dependencies:
+      '@mcpe/core':
+        specifier: workspace:*
+        version: link:../core
+      '@mcpe/platform':
+        specifier: workspace:*
+        version: link:../platform
+      '@mcpe/util':
+        specifier: workspace:*
+        version: link:../util
+      '@mcpe/world':
+        specifier: workspace:*
+        version: link:../world
+
+  packages/core:
     dependencies:
       '@mcpe/platform':
         specifier: workspace:*
         version: link:../platform
 
-  packages/core: {}
-
-  packages/input-core: {}
-
   packages/platform: {}
-
-  packages/renderer-core:
-    dependencies:
-      '@mcpe/world':
-        specifier: workspace:*
-        version: link:../world
-
-  packages/simulation:
-    dependencies:
-      '@mcpe/core':
-        specifier: workspace:*
-        version: link:../core
 
   packages/util:
     dependencies:
@@ -93,7 +104,17 @@ importers:
         specifier: workspace:*
         version: link:../platform
 
-  packages/world: {}
+  packages/world:
+    dependencies:
+      '@mcpe/core':
+        specifier: workspace:*
+        version: link:../core
+      '@mcpe/platform':
+        specifier: workspace:*
+        version: link:../platform
+      '@mcpe/util':
+        specifier: workspace:*
+        version: link:../util
 
 packages:
 

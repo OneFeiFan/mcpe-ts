@@ -1,9 +1,5 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "allowImportingTsExtensions": false,
-    "noEmit": true,
-    "types": ["vite/client"]
-  },
+  "compilerOptions": { "noEmit": true, "lib": ["ESNext", "DOM", "DOM.Iterable"], "types": ["vite/client"] },
   "include": ["src/**/*.ts"]
 }

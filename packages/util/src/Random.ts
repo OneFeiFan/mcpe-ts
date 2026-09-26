@@ -110,22 +110,22 @@ export class Random {
   }
 
   nextGaussian(): number {
+    // C++ 里 v1、v2、s、multiplier 都是 float，std::log / std::sqrt 走 float 重载：每一步都要 Math.fround
     if (this.haveNextNextGaussian) {
       this.haveNextNextGaussian = false;
       return this.nextNextGaussian;
     }
-
+    const f = Math.fround;
     let v1: number, v2: number, s: number;
     do {
-      v1 = 2 * this.nextFloat() - 1;
-      v2 = 2 * this.nextFloat() - 1;
-      s = v1 * v1 + v2 * v2;
+      v1 = f(f(2 * this.nextFloat()) - 1); // between -1.0 and 1.0
+      v2 = f(f(2 * this.nextFloat()) - 1); // between -1.0 and 1.0
+      s = f(f(v1 * v1) + f(v2 * v2));
     } while (s >= 1 || s === 0);
-
-    const multiplier = Math.sqrt(-2 * Math.log(s) / s);
-    this.nextNextGaussian = v2 * multiplier;
+    const multiplier = f(Math.sqrt(f(f(-2 * f(Math.log(s))) / s)));
+    this.nextNextGaussian = f(v2 * multiplier);
     this.haveNextNextGaussian = true;
-    return v1 * multiplier;
+    return f(v1 * multiplier);
   }
 
   /**

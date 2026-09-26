@@ -1,23 +1,9 @@
-import { GameSimulation } from '@mcpe/simulation';
+// 占位：专用服务器不在 demo 范围内，这里只保证 workspace 能编译运行。
+import { Common, SharedConstants } from '@mcpe/core';
+import { getTimeMs } from '@mcpe/platform';
 
-const simulation = new GameSimulation({ seed: 12345 });
-simulation.start();
-
-console.log('MCPE TS server runtime started');
-
-let lastLoggedTick = 0;
-
+console.log(`MCPE-TS server placeholder ${Common.getGameVersionString()}`);
 const interval = setInterval(() => {
-  simulation.tick();
-
-  if (simulation.clock.tick - lastLoggedTick >= 20) {
-    lastLoggedTick = simulation.clock.tick;
-    console.log(`tick=${simulation.clock.tick}`);
-  }
-}, 1000 / simulation.clock.tickRate);
-
-process.on('SIGINT', () => {
-  clearInterval(interval);
-  console.log('server runtime stopped');
-  process.exit(0);
-});
+  console.log(`uptime=${getTimeMs()}ms tps=${SharedConstants.TicksPerSecond}`);
+}, 1000);
+process.on('SIGINT', () => { clearInterval(interval); process.exit(0); });

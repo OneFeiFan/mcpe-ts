@@ -1,58 +1,20 @@
-# 工程地基
+# 工程地基（2026-09 修订）
 
-当前工程的职责边界：
-
-```text
-analysis/
-    Reference 研究结果
-
-reference/
-    原项目源码
-
-packages/
-    与运行环境无关的 TypeScript 核心
-
-apps/web/
-    浏览器运行时
-
-apps/server/
-    Node.js 运行时
-
-tests/
-    跨 package 的验证
-
-fixtures/
-    Reference 黄金样本
-
-tools/
-    辅助工具
-```
-
-依赖方向：
+基准：`minecraft-pe-reference`（MCPE 0.6.1 alpha 社区分支，含 Beta 特性与 Emscripten 网页版）。
+移植目标：行为与该分支一致；目录、文件名、类名镜像 C++ 的 `src/` 结构。
 
 ```text
-math
- ↓
-core
- ↓
-simulation
- ↓
-apps
-
-renderer-core / input-core
- ↓
-apps/web
+packages/platform  ← src/platform      时间、日志、输入静态类（Keyboard / Mouse）
+packages/util      ← src/util          Random、Mth、Color …
+packages/core      ← src/*.h 根文件     SharedConstants …
+packages/world     ← src/world         Material、Tile、Level、Chunk …（禁止依赖 DOM / client）
+packages/client    ← src/client        Minecraft、Options、renderer/、player/input/ …（可用 DOM / WebGL）
+apps/web           ← main_glfw.h + AppPlatform_glfw 的网页等价物（入口、资源预加载、DOM 事件接入）
+apps/server        占位
+tools/golden       用参考 C++ 源码生成黄金样本（fixtures/golden）
 ```
 
-Simulation 不依赖 DOM、WebGL、WebAudio、Node fs。
+依赖方向：`platform → util → core → world → client → apps/web`，只能向右依赖。
+各包 `exports` 直接指向 `src/index.ts`，Vite / Vitest / tsc 都按源码解析，无需别名。
 
-当前 `SeededRandom` 只是工程地基的确定性占位实现，
-真正开始 WorldGen 行为对齐时必须替换成 Reference 所要求的精确随机算法。
-
-当前 `GameSimulation` 只负责验证：
-
-- deterministic clock；
-- deterministic random；
-- headless tick execution。
-
-它不是 Minecraft World 的实现。
+规则与标记见实施手册《MCPE-TS 最小 Demo 实施流程（修订版）》；台账用 `pnpm ledger` 查看。

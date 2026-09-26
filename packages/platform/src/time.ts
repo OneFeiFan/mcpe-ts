@@ -1,11 +1,15 @@
 import { LOGI } from "./log.js";
 
+// 平台适配：C++ 的 getTimeS()/getTimeMs() 以程序启动时刻为 0（time.cpp 里减去 _t_start），
+// Windows 用 QueryPerformanceCounter。这里用单调的 performance.now()，同样以模块加载时刻为 0。
+const T0 = performance.now();
+
 export function getTimeS(): number {
-    return Date.now() / 1000.0;
+    return (performance.now() - T0) / 1000.0;
 }
 
 export function getTimeMs(): number {
-    return Date.now();
+    return Math.trunc(getTimeS() * 1000.0);
 }
 
 /// Returns a platform dependent time in seconds

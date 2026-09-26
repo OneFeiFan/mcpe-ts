@@ -4,10 +4,15 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@mcpe/platform": "workspace:*",
+    "@mcpe/util": "workspace:*",
+    "@mcpe/core": "workspace:*"
   }
 }

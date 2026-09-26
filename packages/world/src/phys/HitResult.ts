@@ -1,5 +1,5 @@
 import { Vec3 } from "./Vec3";
-import { Entity } from "../entity/Entity";
+import type { Entity } from "../entity/Entity";
 
 export const enum HitResultType {
     TILE = 0,
@@ -93,7 +93,9 @@ export class HitResult {
         }
 
         // HitResult(Entity*)
-        if (arg0 instanceof Entity) {
+        // Entity 目前是前向声明接口（FORWARD-DECL），不能 instanceof；前面的分支已排除 HitResult / number，
+        // 剩下的对象参数就是实体。移植真正的 Entity 类后可改回 instanceof。
+        if (arg0 !== undefined && typeof arg0 === 'object') {
             this.type = HitResultType.ENTITY;
             this.entity = arg0;
             this.pos.set(arg0.x, arg0.y, arg0.z);

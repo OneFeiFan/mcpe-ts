@@ -1,20 +1,68 @@
-export * from "./phys/Vec3.js";
-
-// export interface Vec3 {
-//   readonly x: number;
-//   readonly y: number;
-//   readonly z: number;
-// }
-
-// export function vec3(x: number, y: number, z: number): Vec3 {
-//   return { x, y, z };
-// }
-
-// export interface AABB {
-//   readonly minX: number;
-//   readonly minY: number;
-//   readonly minZ: number;
-//   readonly maxX: number;
-//   readonly maxY: number;
-//   readonly maxZ: number;
-// }
+// @mcpe/world 对外出口。包内部文件之间一律直接 import 具体文件，禁止 import 本 barrel。
+export * from './Pos.js';
+export * from './phys/Vec3.js';
+export * from './phys/AABB.js';
+export * from './phys/HitResult.js';
+export * from './level/TilePos.js';
+export * from './level/ChunkPos.js';
+export * from './level/LevelConstants.js';
+export * from './level/material/Material.js';
+export * from './level/material/DecorationMaterial.js';
+export * from './level/material/GasMaterial.js';
+export * from './level/material/LiquidMaterial.js';
+export * from './level/material/WebMaterial.js';
+export * from './level/material/MaterialInclude.js';
+export type { Entity } from './entity/Entity.js';
+export * from './Facing.js';
+export * from './Direction.js';
+export * from './Unregistered.js';
+export type { LevelSource } from './level/LevelSource.js';
+export * from './level/Level.js';
+export * from './level/GrassColor.js';
+export * from './level/FoliageColor.js';
+export type { BiomeSource } from './level/biome/BiomeSource.js';
+export * from './level/dimension/Dimension.js';
+export * from './item/ItemCategory.js';
+export * from './item/UseAnim.js';
+export * from './item/Item.js';
+export * from './item/TileItem.js';
+export * from './item/StoneSlabTileItem.js';
+export * from './level/tile/Tile.js';
+export * from './item/LeafTileItem.js';
+export * from './level/tile/TransparentTile.js';
+export * from './level/tile/DirectionalTile.js';
+export * from './level/tile/StoneSlabTile.js';
+export * from './level/tile/FarmTile.js';
+export * from './level/tile/LeafTile.js';
+export * from './level/tile/BedTile.js';
+export * from './level/tile/LiquidTile.js';
+export * from './level/tile/LiquidTileDynamic.js';
+export * from './level/tile/LiquidTileStatic.js';
+export * from './level/tile/FireTile.js';
+export * from './entity/EntityTypes.js';
+export * from './entity/MobCategory.js';
+export type { Player } from './entity/player/Player.js';
+export * from './level/LightLayer.js';
+export * from './level/LevelSettings.js';
+export * from './level/chunk/DataLayer.js';
+export * from './level/chunk/LevelChunk.js';
+export * from './level/chunk/storage/ChunkStorage.js';
+export * from './level/chunk/storage/MemoryChunkStorage.js';
+export * from './level/biome/Biome.js';
+export * from './level/biome/FlatBiome.js';
+export * from './level/biome/ForestBiome.js';
+export * from './level/biome/RainforestBiome.js';
+export * from './level/biome/SwampBiome.js';
+export * from './level/biome/TaigaBiome.js';
+export * from './level/biome/BiomeInclude.js';
+export * from './level/storage/PlayerData.js';
+export * from './level/storage/LevelData.js';
+export * from './level/storage/LevelStorage.js';
+export * from './level/storage/MemoryLevelStorage.js';
+export * from './level/chunk/EmptyLevelChunk.js';
+export * from './level/TickNextTickData.js';
+export * from './level/LightUpdate.js';
+export * from './level/chunk/ChunkSource.js';
+export * from './level/levelgen/synth/Synth.js';
+export * from './level/levelgen/synth/ImprovedNoise.js';
+export * from './level/levelgen/synth/PerlinNoise.js';
