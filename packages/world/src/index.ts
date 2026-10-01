@@ -77,3 +77,7 @@ export * from './level/tile/StoneTile.js';
 export * from './level/tile/DirtTile.js';
 export * from './level/tile/GrassTile.js';
 export * from './level/tile/InvisibleTile.js';
+export * from './level/levelgen/FlatChunkSource.js';
+export * from './level/dimension/FlatDimension.js';
+export type { TileEntity } from './level/tile/entity/TileEntity.js';
+export type { TripodCamera } from './entity/item/TripodCamera.js';

@@ -83,7 +83,7 @@ class LitLevel extends FakeLevel {
     this.maxLoop--;
   }
 
-  updateLights(): boolean {
+  override updateLights(): boolean {
     if (this.maxRecurse >= 50) return false;
     this.maxRecurse++;
     let max = 500;

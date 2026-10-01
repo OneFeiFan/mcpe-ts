@@ -1,11 +1,8 @@
 import type { ParticleType } from "../entity/EntityTypes";
 import type { Entity } from "../entity/Entity";
-// import type { TripodCamera } from "../entity/TripodCamera";
-// import type { Player } from "../entity/Player";
-// import type { TileEntity } from "../tile/TileEntity";
-class TripodCamera{}
-class Player{}
-class TileEntity{}
+import type { TripodCamera } from "../entity/item/TripodCamera";
+import type { Player } from "../entity/player/Player";
+import type { TileEntity } from "./tile/entity/TileEntity";
 
 export class LevelListener {
     setTilesDirty(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): void {}
@@ -24,6 +21,8 @@ export class LevelListener {
 
     addParticle(name: string, x: number, y: number, z: number, xa: number, ya: number, za: number, data: number): void;
     addParticle(name: ParticleType.Id, x: number, y: number, z: number, xa: number, ya: number, za: number, data: number): void;
+    /** Level.addParticle 把两种 id 原样转过来时用的签名 */
+    addParticle(name: string | ParticleType.Id, x: number, y: number, z: number, xa: number, ya: number, za: number, data: number): void;
     addParticle(name: string | ParticleType.Id, x: number, y: number, z: number, xa: number, ya: number, za: number, data: number): void {}
 
     playSound(name: string, x: number, y: number, z: number, volume: number, pitch: number): void {}

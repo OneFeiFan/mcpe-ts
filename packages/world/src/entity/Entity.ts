@@ -5,4 +5,5 @@ export interface Entity {
   x: number;
   y: number;
   z: number;
+  heightOffset: number; // Level::playSound(Entity*) 用到
 }

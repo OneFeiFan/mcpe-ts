@@ -36,7 +36,8 @@ export abstract class LevelStorage {
 
   saveGame(_level: Level): void {}
 
-  loadEntities(_level: Level, _levelChunk: LevelChunk): void {}
+  /** C++ 的参数是指针，Level::loadEntities 传的是 NULL */
+  loadEntities(_level: Level, _levelChunk: LevelChunk | null): void {}
 
   abstract savePlayer(player: Player): void;
 
