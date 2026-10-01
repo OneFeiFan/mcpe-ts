@@ -42,8 +42,8 @@ export class LeafTile extends TransparentTile {
       return FoliageColor.getDefaultColor();
     }
     level.getBiomeSource().getBiomeBlock(x, z, 1, 1);
-    const temperature = level.getBiomeSource().temperatures[0]!;
-    const rainfall = level.getBiomeSource().downfalls[0]!;
+    const temperature = level.getBiomeSource().temperatures![0]!;
+    const rainfall = level.getBiomeSource().downfalls![0]!;
     return FoliageColor.get(temperature, rainfall);
   }
 

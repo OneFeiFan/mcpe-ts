@@ -127,6 +127,13 @@ export class FakeLevel implements Level {
   updateNeighborsAt(): void {}
 
   seed = 0;
+  skyDarken = 0;
+  time = 0;
+
+  getTime(): number {
+    return this.time;
+  }
+
   readonly lightUpdates: [layer: LightLayer, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number][] = [];
 
   updateLight(layer: LightLayer, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, _join?: boolean): void {

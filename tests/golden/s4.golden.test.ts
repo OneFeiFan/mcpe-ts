@@ -50,7 +50,7 @@ describe('Dimension 与 C++ 逐位一致', () => {
   const bits = (x: number): number => { f32[0] = x; return u32[0]!; };
   it('brightnessRamp（光照等级 → 亮度，Dimension.cpp 的 updateLightRamp）', () => {
     const d = new Dimension();
-    d.init({} as Level);
+    d.init({ getSeed: () => 0 } as unknown as Level); // init 会用种子创建 BiomeSource
     expect(Array.from(d.brightnessRamp, bits)).toEqual(G.brightnessRamp);
   });
   it('NormalDayCycleDimension.getTimeOfDay（float 语义、C 库 cos）', () => {

@@ -72,6 +72,10 @@ export interface Level extends LevelSource {
   // Dimension（S4）
   getTopTile(x: number, z: number): number;
 
+  // Region、ChunkCache（S4）
+  skyDarken: number;
+  getTime(): number;
+
   addParticle(id: string, x: number, y: number, z: number, xd: number, yd: number, zd: number, data?: number): void;
   playSound(x: number, y: number, z: number, name: string, volume: number, pitch: number): void;
 }

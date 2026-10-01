@@ -1,32 +1,13 @@
-import {
-  BedTile, FarmTile, FireTile, initMaterials, LeafTile, LeafTileItem, LiquidTileDynamic, LiquidTileStatic, Material,
-  StoneSlabTile, StoneSlabTileItem, Tile, TileItem, type TileClasses,
-} from '@mcpe/world';
+import { initMaterials, initTiles } from '@mcpe/world';
 
 /**
- * 测试用的方块注册：已移植的类用真实实现，StoneTile、DirtTile、GrassTile、InvisibleTile、TopSnowTile 还没移植，用最小替身。
- * 这 5 个类移植完、TileInclude.ts 放进仓库后，把这里换成 `initMaterials(); initTiles();`（TileInclude 导出的那个）。
+ * 测试用的方块注册：S3 的 16 个方块类已经全部移植，直接用 TileInclude 的 initTiles()（与 NinecraftApp::init 相同）。
+ * 只验证注册机制、不依赖真实子类的测试（tile-registry-mechanism、tiles-batch）仍然用各自的替身。
  */
-class Solid extends Tile {}
-const STAND_INS = {
-  StoneTile: class extends Solid { constructor(id: number, tex: number) { super(id, tex, Material.stone); } },
-  GrassTile: class extends Solid { constructor(id: number) { super(id, Material.dirt); this.tex = 3; } },
-  DirtTile: class extends Solid { constructor(id: number, tex: number) { super(id, tex, Material.dirt); } },
-  InvisibleTile: class extends Solid { constructor(id: number, tex: number, m: Material) { super(id, tex, m); } },
-  TopSnowTile: class extends Tile {
-    constructor(id: number, tex: number) { super(id, tex, Material.topSnow); }
-    override isSolidRender(): boolean { return false; }
-  },
-};
-
 let done = false;
 export function initTestTiles(): void {
   if (done) return;
   done = true;
   initMaterials();
-  const classes: TileClasses = {
-    ...STAND_INS, LiquidTileDynamic, LiquidTileStatic, LeafTile, BedTile, StoneSlabTile, FireTile, FarmTile,
-    TileItem, StoneSlabTileItem, LeafTileItem,
-  };
-  Tile.initTiles(classes);
+  initTiles();
 }

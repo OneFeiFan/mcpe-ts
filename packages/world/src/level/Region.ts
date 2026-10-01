@@ -65,7 +65,7 @@ export class Region implements LevelSource {
     // getTileEntity 原代码被注释，保留注释
 
     getBrightness(x: number, y: number, z: number): number {
-        return this.level.dimension.brightnessRamp[this.getRawBrightness(x, y, z)];
+        return this.level.dimension.brightnessRamp[this.getRawBrightness(x, y, z)]!;
     }
 
     getRawBrightness(x: number, y: number, z: number): number;

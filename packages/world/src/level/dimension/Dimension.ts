@@ -2,13 +2,9 @@
  * 1:1 移植自 src/world/level/dimension/Dimension.h 与 Dimension.cpp（S4），同时包含 NormalDayCycleDimension.h 与 DimensionFactory。
  * 替换原来的 FORWARD-DECL(Dimension)。
  *
- * 【依赖未移植系统的两处】
+ * 【依赖未移植系统的一处】
  *  - createRandomLevelSource()：C++ 里 new RandomLevelSource（世界生成），本轮不移植。原句保留为 DEFERRED(Levelgen)，
  *    调用时抛出写明原因的错误。demo 的 FlatDimension（S5）重写这个方法返回 FlatChunkSource，不会走到这里。
- *  - init()：C++ 里 new BiomeSource(level)。BiomeSource 本身还没移植（它依赖的 levelgen/synth 噪声已经移植）。
- *    biomeSource 暂时是访问即报错的占位对象（Unregistered.ts 的 notPorted）。
- *    注意：GameRenderer::setupClearColor 每帧调用 Level::getSkyColor，后者无条件读取 getBiomeSource()->getTemperature，
- *    所以 S9 之前必须把 BiomeSource 移植过来，届时恢复 DEFERRED 的那一句。
  *
  * 【C++ 的重载】init(Level*) 是 public，init() 是 protected，TS 只能有一个同名方法，按约定把无参版本写成 init$0()；
  *   子类要重写 C++ 的 init() 时重写 init$0。
@@ -19,9 +15,8 @@
  *   C++ 里直接调用 C 库 cos 的地方写成 Math.cos，调用 Mth::cos 的地方写成 Mth.cos（查表），两者结果不同。
  */
 import { Mth } from '@mcpe/util';
-import { notPorted } from '../../Unregistered';
 import { Vec3 } from '../../phys/Vec3';
-import type { BiomeSource } from '../biome/BiomeSource';
+import { BiomeSource } from '../biome/BiomeSource';
 import type { ChunkSource } from '../chunk/ChunkSource';
 import { Level } from '../Level';
 import { GameType } from '../LevelSettings';
@@ -30,14 +25,12 @@ import { Tile } from '../tile/Tile';
 
 const f = Math.fround;
 
-const BIOME_SOURCE_NOT_PORTED = 'BiomeSource 本身还没移植（Dimension.init 里 new BiomeSource 的一句是 DEFERRED(Levelgen)）';
-
 export class Dimension {
   static readonly NORMAL = 0;
   static readonly NORMAL_DAYCYCLE = 10;
 
   level!: Level;
-  biomeSource: BiomeSource = notPorted<BiomeSource>('BiomeSource', BIOME_SOURCE_NOT_PORTED); // C++ 初值 NULL
+  biomeSource: BiomeSource = null!; // C++ 初值 NULL，init() 之后才有
   foggy = false;
   ultraWarm = false;
   hasCeiling = false;
@@ -55,8 +48,7 @@ export class Dimension {
 
   /** C++ 的 protected virtual void init() */
   protected init$0(): void {
-    // DEFERRED(Levelgen): biomeSource = new BiomeSource(level);
-    this.biomeSource = notPorted<BiomeSource>('BiomeSource', BIOME_SOURCE_NOT_PORTED);
+    this.biomeSource = new BiomeSource(this.level);
   }
 
   createRandomLevelSource(): ChunkSource {

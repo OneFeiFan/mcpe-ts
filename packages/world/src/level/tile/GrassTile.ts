@@ -14,29 +14,15 @@ export class GrassTile extends Tile {
         this.setTicking(true);
     }
 
-    override getTexture(face: number): number;
-    override getTexture(face: number, data: number): number;
-    override getTexture(level: LevelSource, x: number, y: number, z: number, face: number): number;
-    override getTexture(
-        a: number | LevelSource,
-        b?: number,
-        c?: number,
-        d?: number,
-        e?: number
-    ): number {
-        if (typeof a === "number") {
-            // 对应 getTexture(int face) / getTexture(int face, int data)
-            const face = a;
-            if (face === 1) return 0;
-            if (face === 0) return 2;
-            return 3;
-        }
-        // 对应 getTexture(LevelSource*, int x, int y, int z, int face)
-        const level = a;
-        const x = b as number;
-        const y = c as number;
-        const z = d as number;
-        const face = e as number;
+    /** C++ getTexture(int face, int data)。GrassTile 没有重写 getTexture(int face)：那个仍是 Tile 的版本，返回 tex（= 3） */
+    override getTexture$2(face: number, _data: number): number {
+        if (face === 1) return 0;
+        if (face === 0) return 2;
+        return 3;
+    }
+
+    /** C++ getTexture(LevelSource* level, int x, int y, int z, int face) */
+    override getTexture$5(level: LevelSource, x: number, y: number, z: number, face: number): number {
         if (face === 1) return 0;
         if (face === 0) return 2;
         const above = level.getMaterial(x, y + 1, z);
@@ -51,8 +37,8 @@ export class GrassTile extends Tile {
 
         const bs = level.getBiomeSource()!;
         bs.getBiomeBlock(x, z, 1, 1);
-        const temp = bs.temperatures[0];
-        const rain = bs.downfalls[0];
+        const temp = bs.temperatures![0];
+        const rain = bs.downfalls![0];
 
         return GrassColor.get(temp!, rain!);
     }

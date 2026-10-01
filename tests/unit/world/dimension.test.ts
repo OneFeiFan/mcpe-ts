@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { Mth } from '@mcpe/util';
 import {
-  Dimension, DimensionFactory, GameType, isUnregistered, LevelData, LevelSettings, NormalDayCycleDimension,
+  BiomeSource, Dimension, DimensionFactory, GameType, isUnregistered, LevelData, LevelSettings, NormalDayCycleDimension,
 } from '@mcpe/world';
 import { NormalDayCycleDimension as ViaHeaderPath } from '../../../packages/world/src/level/dimension/NormalDayCycleDimension';
 import { FakeLevel } from '../../helpers/fakeLevel';
@@ -23,12 +23,15 @@ describe('Dimension', () => {
     expect([d.getTimeOfDay(12345, 0.5), d.mayRespawn(), d.isNaturalDimension()]).toEqual([1, true, false]);
   });
 
-  it('依赖未移植系统的两处：调用时报出写明原因的错误', () => {
+  it('init 创建 BiomeSource（用 level 的种子）；RandomLevelSource 未移植，调用时报出原因', () => {
     const d = new Dimension();
-    d.init(new FakeLevel());
+    const lv = new FakeLevel();
+    lv.seed = 12345;
+    d.init(lv);
+    expect(d.biomeSource).toBeInstanceOf(BiomeSource);
+    expect(isUnregistered(d.biomeSource)).toBe(false);
+    expect(Number.isFinite(d.biomeSource.getTemperature(128, 128))).toBe(true); // Level.getSkyColor 每帧读它
     expect(() => d.createRandomLevelSource()).toThrow(/RandomLevelSource 尚未移植/);
-    expect(isUnregistered(d.biomeSource)).toBe(true);
-    expect(() => d.biomeSource.getBiomeBlock(0, 0, 1, 1)).toThrow(/BiomeSource 尚未移植/);
   });
 
   it('getNew 与 DimensionFactory：创造模式用 Dimension，生存模式用有昼夜的 NormalDayCycleDimension', () => {

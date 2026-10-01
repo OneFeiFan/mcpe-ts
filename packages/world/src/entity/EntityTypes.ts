@@ -45,3 +45,10 @@ export const ParticleType = {
   largeexplode: 11,
   hugeexplosion: 12,
 } as const;
+
+type ParticleTypeIdT = (typeof ParticleType)[keyof typeof ParticleType];
+// C++ 的嵌套类型：ParticleType::Id 在 TS 里照样写成 ParticleType.Id（作类型用）；作值用是上面的常量对象
+// eslint-disable-next-line @typescript-eslint/no-namespace -- 只含类型，编译后不产生任何代码
+export declare namespace ParticleType {
+  type Id = ParticleTypeIdT;
+}
