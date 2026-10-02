@@ -1,6 +1,11 @@
-// 1:1 移植自 src/world/item/StoneSlabTileItem.h（S3）。
-// 叠放台阶的 useOn（Player）与按 ItemInstance 取描述的重载本轮 OMIT，所以这里不依赖 StoneSlabTile。
+// 1:1 移植自 src/world/item/StoneSlabTileItem.h（S3；useOn 与按 ItemInstance 取描述的重载在 S11 阶段 A 补上）。
+// useOn 里的 level->isUnobstructed（检查实体是否挡住）在 S12 移植；没有实体时它恒为 true，所以先按 true 处理并标 DEFERRED(Entity)。
+import type { Player } from '../entity/player/Player';
+import { Facing } from '../Facing';
+import type { Level } from '../level/Level';
+import { StoneSlabTile } from '../level/tile/StoneSlabTile';
 import { Tile } from '../level/tile/Tile';
+import type { ItemInstance } from './ItemInstance';
 import { TileItem } from './TileItem';
 
 export class StoneSlabTileItem extends TileItem {
@@ -18,6 +23,28 @@ export class StoneSlabTileItem extends TileItem {
     return auxValue;
   }
 
-  // OMIT(ItemInstance): getDescriptionId(instance)  StoneSlabTileItem.h:35
-  // OMIT(Player): useOn(instance, player, level, x, y, z, face, clickX, clickY, clickZ)  StoneSlabTileItem.h:43
+  override getDescriptionId$1(instance: ItemInstance | null): string {
+    let auxValue = instance!.getAuxValue();
+    if (auxValue < 0 || auxValue >= StoneSlabTile.SLAB_NAMES_COUNT) auxValue = 0;
+    return super.getDescriptionId$0() + '.' + StoneSlabTile.SLAB_NAMES[auxValue]!;
+  }
+
+  override useOn$10(instance: ItemInstance, player: Player, level: Level, x: number, y: number, z: number, face: number, clickX: number, clickY: number, clickZ: number): boolean {
+    if (instance.count === 0) return false;
+    const currentTile = level.getTile(x, y, z);
+    const currentData = level.getData(x, y, z);
+    const slabType = currentData & StoneSlabTile.TYPE_MASK;
+    const isUpper = (currentData & StoneSlabTile.TOP_SLOT_BIT) !== 0;
+    if (((face === Facing.UP && !isUpper) || (face === Facing.DOWN && isUpper)) && currentTile === Tile.stoneSlabHalf.id && slabType === instance.getAuxValue()) {
+      // DEFERRED(Entity): bool unobstructed = level->isUnobstructed(*Tile::stoneSlab->getAABB(level, x, y, z));
+      const unobstructed = true;
+      if (unobstructed && level.setTileAndData(x, y, z, Tile.stoneSlab.id, slabType)) {
+        level.playSound(x + 0.5, y + 0.5, z + 0.5, Tile.stoneSlab.soundType.getStepSound(), (Tile.stoneSlab.soundType.getVolume() + 1) / 2, Tile.stoneSlab.soundType.getPitch() * 0.8);
+        instance.count--;
+      }
+      return true;
+    } else {
+      return super.useOn$10(instance, player, level, x, y, z, face, clickX, clickY, clickZ);
+    }
+  }
 }

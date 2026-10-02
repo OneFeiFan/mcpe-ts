@@ -1,6 +1,6 @@
 /**
  * 1:1 移植自 src/NinecraftApp.h 与 NinecraftApp.cpp（S9）：应用入口，按原顺序初始化静态表、GL 状态与 Minecraft。
- * 【DEFERRED】Item.initItems（Item）、TileEntity.initTileEntities（TileEntity）、I18n.loadLanguage（Locale）、
+ * 【DEFERRED】Item.initItems（Item）、I18n.loadLanguage（Locale）、
  *   storageSource 与起始界面（Storage、Gui）、raknet 重启（Network）、updateStats（Stats）。
  * 【ADAPTED(Demo)】在原本设置起始界面的位置调用 startDemoWorld()：demo 唯一的专用入口。
  * 【OMIT】teardown（只被析构函数调用）、restartServer、handleBack、updateStats、testCreationAndDestruction、testJoiningAndDestruction。
@@ -9,7 +9,7 @@
 import { SharedConstants } from '@mcpe/core';
 import { Mouse, Multitouch } from '@mcpe/platform';
 import { Mth } from '@mcpe/util';
-import { FlatDimension, GameType, initBiomes, initMaterials, initTiles, Level, LevelSettings, MemoryLevelStorage, MobCategory } from '@mcpe/world';
+import { FlatDimension, GameType, initBiomes, initMaterials, initTileEntities, initTiles, Level, LevelSettings, MemoryLevelStorage, MobCategory } from '@mcpe/world';
 import { DebugFreeCamera } from './camera/DebugFreeCamera';
 import { Minecraft } from './Minecraft';
 import { OptionId } from './Options';
@@ -40,7 +40,7 @@ export class NinecraftApp extends Minecraft {
     initTiles(); // Tile::initTiles()
     // DEFERRED(Item): Item::initItems();
     initBiomes(); // Biome::initBiomes()
-    // DEFERRED(TileEntity): TileEntity::initTileEntities();
+    initTileEntities(); // TileEntity::initTileEntities()（子类经 TileEntityInclude 注入，ADAPTED(ESM)）
     this.initGLStates();
     Tesselator.instance.init();
     // DEFERRED(Locale): I18n::loadLanguage(platform(), "en_US");

@@ -22,8 +22,8 @@
  * 【可见性】C++ 的 protected 构造器方法（setDestroyTime 等）与 private 的 init、setCategory 在 TS 里保持同样的可见性；
  *   initTiles 是 Tile 的静态方法，所以能调用它们。
  *
- * 【OMIT】签名含 Player、Entity、Mob 的 10 个 virtual，生成 ItemEntity 的 spawnResources（两个重载）与 popResource，
- *   以及用 I18n 的 getName。子类里对应的重写一并 OMIT（手册 R3）。
+ * 【S11 阶段 A】签名含 Player、Entity、Mob 的 virtual 与 getName 已补全（参数类型是前向声明）；spawnResources（两个重载，$5/$6）
+ *   与 popResource 保留全部随机数调用，只有生成掉落物实体（ItemEntity）的一句 DEFERRED(Entity)，S12 恢复。
  *
  * 【数值】按手册三档规则属于“结构一致、数值放宽”：形状、摧毁时间等按 JS 数值计算，不做 float 舍入。
  */
@@ -37,6 +37,12 @@ import { AABB } from '../../phys/AABB';
 import { HitResult } from '../../phys/HitResult';
 import { Vec3 } from '../../phys/Vec3';
 import { Level } from '../Level';
+import { GameType } from '../LevelSettings';
+import { I18n } from '../../locale/I18n';
+import type { Entity } from '../../entity/Entity';
+import type { Mob } from '../../entity/Mob';
+import type { Player } from '../../entity/player/Player';
+import type { ItemInstance } from '../../item/ItemInstance';
 import { LevelConstants } from '../LevelConstants';
 import type { LevelSource } from '../LevelSource';
 import { Material } from '../material/Material';
@@ -609,16 +615,56 @@ export class Tile {
     return 1;
   }
 
-  // OMIT(Player): getDestroyProgress(player)  Tile.h:292
-  // OMIT(Entity): spawnResources(level, x, y, z, data)  Tile.h:294
-  // OMIT(Entity): spawnResources(level, x, y, z, data, odds)  Tile.h:295（生成 ItemEntity）
-  // OMIT(Entity): popResource(level, x, y, z, itemInstance)  Tile.h:297（生成 ItemEntity）
+  getDestroyProgress(player: Player): number {
+    if (this.destroySpeed < 0) return 0;
+    if (!player.canDestroy(this)) return 1 / this.destroySpeed / 100.0;
+    return player.getDestroySpeed(this) / this.destroySpeed / 30.0;
+  }
+
+  /** C++ 的两个重载：spawnResources(level, x, y, z, data) 与 spawnResources(level, x, y, z, data, odds)（R10） */
+  spawnResources(level: Level, x: number, y: number, z: number, data: number, odds?: number): void {
+    if (odds === undefined) this.spawnResources$5(level, x, y, z, data);
+    else this.spawnResources$6(level, x, y, z, data, odds);
+  }
+
+  spawnResources$5(level: Level, x: number, y: number, z: number, data: number): void {
+    this.spawnResources(level, x, y, z, data, 1);
+  }
+
+  /** 随机数的调用次数与顺序和 C++ 相同；生成掉落物实体的语句在 S12 恢复 */
+  spawnResources$6(level: Level, x: number, y: number, z: number, data: number, odds: number): void {
+    if (level.isClientSide) return;
+    const count = this.getResourceCount(level.random);
+    for (let i = 0; i < count; i++) {
+      if (level.random.nextFloat() > odds) continue;
+      const type = this.getResource(data, level.random);
+      if (type <= 0) continue;
+      const s = 0.7;
+      const xo = level.random.nextFloat() * s + (1 - s) * 0.5;
+      const yo = level.random.nextFloat() * s + (1 - s) * 0.5;
+      const zo = level.random.nextFloat() * s + (1 - s) * 0.5;
+      void xo, yo, zo;
+      // DEFERRED(Entity): ItemEntity* item = new ItemEntity(level, x + xo, y + yo, z + zo, ItemInstance(type, 1, getSpawnResourcesAuxValue(data))); item->throwTime = 10; level->addEntity(item);
+    }
+  }
+
+  popResource(level: Level, x: number, y: number, z: number, itemInstance: ItemInstance): void {
+    if (level.isClientSide || level.getLevelData().getGameType() === GameType.Creative) return;
+    const s = 0.7;
+    const xo = level.random.nextFloat() * s + (1 - s) * 0.5;
+    const yo = level.random.nextFloat() * s + (1 - s) * 0.5;
+    const zo = level.random.nextFloat() * s + (1 - s) * 0.5;
+    void xo, yo, zo, itemInstance;
+    // DEFERRED(Entity): ItemEntity* item = new ItemEntity(level, x + xo, y + yo, z + zo, itemInstance); item->throwTime = 10; level->addEntity(item);
+  }
 
   spawnBurnResources(_level: Level, _x: number, _y: number, _z: number): boolean {
     return false;
   }
 
-  // OMIT(Entity): getExplosionResistance(source)  Tile.h:299
+  getExplosionResistance(_source: Entity | null): number {
+    return this.explosionResistance / 5.0;
+  }
 
   clip(level: Level, xt: number, yt: number, zt: number, A: Vec3, B: Vec3): HitResult {
     this.updateShape(level, xt, yt, zt);
@@ -672,9 +718,13 @@ export class Tile {
     return Tile.RENDERLAYER_OPAQUE;
   }
 
-  // OMIT(Player): use(level, x, y, z, player)  Tile.h:307
-  // OMIT(Entity): stepOn(level, x, y, z, entity)  Tile.h:309
-  // OMIT(Entity): fallOn(level, x, y, z, entity, fallDistance)  Tile.h:311
+  use(_level: Level, _x: number, _y: number, _z: number, _player: Player): boolean {
+    return false;
+  }
+
+  stepOn(_level: Level, _x: number, _y: number, _z: number, _entity: Entity): void {}
+
+  fallOn(_level: Level, _x: number, _y: number, _z: number, _entity: Entity, _fallDistance: number): void {}
 
   getPlacedOnFaceDataValue(
     _level: Level, _x: number, _y: number, _z: number, _face: number,
@@ -683,12 +733,14 @@ export class Tile {
     return itemValue;
   }
 
-  // OMIT(Mob): setPlacedBy(level, x, y, z, by)  Tile.h:314
+  setPlacedBy(_level: Level, _x: number, _y: number, _z: number, _by: Mob): void {}
 
   prepareRender(_level: Level, _x: number, _y: number, _z: number): void {}
 
-  // OMIT(Player): attack(level, x, y, z, player)  Tile.h:318
-  // OMIT(Entity): handleEntityInside(level, x, y, z, e, current)  Tile.h:320
+  attack(_level: Level, _x: number, _y: number, _z: number, _player: Player): void {}
+
+  /** current 是 C++ 的 Vec3& 引用：子类直接改它的分量 */
+  handleEntityInside(_level: Level, _x: number, _y: number, _z: number, _e: Entity, _current: Vec3): void {}
 
   getColor(_level: LevelSource, _x: number, _y: number, _z: number): number {
     return 0xffffff;
@@ -719,14 +771,19 @@ export class Tile {
     return false;
   }
 
-  // OMIT(Entity): entityInside(level, x, y, z, entity)  Tile.h:329
-  // OMIT(Player): playerDestroy(level, player, x, y, z, data)  Tile.h:331
+  entityInside(_level: Level, _x: number, _y: number, _z: number, _entity: Entity): void {}
+
+  playerDestroy(level: Level, _player: Player, x: number, y: number, z: number, data: number): void {
+    this.spawnResources(level, x, y, z, data);
+  }
 
   canSurvive(_level: Level, _x: number, _y: number, _z: number): boolean {
     return true;
   }
 
-  // OMIT(Locale): getName()  Tile.h:336（I18n::get）
+  getName(): string {
+    return I18n.get(this.getDescriptionId() + '.name');
+  }
 
   getDescriptionId(): string {
     return this.descriptionId;

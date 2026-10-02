@@ -5,7 +5,7 @@
  *  - _init：new PathFinder() → DEFERRED(PathFinder)
  *  - tick：MobSpawner 整块 → DEFERRED(MobSpawner)；三处 SetTimePacket 发送与实体数据同步循环 → DEFERRED(Network)
  *  - mayPlace：调用已 OMIT 的 isUnobstructed（检查实体是否挡住）的一句 → DEFERRED(Entity)。没有实体时那一句恒为“不挡”，结果相同。
- * 【OMIT】实体、玩家、方块实体、寻路、爆炸、刷怪相关的 36 个函数（见各处标记）。析构函数不移植（R3）。
+ * 【OMIT】实体、玩家、寻路、爆炸、刷怪相关的 32 个函数（见各处标记）；方块实体的 4 个函数在 S11 阶段 A 补上。析构函数不移植（R3）。
  *   C++ 里 addEntities、ensureAdded、removeAllPendingEntityRemovals 整段在注释里，awakenAllPlayers 只有声明没有定义，都不算。
  *
  * 【C++ 的重载】hasChunksAt、getBrightness、playSound 写成一个方法，按参数个数或第一个参数的类型分派；
@@ -17,7 +17,7 @@
  */
 import { SharedConstants } from '@mcpe/core';
 import { LOGI } from '@mcpe/platform';
-import { Mth, Random, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH } from '@mcpe/util';
+import { Mth, Random, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH, Util } from '@mcpe/util';
 import type { Entity } from '../entity/Entity';
 import type { ParticleType } from '../entity/EntityTypes';
 import type { Player } from '../entity/player/Player';
@@ -767,7 +767,14 @@ export class Level implements LevelSource {
   // OMIT(Entity): entityRemoved(e)  Level.cpp:1058
   // OMIT(Mob): getMob(entityId)  Level.cpp:1064
   // OMIT(Entity): removeEntity(e)  Level.cpp:1070
-  // OMIT(TileEntity): tileEntityChanged(x, y, z, te)  Level.cpp:1077
+  tileEntityChanged(x: number, y: number, z: number, te: TileEntity): void {
+    if (this.hasChunkAt(x, y, z)) {
+      this.getChunkAt(x, z).markUnsaved();
+    }
+    for (let i = 0; i < this._listeners.length; i++) {
+      this._listeners[i]!.tileEntityChanged(x, y, z, te);
+    }
+  }
   // OMIT(MobSpawner): getRandomMobSpawnAt(mobCategory, x, y, z)  Level.cpp:1103
 
   addListener(listener: LevelListener): void {
@@ -1068,9 +1075,47 @@ export class Level implements LevelSource {
     return this._chunkSource.gatherStats();
   }
 
-  // OMIT(TileEntity): getTileEntity(x, y, z)  Level.cpp:1757
-  // OMIT(TileEntity): setTileEntity(x, y, z, tileEntity)  Level.cpp:1772
-  // OMIT(TileEntity): removeTileEntity(x, y, z)  Level.cpp:1789
+  getTileEntity(x: number, y: number, z: number): TileEntity | null {
+    const lc = this.getChunk(x >> 4, z >> 4);
+    if (!lc) return null;
+    const tileEntity = lc.getTileEntity(x & 15, y, z & 15);
+    if (tileEntity) return tileEntity;
+    for (let i = 0; i < this.pendingTileEntities.length; ++i) {
+      const e = this.pendingTileEntities[i]!;
+      if (!e.isRemoved() && e.x === x && e.y === y && e.z === z) return e;
+    }
+    return null;
+  }
+
+  setTileEntity(x: number, y: number, z: number, tileEntity: TileEntity | null): void {
+    if (!tileEntity || tileEntity.isRemoved()) return;
+    if (this.updatingTileEntities) {
+      tileEntity.x = x;
+      tileEntity.y = y;
+      tileEntity.z = z;
+      this.pendingTileEntities.push(tileEntity);
+    } else {
+      this.tileEntities.push(tileEntity);
+      const lc = this.getChunk(x >> 4, z >> 4);
+      if (lc !== null) lc.setTileEntity(x & 15, y, z & 15, tileEntity);
+    }
+  }
+
+  removeTileEntity(x: number, y: number, z: number): void {
+    const te = this.getTileEntity(x, y, z);
+    if (te && this.updatingTileEntities) {
+      te.setRemoved();
+      Util.remove(this.pendingTileEntities, te);
+    } else {
+      const lc = this.getChunk(x >> 4, z >> 4);
+      if (lc) lc.removeTileEntity(x & 15, y, z & 15);
+      if (te) {
+        Util.remove(this.pendingTileEntities, te);
+        Util.remove(this.tileEntities, te);
+        // delete te;（交给垃圾回收）
+      }
+    }
+  }
 
   getLightsToUpdate(): number {
     return this._lightUpdates.length;

@@ -87,7 +87,7 @@ export class BedTile extends DirectionalTile {
       if (level.getTile(x + off[0], y, z + off[1]) !== this.id) {
         level.setTile(x, y, z, 0);
         if (!level.isClientSide) {
-          // DEFERRED(Entity): popResource(level, x, y, z, ItemInstance(Item::bed));
+          // DEFERRED(ItemInstance): popResource(level, x, y, z, ItemInstance(Item::bed));
         }
       }
     }
@@ -126,7 +126,11 @@ export class BedTile extends DirectionalTile {
     return false;
   }
 
-  // OMIT(Entity): spawnResources(level, x, y, z, data, odds)  BedTile.cpp:189
+  override spawnResources$6(_level: Level, _x: number, _y: number, _z: number, data: number, _odds: number): void {
+    if (!BedTile.isHeadPiece(data)) {
+      // DEFERRED(ItemInstance): popResource(level, x, y, z, ItemInstance(Item::bed));
+    }
+  }
 
   override updateShape(_level: LevelSource, _x: number, _y: number, _z: number): void {
     this.setShape();

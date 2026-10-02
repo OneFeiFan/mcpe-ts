@@ -1,3 +1,4 @@
+import { Random } from '@mcpe/util';
 import { Dimension, Material, Tile, type Biome, type BiomeSource, type Level, type LevelChunk, type LightLayer } from '@mcpe/world';
 
 /**
@@ -134,6 +135,8 @@ export class FakeLevel extends LevelType {
   override updateNeighborsAt(): void {}
 
   seed = 0;
+  /** Tile.spawnResources 等用 level->random（S11 阶段 A 起） */
+  override random = new Random(0);
   override skyDarken = 0;
   time = 0;
 

@@ -5,6 +5,7 @@ import { Vec3 } from '../../phys/Vec3';
 import type { Level } from '../Level';
 import type { LevelSource } from '../LevelSource';
 import { Material } from '../material/Material';
+import type { Entity } from '../../entity/Entity';
 import { Tile } from './Tile';
 
 export class LiquidTile extends Tile {
@@ -64,7 +65,12 @@ export class LiquidTile extends Tile {
     return 0x999999ff | 0; // C++ 的 int：超过 INT_MAX，回绕成负数
   }
 
-  // OMIT(Entity): handleEntityInside(level, x, y, z, e, current)  LiquidTile.h:71
+  override handleEntityInside(level: Level, x: number, y: number, z: number, _e: Entity, current: Vec3): void {
+    const flow = this.getFlow(level, x, y, z);
+    current.x += flow.x * 0.5;
+    current.y += flow.y * 0.5;
+    current.z += flow.z * 0.5;
+  }
 
   override getTickDelay(): number {
     if (this.material === Material.water) return 5;

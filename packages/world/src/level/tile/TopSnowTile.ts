@@ -1,7 +1,8 @@
 // 1:1 移植自 src/world/level/tile/TopSnowTile.h（S3）。
 // 必须注册：Tile.shouldRenderFace 会读 Tile.topSnow.id（方块上面还有方块时，渲染它的顶面就会走到）。
-// 生成掉落物的 playerDestroy 本轮 OMIT；tick 与 checkCanSurvive 里调用 spawnResources 的两句 DEFERRED(Entity)。
+// playerDestroy 与两处 spawnResources 调用在 S11 阶段 A 补上；playerDestroy 里生成掉落物实体的一句 DEFERRED(Entity)（S12）。
 import type { Random } from '@mcpe/util';
+import type { Player } from '../../entity/player/Player';
 import { Item } from '../../item/Item';
 import type { AABB } from '../../phys/AABB';
 import type { Level } from '../Level';
@@ -45,7 +46,17 @@ export class TopSnowTile extends Tile {
     this.checkCanSurvive(level, x, y, z);
   }
 
-  // OMIT(Player): playerDestroy(level, player, x, y, z, data)  TopSnowTile.h:49
+  override playerDestroy(level: Level, _player: Player, x: number, y: number, z: number, _data: number): void {
+    if (level.isClientSide) return;
+    const type = Item.snowBall.id;
+    const s = 0.7;
+    const xo = level.random.nextFloat() * s + (1 - s) * 0.5;
+    const yo = level.random.nextFloat() * s + (1 - s) * 0.5;
+    const zo = level.random.nextFloat() * s + (1 - s) * 0.5;
+    void type, xo, yo, zo;
+    // DEFERRED(Entity): ItemEntity* item = new ItemEntity(level, x + xo, y + yo, z + zo, ItemInstance(type, 1, 0)); item->throwTime = 10; level->addEntity(item);
+    level.setTile(x, y, z, 0);
+  }
 
   override getResource(_data: number, _random: Random): number {
     return Item.snowBall.id; // 依赖未注册：Item.snowBall（只被已 OMIT 的 spawnResources 调用）
@@ -57,7 +68,7 @@ export class TopSnowTile extends Tile {
 
   override tick(level: Level, x: number, y: number, z: number, _random: Random): void {
     if (level.getBrightness(LightLayer.Block, x, y, z) > 11) {
-      // DEFERRED(Entity): this->spawnResources(level, x, y, z, level->getData(x, y, z));
+      this.spawnResources(level, x, y, z, level.getData(x, y, z));
       level.setTile(x, y, z, 0);
     }
   }
@@ -71,7 +82,7 @@ export class TopSnowTile extends Tile {
 
   private checkCanSurvive(level: Level, x: number, y: number, z: number): boolean {
     if (!this.mayPlace(level, x, y, z)) {
-      // DEFERRED(Entity): this->spawnResources(level, x, y, z, level->getData(x, y, z));
+      this.spawnResources(level, x, y, z, level.getData(x, y, z));
       level.setTile(x, y, z, 0);
       return false;
     }

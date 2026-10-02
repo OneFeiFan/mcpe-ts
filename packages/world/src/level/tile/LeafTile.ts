@@ -5,6 +5,8 @@ import { FoliageColor } from '../FoliageColor';
 import type { Level } from '../Level';
 import type { LevelSource } from '../LevelSource';
 import { Material } from '../material/Material';
+import type { Player } from '../../entity/player/Player';
+import { Item } from '../../item/Item';
 import { Tile } from './Tile';
 import { TransparentTile } from './TransparentTile';
 
@@ -126,17 +128,39 @@ export class LeafTile extends TransparentTile {
     }
   }
 
-  // OMIT(Player): playerDestroy(level, player, x, y, z, data)  LeafTile.h:156
+  override playerDestroy(level: Level, player: Player, x: number, y: number, z: number, data: number): void {
+    if (!level.isClientSide) {
+      const item = player.inventory.getSelected();
+      if (item && item.id === Item.shears.id) {
+        // DEFERRED(ItemInstance): popResource(level, x, y, z, ItemInstance(Tile::leaves->id, 1, data & LEAF_TYPE_MASK));
+        return;
+      }
+    }
+    super.playerDestroy(level, player, x, y, z, data);
+  }
 
   override getResourceCount(random: Random): number {
     return random.nextInt(20) === 0 ? 1 : 0;
   }
 
   override getResource(_data: number, _random: Random): number {
-    return Tile.sapling.id; // 依赖未注册：sapling（只被已 OMIT 的 spawnResources 调用）
+    return Tile.sapling.id; // 依赖未注册：sapling（S11 阶段 C 注册）
   }
 
-  // OMIT(Entity): spawnResources(level, x, y, z, data, odds)  LeafTile.h:176
+  /** C++ 只重写 spawnResources(level, x, y, z, data, odds)：随机数调用与 C++ 相同，生成物品的两句在阶段 C 恢复 */
+  override spawnResources$6(level: Level, x: number, y: number, z: number, data: number, _odds: number): void {
+    if (!level.isClientSide) {
+      const chance = 20;
+      if (level.random.nextInt(chance) === 0) {
+        const type = this.getResource(data, level.random);
+        void type;
+        // DEFERRED(ItemInstance): popResource(level, x, y, z, ItemInstance(type, 1, getSpawnResourcesAuxValue(data)));
+      }
+      if ((data & LeafTile.LEAF_TYPE_MASK) === LeafTile.NORMAL_LEAF && level.random.nextInt(200) === 0) {
+        // DEFERRED(ItemInstance): popResource(level, x, y, z, ItemInstance(Item::apple, 1, 0));
+      }
+    }
+  }
 
   override isSolidRender(): boolean {
     return !this.allowSame;
@@ -160,7 +184,7 @@ export class LeafTile extends TransparentTile {
   }
 
   private die(level: Level, x: number, y: number, z: number): void {
-    // DEFERRED(Entity): spawnResources(level, x, y, z, level->getData(x, y, z) & LEAF_TYPE_MASK, 0);
+    this.spawnResources(level, x, y, z, level.getData(x, y, z) & LeafTile.LEAF_TYPE_MASK, 0);
     level.setTile(x, y, z, 0);
   }
 }

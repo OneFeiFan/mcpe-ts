@@ -174,7 +174,7 @@ export class LiquidTileDynamic extends LiquidTile {
         if (this.material === Material.lava) {
           this.fizz(level, x, y, z);
         } else {
-          // DEFERRED(Entity): Tile::tiles[old]->spawnResources(level, x, y, z, level->getData(x, y, z));
+          Tile.tiles[old]!.spawnResources(level, x, y, z, level.getData(x, y, z));
         }
       }
       level.setTileAndData(x, y, z, this.id, neighbor);

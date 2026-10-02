@@ -8,19 +8,23 @@
  *  - getRandom 在“种子 → 世界”的链上（地物、刷怪都用它），整数运算逐位与 C++ 一致（Math.imul 与 | 0）。
  *  - 高度图与天空光的重算是整数逻辑，本来就与 C++ 一致。
  *
- * 【OMIT】实体与方块实体相关的 13 个方法；setTileAndData 里客户端删除方块实体的一句 DEFERRED(TileEntity)。
+ * 【OMIT】实体相关的 6 个方法；方块实体的 7 个方法与 setTileAndData 里删除方块实体的一句在 S11 阶段 A 补上。
  * entityBlocks 仍然保留（countEntities 要用），里面始终为空。
  *
  * 【C++ 的未初始化字段】loaded、minHeight 在 C++ 构造函数里没有初始化，这里取 false、0。
  * LevelChunk.ChunkBlockCount 是 C++ 的未初始化静态变量（值为 0），创建区块前要先设成 32768
  * （NinecraftApp::init 里是 LevelChunk::ChunkBlockCount = LEVEL_HEIGHT * CHUNK_COLUMNS）。
  */
+import { LOGW } from '@mcpe/platform';
 import { Random } from '@mcpe/util';
 import type { Entity } from '../../entity/Entity';
 import { Level } from '../Level';
 import { LevelConstants } from '../LevelConstants';
 import { LightLayer } from '../LightLayer';
+import type { TileEntity } from '../tile/entity/TileEntity';
+import type { EntityTile } from '../tile/EntityTile';
 import { Tile } from '../tile/Tile';
+import { TilePos } from '../TilePos';
 import { DataLayer } from './DataLayer';
 
 export class LevelChunk {
@@ -51,7 +55,8 @@ export class LevelChunk {
   lastSaveTime = 0;
   protected blocks: Uint8Array | null;
   protected entityBlocks: Entity[][] = Array.from({ length: LevelChunk.EntityBlocksArraySize }, () => []);
-  // OMIT(TileEntity): TEMap tileEntities;  LevelChunk.h:140（只被已 OMIT 的方块实体方法使用）
+  /** TEMap = std::map<TilePos, TileEntity*>：按 TilePos::operator<（比较 hashCode）判等与排序，所以用 hashCode 作键 */
+  tileEntities = new Map<number, TileEntity>();
 
   constructor(level: Level, x: number, z: number);
   /** blocks 可以为 null：C++ 的 unsigned char* 允许 NULL，ChunkCache 就是这样创建 EmptyLevelChunk 的 */
@@ -105,7 +110,7 @@ export class LevelChunk {
       if (!level.isClientSide) {
         Tile.tiles[old]!.onRemove(level, xOffs, y, zOffs);
       } else if (old !== tile && Tile.isEntityTile[old]) {
-        // DEFERRED(TileEntity): level->removeTileEntity(xOffs, y, zOffs);
+        level.removeTileEntity(xOffs, y, zOffs);
       }
     }
     this.data.set(x, y, z, data_);
@@ -414,12 +419,73 @@ export class LevelChunk {
     return entityCount;
   }
 
-  // OMIT(TileEntity): getTileEntity(x, y, z)  LevelChunk.cpp:550
-  // OMIT(TileEntity): hasTileEntityAt(x, y, z)  LevelChunk.cpp:582
-  // OMIT(TileEntity): hasTileEntityAt(te)  LevelChunk.cpp:586
-  // OMIT(TileEntity): addTileEntity(te)  LevelChunk.cpp:591
-  // OMIT(TileEntity): setTileEntity(x, y, z, tileEntity)  LevelChunk.cpp:602
-  // OMIT(TileEntity): removeTileEntity(x, y, z)  LevelChunk.cpp:616
+  getTileEntity(x: number, y: number, z: number): TileEntity | null {
+    const pos = new TilePos(x, y, z).hashCode();
+    const cit = this.tileEntities.get(pos);
+    let tileEntity: TileEntity | null = null;
+    if (cit === undefined) {
+      const t = this.getTile(x, y, z);
+      if (t <= 0 || !Tile.isEntityTile[t]) return null;
+      if (tileEntity === null) {
+        tileEntity = (Tile.tiles[t] as EntityTile).newTileEntity();
+        this.level.setTileEntity(this.xt + x, y, this.zt + z, tileEntity);
+      }
+    } else {
+      tileEntity = cit;
+    }
+    if (tileEntity !== null && tileEntity.isRemoved()) {
+      // C++ 在 cit 指向 end() 时也会 erase(cit)（未定义行为）；这里只在找到时删除
+      if (cit !== undefined) this.tileEntities.delete(pos);
+      return null;
+    }
+    return tileEntity;
+  }
+
+  /** C++ 的两个重载：hasTileEntityAt(x, y, z) 与 hasTileEntityAt(TileEntity*) */
+  hasTileEntityAt(x: number, y: number, z: number): boolean;
+  hasTileEntityAt(te: TileEntity): boolean;
+  hasTileEntityAt(a: number | TileEntity, y?: number, z?: number): boolean {
+    if (typeof a === 'number') return this.tileEntities.has(new TilePos(a, y!, z!).hashCode());
+    return this.tileEntities.has(new TilePos(a.x & 15, a.y, a.z & 15).hashCode());
+  }
+
+  addTileEntity(te: TileEntity): void {
+    const xx = te.x - this.xt;
+    const yy = te.y;
+    const zz = te.z - this.zt;
+    this.setTileEntity(xx, yy, zz, te);
+    if (this.loaded) {
+      this.level.tileEntities.push(te);
+    }
+  }
+
+  setTileEntity(x: number, y: number, z: number, tileEntity: TileEntity): void {
+    tileEntity.setLevelAndPos(this.level, this.xt + x, y, this.zt + z);
+    const t = this.getTile(x, y, z);
+    if (t === 0 || !Tile.isEntityTile[t]) {
+      LOGW(`Attempted to place a tile entity where there was no entity tile! ${tileEntity.x}, ${tileEntity.y}, ${tileEntity.z}`);
+      return;
+    }
+    tileEntity.clearRemoved();
+    const key = new TilePos(x, y, z).hashCode();
+    if (!this.tileEntities.has(key)) this.tileEntities.set(key, tileEntity); // std::map::insert 不覆盖已有键
+  }
+
+  removeTileEntity(x: number, y: number, z: number): void {
+    if (this.loaded) {
+      const pos = new TilePos(x, y, z).hashCode();
+      const cit = this.tileEntities.get(pos);
+      if (cit !== undefined) {
+        cit.setRemoved();
+        if (!this.level.isClientSide) {
+          for (let i = 0; i < this.level.players.length; ++i) {
+            this.level.players[i]!.tileEntityDestroyed(cit.runningId);
+          }
+        }
+        this.tileEntities.delete(pos);
+      }
+    }
+  }
 
   getBlocksAndData(data: Uint8Array, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, p: number): number {
     const blocks = this.blocks!;
@@ -468,5 +534,8 @@ export class LevelChunk {
     return false;
   }
 
-  // OMIT(TileEntity): getTileEntityMap()  LevelChunk.cpp:715
+  /** C++ 返回 const TEMap&（按键有序）；这里按键排序后返回，迭代顺序与 std::map 相同 */
+  getTileEntityMap(): ReadonlyMap<number, TileEntity> {
+    return new Map([...this.tileEntities.entries()].sort((a, b) => a[0] - b[0]));
+  }
 }

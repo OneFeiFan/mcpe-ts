@@ -12,7 +12,13 @@
 import { LOGW } from '@mcpe/platform';
 import { Random } from '@mcpe/util';
 import { unregistered } from '../Unregistered';
+import type { Entity } from '../entity/Entity';
+import type { Mob } from '../entity/Mob';
+import type { Player } from '../entity/player/Player';
+import type { Level } from '../level/Level';
 import type { Tile } from '../level/tile/Tile';
+import { I18n } from '../locale/I18n';
+import type { ItemInstance } from './ItemInstance';
 import { UseAnim, type UseAnimation } from './UseAnim';
 
 /** C++ 的嵌套类 Item::Tier（也可用 Item.Tier 取到） */
@@ -216,12 +222,39 @@ export class Item {
     return this.icon;
   }
 
-  // OMIT(ItemInstance): useOn(itemInstance, level, x, y, z, face)  Item.h:253
-  // OMIT(Player): useOn(itemInstance, player, level, x, y, z, face, clickX, clickY, clickZ)  Item.h:257
-  // OMIT(ItemInstance): getUseDuration(itemInstance)  Item.h:261
-  // OMIT(Player): useTimeDepleted(itemInstance, level, player)  Item.cpp:305
-  // OMIT(ItemInstance): getDestroySpeed(itemInstance, tile)  Item.h:267
-  // OMIT(Player): use(itemInstance, level, player)  Item.h:271
+  /** C++ 的两个重载（R10）：useOn(itemInstance, level, x, y, z, face) 与 useOn(itemInstance, player, level, x, y, z, face, clickX, clickY, clickZ) */
+  useOn(itemInstance: ItemInstance, level: Level, x: number, y: number, z: number, face: number): boolean;
+  useOn(itemInstance: ItemInstance, player: Player, level: Level, x: number, y: number, z: number, face: number, clickX: number, clickY: number, clickZ: number): boolean;
+  useOn(...a: unknown[]): boolean {
+    if (a.length <= 6) return this.useOn$6(a[0] as ItemInstance, a[1] as Level, a[2] as number, a[3] as number, a[4] as number, a[5] as number);
+    return this.useOn$10(a[0] as ItemInstance, a[1] as Player, a[2] as Level, a[3] as number, a[4] as number, a[5] as number, a[6] as number, a[7] as number, a[8] as number, a[9] as number);
+  }
+
+  useOn$6(_itemInstance: ItemInstance, _level: Level, _x: number, _y: number, _z: number, _face: number): boolean {
+    return false;
+  }
+
+  useOn$10(_itemInstance: ItemInstance, _player: Player, _level: Level, _x: number, _y: number, _z: number, _face: number, _clickX: number, _clickY: number, _clickZ: number): boolean {
+    return false;
+  }
+
+  getUseDuration(_itemInstance: ItemInstance): number {
+    return 0;
+  }
+
+  /** C++ 按值返回 *itemInstance 的副本 */
+  useTimeDepleted(itemInstance: ItemInstance, _level: Level, _player: Player): ItemInstance {
+    // DEFERRED(ItemInstance): return *itemInstance;（按值复制，阶段 C 改成 new ItemInstance(itemInstance)）
+    return itemInstance;
+  }
+
+  getDestroySpeed(_itemInstance: ItemInstance, _tile: Tile): number {
+    return 1;
+  }
+
+  use(itemInstance: ItemInstance, _level: Level, _player: Player): ItemInstance {
+    return itemInstance;
+  }
 
   getMaxStackSize(): number {
     return this.maxStackSize;
@@ -244,15 +277,21 @@ export class Item {
     return this.maxDamage;
   }
 
-  // OMIT(Mob): hurtEnemy(itemInstance, mob)  Item.h:296
-  // OMIT(ItemInstance): mineBlock(itemInstance, tile, x, y, z)  Item.h:299
-  // OMIT(Entity): getAttackDamage(entity)  Item.h:303
+  hurtEnemy(_itemInstance: ItemInstance, _mob: Mob): void {}
+
+  mineBlock(_itemInstance: ItemInstance, _tile: number, _x: number, _y: number, _z: number): boolean {
+    return false;
+  }
+
+  getAttackDamage(_entity: Entity): number {
+    return 1;
+  }
 
   canDestroySpecial(_tile: Tile): boolean {
     return false;
   }
 
-  // OMIT(Mob): interactEnemy(itemInstance, mob)  Item.h:311
+  interactEnemy(_itemInstance: ItemInstance, _mob: Mob): void {}
 
   handEquipped(): Item {
     this._handEquipped = true;
@@ -280,14 +319,31 @@ export class Item {
     return this;
   }
 
-  // OMIT(Locale): getDescription()  Item.h:340（I18n::get）
-  // OMIT(ItemInstance): getDescription(instance)  Item.h:344
+  /** C++ 的两个重载：getDescription() 与 getDescription(const ItemInstance*)（R10：$0 / $1） */
+  getDescription(instance?: ItemInstance | null): string {
+    return instance === undefined ? this.getDescription$0() : this.getDescription$1(instance);
+  }
 
-  getDescriptionId(): string {
+  getDescription$0(): string {
+    return I18n.get(this.getDescriptionId());
+  }
+
+  getDescription$1(instance: ItemInstance | null): string {
+    return I18n.get(this.getDescriptionId(instance));
+  }
+
+  /** C++ 的两个重载：getDescriptionId() 与 getDescriptionId(const ItemInstance*)（R10：$0 / $1） */
+  getDescriptionId(instance?: ItemInstance | null): string {
+    return instance === undefined ? this.getDescriptionId$0() : this.getDescriptionId$1(instance);
+  }
+
+  getDescriptionId$0(): string {
     return this.descriptionId;
   }
 
-  // OMIT(ItemInstance): getDescriptionId(instance)  Item.h:352
+  getDescriptionId$1(_instance: ItemInstance | null): string {
+    return this.descriptionId;
+  }
 
   setCraftingRemainingItem(craftingRemainingItem: Item): Item {
     if (this.maxStackSize > 1) LOGW('Max stack size must be 1 for items with crafting results');
@@ -303,8 +359,11 @@ export class Item {
     return this.craftingRemainingItem !== null;
   }
 
-  // OMIT(Locale): getName()  Item.h:372（I18n::get）
-  // OMIT(Player): releaseUsing(itemInstance, level, player, durationLeft)  Item.h:376
+  getName(): string {
+    return I18n.get(this.getDescriptionId() + '.name');
+  }
+
+  releaseUsing(_itemInstance: ItemInstance, _level: Level, _player: Player, _durationLeft: number): void {}
 
   getUseAnimation(): UseAnimation {
     return UseAnim.none;

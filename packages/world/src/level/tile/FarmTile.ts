@@ -4,6 +4,7 @@ import type { AABB } from '../../phys/AABB';
 import { idOf } from '../../Unregistered';
 import type { Level } from '../Level';
 import { Material } from '../material/Material';
+import type { Entity } from '../../entity/Entity';
 import { Tile } from './Tile';
 
 export class FarmTile extends Tile {
@@ -56,7 +57,11 @@ export class FarmTile extends Tile {
     }
   }
 
-  // OMIT(Entity): fallOn(level, x, y, z, entity, fallDistance)  FarmTile.h:62
+  override fallOn(level: Level, x: number, y: number, z: number, _entity: Entity, fallDistance: number): void {
+    if (!level.isClientSide && level.random.nextFloat() < fallDistance - 0.5) {
+      level.setTile(x, y, z, Tile.dirt.id);
+    }
+  }
 
   override neighborChanged(level: Level, x: number, y: number, z: number, type: number): void {
     super.neighborChanged(level, x, y, z, type);
