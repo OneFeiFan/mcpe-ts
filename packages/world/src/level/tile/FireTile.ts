@@ -25,11 +25,11 @@ export class FireTile extends Tile {
     super(id, tex, Material.fire);
     // flameOdds / burnOdds 已由 Int32Array 置 0（C++ 在这里用循环清零）
     this.setFlammable(Tile.wood.id, FireTile.FLAME_HARD, FireTile.BURN_MEDIUM);
-    // DEFERRED(Tile): setFlammable(Tile::treeTrunk->id, FLAME_HARD, BURN_HARD);
+    this.setFlammable(Tile.treeTrunk.id, FireTile.FLAME_HARD, FireTile.BURN_HARD);
     this.setFlammable(Tile.leaves.id, FireTile.FLAME_EASY, FireTile.BURN_EASY);
-    // DEFERRED(Tile): setFlammable(Tile::bookshelf->id, FLAME_EASY, BURN_MEDIUM);
-    // DEFERRED(Tile): setFlammable(Tile::tnt->id, FLAME_MEDIUM, BURN_INSTANT);
-    // DEFERRED(Tile): setFlammable(Tile::cloth->id, FLAME_EASY, BURN_EASY);
+    this.setFlammable(Tile.bookshelf.id, FireTile.FLAME_EASY, FireTile.BURN_MEDIUM);
+    this.setFlammable(Tile.tnt.id, FireTile.FLAME_MEDIUM, FireTile.BURN_INSTANT);
+    this.setFlammable(Tile.cloth.id, FireTile.FLAME_EASY, FireTile.BURN_EASY);
     this.setTicking(true); //@fire
   }
 
@@ -234,7 +234,7 @@ export class FireTile extends Tile {
     const odds = this.burnOdds[level.getTile(x, y, z)]!;
     if (random.nextInt(chance) < odds) {
       // ADAPTED(DeferredTile): == Tile::tnt->id —— 火一旦烧到木头或树叶就会走到这里；tnt 未注册时恒为 false
-      const wasTnt = level.getTile(x, y, z) === idOf(Tile.tnt);
+      const wasTnt = level.getTile(x, y, z) === Tile.tnt.id;
       if (random.nextInt(2) === 0) {
         level.setTile(x, y, z, this.id);
       } else {

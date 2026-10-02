@@ -39,7 +39,8 @@ describe('TileEntity 与 SignTileEntity', () => {
   });
 
   it('工厂：还没移植的子类报出写明原因的错误；未知类型返回 null', () => {
-    expect(() => TileEntityFactory.createTileEntity(TileEntityType.Furnace)).toThrow(/FurnaceTileEntity 尚未移植/);
+    expect(() => TileEntityFactory.createTileEntity(TileEntityType.NetherReactor)).toThrow(/NetherReactorTileEntity 尚未移植/);
+    expect(TileEntityFactory.createTileEntity(TileEntityType.Furnace)).not.toBeNull(); // S12 阶段 A 起已移植
     expect(TileEntityFactory.createTileEntity(99)).toBeNull();
   });
 
@@ -79,9 +80,9 @@ describe('TileEntity 与 SignTileEntity', () => {
 });
 
 describe('Tile 与 Item 的签名补全', () => {
-  it('spawnResources 的随机数调用次数与 C++ 相同（生成实体的一句 S12 恢复）', () => {
+  it('spawnResources 的随机数调用次数与 C++ 相同（S12 起会生成掉落物实体）', () => {
     const r = new Random(42), ref = new Random(42);
-    const lv = { isClientSide: false, random: r } as unknown as Level;
+    const lv = { isClientSide: false, random: r, addEntity: () => true } as unknown as Level;
     Tile.rock.spawnResources(lv, 0, 0, 0, 0); // 数量 1：odds 判定 1 次 + 偏移 3 次
     for (let i = 0; i < 4; i++) ref.nextFloat();
     expect(r.nextInt(1 << 30)).toBe(ref.nextInt(1 << 30));

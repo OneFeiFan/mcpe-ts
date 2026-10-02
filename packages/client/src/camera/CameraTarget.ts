@@ -3,7 +3,7 @@
  * 将来真正的 Mob、LocalPlayer 按结构类型直接满足，GameRenderer、LevelRenderer 不用改（手册附录 A）。
  * 只在 isPlayer() 为真、强转成 Player 之后才读的 bob、tilt、walkDist 等不放这里。
  */
-import type { Material, Vec3 } from '@mcpe/world';
+import type { Entity, Material, Vec3 } from '@mcpe/world';
 
 export interface CameraTarget {
   x: number;
@@ -30,4 +30,12 @@ export interface CameraTarget {
   isUnderLiquid(material: Material): boolean;
   getPos(a: number): Vec3;
   turn(xo: number, yo: number): void;
+}
+
+/**
+ * ADAPTED(DebugCamera)：C++ 里这些位置传的是 Mob*（相机目标就是玩家），渲染代码只读它的 x、y、z。
+ * 调试相机不是 Entity；S12 阶段 C 接上真正的玩家后，连同 DebugFreeCamera、CameraTarget 一起删除。
+ */
+export function asEntity(target: CameraTarget): Entity {
+  return target as unknown as Entity;
 }

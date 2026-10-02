@@ -23,6 +23,17 @@ import { TopSnowTile } from './TopSnowTile';
 import { LeafTileItem } from '../../item/LeafTileItem';
 import { StoneSlabTileItem } from '../../item/StoneSlabTileItem';
 import { TileItem } from '../../item/TileItem';
+import { CactusTile } from './CactusTile';
+import { ChestTile } from './ChestTile';
+import { CropTile } from './CropTile';
+import { DoorTile } from './DoorTile';
+import { FenceGateTile } from './FenceGateTile';
+import { FurnaceTile } from './FurnaceTile';
+import { StairTile } from './StairTile';
+import { StonecutterTile } from './StonecutterTile';
+import { TallGrass } from './TallGrass';
+import { WebTile } from './WebTile';
+import { WorkbenchTile } from './WorkbenchTile';
 import { AuxDataTileItem } from '../../item/AuxDataTileItem';
 import { BookshelfTile } from './BookshelfTile';
 import { Bush } from './Bush';
@@ -60,6 +71,7 @@ import { TreeTile } from './TreeTile';
 
 /** 全部已移植的方块类与特殊 TileItem 类（测试可以在它的基础上替换个别类） */
 export const TILE_CLASSES: TileClasses = {
+  CactusTile, ChestTile, CropTile, DoorTile, FenceGateTile, FurnaceTile, StairTile, StonecutterTile, TallGrass, WebTile, WorkbenchTile,
     StoneTile, GrassTile, DirtTile, LiquidTileDynamic, LiquidTileStatic, LeafTile, BedTile, StoneSlabTile,
     FireTile, FarmTile, InvisibleTile, TopSnowTile, TileItem, StoneSlabTileItem, LeafTileItem,
     AuxDataTileItem, BookshelfTile, Bush, CarriedTile, ClayTile, ClothTile, ClothTileItem, FenceTile, GlassTile, GravelTile, HeavyTile, IceTile, LadderTile, LightGemTile, MelonTile, MetalTile, MultiTextureTile, Mushroom, ObsidianTile, OreTile, QuartzBlockTile, RedStoneOreTile, ReedTile, SandStoneTile, Sapling, SaplingTileItem, SignTile, SnowTile, StemTile, ThinFenceTile, TntTile, TorchTile, TrapDoorTile, TreeTile,

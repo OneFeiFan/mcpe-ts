@@ -137,6 +137,16 @@ export class FakeLevel extends LevelType {
   seed = 0;
   /** Tile.spawnResources 等用 level->random（S11 阶段 A 起） */
   override random = new Random(0);
+  /** Tile.popResource 判断创造模式、spawnResources 生成掉落物（S12 起） */
+  private readonly fakeLevelData = { getGameType: () => 0 };
+  override getLevelData(): never {
+    return this.fakeLevelData as never;
+  }
+  readonly droppedEntities: unknown[] = [];
+  override addEntity(e: never): boolean {
+    this.droppedEntities.push(e);
+    return true;
+  }
   override skyDarken = 0;
   time = 0;
 

@@ -1,6 +1,5 @@
 // 1:1 移植自 src/world/level/tile/LeafTile.h（S3）
 import type { Random } from '@mcpe/util';
-import { idOf } from '../../Unregistered';
 import { FoliageColor } from '../FoliageColor';
 import type { Level } from '../Level';
 import type { LevelSource } from '../LevelSource';
@@ -80,7 +79,7 @@ export class LeafTile extends TransparentTile {
       }
       const b = this.checkBuffer;
       if (level.hasChunksAt(x - r2, y - r2, z - r2, x + r2, y + r2, z + r2)) {
-        const trunk = idOf(Tile.treeTrunk); // ADAPTED(DeferredTile): Tile::treeTrunk->id —— 未注册时没有原木，树叶都会腐烂
+        const trunk = Tile.treeTrunk.id;
         for (let xo = -r; xo <= r; xo++)
           for (let yo = -r; yo <= r; yo++)
             for (let zo = -r; zo <= r; zo++) {

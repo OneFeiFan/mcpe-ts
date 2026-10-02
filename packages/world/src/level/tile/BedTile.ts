@@ -1,4 +1,5 @@
 // 1:1 移植自 src/world/level/tile/BedTile.h 与 BedTile.cpp（S3）
+import { ItemInstance } from '../../item/ItemInstance';
 import type { Random } from '@mcpe/util';
 import { Direction } from '../../Direction';
 import { Facing } from '../../Facing';
@@ -87,7 +88,7 @@ export class BedTile extends DirectionalTile {
       if (level.getTile(x + off[0], y, z + off[1]) !== this.id) {
         level.setTile(x, y, z, 0);
         if (!level.isClientSide) {
-          // DEFERRED(Item): popResource(level, x, y, z, ItemInstance(Item::bed));  —— Item::bed（BedItem）S12 注册
+          this.popResource(level, x, y, z, new ItemInstance(Item.bed));
         }
       }
     }
@@ -126,9 +127,9 @@ export class BedTile extends DirectionalTile {
     return false;
   }
 
-  override spawnResources(_level: Level, _x: number, _y: number, _z: number, data: number, _odds = 1): void {
+  override spawnResources(level: Level, x: number, y: number, z: number, data: number, _odds = 1): void {
     if (!BedTile.isHeadPiece(data)) {
-      // DEFERRED(Item): popResource(level, x, y, z, ItemInstance(Item::bed));  —— Item::bed（BedItem）S12 注册
+      this.popResource(level, x, y, z, new ItemInstance(Item.bed));
     }
   }
 

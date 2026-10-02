@@ -9,6 +9,16 @@
  * 子类（TileItem 等）里对应的重写一并 OMIT。
  * 调用方式与 C++ 一致：Item::items[i] → Item.items[i]，Item::apple → Item.apple。
  */
+import type { HatchetItem } from './HatchetItem';
+import { Material } from '../level/material/Material';
+import type { BedItem } from './BedItem';
+import type { DoorItem } from './DoorItem';
+import type { FlintAndSteelItem } from './FlintAndSteelItem';
+import type { HoeItem } from './HoeItem';
+import type { ShearsItem } from './ShearsItem';
+import type { SignItem } from './SignItem';
+import type { TilePlanterItem } from './TilePlanterItem';
+import type { WeaponItem } from './WeaponItem';
 import type { ArmorItem } from './ArmorItem';
 import type { BowItem } from './BowItem';
 import type { BowlFoodItem } from './BowlFoodItem';
@@ -40,6 +50,15 @@ import { I18n } from '@mcpe/locale';
 
 /** ItemInclude.ts 注入的子类构造器（import type，不形成运行时循环） */
 export interface ItemClasses {
+  readonly HatchetItem: typeof HatchetItem;
+  readonly BedItem: typeof BedItem;
+  readonly DoorItem: typeof DoorItem;
+  readonly FlintAndSteelItem: typeof FlintAndSteelItem;
+  readonly HoeItem: typeof HoeItem;
+  readonly ShearsItem: typeof ShearsItem;
+  readonly SignItem: typeof SignItem;
+  readonly TilePlanterItem: typeof TilePlanterItem;
+  readonly WeaponItem: typeof WeaponItem;
   readonly ArmorItem: typeof ArmorItem;
   readonly BowItem: typeof BowItem;
   readonly BowlFoodItem: typeof BowlFoodItem;
@@ -234,15 +253,15 @@ export class Item {
 
   /**
    * C++ Item::initItems（S11 阶段 C）。子类构造器由 ItemInclude.ts 注入（ADAPTED(ESM)，与 TileInclude 同一做法）。
-   * 依赖 S12 类（打火石、剑、锄、告示牌、门、甘蔗、床、剪刀）、Tile.crops（小麦种子）与 Tile.chest（斧子的构造函数）的 23 行 DEFERRED(Item)。
+   * 全部 C++ 的物品赋值都已注册（S11 72 个，S12 补上 23 个）。
    */
   static initItems(c: ItemClasses): void {
     if (Item.isInited) return;
     Item.isInited = true;
     Item.shovel_iron = new c.ShovelItem(0, Tier.IRON).setIcon(2, 5).setCategory(ItemCategory.Tools).setDescriptionId('shovelIron');
     Item.pickAxe_iron = new c.PickaxeItem(1, Tier.IRON).setIcon(2, 6).setCategory(ItemCategory.Tools).setDescriptionId('pickaxeIron');
-    // DEFERRED(Item): Item.hatchet_iron = new c.HatchetItem(2, Tier.IRON).setIcon(2, 7).setCategory(ItemCategory.Tools).setDescriptionId('hatchetIron');  —— HatchetItem 的构造函数读 Tile::chest（S12 注册）
-    // DEFERRED(Item): Item::flintAndSteel = (new FlintAndSteelItem(3))->setIcon(5, 0)->setCategory(ItemCategory::Tools)->setDescriptionId("flintAndSteel");
+    Item.hatchet_iron = new c.HatchetItem(2, Tier.IRON).setIcon(2, 7).setCategory(ItemCategory.Tools).setDescriptionId('hatchetIron');
+    Item.flintAndSteel = new c.FlintAndSteelItem(3).setIcon(5, 0).setCategory(ItemCategory.Tools).setDescriptionId('flintAndSteel');
     Item.apple = new c.FoodItem(4, 4, false).setIcon(10, 0).setCategory(ItemCategory.FoodArmor).setDescriptionId('apple');
     Item.bow = new c.BowItem(5).setIcon(5, 1).setCategory(ItemCategory.Tools).setDescriptionId('bow');
     Item.arrow = new Item(6).setIcon(5, 2).setCategory(ItemCategory.Tools).setDescriptionId('arrow');
@@ -250,35 +269,35 @@ export class Item {
     Item.emerald = new Item(8).setIcon(7, 3).setCategory(ItemCategory.Decorations).setDescriptionId('emerald');
     Item.ironIngot = new Item(9).setIcon(7, 1).setCategory(ItemCategory.Decorations).setDescriptionId('ingotIron');
     Item.goldIngot = new Item(10).setIcon(7, 2).setCategory(ItemCategory.Decorations).setDescriptionId('ingotGold');
-    // DEFERRED(Item): Item::sword_iron = (new WeaponItem(11, Tier::IRON))->setIcon(2, 4)->setCategory(ItemCategory::Tools)->setDescriptionId("swordIron");
-    // DEFERRED(Item): Item::sword_wood = (new WeaponItem(12, Tier::WOOD))->setIcon(0, 4)->setCategory(ItemCategory::Tools)->setDescriptionId("swordWood");
+    Item.sword_iron = new c.WeaponItem(11, Tier.IRON).setIcon(2, 4).setCategory(ItemCategory.Tools).setDescriptionId('swordIron');
+    Item.sword_wood = new c.WeaponItem(12, Tier.WOOD).setIcon(0, 4).setCategory(ItemCategory.Tools).setDescriptionId('swordWood');
     Item.shovel_wood = new c.ShovelItem(13, Tier.WOOD).setIcon(0, 5).setCategory(ItemCategory.Tools).setDescriptionId('shovelWood');
     Item.pickAxe_wood = new c.PickaxeItem(14, Tier.WOOD).setIcon(0, 6).setCategory(ItemCategory.Tools).setDescriptionId('pickaxeWood');
-    // DEFERRED(Item): Item.hatchet_wood = new c.HatchetItem(15, Tier.WOOD).setIcon(0, 7).setCategory(ItemCategory.Tools).setDescriptionId('hatchetWood');  —— HatchetItem 的构造函数读 Tile::chest（S12 注册）
-    // DEFERRED(Item): Item::sword_stone = (new WeaponItem(16, Tier::STONE))->setIcon(1, 4)->setCategory(ItemCategory::Tools)->setDescriptionId("swordStone");
+    Item.hatchet_wood = new c.HatchetItem(15, Tier.WOOD).setIcon(0, 7).setCategory(ItemCategory.Tools).setDescriptionId('hatchetWood');
+    Item.sword_stone = new c.WeaponItem(16, Tier.STONE).setIcon(1, 4).setCategory(ItemCategory.Tools).setDescriptionId('swordStone');
     Item.shovel_stone = new c.ShovelItem(17, Tier.STONE).setIcon(1, 5).setCategory(ItemCategory.Tools).setDescriptionId('shovelStone');
     Item.pickAxe_stone = new c.PickaxeItem(18, Tier.STONE).setIcon(1, 6).setCategory(ItemCategory.Tools).setDescriptionId('pickaxeStone');
-    // DEFERRED(Item): Item.hatchet_stone = new c.HatchetItem(19, Tier.STONE).setIcon(1, 7).setCategory(ItemCategory.Tools).setDescriptionId('hatchetStone');  —— HatchetItem 的构造函数读 Tile::chest（S12 注册）
-    // DEFERRED(Item): Item::sword_emerald = (new WeaponItem(20, Tier::EMERALD))->setIcon(3, 4)->setCategory(ItemCategory::Tools)->setDescriptionId("swordDiamond");
+    Item.hatchet_stone = new c.HatchetItem(19, Tier.STONE).setIcon(1, 7).setCategory(ItemCategory.Tools).setDescriptionId('hatchetStone');
+    Item.sword_emerald = new c.WeaponItem(20, Tier.EMERALD).setIcon(3, 4).setCategory(ItemCategory.Tools).setDescriptionId('swordDiamond');
     Item.shovel_emerald = new c.ShovelItem(21, Tier.EMERALD).setIcon(3, 5).setCategory(ItemCategory.Tools).setDescriptionId('shovelDiamond');
     Item.pickAxe_emerald = new c.PickaxeItem(22, Tier.EMERALD).setIcon(3, 6).setCategory(ItemCategory.Tools).setDescriptionId('pickaxeDiamond');
-    // DEFERRED(Item): Item.hatchet_emerald = new c.HatchetItem(23, Tier.EMERALD).setIcon(3, 7).setCategory(ItemCategory.Tools).setDescriptionId('hatchetDiamond');  —— HatchetItem 的构造函数读 Tile::chest（S12 注册）
+    Item.hatchet_emerald = new c.HatchetItem(23, Tier.EMERALD).setIcon(3, 7).setCategory(ItemCategory.Tools).setDescriptionId('hatchetDiamond');
     Item.stick = new Item(24).setIcon(5, 3).handEquipped().setCategory(ItemCategory.Structures).setDescriptionId('stick');
     Item.bowl = new Item(25).setIcon(7, 4).setCategory(ItemCategory.FoodArmor).setDescriptionId('bowl');
     Item.mushroomStew = new c.BowlFoodItem(26, 8).setIcon(8, 4).setCategory(ItemCategory.FoodArmor).setDescriptionId('mushroomStew');
-    // DEFERRED(Item): Item::sword_gold = (new WeaponItem(27, Tier::GOLD))->setIcon(4, 4)->setCategory(ItemCategory::Tools)->setDescriptionId("swordGold");
+    Item.sword_gold = new c.WeaponItem(27, Tier.GOLD).setIcon(4, 4).setCategory(ItemCategory.Tools).setDescriptionId('swordGold');
     Item.shovel_gold = new c.ShovelItem(28, Tier.GOLD).setIcon(4, 5).setCategory(ItemCategory.Tools).setDescriptionId('shovelGold');
     Item.pickAxe_gold = new c.PickaxeItem(29, Tier.GOLD).setIcon(4, 6).setCategory(ItemCategory.Tools).setDescriptionId('pickaxeGold');
-    // DEFERRED(Item): Item.hatchet_gold = new c.HatchetItem(30, Tier.GOLD).setIcon(4, 7).setCategory(ItemCategory.Tools).setDescriptionId('hatchetGold');  —— HatchetItem 的构造函数读 Tile::chest（S12 注册）
+    Item.hatchet_gold = new c.HatchetItem(30, Tier.GOLD).setIcon(4, 7).setCategory(ItemCategory.Tools).setDescriptionId('hatchetGold');
     Item.string = new Item(31).setIcon(8, 0).setCategory(ItemCategory.Tools).setDescriptionId('string');
     Item.feather = new Item(32).setIcon(8, 1).setCategory(ItemCategory.Tools).setDescriptionId('feather');
     Item.sulphur = new Item(33).setIcon(8, 2).setCategory(ItemCategory.Tools).setDescriptionId('sulphur');
-    // DEFERRED(Item): Item::hoe_wood = (new HoeItem(34, Tier::WOOD))->setIcon(0, 8)->setCategory(ItemCategory::Tools)->setDescriptionId("hoeWood");
-    // DEFERRED(Item): Item::hoe_stone = (new HoeItem(35, Tier::STONE))->setIcon(1, 8)->setCategory(ItemCategory::Tools)->setDescriptionId("hoeStone");
-    // DEFERRED(Item): Item::hoe_iron = (new HoeItem(36, Tier::IRON))->setIcon(2, 8)->setCategory(ItemCategory::Tools)->setDescriptionId("hoeIron");
-    // DEFERRED(Item): Item::hoe_emerald = (new HoeItem(37, Tier::EMERALD))->setIcon(3, 8)->setCategory(ItemCategory::Tools)->setDescriptionId("hoeDiamond");
-    // DEFERRED(Item): Item::hoe_gold = (new HoeItem(38, Tier::GOLD))->setIcon(4, 8)->setCategory(ItemCategory::Tools)->setDescriptionId("hoeGold");
-    // DEFERRED(Item): Item::seeds_wheat = (new SeedItem(39, Tile::crops->id, Tile::farmland->id))->setIcon(9, 0)->setCategory(ItemCategory::FoodArmor)->setDescriptionId("seeds");
+    Item.hoe_wood = new c.HoeItem(34, Tier.WOOD).setIcon(0, 8).setCategory(ItemCategory.Tools).setDescriptionId('hoeWood');
+    Item.hoe_stone = new c.HoeItem(35, Tier.STONE).setIcon(1, 8).setCategory(ItemCategory.Tools).setDescriptionId('hoeStone');
+    Item.hoe_iron = new c.HoeItem(36, Tier.IRON).setIcon(2, 8).setCategory(ItemCategory.Tools).setDescriptionId('hoeIron');
+    Item.hoe_emerald = new c.HoeItem(37, Tier.EMERALD).setIcon(3, 8).setCategory(ItemCategory.Tools).setDescriptionId('hoeDiamond');
+    Item.hoe_gold = new c.HoeItem(38, Tier.GOLD).setIcon(4, 8).setCategory(ItemCategory.Tools).setDescriptionId('hoeGold');
+    Item.seeds_wheat = new c.SeedItem(39, Tile.crops.id, Tile.farmland.id).setIcon(9, 0).setCategory(ItemCategory.FoodArmor).setDescriptionId('seeds');
     Item.wheat = new Item(40).setIcon(9, 1).setCategory(ItemCategory.FoodArmor).setDescriptionId('wheat');
     Item.bread = new c.FoodItem(41, 5, false).setIcon(9, 2).setCategory(ItemCategory.FoodArmor).setDescriptionId('bread');
     Item.helmet_cloth = new c.ArmorItem(42, c.ArmorItem.CLOTH, 0, c.ArmorItem.SLOT_HEAD).setIcon(0, 0).setCategory(ItemCategory.FoodArmor).setDescriptionId('helmetCloth');
@@ -305,14 +324,14 @@ export class Item {
     Item.porkChop_raw = new c.FoodItem(63, 3, true).setIcon(7, 5).setCategory(ItemCategory.FoodArmor).setDescriptionId('porkchopRaw');
     Item.porkChop_cooked = new c.FoodItem(64, 8, true).setIcon(8, 5).setCategory(ItemCategory.FoodArmor).setDescriptionId('porkchopCooked');
     Item.painting = new c.HangingEntityItem(65, EntityTypes.IdPainting).setIcon(10, 1).setCategory(ItemCategory.Decorations).setDescriptionId('painting');
-    // DEFERRED(Item): Item::sign = (new SignItem(67))->setIcon(10, 2)->setCategory(ItemCategory::Decorations)->setDescriptionId("sign");
-    // DEFERRED(Item): Item::door_wood = (new DoorItem(68, Material::wood))->setIcon(11, 2)->setCategory(ItemCategory::Structures)->setDescriptionId("doorWood");
-    // DEFERRED(Item): Item::door_iron = (new DoorItem(74, Material::metal))->setIcon(12, 2)->setCategory(ItemCategory::Structures)->setDescriptionId("doorIron");
+    Item.sign = new c.SignItem(67).setIcon(10, 2).setCategory(ItemCategory.Decorations).setDescriptionId('sign');
+    Item.door_wood = new c.DoorItem(68, Material.wood).setIcon(11, 2).setCategory(ItemCategory.Structures).setDescriptionId('doorWood');
+    Item.door_iron = new c.DoorItem(74, Material.metal).setIcon(12, 2).setCategory(ItemCategory.Structures).setDescriptionId('doorIron');
     Item.snowBall = new c.SnowballItem(76).setIcon(14, 0).setCategory(ItemCategory.Decorations).setDescriptionId('snowball');
     Item.leather = new Item(78).setIcon(7, 6).setCategory(ItemCategory.Tools).setDescriptionId('leather');
     Item.brick = new Item(80).setIcon(6, 1).setCategory(ItemCategory.Structures).setDescriptionId('brick');
     Item.clay = new Item(81).setIcon(9, 3).setCategory(ItemCategory.Structures).setDescriptionId('clay');
-    // DEFERRED(Item): Item::reeds = (new TilePlanterItem(82, Tile::reeds))->setIcon(11, 1)->setCategory(ItemCategory::FoodArmor)->setDescriptionId("reeds");
+    Item.reeds = new c.TilePlanterItem(82, Tile.reeds).setIcon(11, 1).setCategory(ItemCategory.FoodArmor).setDescriptionId('reeds');
     Item.paper = new Item(83).setIcon(10, 3).setCategory(ItemCategory.Decorations).setDescriptionId('paper');
     Item.book = new Item(84).setIcon(11, 3).setCategory(ItemCategory.Decorations).setDescriptionId('book');
     Item.slimeBall = new Item(85).setIcon(14, 1).setCategory(ItemCategory.Decorations).setDescriptionId('slimeball');
@@ -323,8 +342,8 @@ export class Item {
     Item.dye_powder = new c.DyePowderItem(95).setIcon(14, 4).setCategory(ItemCategory.Decorations).setDescriptionId('dyePowder');
     Item.bone = new Item(96).setIcon(12, 1).setCategory(ItemCategory.Tools).setDescriptionId('bone').handEquipped();
     Item.sugar = new Item(97).setIcon(13, 0).setCategory(ItemCategory.FoodArmor).setDescriptionId('sugar').handEquipped();
-    // DEFERRED(Item): Item::bed = (new BedItem(99))->setMaxStackSize(1)->setIcon(13, 2)->setCategory(ItemCategory::Structures)->setDescriptionId("bed");
-    // DEFERRED(Item): Item::shears = (ShearsItem*)(new ShearsItem(103))->setIcon(13, 5)->setCategory(ItemCategory::Tools)->setDescriptionId("shears");
+    Item.bed = new c.BedItem(99).setMaxStackSize(1).setIcon(13, 2).setCategory(ItemCategory.Structures).setDescriptionId('bed');
+    Item.shears = new c.ShearsItem(103).setIcon(13, 5).setCategory(ItemCategory.Tools).setDescriptionId('shears');
     Item.melon = new c.FoodItem(104, 2, false).setIcon(13, 6).setCategory(ItemCategory.FoodArmor).setDescriptionId('melon');
     Item.seeds_melon = new c.SeedItem(106, Tile.melonStem.id, Tile.farmland.id).setIcon(14, 3).setCategory(ItemCategory.FoodArmor).setDescriptionId('seeds_melon');
     Item.beef_raw = new c.FoodItem(107, 3,  true).setIcon(9, 6).setCategory(ItemCategory.FoodArmor).setDescriptionId('beefRaw');
@@ -404,7 +423,8 @@ export class Item {
     return new ItemInstance(itemInstance); // C++ 按值返回 *itemInstance 的副本
   }
 
-  getDestroySpeed(_itemInstance: ItemInstance, _tile: Tile): number {
+  /** C++ 调用处可能传 NULL（Inventory::getDestroySpeed） */
+  getDestroySpeed(_itemInstance: ItemInstance | null, _tile: Tile): number {
     return 1;
   }
 

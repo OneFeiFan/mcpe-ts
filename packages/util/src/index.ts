@@ -8,3 +8,4 @@ export { WeighedRandom, WeighedRandomItem } from './WeighedRandom.js';
 export { BytesDataOutput, BytesDataInput, MemoryDataOutput, MemoryDataInput, PrintStream } from './DataIO.js';
 export type { IDataOutput, IDataInput } from './DataIO.js';
 
+export { SmoothFloat } from './SmoothFloat.js';

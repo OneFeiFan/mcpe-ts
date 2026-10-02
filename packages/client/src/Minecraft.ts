@@ -39,6 +39,11 @@ import { Timer } from './Timer';
 /** Minecraft.cpp 的 checkGlError：只在定义了 GLDEBUG 时有内容 */
 function checkGlError(_tag: string): void {}
 
+/** Player::resetPos 是公开的，而 Entity::resetPos 是 protected；LocalPlayer 正身（S12 阶段 C）就位前经这里调用 */
+function resetPlayerPos(player: LocalPlayer, clearMore: boolean): void {
+  (player as unknown as { resetPos(clearMore: boolean): void }).resetPos(clearMore);
+}
+
 /** Minecraft::tickInput 里的 static bool prevMouseDownLeft、static int buildHoldTicks（只被 DEFERRED 的建造代码使用） */
 
 export class Minecraft extends App {
@@ -263,9 +268,9 @@ export class Minecraft extends App {
       // DEFERRED(GameMode): gameMode->initLevel(level);
       if (!this.player && forceInsertPlayer) {
         this.player = forceInsertPlayer;
-        this.player.resetPos(false);
+        resetPlayerPos(this.player, false);
       } else if (this.player !== null) {
-        this.player.resetPos(false);
+        resetPlayerPos(this.player, false);
         // DEFERRED(Entity): if (level != NULL) level->addEntity(player);
       }
       this.level = level;
@@ -563,7 +568,7 @@ export class Minecraft extends App {
     level.validateSpawn();
     // DEFERRED(Player): level->loadPlayer(player, true);
     if (this.player && !level.isClientSide) {
-      this.player.resetPos(false);
+      resetPlayerPos(this.player, false);
     }
     if (level && level.dimension) {
       level.dimension.FogType = this.options.getIntValue(OptionId.OPTIONS_FOG_TYPE);

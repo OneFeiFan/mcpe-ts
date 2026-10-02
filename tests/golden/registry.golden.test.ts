@@ -11,8 +11,8 @@ import { initItems, initMaterials, initTiles, Item, Material, Tile } from '@mcpe
  * - REQUIRE_ALL：S11 阶段 C 把剩下的方块、物品注册完之后改为 true；在此之前只比较 TS 已经注册的条目，并列出尚未注册的 id。
  */
 const REQUIRE_ALL = false;
-/** S12 才注册的方块 id（依赖玩家、实体的 12 个类） */
-const S12_IDS = new Set([30, 31, 53, 54, 58, 59, 61, 62, 64, 67, 71, 81, 107, 108, 109, 114, 128, 156, 245, 247]);
+/** 还没注册的方块：下界反应堆（247，S12 阶段 C 后半） */
+const S12_IDS = new Set([247]);
 /** 方块形状属于第二档（结构一致、数值放宽）：C++ 用 float 计算（如 0.5f - 0.4f），TS 用 double，末位可差 1 ulp */
 const BOUNDS_TOL = 1e-6;
 type TileRec = {

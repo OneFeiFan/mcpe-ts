@@ -7,6 +7,8 @@
  *   去掉 override 硬写进来，又会变成一个通过 LevelChunk 类型永远调不到的孤立方法。移植实体时两边一起恢复。
  * 【C++ 里本来就注释掉的】方块实体的 4 个重写、getEntitiesOfClass、countEntities、shouldSave（EmptyLevelChunk.h:72-108），不移植。
  */
+import type { Entity } from '../../entity/Entity';
+import type { AABB } from '../../phys/AABB';
 import { Random } from '@mcpe/util';
 import type { Level } from '../Level';
 import type { LightLayer } from '../LightLayer';
@@ -66,9 +68,9 @@ export class EmptyLevelChunk extends LevelChunk {
     return 7;
   }
 
-  // OMIT(Entity): addEntity(e)  EmptyLevelChunk.h:96
-  // OMIT(Entity): removeEntity(e)  EmptyLevelChunk.h:100
-  // OMIT(Entity): removeEntity(e, yc)  EmptyLevelChunk.h:104
+  override addEntity(_e: Entity): void {}
+
+  override removeEntity(_e: Entity, _yc?: number): void {}
 
   override isSkyLit(_x: number, _y: number, _z: number): boolean {
     return false;
@@ -82,7 +84,7 @@ export class EmptyLevelChunk extends LevelChunk {
 
   override markUnsaved(): void {}
 
-  // OMIT(Entity): getEntities(except, bb, es)  EmptyLevelChunk.h:145
+  override getEntities(_except: Entity | null, _bb: AABB, _es: Entity[]): void {}
 
   override setBlocks(_newBlocks: Uint8Array, _sub: number): void {}
 

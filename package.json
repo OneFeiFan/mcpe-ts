@@ -32,6 +32,8 @@
     "@mcpe/util": "workspace:*",
     "@mcpe/core": "workspace:*",
     "@mcpe/world": "workspace:*",
-    "@mcpe/client": "workspace:*"
+    "@mcpe/client": "workspace:*",
+    "@mcpe/nbt": "workspace:*",
+    "@mcpe/locale": "workspace:*"
   }
 }

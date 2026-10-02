@@ -41,10 +41,10 @@ export class TileEntityFactory {
 
   static createTileEntity(type: number): TileEntity | null {
     switch (type) {
-      case TileEntityType.Furnace: return new (TileEntityFactory.need('Furnace', 'S11 阶段 C'))();
-      case TileEntityType.Chest: return new (TileEntityFactory.need('Chest', 'S12'))();
+      case TileEntityType.Furnace: return new (TileEntityFactory.need('Furnace', 'S12 阶段 A'))();
+      case TileEntityType.Chest: return new (TileEntityFactory.need('Chest', 'S12 阶段 C'))();
       case TileEntityType.Sign: return new (TileEntityFactory.need('Sign', 'S11 阶段 A'))();
-      case TileEntityType.NetherReactor: return new (TileEntityFactory.need('NetherReactor', 'S11 阶段 C'))();
+      case TileEntityType.NetherReactor: return new (TileEntityFactory.need('NetherReactor', 'S12 阶段 C'))();
       default:
         LOGE(`Can't find TileEntity of type: ${type}`);
         return null;

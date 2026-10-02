@@ -1,6 +1,5 @@
 // 1:1 移植自 src/world/level/tile/LiquidTileDynamic.h（S3）
 import type { Random } from '@mcpe/util';
-import { idOf } from '../../Unregistered';
 import type { Level } from '../Level';
 import { Material } from '../material/Material';
 import { LiquidTile } from './LiquidTile';
@@ -125,7 +124,7 @@ export class LiquidTileDynamic extends LiquidTile {
     // ADAPTED(DeferredTile): 原句为 t == Tile::door_wood->id /*|| t == Tile::door_iron->id */ || t == Tile::sign->id
     //   || t == Tile::ladder->id || t == Tile::reeds->id。四个方块都未注册：每次液体流动都会走到这里，
     //   直接读 .id 会报错；未注册的方块不会出现在世界里，按“不等于”处理。
-    if (t === idOf(Tile.door_wood) || t === idOf(Tile.sign) || t === idOf(Tile.ladder) || t === idOf(Tile.reeds)) {
+    if (t === Tile.door_wood.id || t === Tile.sign.id || t === Tile.ladder.id || t === Tile.reeds.id) {
       return true;
     }
     const m = Tile.tiles[t]!.material;

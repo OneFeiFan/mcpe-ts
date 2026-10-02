@@ -12,7 +12,7 @@
 import { Mouse, Multitouch } from '@mcpe/platform';
 import { Mth, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH } from '@mcpe/util';
 import { HitResultType, Material, Tile, Vec3 } from '@mcpe/world';
-import type { CameraTarget } from '../camera/CameraTarget';
+import { asEntity, type CameraTarget } from '../camera/CameraTarget';
 import { IntRectangle } from '../gui/components/ImageButton';
 import { Gui } from '../gui/Gui';
 import type { Minecraft } from '../Minecraft';
@@ -534,7 +534,7 @@ export class GameRenderer {
     const player = mc.cameraTargetPlayer!;
     let whiteness = 1.0 / (4 - mc.options.getIntValue(OptionId.OPTIONS_VIEW_DISTANCE));
     whiteness = 1 - Math.pow(whiteness, 0.25);
-    const skyColor = level.getSkyColor(player, a);
+    const skyColor = level.getSkyColor(asEntity(player), a);
     const sr = skyColor.x;
     const sg = skyColor.y;
     const sb = skyColor.z;

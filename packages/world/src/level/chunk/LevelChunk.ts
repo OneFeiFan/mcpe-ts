@@ -8,15 +8,16 @@
  *  - getRandom 在“种子 → 世界”的链上（地物、刷怪都用它），整数运算逐位与 C++ 一致（Math.imul 与 | 0）。
  *  - 高度图与天空光的重算是整数逻辑，本来就与 C++ 一致。
  *
- * 【OMIT】实体相关的 6 个方法；方块实体的 7 个方法与 setTileAndData 里删除方块实体的一句在 S11 阶段 A 补上。
- * entityBlocks 仍然保留（countEntities 要用），里面始终为空。
+ * 实体的 6 个方法在 S12 阶段 A 补上；方块实体的 7 个方法在 S11 阶段 A 补上。
+ * entityBlocks：S12 阶段 A 起由 addEntity / removeEntity 维护。
  *
  * 【C++ 的未初始化字段】loaded、minHeight 在 C++ 构造函数里没有初始化，这里取 false、0。
  * LevelChunk.ChunkBlockCount 是 C++ 的未初始化静态变量（值为 0），创建区块前要先设成 32768
  * （NinecraftApp::init 里是 LevelChunk::ChunkBlockCount = LEVEL_HEIGHT * CHUNK_COLUMNS）。
  */
-import { LOGW } from '@mcpe/platform';
-import { Random } from '@mcpe/util';
+import { LOGE, LOGW } from '@mcpe/platform';
+import { Mth, Random } from '@mcpe/util';
+import type { AABB } from '../../phys/AABB';
 import type { Entity } from '../../entity/Entity';
 import { Level } from '../Level';
 import { LevelConstants } from '../LevelConstants';
@@ -384,9 +385,32 @@ export class LevelChunk {
     return light;
   }
 
-  // OMIT(Entity): addEntity(e)  LevelChunk.cpp:409
-  // OMIT(Entity): removeEntity(e)  LevelChunk.cpp:429
-  // OMIT(Entity): removeEntity(e, yc)  LevelChunk.cpp:434
+  addEntity(e: Entity): void {
+    this.lastSaveHadEntities = true;
+    const xc = Mth.floor(e.x / 16);
+    const zc = Mth.floor(e.z / 16);
+    if (xc !== this.x || zc !== this.z) {
+      LOGE(`ERR: WRONG LOCATION : ${xc}, ${this.x}, ${zc}, ${this.z}`);
+    }
+    let yc = Mth.floor(e.y / 16);
+    if (yc < 0) yc = 0;
+    if (yc >= LevelChunk.EntityBlocksArraySize) yc = LevelChunk.EntityBlocksArraySize - 1;
+    e.inChunk = true;
+    e.xChunk = this.x;
+    e.yChunk = yc;
+    e.zChunk = this.z;
+    this.entityBlocks[yc]!.push(e);
+  }
+
+  /** C++ 的 removeEntity(e) 以 e->yChunk 转调 removeEntity(e, yc)（R10 情形 A） */
+  removeEntity(e: Entity, yc: number = e.yChunk): void {
+    if (yc < 0) yc = 0;
+    if (yc >= LevelChunk.EntityBlocksArraySize) yc = LevelChunk.EntityBlocksArraySize - 1;
+    const list = this.entityBlocks[yc]!;
+    let w = 0;
+    for (let r = 0; r < list.length; r++) if (list[r] !== e) list[w++] = list[r]!; // std::remove + erase
+    list.length = w;
+  }
 
   isSkyLit(x: number, y: number, z: number): boolean {
     return y >= (this.heightmap[(z << 4) | x]! & 0xff);
@@ -407,9 +431,60 @@ export class LevelChunk {
     this.unsaved = true;
   }
 
-  // OMIT(Entity): getEntities(except, bb, es)  LevelChunk.cpp:473
-  // OMIT(Entity): getEntitiesOfType(entityType, bb, list)  LevelChunk.cpp:490
-  // OMIT(Entity): getEntitiesOfClass(type, bb, list)  LevelChunk.cpp:515
+  getEntities(except: Entity | null, bb: AABB, es: Entity[]): void {
+    let yc0 = Mth.floor((bb.y0 - 2) / 16);
+    let yc1 = Mth.floor((bb.y1 + 2) / 16);
+    if (yc0 < 0) yc0 = 0;
+    if (yc1 >= LevelChunk.EntityBlocksArraySize) yc1 = LevelChunk.EntityBlocksArraySize - 1;
+    for (let yc = yc0; yc <= yc1; yc++) {
+      const entities = this.entityBlocks[yc]!;
+      for (let i = 0; i < entities.length; i++) {
+        const e = entities[i]!;
+        if (e !== except && e.bb.intersects(bb)) {
+          es.push(e);
+        }
+      }
+    }
+  }
+
+  getEntitiesOfType(entityType: number, bb: AABB, list: Entity[]): void {
+    const [yc0, yc1] = this.entityRange(bb);
+    for (let yc = yc0; yc <= yc1; yc++) {
+      const entities = this.entityBlocks[yc]!;
+      for (let i = 0; i < entities.length; i++) {
+        const e = entities[i]!;
+        if (e.getEntityTypeId() === entityType) list.push(e);
+      }
+    }
+  }
+
+  getEntitiesOfClass(type: number, bb: AABB, list: Entity[]): void {
+    const [yc0, yc1] = this.entityRange(bb);
+    for (let yc = yc0; yc <= yc1; yc++) {
+      const entities = this.entityBlocks[yc]!;
+      for (let i = 0; i < entities.length; i++) {
+        const e = entities[i]!;
+        if (e.getCreatureBaseType() === type) list.push(e);
+      }
+    }
+  }
+
+  /** getEntitiesOfType 与 getEntitiesOfClass 里相同的 yc0、yc1 计算（C++ 里两处逐字相同） */
+  private entityRange(bb: AABB): [number, number] {
+    let yc0 = Mth.floor((bb.y0 - 2) / 16);
+    let yc1 = Mth.floor((bb.y1 + 2) / 16);
+    if (yc0 < 0) {
+      yc0 = 0;
+    } else if (yc0 >= LevelChunk.EntityBlocksArraySize) {
+      yc0 = LevelChunk.EntityBlocksArraySize - 1;
+    }
+    if (yc1 >= LevelChunk.EntityBlocksArraySize) {
+      yc1 = LevelChunk.EntityBlocksArraySize - 1;
+    } else if (yc1 < 0) {
+      yc1 = 0;
+    }
+    return [yc0, yc1];
+  }
 
   countEntities(): number {
     let entityCount = 0;

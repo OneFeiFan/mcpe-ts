@@ -127,6 +127,9 @@ importers:
       '@mcpe/locale':
         specifier: workspace:*
         version: link:../locale
+      '@mcpe/nbt':
+        specifier: workspace:*
+        version: link:../nbt
       '@mcpe/platform':
         specifier: workspace:*
         version: link:../platform

@@ -1,4 +1,3 @@
-import { idOf } from '../../Unregistered';
 import { Tile } from "./Tile";
 import { Material } from "../material/Material";
 import { AABB } from "../../phys/AABB";
@@ -88,7 +87,7 @@ export class FenceTile extends Tile {
   /** C++ FenceTile::connectsTo(LevelSource*, int, int, int) */
   connectsTo(level: LevelSource, x: number, y: number, z: number): boolean {
     const tile = level.getTile(x, y, z);
-    if (tile === this.id || tile === idOf(Tile.fenceGate)) { // fenceGate 在 S12 注册（idOf 见 Unregistered.ts）
+    if (tile === this.id || tile === Tile.fenceGate.id) {
       return true;
     }
     const tileInstance = Tile.tiles[tile] ?? null;

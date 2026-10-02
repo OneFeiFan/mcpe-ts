@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { Random } from '@mcpe/util';
 import {
+  initItems,
   BedTile, FarmTile, FireTile, FoliageColor, initMaterials, Item, LeafTile, LeafTileItem, LiquidTile, LiquidTileDynamic,
   LiquidTileStatic, Material, StoneSlabTile, StoneSlabTileItem, Tile, TileItem, type TileClasses, TILE_CLASSES } from '@mcpe/world';
 import { FakeLevel } from '../../helpers/fakeLevel';
@@ -24,7 +25,8 @@ beforeAll(() => {
     ...TILE_CLASSES, ...fakes, LiquidTileDynamic, LiquidTileStatic, LeafTile, BedTile, StoneSlabTile, FireTile, FarmTile,
     TileItem, StoneSlabTileItem, LeafTileItem,
   };
-  Tile.initTiles(classes); // FireTile 构造函数里那 4 行 DEFERRED 没切掉的话，这里就会报错
+  Tile.initTiles(classes);
+  initItems(); // 床的掉落物要用 Item.bed（C++ 里 initItems 紧跟在 initTiles 之后）
 });
 
 describe('注册与静态表', () => {
@@ -43,10 +45,10 @@ describe('注册与静态表', () => {
     expect(Item.items[18]).toBeInstanceOf(LeafTileItem);
   });
 
-  it('FireTile：木头与树叶可燃，DEFERRED 的原木、书架、TNT、羊毛不在表里', () => {
+  it('FireTile：木头、树叶、原木、书架、TNT、羊毛都可燃', () => {
     const fire = Tile.fire;
     expect([fire.isFlammable(5), fire.isFlammable(18), fire.isFlammable(17), fire.isFlammable(47), fire.isFlammable(46), fire.isFlammable(35)])
-      .toEqual([true, true, false, false, false, false]);
+      .toEqual([true, true, true, true, true, true]);
   });
 });
 
@@ -96,7 +98,7 @@ describe('BedTile', () => {
     expect(Tile.bed.getTexture(3, BedTile.HEAD_PIECE_DATA)).toBe(t + 2 + 16); // 床头
   });
 
-  it('床尾找不到床头时自己消失（掉落物品已 DEFERRED）', () => {
+  it('床尾找不到床头时自己消失（并掉落床）', () => {
     const lv = new FakeLevel().put(0, 64, 0, 26, 0);
     Tile.bed.neighborChanged(lv, 0, 64, 0, 0);
     expect(lv.getTile(0, 64, 0)).toBe(0);

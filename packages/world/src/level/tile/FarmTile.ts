@@ -1,7 +1,6 @@
 // 1:1 移植自 src/world/level/tile/FarmTile.h（S3）
 import type { Random } from '@mcpe/util';
 import type { AABB } from '../../phys/AABB';
-import { idOf } from '../../Unregistered';
 import type { Level } from '../Level';
 import { Material } from '../material/Material';
 import type { Entity } from '../../entity/Entity';
@@ -85,7 +84,7 @@ export class FarmTile extends Tile {
     for (let xx = x - r; xx <= x + r; xx++)
       for (let zz = z - r; zz <= z + r; zz++) {
         // ADAPTED(DeferredTile): == Tile::crops->id —— crops 未注册时恒为 false
-        if (level.getTile(xx, y + 1, zz) === idOf(Tile.crops)) {
+        if (level.getTile(xx, y + 1, zz) === Tile.crops.id) {
           return true;
         }
       }

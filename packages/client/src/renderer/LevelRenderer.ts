@@ -12,7 +12,7 @@
 import { LOGI, Stopwatch } from '@mcpe/platform';
 import { Mth, Random, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH } from '@mcpe/util';
 import { FoliageColor, GrassColor, type Level, LevelConstants, LevelListener, Tile } from '@mcpe/world';
-import type { CameraTarget } from '../camera/CameraTarget';
+import { asEntity, type CameraTarget } from '../camera/CameraTarget';
 import { Minecraft } from '../Minecraft';
 import { OptionId } from '../Options';
 import { Chunk } from './Chunk';
@@ -273,7 +273,7 @@ export class LevelRenderer extends LevelListener {
       const player = mc.cameraTargetPlayer;
       if (player !== null) {
         this.resortChunks(Mth.floor(player.x), Mth.floor(player.y), Mth.floor(player.z));
-        sortedChunks.sort(sorterComparator(new DistanceChunkSorter(player)));
+        sortedChunks.sort(sorterComparator(new DistanceChunkSorter(asEntity(player))));
       }
     }
     this.noEntityRenderFrames = 2;
@@ -391,7 +391,7 @@ export class LevelRenderer extends LevelListener {
       this.yOld = player.y;
       this.zOld = player.z;
       this.resortChunks(Mth.floor(player.x), Mth.floor(player.y), Mth.floor(player.z));
-      this.sortedChunks!.sort(sorterComparator(new DistanceChunkSorter(player)));
+      this.sortedChunks!.sort(sorterComparator(new DistanceChunkSorter(asEntity(player))));
     }
     let count = 0;
     if (this.occlusionCheck && !mc.options.getBooleanValue(OptionId.OPTIONS_ANAGLYPH_3D) && layer === 0) {
@@ -427,7 +427,7 @@ export class LevelRenderer extends LevelListener {
             ci.occlusion_visible = true;
           }
           if (ci.visible && !ci.occlusion_querying) {
-            const dist = Mth.sqrt(ci.distanceToSqr(player));
+            const dist = Mth.sqrt(ci.distanceToSqr(asEntity(player)));
             const frequency = Math.trunc(1 + dist / 128);
             if (this.ticks % frequency === i % frequency) {
               const xt = ci.x - xOff;
@@ -516,13 +516,13 @@ export class LevelRenderer extends LevelListener {
     const dirtyChunks = this.dirtyChunks;
     if (slow) {
       // 慢速分支：slow 恒为 false，照原样保留
-      (dirtyChunks as Chunk[]).sort(sorterComparator(new DirtyChunkSorter(player)));
+      (dirtyChunks as Chunk[]).sort(sorterComparator(new DirtyChunkSorter(asEntity(player))));
       const s = dirtyChunks.length - 1;
       const amount = dirtyChunks.length;
       for (let i = 0; i < amount; i++) {
         const chunk = dirtyChunks[s - i]!;
         if (!force) {
-          if (chunk.distanceToSqr(player) > 16 * 16) {
+          if (chunk.distanceToSqr(asEntity(player)) > 16 * 16) {
             if (chunk.visible) {
               if (i >= LevelRenderer.MAX_VISIBLE_REBUILDS_PER_FRAME) return false;
             } else {
@@ -539,7 +539,7 @@ export class LevelRenderer extends LevelListener {
       return dirtyChunks.length === 0;
     } else {
       const count = 3;
-      const dirtyChunkSorter = new DirtyChunkSorter(player);
+      const dirtyChunkSorter = new DirtyChunkSorter(asEntity(player));
       const toAdd: (Chunk | null)[] = [null, null, null];
       let nearChunks: Chunk[] | null = null;
       const pendingChunkSize = dirtyChunks.length;
@@ -547,7 +547,7 @@ export class LevelRenderer extends LevelListener {
       for (let i = 0; i < pendingChunkSize; i++) {
         const chunk = dirtyChunks[i]!;
         if (!force) {
-          if (chunk.distanceToSqr(player) > 1024.0) {
+          if (chunk.distanceToSqr(asEntity(player)) > 1024.0) {
             let index: number;
             for (index = 0; index < count; index++) {
               if (toAdd[index] !== null && dirtyChunkSorter.compare(toAdd[index]!, chunk) === false) {

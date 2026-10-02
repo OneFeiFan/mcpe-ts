@@ -4,6 +4,7 @@ import {
   glMatrixMode, glRotatef, glSetContext, glTranslatef, gluPerspective, Minecraft, RenderList, sorterComparator, Tesselator, TileRenderer,
 } from '@mcpe/client';
 import { AABB, FoliageColor, GrassColor, Level, Material, Tile } from '@mcpe/world';
+import type { Entity } from '@mcpe/world';
 import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
 // S7 检查点：用 S5 的无头世界做网格测试（GLES1 无头模式，只记录上传的字节数）
@@ -106,7 +107,7 @@ describe('剔除、排序、RenderList', () => {
   it('DistanceChunkSorter：近的排前面；RenderList 逐个绘制已加入的区块', () => {
     const near = new Chunk(level, 128, 64, 112, 16, 0, vbo());
     const far = new Chunk(level, 128, 64, 160, 16, 0, vbo());
-    const sorted = [far, near].sort(sorterComparator(new DistanceChunkSorter({ x: 136, y: 72, z: 104, heightOffset: 0 })));
+    const sorted = [far, near].sort(sorterComparator(new DistanceChunkSorter({ x: 136, y: 72, z: 104, heightOffset: 0 } as unknown as Entity)));
     expect(sorted[0]).toBe(near);
     const { chunk } = build(128, 48, 128);
     const list = new RenderList();

@@ -4,7 +4,6 @@
  * 【PORT-CUT】
  *  - _init：new PathFinder() → DEFERRED(PathFinder)
  *  - tick：MobSpawner 整块 → DEFERRED(MobSpawner)；三处 SetTimePacket 发送与实体数据同步循环 → DEFERRED(Network)
- *  - mayPlace：调用已 OMIT 的 isUnobstructed（检查实体是否挡住）的一句 → DEFERRED(Entity)。没有实体时那一句恒为“不挡”，结果相同。
  * 【OMIT】实体、玩家、寻路、爆炸、刷怪相关的 32 个函数（见各处标记）；方块实体的 4 个函数在 S11 阶段 A 补上。析构函数不移植（R3）。
  *   C++ 里 addEntities、ensureAdded、removeAllPendingEntityRemovals 整段在注释里，awakenAllPlayers 只有声明没有定义，都不算。
  *
@@ -16,10 +15,10 @@
  * 【C++ 的未初始化字段】difficulty 没有初始化（由 Minecraft 设置），这里取 0。
  */
 import { SharedConstants } from '@mcpe/core';
-import { LOGI } from '@mcpe/platform';
+import { getTimeS, LOGE, LOGI } from '@mcpe/platform';
 import { Mth, Random, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH, Util } from '@mcpe/util';
 import type { Entity } from '../entity/Entity';
-import type { ParticleType } from '../entity/EntityTypes';
+import { MobTypes, type ParticleType } from '../entity/EntityTypes';
 import type { Player } from '../entity/player/Player';
 import { Facing } from '../Facing';
 import type { AABB } from '../phys/AABB';
@@ -44,6 +43,7 @@ import { LevelData } from './storage/LevelData';
 import type { LevelStorage } from './storage/LevelStorage';
 import { TickDataSet, TickNextTickData } from './TickNextTickData';
 import type { TileEntity } from './tile/entity/TileEntity';
+import { LiquidTile } from './tile/LiquidTile';
 import { Tile } from './tile/Tile';
 
 /** C++ 的 struct AdventureSettings */
@@ -56,7 +56,7 @@ export class AdventureSettings {
   showNameTags = true;
 }
 
-/** C++ 的 struct PRInfo（待移除的玩家），只被已 OMIT 的函数使用 */
+/** C++ 的 struct PRInfo（待移除的玩家） */
 interface PRInfo {
   e: Entity;
   ticks: number;
@@ -124,18 +124,18 @@ export class Level implements LevelSource {
   protected _addend = 1013904223;
 
   // ---------------------------------------------------------------- private（与 Level.h 一一对应；带“只被 OMIT 使用”的字段照样保留）
-  private _es: Entity[] = []; // 只被已 OMIT 的 getEntities 使用
+  private _es: Entity[] = [];
   private _tickNextTickSet = new TickDataSet();
   private _chunksToPoll = new Map<number, ChunkPos>(); // std::set<ChunkPos>，键是 hashCode
   private _lightUpdates: LightUpdate[] = [];
-  private _pendingEntityData = new Map<number, Entity>(); // 只被已 OMIT 的函数使用
+  private _pendingEntityData = new Map<number, Entity>();
   private _updateLights = true;
   private _maxRecurse = 0;
   private _isNew = false;
   private _nightMode = false;
   private _pathFinder: unknown = null; // 对应 _init 里那句延后的 new PathFinder()
   private _lastSavedPlayerTime = 0; // @attn: @time: clock starts on 0 now, change if not
-  private _pendingPlayerRemovals: PRInfo[] = []; // 只被已 OMIT 的函数使用
+  private _pendingPlayerRemovals: PRInfo[] = [];
 
   constructor(levelStorage: LevelStorage | null, levelName: string, settings: LevelSettings, generatorVersion: number, fixedDimension: Dimension | null = null) {
     this.levelStorage = levelStorage;
@@ -176,9 +176,60 @@ export class Level implements LevelSource {
     return new ChunkCache(this, chunkStorage, this.dimension.createRandomLevelSource());
   }
 
-  // OMIT(Entity): checkAndHandleWater(box, material, e)  Level.cpp:126
-  // OMIT(Player): getNearestPlayer(source, maxDist)  Level.cpp:165
-  // OMIT(Player): getNearestPlayer(x, y, z, maxDist)  Level.cpp:170
+  checkAndHandleWater(box: AABB, material: Material, e: Entity): boolean {
+    const x0 = Mth.floor(box.x0);
+    const x1 = Mth.floor(box.x1 + 1);
+    const y0 = Mth.floor(box.y0);
+    const y1 = Mth.floor(box.y1 + 1);
+    const z0 = Mth.floor(box.z0);
+    const z1 = Mth.floor(box.z1 + 1);
+    if (!this.hasChunksAt(x0, y0, z0, x1, y1, z1)) {
+      return false;
+    }
+    let ok = false;
+    const current = new Vec3(0, 0, 0);
+    for (let x = x0; x < x1; x++)
+      for (let y = y0; y < y1; y++)
+        for (let z = z0; z < z1; z++) {
+          const tile = Tile.tiles[this.getTile(x, y, z)];
+          if (tile != null && tile.material === material) {
+            const yt0 = y + 1 - LiquidTile.getHeight(this.getData(x, y, z));
+            if (y1 >= yt0) {
+              ok = true;
+              tile.handleEntityInside(this, x, y, z, e, current);
+            }
+          }
+        }
+    const len = current.length();
+    if (len > 0) {
+      const pow = 0.004 / len;
+      e.xd += current.x * pow;
+      e.yd += current.y * pow;
+      e.zd += current.z * pow;
+    }
+    return ok;
+  }
+
+  /** C++ 的两个重载：getNearestPlayer(source, maxDist) 与 getNearestPlayer(x, y, z, maxDist) */
+  getNearestPlayer(source: Entity, maxDist: number): Player | null;
+  getNearestPlayer(x: number, y: number, z: number, maxDist: number): Player | null;
+  getNearestPlayer(a: Entity | number, b: number, c?: number, d?: number): Player | null {
+    if (typeof a !== 'number') return this.getNearestPlayer(a.x, a.y, a.z, b);
+    const x = a, y = b, z = c!, maxDist = d!;
+    const maxDistSqr = maxDist * maxDist;
+    let best = -1;
+    let result: Player | null = null;
+    for (let i = 0; i < this.players.length; i++) {
+      const p = this.players[i]!;
+      if (p.removed) continue;
+      const dist = p.distanceToSqr(x, y, z);
+      if ((maxDist < 0 || dist < maxDistSqr) && (best === -1 || dist < best)) {
+        best = dist;
+        result = p;
+      }
+    }
+    return result;
+  }
 
   tick(): void {
     // DEFERRED(MobSpawner): if (!isClientSide && levelData.getSpawnMobs()) { static int _mobSpawnTick = 0; const int MobSpawnInterval = 2; if (++_mobSpawnTick >= MobSpawnInterval) { _mobSpawnTick = 0; TIMER_PUSH("mobSpawner"); MobSpawner::tick(this, _spawnEnemies && difficulty > Difficulty::PEACEFUL, _spawnFriendlies && (levelData.getTime() % 400) < MobSpawnInterval); TIMER_POP(); } }
@@ -288,7 +339,14 @@ export class Level implements LevelSource {
     return this._tickNextTickSet.size() !== 0;
   }
 
-  // OMIT(Player): loadPlayer(player, doAddPlayer)  Level.cpp:364
+  loadPlayer(player: Player | null, doAddPlayer = true): void {
+    if (player) {
+      // DEFERRED(NBT): CompoundTag* loadedPlayerTag = levelData.getLoadedPlayerTag();（LevelData 的 NBT 读写在 S16）
+      // DEFERRED(NBT): if (loadedPlayerTag != NULL) { player->load(loadedPlayerTag); levelData.setLoadedPlayerTag(NULL); } else
+      // DEFERRED(Player): levelData.setLoadedPlayerTo(player);
+      if (doAddPlayer) this.addEntity(player);
+    }
+  }
   // OMIT(PathFinder): findPath(path, from, to, maxDist, canOpenDoors, avoidWater)  Level.cpp:381
   // OMIT(PathFinder): findPath(path, from, xBest, yBest, zBest, maxDist, canOpenDoors, avoidWater)  Level.cpp:404
 
@@ -761,12 +819,49 @@ export class Level implements LevelSource {
     }
   }
 
-  // OMIT(Entity): addEntity(e)  Level.cpp:1007
-  // OMIT(Entity): getEntity(entityId)  Level.cpp:1035
-  // OMIT(Entity): entityAdded(e)  Level.cpp:1051
-  // OMIT(Entity): entityRemoved(e)  Level.cpp:1058
-  // OMIT(Mob): getMob(entityId)  Level.cpp:1064
-  // OMIT(Entity): removeEntity(e)  Level.cpp:1070
+  addEntity(e: Entity): boolean {
+    const prev = this.getEntity(e.entityId);
+    if (prev) this.removeEntity(prev);
+    const xc = Mth.floor(e.x / 16);
+    const zc = Mth.floor(e.z / 16);
+    const forced = true;
+    if (forced /* || hasChunk(xc, zc)*/) {
+      if (e.isPlayer() && !this.players.includes(e as Player)) {
+        this.players.push(e as Player);
+      }
+      this.getChunk(xc, zc).addEntity(e);
+      this.entities.push(e);
+      this.entityIdLookup.set(e.entityId, e);
+      this.entityAdded(e);
+      return true;
+    }
+    return false;
+  }
+
+  getEntity(entityId: number): Entity | null {
+    return this.entityIdLookup.get(entityId) ?? null;
+  }
+
+  entityAdded(e: Entity): void {
+    for (let i = 0; i < this._listeners.length; i++) {
+      this._listeners[i]!.entityAdded(e);
+    }
+  }
+
+  entityRemoved(e: Entity): void {
+    for (let j = 0; j < this._listeners.length; j++) {
+      this._listeners[j]!.entityRemoved(e);
+    }
+  }
+
+  // OMIT(Mob): getMob(entityId)  Level.cpp:1064（dynamic_cast<Mob*>，Mob 在 S12 阶段 C）
+
+  removeEntity(e: Entity): void {
+    e.remove();
+    if (e.isPlayer() && e.reallyRemoveIfPlayer) {
+      Util.remove(this.players, e as Player);
+    }
+  }
   tileEntityChanged(x: number, y: number, z: number, te: TileEntity): void {
     if (this.hasChunkAt(x, y, z)) {
       this.getChunkAt(x, z).markUnsaved();
@@ -787,7 +882,28 @@ export class Level implements LevelSource {
     if (it >= 0) this._listeners.splice(it, 1);
   }
 
-  // OMIT(Entity): getCubes(source, box)  Level.cpp:1122
+  /** 返回共享的 boxes（C++ 返回 std::vector<AABB>&）；实体之间的碰撞盒那段在 C++ 里被注释掉了 */
+  getCubes(_source: Entity | null, box: AABB): AABB[] {
+    this.boxes.length = 0;
+    const x0 = Mth.floor(box.x0);
+    const x1 = Mth.floor(box.x1 + 1);
+    const y0 = Mth.floor(box.y0);
+    const y1 = Mth.floor(box.y1 + 1);
+    const z0 = Mth.floor(box.z0);
+    const z1 = Mth.floor(box.z1 + 1);
+    for (let x = x0; x < x1; x++)
+      for (let z = z0; z < z1; z++) {
+        if (this.hasChunkAt(x, (Level.DEPTH / 2) | 0, z)) {
+          for (let y = y0 - 1; y < y1; y++) {
+            const tile = Tile.tiles[this.getTile(x, y, z)];
+            if (tile != null) {
+              tile.addAABBs(this, x, y, z, box, this.boxes);
+            }
+          }
+        }
+      }
+    return this.boxes;
+  }
 
   getSkyDarken(a: number): number {
     const td = this.getTimeOfDay(a);
@@ -929,11 +1045,154 @@ export class Level implements LevelSource {
     }
   }
 
-  // OMIT(Entity): tickEntities()  Level.cpp:1356
+  tickEntities(): void {
+    TIMER_PUSH('entities');
+    TIMER_PUSH('remove');
+    const pendingRemovedEntities: Entity[] = [];
+    // DEFERRED(Mob): std::vector<Zombie*> zombies;（僵尸 AI，计划外）
+    TIMER_POP_PUSH('regular');
+    for (let i = 0; i < this.entities.length; i++) {
+      const e = this.entities[i]!;
+      if (!e.removed) {
+        this.tickEntity(e);
+        // DEFERRED(Mob): if (e->getEntityTypeId() == MobTypes::Zombie) { zombies.push_back((Zombie*)e); ((Zombie*)e)->setUseNewAi(false); }
+      }
+      TIMER_PUSH('remove');
+      if (e.removed && (!e.isPlayer() || e.reallyRemoveIfPlayer)) {
+        const xc = e.xChunk;
+        const zc = e.zChunk;
+        if (e.inChunk && this.hasChunk(xc, zc)) {
+          this.getChunk(xc, zc).removeEntity(e);
+        }
+        this.entityIdLookup.delete(e.entityId);
+        this.entities.splice(i--, 1);
+        this.entityRemoved(e);
+        pendingRemovedEntities.push(e);
+      }
+      TIMER_POP();
+    }
+    TIMER_POP_PUSH('remove');
+    for (let i = 0; i < pendingRemovedEntities.length; ++i) {
+      const e = pendingRemovedEntities[i]!;
+      if (e.isPlayer()) this._pendingPlayerRemovals.push({ e, ticks: 16 });
+      // else delete e;（交给垃圾回收）
+    }
+    pendingRemovedEntities.length = 0;
+    for (let i = this._pendingPlayerRemovals.length - 1; i >= 0; --i) {
+      const pr = this._pendingPlayerRemovals[i]!;
+      if (--pr.ticks <= 0) {
+        LOGI('deleting: player');
+        this._pendingPlayerRemovals.splice(i, 1);
+      }
+    }
+    TIMER_POP_PUSH('tileEntities');
+    this.updatingTileEntities = true;
+    for (let i = 0; i < this.tileEntities.length; ++i) {
+      const te = this.tileEntities[i]!;
+      if (!te.isRemoved() && te.level !== null) {
+        if (this.hasChunkAt(te.x, te.y, te.z)) {
+          te.tick();
+        }
+      }
+      if (te.isRemoved()) {
+        for (let j = 0; j < 10; ++j) LOGI(`REmoved tile-entity @ ${te.x}, ${te.y}, ${te.z}`);
+        this.tileEntities.splice(i--, 1);
+        if (this.hasChunk(te.x >> 4, te.z >> 4)) {
+          const lc = this.getChunk(te.x >> 4, te.z >> 4);
+          if (lc !== null) {
+            lc.removeTileEntity(te.x & 15, te.y, te.z & 15);
+          }
+        }
+      }
+    }
+    this.updatingTileEntities = false;
+    TIMER_POP_PUSH('pendingTileEntities');
+    if (this.pendingTileEntities.length > 0) {
+      for (let i = 0; i < this.pendingTileEntities.length; ++i) {
+        let e: TileEntity | null = this.pendingTileEntities[i]!;
+        if (!e.isRemoved()) {
+          let found = false;
+          for (let j = 0; j < this.tileEntities.length; ++j) {
+            if (this.tileEntities[j] === e) {
+              found = true;
+              break;
+            }
+          }
+          const xx = e.x, yy = e.y, zz = e.z;
+          const lc = this.getChunk(xx >> 4, zz >> 4);
+          const has = lc && lc.hasTileEntityAt(e);
+          if (!found) {
+            if (!has) this.tileEntities.push(e);
+            else e = null;
+          }
+          if (e && lc) lc.setTileEntity(xx & 15, yy, zz & 15, e);
+          this.sendTileUpdated(xx, yy, zz);
+        }
+      }
+      this.pendingTileEntities.length = 0;
+    }
+    TIMER_POP();
+    TIMER_POP();
+  }
+
   // OMIT(Mob): setZombieAi(zombies)  Level.cpp:1507（同文件的 DistanceEntitySorter 只给它用，一并不移植）
-  // OMIT(Entity): tick(e)  Level.cpp:1526
-  // OMIT(Entity): tick(e, actual)  Level.cpp:1530
-  // OMIT(Entity): isUnobstructed(aabb)  Level.cpp:1582
+
+  /**
+   * C++ 的 tick(Entity*) 与 tick(Entity*, bool actual)（前者以 actual = true 转调后者）。它们和无参的 Level::tick()（世界的 tick）同名，
+   * 按 R10 情形 B 命名为 tickEntity，并按情形 A 合并成一个默认参数。
+   */
+  tickEntity(e: Entity, actual = true): void {
+    const xc = Mth.floor(e.x);
+    const zc = Mth.floor(e.z);
+    const r = 32;
+    if (actual && !this.hasChunksAt(xc - r, 0, zc - r, xc + r, 128, zc + r)) {
+      return;
+    }
+    e.xOld = e.x;
+    e.yOld = e.y;
+    e.zOld = e.z;
+    e.yRotO = e.yRot;
+    e.xRotO = e.xRot;
+    if (actual && e.inChunk) {
+      e.tick();
+    }
+    TIMER_PUSH('chunkCheck');
+    if (e.x !== e.x) e.x = e.xOld; // @note: checking for NaN, not sure about Infinite
+    if (e.y !== e.y) e.y = e.yOld;
+    if (e.z !== e.z) e.z = e.zOld;
+    if (e.xRot !== e.xRot) e.xRot = e.xRotO;
+    if (e.yRot !== e.yRot) e.yRot = e.yRotO;
+    const xcn = Mth.floor(e.x / 16.0);
+    const ycn = Mth.floor(e.y / 16.0);
+    const zcn = Mth.floor(e.z / 16.0);
+    if (!e.inChunk || e.xChunk !== xcn || e.yChunk !== ycn || e.zChunk !== zcn) {
+      if (e.inChunk && this.hasChunk(e.xChunk, e.zChunk)) {
+        this.getChunk(e.xChunk, e.zChunk).removeEntity(e, e.yChunk);
+      }
+      if (this.hasChunk(xcn, zcn)) {
+        e.inChunk = true;
+        this.getChunk(xcn, zcn).addEntity(e);
+      } else {
+        e.inChunk = false;
+      }
+    }
+    TIMER_POP();
+    const now = getTimeS();
+    if (now - this._lastSavedPlayerTime >= 30) {
+      this.saveLevelData();
+      this._lastSavedPlayerTime = now;
+    }
+  }
+
+  isUnobstructed(aabb: AABB): boolean {
+    const entities = this.getEntities(null, aabb);
+    for (let i = 0; i < entities.length; i++) {
+      const e = entities[i]!;
+      if (!e.removed && e.blocksBuilding) return false;
+    }
+    return true;
+  }
+  // OMIT(Mob): setZombieAi(zombies)  Level.cpp:1507（同文件的 DistanceEntitySorter 只给它用，一并不移植）
 
   containsAnyLiquid(box: AABB): boolean {
     let x0 = Mth.floor(box.x0);
@@ -1208,8 +1467,25 @@ export class Level implements LevelSource {
     }
   }
 
-  // OMIT(Entity): getEntities(except, bb)  Level.cpp:1929
-  // OMIT(Entity): getAllEntities()  Level.cpp:1959
+  /** 返回共享的 _es（C++ 返回 EntityList&） */
+  getEntities(except: Entity | null, bb: AABB): Entity[] {
+    this._es.length = 0;
+    const xc0 = Mth.floor((bb.x0 - 2) / 16);
+    const xc1 = Mth.floor((bb.x1 + 2) / 16);
+    const zc0 = Mth.floor((bb.z0 - 2) / 16);
+    const zc1 = Mth.floor((bb.z1 + 2) / 16);
+    for (let xc = xc0; xc <= xc1; xc++)
+      for (let zc = zc0; zc <= zc1; zc++) {
+        if (this.hasChunk(xc, zc)) {
+          this.getChunk(xc, zc).getEntities(except, bb, this._es);
+        }
+      }
+    return this._es;
+  }
+
+  getAllEntities(): readonly Entity[] {
+    return this.entities;
+  }
 
   prepare(): void {
     while (this._chunkSource.tick());
@@ -1225,8 +1501,7 @@ export class Level implements LevelSource {
     const tile = Tile.tiles[tileId]!;
     let aabb = tile.getAABB(this, x, y, z);
     if (ignoreEntities) aabb = null;
-    void aabb; // 只被下面 DEFERRED 的一句使用
-    // DEFERRED(Entity): if (aabb != NULL && !isUnobstructed(*aabb)) return false;
+    if (aabb != null && !this.isUnobstructed(aabb)) return false;
     if (targetTile === Tile.water || targetTile === Tile.calmWater || targetTile === Tile.lava || targetTile === Tile.calmLava || targetTile === Tile.fire || targetTile === Tile.topSnow) targetTile = null;
     if (tileId > 0 && targetTile === null) {
       if (tile.mayPlace(this, x, y, z, face)) {
@@ -1275,10 +1550,52 @@ export class Level implements LevelSource {
     return false;
   }
 
-  // OMIT(Entity): getEntitiesOfType(entityType, bb, list)  Level.cpp:2156
-  // OMIT(Entity): getEntitiesOfClass(type, bb, list)  Level.cpp:2172
-  // OMIT(Entity): countInstanceOfType(typeId)  Level.cpp:2187
-  // OMIT(Entity): countInstanceOfBaseType(baseTypeId)  Level.cpp:2195
+  /** C++ 的返回值 list.size() - (-初始大小)，即“加上”初始大小（原样保留这个缺陷） */
+  getEntitiesOfType(entityType: number, bb: AABB, list: Entity[]): number {
+    const xc0 = Mth.floor((bb.x0 - 2) / 16);
+    const xc1 = Mth.floor((bb.x1 + 2) / 16);
+    const zc0 = Mth.floor((bb.z0 - 2) / 16);
+    const zc1 = Mth.floor((bb.z1 + 2) / 16);
+    const count = -list.length;
+    for (let xc = xc0; xc <= xc1; xc++)
+      for (let zc = zc0; zc <= zc1; zc++) {
+        if (this.hasChunk(xc, zc)) {
+          this.getChunk(xc, zc).getEntitiesOfType(entityType, bb, list);
+        }
+      }
+    return list.length - count;
+  }
+
+  getEntitiesOfClass(type: number, bb: AABB, list: Entity[]): number {
+    const xc0 = Mth.floor((bb.x0 - 2) / 16);
+    const xc1 = Mth.floor((bb.x1 + 2) / 16);
+    const zc0 = Mth.floor((bb.z0 - 2) / 16);
+    const zc1 = Mth.floor((bb.z1 + 2) / 16);
+    const count = -list.length;
+    for (let xc = xc0; xc <= xc1; xc++)
+      for (let zc = zc0; zc <= zc1; zc++) {
+        if (this.hasChunk(xc, zc)) {
+          this.getChunk(xc, zc).getEntitiesOfClass(type, bb, list);
+        }
+      }
+    return list.length - count;
+  }
+
+  countInstanceOfType(typeId: number): number {
+    let n = 0;
+    for (let i = 0; i < this.entities.length; ++i) if (typeId === this.entities[i]!.getEntityTypeId()) ++n;
+    return n;
+  }
+
+  countInstanceOfBaseType(baseTypeId: number): number {
+    if (baseTypeId < MobTypes.BaseEnemy || baseTypeId > MobTypes.BaseWaterCreature) {
+      LOGE('Bad typeId sent to Level::countInstanceOf. Note that only Base types (MobTypes::Base*) are supported for now.');
+      return -1;
+    }
+    let n = 0;
+    for (let i = 0; i < this.entities.length; ++i) if (baseTypeId === this.entities[i]!.getCreatureBaseType()) ++n;
+    return n;
+  }
 
   updateSleepingPlayerList(): void {}
 
@@ -1302,8 +1619,14 @@ export class Level implements LevelSource {
     this.levelData.setSpawn(spawnPos.x, spawnPos.y, spawnPos.z);
   }
 
-  // OMIT(Player): mayInteract(player, xt, yt, zt)  Level.cpp:2088
-  // OMIT(Entity): broadcastEntityEvent(e, eventId)  Level.cpp:2092
+  mayInteract(_player: Player, _xt: number, _yt: number, _zt: number): boolean {
+    return true;
+  }
+
+  broadcastEntityEvent(_e: Entity, _eventId: number): void {
+    if (this.isClientSide) return;
+    // DEFERRED(Network): EntityEventPacket packet(e->entityId, eventId); raknetInstance->send(packet);
+  }
 
   getChunkSource(): ChunkSource {
     return this._chunkSource;
@@ -1318,7 +1641,10 @@ export class Level implements LevelSource {
   }
 
   // OMIT(Entity): takePicture(cam, e)  Level.cpp:2150
-  // OMIT(Entity): dispatchEntityData(e)  Level.cpp:2208
+  dispatchEntityData(e: Entity): void {
+    if (this.isClientSide) return;
+    if (!this._pendingEntityData.has(e.entityId)) this._pendingEntityData.set(e.entityId, e); // std::map::insert 不覆盖
+  }
 
   saveGame(): void {
     if (this.levelStorage) {
@@ -1339,7 +1665,12 @@ export class Level implements LevelSource {
       }
   }
 
-  // OMIT(Player): removePlayer(player)  Level.cpp:2236
+  removePlayer(player: Player): void {
+    for (let i = 0; i < this.players.length; ++i)
+      if (this.players[i] === player) {
+        this.players.splice(i, 1);
+      }
+  }
 
   /** C++ 返回 int（0 或 1） */
   isNightMode(): number {

@@ -3,7 +3,7 @@
  *
  * 【注册表】initTiles 由 TileInclude.ts 注入子类构造器调用（与 MaterialInclude 同一模式，手册 R7）：
  *   本文件只 `import type` 自身之外的方块类型，不 import 任何子类文件，避免 ES 模块循环依赖。
- *   C++ 的 89 条方块赋值中注册 75 条（S3 的 27 条 + S11 的 48 条），依赖玩家、实体的 14 条留到 S12，逐行标 DEFERRED(Tile)；
+ *   C++ 的 89 条方块赋值中注册 88 条（S3 的 27 条 + S11 的 48 条 + S12 的 13 条）；NetherReactor 一条在 S12 阶段 C 后半补上，标 DEFERRED(Tile)；
  *   8 条特殊 TileItem 全部注册。
  *   未注册的静态字段是“访问即报错”的哨兵（见 Unregistered.ts），相当于 C++ 的 NULL，但报错信息写明是哪个字段。
  *   与手册初版相比多注册了 topSnow：本文件的 shouldRenderFace 会直接读 topSnow.id，不注册就会空指针。
@@ -23,7 +23,7 @@
  *   initTiles 是 Tile 的静态方法，所以能调用它们。
  *
  * 【S11 阶段 A】签名含 Player、Entity、Mob 的 virtual 与 getName 已补全（参数类型是前向声明）；spawnResources（两个重载合并为带默认参数的一个）
- *   与 popResource 保留全部随机数调用，只有生成掉落物实体（ItemEntity）的一句 DEFERRED(Entity)，S12 恢复。
+ *   与 popResource 保留全部随机数调用；生成掉落物实体在 S12 阶段 C 恢复（经 Entity.ts 的 createItemEntity）。
  *
  * 【数值】按手册三档规则属于“结构一致、数值放宽”：形状、摧毁时间等按 JS 数值计算，不做 float 舍入。
  */
@@ -62,6 +62,17 @@ import type { TntTile } from './TntTile';
 import type { TorchTile } from './TorchTile';
 import type { TrapDoorTile } from './TrapDoorTile';
 import type { TreeTile } from './TreeTile';
+import type { CactusTile } from './CactusTile';
+import type { ChestTile } from './ChestTile';
+import type { CropTile } from './CropTile';
+import type { DoorTile } from './DoorTile';
+import type { FenceGateTile } from './FenceGateTile';
+import type { FurnaceTile } from './FurnaceTile';
+import type { StairTile } from './StairTile';
+import type { StonecutterTile } from './StonecutterTile';
+import type { TallGrass } from './TallGrass';
+import type { WebTile } from './WebTile';
+import type { WorkbenchTile } from './WorkbenchTile';
 import { TileEntityType } from './entity/TileEntity';
 import type { Random } from '@mcpe/util';
 import { Facing } from '../../Facing';
@@ -76,7 +87,8 @@ import { GameType } from '../LevelSettings';
 import type { Entity } from '../../entity/Entity';
 import type { Mob } from '../../entity/Mob';
 import type { Player } from '../../entity/player/Player';
-import type { ItemInstance } from '../../item/ItemInstance';
+import { ItemInstance } from '../../item/ItemInstance';
+import { createItemEntity } from '../../entity/Entity';
 import { LevelConstants } from '../LevelConstants';
 import type { LevelSource } from '../LevelSource';
 import { Material } from '../material/Material';
@@ -143,6 +155,18 @@ export interface TileClasses {
   readonly TileItem: new (id: number) => Item;
   readonly StoneSlabTileItem: new (id: number) => Item;
   readonly LeafTileItem: new (id: number) => Item;
+  // S12 阶段 C 注册的类
+  readonly CactusTile: typeof CactusTile;
+  readonly ChestTile: typeof ChestTile;
+  readonly CropTile: typeof CropTile;
+  readonly DoorTile: typeof DoorTile;
+  readonly FenceGateTile: typeof FenceGateTile;
+  readonly FurnaceTile: typeof FurnaceTile;
+  readonly StairTile: typeof StairTile;
+  readonly StonecutterTile: typeof StonecutterTile;
+  readonly TallGrass: typeof TallGrass;
+  readonly WebTile: typeof WebTile;
+  readonly WorkbenchTile: typeof WorkbenchTile;
   // S11 阶段 C 注册的类（import type，不形成运行时循环）
   readonly AuxDataTileItem: typeof AuxDataTileItem;
   readonly BookshelfTile: typeof BookshelfTile;
@@ -387,8 +411,8 @@ export class Tile {
     Tile.lapisBlock = new Tile(22, 9 * 16, Material.stone).init().setDestroyTime(3.0).setExplodeable(5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Decorations).setDescriptionId('blockLapis');
     Tile.sandStone = new c.SandStoneTile(24, SANDSTONE_TEXTURES, SANDSTONE_TEXTURE_COUNT).init().setSoundType(Tile.SOUND_STONE).setDestroyTime(0.8).setCategory(ItemCategory.Structures).setDescriptionId('sandStone');
     Tile.bed = new c.BedTile(26).init().setDestroyTime(0.2).setCategory(ItemCategory.Structures).setDescriptionId('bed');
-    // DEFERRED(Tile): web = (new WebTile(30, 11))->init()->setLightBlock(1)->setDestroyTime(4.0f)->setCategory(ItemCategory::Decorations)->setDescriptionId("web");
-    // DEFERRED(Tile): tallgrass = (new TallGrass(31, 2 * 16 + 7))->init()->setDestroyTime(0.0f)->setSoundType(SOUND_GRASS)->setCategory(ItemCategory::Decorations)->setDescriptionId("tallgrass");
+    Tile.web = new c.WebTile(30, 11).init().setLightBlock(1).setDestroyTime(4.0).setCategory(ItemCategory.Decorations).setDescriptionId('web');
+    Tile.tallgrass = new c.TallGrass(31, 2 * 16 + 7).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Decorations).setDescriptionId('tallgrass');
     Tile.cloth = new c.ClothTile(35).init().setDestroyTime(0.8).setSoundType(Tile.SOUND_CLOTH).setCategory(ItemCategory.Structures).setDescriptionId('cloth');
     Tile.flower = new c.Bush(37, 13).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Decorations).setDescriptionId('flower');
     Tile.rose = new c.Bush(38, 12).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Decorations).setDescriptionId('rose');
@@ -404,27 +428,27 @@ export class Tile {
     Tile.mossStone = new Tile(48, 36, Material.stone).init().setDestroyTime(2.0).setExplodeable(10).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('stoneMoss');
     Tile.obsidian = new c.ObsidianTile(49, 37, false).init().setDestroyTime(10.0).setExplodeable(2000).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('obsidian');
     Tile.torch = new c.TorchTile(50, 5 * 16).init().setDestroyTime(0.0).setLightEmission(15 / 16.0).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Tools).setDescriptionId('torch');
-    // DEFERRED(Tile): stairs_wood = (new StairTile(53, wood))->init()->setCategory(ItemCategory::Structures)->setDescriptionId("stairsWood");
-    // DEFERRED(Tile): chest = (new ChestTile(54))->init()->setCategory(ItemCategory::Structures)->setDestroyTime(2.5f)->setSoundType(SOUND_WOOD)->setDescriptionId("chest");
+    Tile.stairs_wood = new c.StairTile(53, Tile.wood).init().setCategory(ItemCategory.Structures).setDescriptionId('stairsWood');
+    Tile.chest = new c.ChestTile(54).init().setCategory(ItemCategory.Structures).setDestroyTime(2.5).setSoundType(Tile.SOUND_WOOD).setDescriptionId('chest');
     Tile.emeraldOre = new c.OreTile(56, 16 * 3 + 2).init().setDestroyTime(3.0).setExplodeable(5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Decorations).setDescriptionId('oreDiamond');
     Tile.emeraldBlock = new c.MetalTile(57, 40 - 16).init().setDestroyTime(5.0).setExplodeable(10).setSoundType(Tile.SOUND_METAL).setCategory(ItemCategory.Decorations).setDescriptionId('blockDiamond');
-    // DEFERRED(Tile): workBench = (new WorkbenchTile(58))->init()->setDestroyTime(2.5f)->setSoundType(SOUND_WOOD)->setCategory(ItemCategory::Structures)->setDescriptionId("workbench");
-    // DEFERRED(Tile): crops = (new CropTile(59, 8 + 5 * 16))->init()->setDestroyTime(0.0f)->setSoundType(SOUND_GRASS)->setCategory(ItemCategory::Structures)->setDescriptionId("crops");
+    Tile.workBench = new c.WorkbenchTile(58).init().setDestroyTime(2.5).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Structures).setDescriptionId('workbench');
+    Tile.crops = new c.CropTile(59, 8 + 5 * 16).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Structures).setDescriptionId('crops');
     Tile.farmland = new c.FarmTile(60).init().setDestroyTime(0.6).setSoundType(Tile.SOUND_GRAVEL).setCategory(ItemCategory.Structures).setDescriptionId('farmland');
-    // DEFERRED(Tile): furnace = (new FurnaceTile(61, false))->init()->setDestroyTime(3.5f)->setSoundType(SOUND_STONE)->setCategory(ItemCategory::Structures)->setDescriptionId("furnace");
-    // DEFERRED(Tile): furnace_lit = (new FurnaceTile(62, true))->init()->setDestroyTime(3.5f)->setSoundType(SOUND_STONE)->setLightEmission(14 / 16.0f)->setCategory(ItemCategory::Structures)->setDescriptionId("furnace");
+    Tile.furnace = new c.FurnaceTile(61, false).init().setDestroyTime(3.5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('furnace');
+    Tile.furnace_lit = new c.FurnaceTile(62, true).init().setDestroyTime(3.5).setSoundType(Tile.SOUND_STONE).setLightEmission(14 / 16.0).setCategory(ItemCategory.Structures).setDescriptionId('furnace');
     Tile.sign = new c.SignTile(63, TileEntityType.Sign, true).init().setDestroyTime(1.0).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Decorations).setDescriptionId('sign');
-    // DEFERRED(Tile): door_wood = (new DoorTile(64, Material::wood))->init()->setDestroyTime(3.0f)->setSoundType(SOUND_WOOD)->setCategory(ItemCategory::Structures)->setDescriptionId("doorWood");
+    Tile.door_wood = new c.DoorTile(64, Material.wood).init().setDestroyTime(3.0).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Structures).setDescriptionId('doorWood');
     Tile.ladder = new c.LadderTile(65, 3 + 5 * 16).init().setDestroyTime(0.4).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Structures).setDescriptionId('ladder');
-    // DEFERRED(Tile): stairs_stone= (new StairTile(67, stoneBrick))->init()->setCategory(ItemCategory::Structures)->setDescriptionId("stairsStone");
+    Tile.stairs_stone = new c.StairTile(67, Tile.stoneBrick).init().setCategory(ItemCategory.Structures).setDescriptionId('stairsStone');
     Tile.wallSign = new c.SignTile(68, TileEntityType.Sign, false).init().setDestroyTime(1.0).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Decorations).setDescriptionId('sign');
-    // DEFERRED(Tile): door_iron = (new DoorTile(71, Material::metal))->init()->setDestroyTime(5.0f)->setSoundType(SOUND_METAL)->setCategory(ItemCategory::Structures)->setDescriptionId("doorIron");
+    Tile.door_iron = new c.DoorTile(71, Material.metal).init().setDestroyTime(5.0).setSoundType(Tile.SOUND_METAL).setCategory(ItemCategory.Structures).setDescriptionId('doorIron');
     Tile.redStoneOre = new c.RedStoneOreTile(73, 16 * 3 + 3, false).init().setDestroyTime(3.0).setExplodeable(5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Mechanisms).setDescriptionId('oreRedstone');
     Tile.redStoneOre_lit = new c.RedStoneOreTile(74, 16 * 3 + 3, true).init().setDestroyTime(3.0).setLightEmission(10 / 16.0).setExplodeable(5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Mechanisms).setDescriptionId('oreRedstone');
     Tile.topSnow = new c.TopSnowTile(78, 16 * 4 + 2).init().setDestroyTime(0.1).setSoundType(Tile.SOUND_CLOTH).setCategory(ItemCategory.Structures).setDescriptionId('snow');
     Tile.ice = new c.IceTile(79, 16 * 4 + 3).init().setDestroyTime(0.5).setLightBlock(3).setSoundType(Tile.SOUND_GLASS).setCategory(ItemCategory.Structures).setDescriptionId('ice');
     Tile.snow = new c.SnowTile(80, 16 * 4 + 2).init().setDestroyTime(0.2).setSoundType(Tile.SOUND_CLOTH).setCategory(ItemCategory.Structures).setDescriptionId('snow');
-    // DEFERRED(Tile): cactus = (new CactusTile(81, 16 * 4 + 6))->init()->setDestroyTime(0.4f)->setSoundType(SOUND_CLOTH)->setCategory(ItemCategory::Structures)->setDescriptionId("cactus");
+    Tile.cactus = new c.CactusTile(81, 16 * 4 + 6).init().setDestroyTime(0.4).setSoundType(Tile.SOUND_CLOTH).setCategory(ItemCategory.Structures).setDescriptionId('cactus');
     Tile.clay = new c.ClayTile(82, 16 * 4 + 8).init().setDestroyTime(0.6).setSoundType(Tile.SOUND_GRAVEL).setCategory(ItemCategory.Structures).setDescriptionId('clay');
     Tile.reeds = new c.ReedTile(83, 16 * 4 + 9).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Structures).setDescriptionId('reeds');
     Tile.fence = new c.FenceTile(85, 4).init().setDestroyTime(2.0).setExplodeable(5).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Structures).setDescriptionId('fence');
@@ -436,15 +460,15 @@ export class Tile {
     Tile.thinGlass = new c.ThinFenceTile(102, 1 + 3 * 16, 4 + 9 * 16, Material.glass, false).init().setDestroyTime(0.3).setSoundType(Tile.SOUND_GLASS).setCategory(ItemCategory.Structures).setDescriptionId('thinGlass');
     Tile.melon = new c.MelonTile(103).init().setDestroyTime(1.0).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.FoodArmor).setDescriptionId('melon');
     Tile.melonStem = new c.StemTile(105, Tile.melon).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.FoodArmor).setDescriptionId('pumpkinStem');
-    // DEFERRED(Tile): fenceGate = (new FenceGateTile(107, 4))->init()->setDestroyTime(2.0f)->setExplodeable(5)->setSoundType(SOUND_WOOD)->setCategory(ItemCategory::Structures)->setDescriptionId("fenceGate");
-    // DEFERRED(Tile): stairs_brick = (new StairTile(108, Tile::redBrick))->init()->setCategory(ItemCategory::Structures)->setDescriptionId("stairsBrick");
-    // DEFERRED(Tile): stairs_stoneBrickSmooth = (new StairTile(109, Tile::stoneBrickSmooth))->init()->setCategory(ItemCategory::Structures)->setDescriptionId("stairsStoneBrickSmooth");
+    Tile.fenceGate = new c.FenceGateTile(107, 4).init().setDestroyTime(2.0).setExplodeable(5).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Structures).setDescriptionId('fenceGate');
+    Tile.stairs_brick = new c.StairTile(108, Tile.redBrick).init().setCategory(ItemCategory.Structures).setDescriptionId('stairsBrick');
+    Tile.stairs_stoneBrickSmooth = new c.StairTile(109, Tile.stoneBrickSmooth).init().setCategory(ItemCategory.Structures).setDescriptionId('stairsStoneBrickSmooth');
     Tile.netherBrick = new Tile(112, 0 + 14 * 16, Material.stone).init().setDestroyTime(2.0).setExplodeable(10).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('netherBrick');
-    // DEFERRED(Tile): stairs_netherBricks = (new StairTile(114, Tile::netherBrick))->init()->setCategory(ItemCategory::Structures)->setDescriptionId("stairsNetherBrick");
-    // DEFERRED(Tile): stairs_sandStone = (new StairTile(128, Tile::sandStone))->init()->setCategory(ItemCategory::Structures)->setDescriptionId("stairsSandStone");
+    Tile.stairs_netherBricks = new c.StairTile(114, Tile.netherBrick).init().setCategory(ItemCategory.Structures).setDescriptionId('stairsNetherBrick');
+    Tile.stairs_sandStone = new c.StairTile(128, Tile.sandStone).init().setCategory(ItemCategory.Structures).setDescriptionId('stairsSandStone');
     Tile.quartzBlock = new c.QuartzBlockTile(155).init().setSoundType(Tile.SOUND_STONE).setDestroyTime(0.8).setCategory(ItemCategory.Structures).setDescriptionId('quartzBlock');
-    // DEFERRED(Tile): stairs_quartz = (new StairTile(156, Tile::quartzBlock))->init()->setCategory(ItemCategory::Structures)->setDescriptionId("stairsQuartz");
-    // DEFERRED(Tile): stonecutterBench= (new StonecutterTile(245))->init()->setDestroyTime(2.5f)->setSoundType(SOUND_STONE)->setCategory(ItemCategory::Structures)->setDescriptionId("stonecutter");
+    Tile.stairs_quartz = new c.StairTile(156, Tile.quartzBlock).init().setCategory(ItemCategory.Structures).setDescriptionId('stairsQuartz');
+    Tile.stonecutterBench = new c.StonecutterTile(245).init().setDestroyTime(2.5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('stonecutter');
     Tile.glowingObsidian = new c.ObsidianTile(246, 10 + 16 * 13, true).init().setDestroyTime(10.0).setLightEmission(14 / 16.0).setExplodeable(2000).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('glowingobsidian');
     // DEFERRED(Tile): netherReactor = (new NetherReactor(247, 10 + 14 * 16, Material::metal))->init()->setDestroyTime(3.0f)->setSoundType(SOUND_METAL)->setCategory(ItemCategory::Structures)->setDescriptionId("netherreactor");
     Tile.info_updateGame1 = new Tile(248, 252, Material.dirt).init().setDestroyTime(1.0).setSoundType(Tile.SOUND_GRAVEL).setCategory(ItemCategory.Structures).setDescriptionId('info_update');
@@ -708,8 +732,9 @@ export class Tile {
       const xo = level.random.nextFloat() * s + (1 - s) * 0.5;
       const yo = level.random.nextFloat() * s + (1 - s) * 0.5;
       const zo = level.random.nextFloat() * s + (1 - s) * 0.5;
-      void xo, yo, zo;
-      // DEFERRED(Entity): ItemEntity* item = new ItemEntity(level, x + xo, y + yo, z + zo, ItemInstance(type, 1, getSpawnResourcesAuxValue(data))); item->throwTime = 10; level->addEntity(item);
+      const item = createItemEntity(level, x + xo, y + yo, z + zo, new ItemInstance(type, 1, this.getSpawnResourcesAuxValue(data)));
+      item.throwTime = 10;
+      level.addEntity(item);
     }
   }
 
@@ -719,8 +744,9 @@ export class Tile {
     const xo = level.random.nextFloat() * s + (1 - s) * 0.5;
     const yo = level.random.nextFloat() * s + (1 - s) * 0.5;
     const zo = level.random.nextFloat() * s + (1 - s) * 0.5;
-    void xo, yo, zo, itemInstance;
-    // DEFERRED(Entity): ItemEntity* item = new ItemEntity(level, x + xo, y + yo, z + zo, itemInstance); item->throwTime = 10; level->addEntity(item);
+    const item = createItemEntity(level, x + xo, y + yo, z + zo, itemInstance);
+    item.throwTime = 10;
+    level.addEntity(item);
   }
 
   spawnBurnResources(_level: Level, _x: number, _y: number, _z: number): boolean {

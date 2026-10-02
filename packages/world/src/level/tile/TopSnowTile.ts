@@ -1,9 +1,11 @@
 // 1:1 移植自 src/world/level/tile/TopSnowTile.h（S3）。
 // 必须注册：Tile.shouldRenderFace 会读 Tile.topSnow.id（方块上面还有方块时，渲染它的顶面就会走到）。
-// playerDestroy 与两处 spawnResources 调用在 S11 阶段 A 补上；playerDestroy 里生成掉落物实体的一句 DEFERRED(Entity)（S12）。
+// playerDestroy 与两处 spawnResources 调用在 S11 阶段 A 补上；生成掉落物实体在 S12 阶段 C 恢复。
 import type { Random } from '@mcpe/util';
 import type { Player } from '../../entity/player/Player';
+import { createItemEntity } from '../../entity/Entity';
 import { Item } from '../../item/Item';
+import { ItemInstance } from '../../item/ItemInstance';
 import type { AABB } from '../../phys/AABB';
 import type { Level } from '../Level';
 import type { LevelSource } from '../LevelSource';
@@ -53,8 +55,9 @@ export class TopSnowTile extends Tile {
     const xo = level.random.nextFloat() * s + (1 - s) * 0.5;
     const yo = level.random.nextFloat() * s + (1 - s) * 0.5;
     const zo = level.random.nextFloat() * s + (1 - s) * 0.5;
-    void type, xo, yo, zo;
-    // DEFERRED(Entity): ItemEntity* item = new ItemEntity(level, x + xo, y + yo, z + zo, ItemInstance(type, 1, 0)); item->throwTime = 10; level->addEntity(item);
+    const item = createItemEntity(level, x + xo, y + yo, z + zo, new ItemInstance(type, 1, 0));
+    item.throwTime = 10;
+    level.addEntity(item);
     level.setTile(x, y, z, 0);
   }
 

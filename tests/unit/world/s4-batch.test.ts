@@ -109,9 +109,9 @@ describe('Biome', () => {
     expect(Biome.desert.getMobs(MobCategory.monster)).toHaveLength(4);
     expect(Biome.forest.getCreatureProbability()).toBe(Math.fround(0.08));
   });
-  it('名字、颜色、地表方块（沙漠的沙子那两行 DEFERRED，仍是草和泥土）', () => {
+  it('名字、颜色、地表方块（沙漠的地表与填充都是沙子）', () => {
     expect([Biome.taiga.name, Biome.taiga.color, Biome.taiga.leafColor]).toEqual(['Taiga', 0x2eb153, 0x7bb731]);
-    expect([Biome.desert.topMaterial, Biome.desert.material]).toEqual([Tile.grass.id, Tile.dirt.id]);
+    expect([Biome.desert.topMaterial, Biome.desert.material]).toEqual([12, 12]);
     expect(Number.isInteger(Biome.plains.getSkyColor(0.5))).toBe(true);
   });
 });

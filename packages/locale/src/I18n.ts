@@ -1,5 +1,5 @@
 import { Util } from "@mcpe/util";
-import { idOf, Tile, type ItemInstance } from "@mcpe/world";
+import { Tile, type ItemInstance } from "@mcpe/world";
 import type { AssetSource } from "./AssetSource";
 
 
@@ -38,7 +38,7 @@ export class I18n {
     // 特殊物品
 	if (item.id == Tile.cloth.id)
 		return I18n.get(item.getAuxValue()? "desc.wool" : "desc.woolstring");
-	else if (item.id == idOf(Tile.fenceGate)) // fenceGate 在 S12 注册；未注册时 idOf 给出不会与任何物品相等的值
+	else if (item.id == Tile.fenceGate.id)
 		return I18n.get("desc.fence");
 	else if (item.id == Tile.stoneSlabHalf.id)
 		return I18n.get("desc.slab");

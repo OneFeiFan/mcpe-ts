@@ -35,9 +35,9 @@ const fakes: TileClasses = {
   LeafTileItem: class extends TileItem {},
 };
 
-/** C++ 注册的 89 个方块减去 S12 才注册的 20 个（依赖玩家、实体的 12 个类：网、草丛、楼梯、箱子、工作台、作物、熔炉、门、仙人掌、栅栏门、切石机、下界反应堆） */
-const S12_IDS = [30,  31,  53,  54,  58,  59,  61,  62,  64,  67,  71,  81,  107,  108,  109,  114,  128,  156,  245,  247];
-const REGISTERED = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  20,  21,  22,  24,  26,  35,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  56,  57,  60,  63,  65,  68,  73,  74,  78,  79,  80,  82,  83,  85,  87,  89,  95,  96,  98,  102,  103,  105,  112,  155,  246,  248,  249,  253,  254,  255];
+/** C++ 注册的 89 个方块减去还没移植的下界反应堆（247，S12 阶段 C 后半） */
+const S12_IDS = [247];
+const REGISTERED = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  20,  21,  22,  24,  26,  30,  31,  35,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  53,  54,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  67,  68,  71,  73,  74,  78,  79,  80,  81,  82,  83,  85,  87,  89,  95,  96,  98,  102,  103,  105,  107,  108,  109,  112,  114,  128,  155,  156,  245,  246,  248,  249,  253,  254,  255];
 let errors: string[] = [];
 
 beforeAll(() => {
@@ -49,15 +49,15 @@ beforeAll(() => {
 });
 
 describe('Tile.initTiles（注入 + 逐行 DEFERRED）', () => {
-  it('恰好注册 69 个方块（S3 的 27 个 + S11 的 42 个），其余槽位为空', () => {
+  it('恰好注册 88 个方块（S3 27 + S11 42 + S12 19），其余槽位为空', () => {
     const ids = Tile.tiles.map((t, i) => (t ? i : -1)).filter((i) => i >= 0);
     expect(ids).toEqual(REGISTERED);
   });
 
   it('DEFERRED 的具名字段是哨兵：访问即报错，并写明字段名', () => {
-    expect(isUnregistered(Tile.chest)).toBe(true); // S12 才注册
+    expect(isUnregistered(Tile.netherReactor)).toBe(true); // 下界反应堆还没移植
     expect(isUnregistered(Tile.rock)).toBe(false);
-    expect(() => Tile.door_wood.id).toThrow(/Tile\.door_wood 尚未注册/);
+    expect(() => Tile.netherReactor.id).toThrow(/Tile\.netherReactor 尚未注册/);
     expect(isUnregistered(Item.apple)).toBe(true);
     expect(() => Item.snowBall.id).toThrow(/Item\.snowBall 尚未注册/);
   });
@@ -120,8 +120,8 @@ describe('Tile 基类行为', () => {
     expect(Tile.rock.shouldRenderFace(snowAbove, 0, 64, 0, 1)).toBe(false); // 需要 topSnow 已注册
   });
   it('transformToValidBlockId：未注册的 id 按坐标奇偶换成 info_updateGame1/2', () => {
-    expect(Tile.transformToValidBlockId(30, 1, 0, 0)).toBe(248); // 30（网）S12 才注册
-    expect(Tile.transformToValidBlockId(30, 0, 0, 0)).toBe(249);
+    expect(Tile.transformToValidBlockId(19, 1, 0, 0)).toBe(248); // C++ 也没有注册 19
+    expect(Tile.transformToValidBlockId(19, 0, 0, 0)).toBe(249);
     expect(Tile.transformToValidBlockId(1)).toBe(1);
   });
   it('getAABB 返回共享的 tmpBB；addAABBs 放入的是拷贝', () => {

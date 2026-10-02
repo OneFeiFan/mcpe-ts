@@ -133,8 +133,8 @@ export class Biome {
         Biome.map[a + b * 64] = Biome._getBiome(f(a / 63), f(b / 63));
       }
     }
-    // DEFERRED(Tile): Biome::desert->topMaterial = Biome::desert->material = (char) Tile::sand->id;
-    // DEFERRED(Tile): Biome::iceDesert->topMaterial = Biome::iceDesert->material = (char) Tile::sand->id;
+    Biome.desert.topMaterial = Biome.desert.material = (Tile.sand.id << 24) >> 24; // (char) Tile::sand->id
+    Biome.iceDesert.topMaterial = Biome.iceDesert.material = (Tile.sand.id << 24) >> 24;
   }
 
   /** 由 BiomeInclude.ts 的 initBiomes() 调用；要在 initTiles 之后（构造函数读 Tile.grass、Tile.dirt） */

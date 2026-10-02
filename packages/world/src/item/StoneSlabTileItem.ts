@@ -1,5 +1,5 @@
 // 1:1 移植自 src/world/item/StoneSlabTileItem.h（S3；useOn 与按 ItemInstance 取描述的重载在 S11 阶段 A 补上）。
-// useOn 里的 level->isUnobstructed（检查实体是否挡住）在 S12 移植；没有实体时它恒为 true，所以先按 true 处理并标 DEFERRED(Entity)。
+// useOn 里的 level->isUnobstructed（检查实体是否挡住）在 S12 阶段 C 恢复。
 import type { Player } from '../entity/player/Player';
 import { Facing } from '../Facing';
 import type { Level } from '../level/Level';
@@ -36,8 +36,7 @@ export class StoneSlabTileItem extends TileItem {
     const slabType = currentData & StoneSlabTile.TYPE_MASK;
     const isUpper = (currentData & StoneSlabTile.TOP_SLOT_BIT) !== 0;
     if (((face === Facing.UP && !isUpper) || (face === Facing.DOWN && isUpper)) && currentTile === Tile.stoneSlabHalf.id && slabType === instance.getAuxValue()) {
-      // DEFERRED(Entity): bool unobstructed = level->isUnobstructed(*Tile::stoneSlab->getAABB(level, x, y, z));
-      const unobstructed = true;
+      const unobstructed = level.isUnobstructed(Tile.stoneSlab.getAABB(level, x, y, z)!);
       if (unobstructed && level.setTileAndData(x, y, z, Tile.stoneSlab.id, slabType)) {
         level.playSound(x + 0.5, y + 0.5, z + 0.5, Tile.stoneSlab.soundType.getStepSound(), (Tile.stoneSlab.soundType.getVolume() + 1) / 2, Tile.stoneSlab.soundType.getPitch() * 0.8);
         instance.count--;

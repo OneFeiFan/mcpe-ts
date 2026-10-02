@@ -2,17 +2,17 @@
  * 1:1 移植自 src/world/item/DyePowderItem.h 与 DyePowderItem.cpp（S11 阶段 A，部分移植）。
  * OreTile、ClothTileItem 读它的常量，所以先给出。
  * 部分（useOn 里骨粉催熟的分支）：
- *  - 作物 CropTile::growCropsToMax（S12）的调用 DEFERRED(Tile)；树苗长树与茎的催熟在阶段 C 恢复。
- *  - 草方块上长草的循环照常执行（随机数调用不变），写入 TallGrass::TALL_GRASS 的一句等 TallGrass（S12）就位后恢复。
+ *  - 骨粉催熟：树苗、茎（S11 阶段 C）、作物与长草（S12 阶段 C）已全部恢复。
  *  - interactEnemy 给羊染色（Sheep，计划外）整段 DEFERRED(Entity)。
  * C++ 的 COLOR_RGB 第 7、8 项相同（0x287697），照原样保留。
  */
 import { Mth } from '@mcpe/util';
-import { idOf } from '../Unregistered';
 import type { Mob } from '../entity/Mob';
 import type { Player } from '../entity/player/Player';
 import type { Level } from '../level/Level';
+import type { CropTile } from '../level/tile/CropTile';
 import type { Sapling } from '../level/tile/Sapling';
+import { TallGrass } from '../level/tile/TallGrass';
 import type { StemTile } from '../level/tile/StemTile';
 import { Tile } from '../level/tile/Tile';
 import { Item } from './Item';
@@ -74,9 +74,9 @@ export class DyePowderItem extends Item {
         }
         itemInstance.count--;
         return true;
-      } else if (tile === idOf(Tile.crops)) { // crops 在 S12 注册
+      } else if (tile === Tile.crops.id) {
         if (!level.isClientSide) {
-          // DEFERRED(Tile): ((CropTile*) Tile::crops)->growCropsToMax(level, x, y, z);
+          (Tile.crops as CropTile).growCropsToMax(level, x, y, z);
         }
         itemInstance.count--;
       } else if (tile === Tile.grass.id) {
@@ -98,7 +98,7 @@ export class DyePowderItem extends Item {
             if (continueMainLoop) continue;
             if (level.getTile(xx, yy, zz) === 0) {
               if (random.nextInt(10) !== 0) {
-                // DEFERRED(Tile): level->setTileAndData(xx, yy, zz, Tile::tallgrass->id, TallGrass::TALL_GRASS);
+                level.setTileAndData(xx, yy, zz, Tile.tallgrass.id, TallGrass.TALL_GRASS);
               } else if (random.nextInt(3) !== 0) {
                 level.setTile(xx, yy, zz, Tile.flower.id);
               } else {
