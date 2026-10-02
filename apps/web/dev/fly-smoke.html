@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>飞行冒烟测试（S8）</title>
+    <style>
+      body { margin: 0; background: #1d1f21; color: #ddd; font: 14px/1.5 system-ui, sans-serif; }
+      canvas { display: block; cursor: crosshair; }
+      p { margin: 8px 12px; }
+      code { color: #9cdcfe; }
+    </style>
+  </head>
+  <body>
+    <canvas id="c" width="854" height="480"></canvas>
+    <p id="status">建世界、网格化中…</p>
+    <p>点击画面进入 pointer lock，鼠标转向；<code>W A S D</code> 水平移动，<code>空格</code> 上升，<code>左 Shift</code> 下降（同时把水平速度降到 0.3 倍）；<code>Esc</code> 解锁。20 TPS 更新，渲染时按 Timer.a 插值。</p>
+    <script type="module" src="./fly-smoke.ts"></script>
+  </body>
+</html>

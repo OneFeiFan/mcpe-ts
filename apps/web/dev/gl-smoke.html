@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>GL 冒烟测试（S6）</title>
+    <style>
+      body { margin: 0; background: #1d1f21; color: #ddd; font: 14px/1.5 system-ui, sans-serif; }
+      canvas { display: block; image-rendering: pixelated; }
+      p { margin: 8px 12px; }
+    </style>
+  </head>
+  <body>
+    <canvas id="c" width="640" height="320"></canvas>
+    <p id="status">加载中…</p>
+    <p>左：terrain.png 第 0 格（草顶）× 0x339933，ALPHA_TEST 为 GREATER 0.1，正交投影。右：透视投影下旋转的草方块（深度测试、背面剔除、线性雾），全部经 GLES1 兼容层与 Tesselator 绘制。</p>
+    <script type="module" src="./gl-smoke.ts"></script>
+  </body>
+</html>
