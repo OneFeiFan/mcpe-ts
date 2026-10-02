@@ -7,7 +7,7 @@
  * 以后每移植一个新的方块类：在这里 import 并加进对象，在 Tile.ts 的 TileClasses 里加上构造签名，
  * 再把 Tile.initTiles 里对应的 DEFERRED(Tile) 行恢复成代码。
  */
-import { Tile } from './Tile';
+import { Tile, type TileClasses } from './Tile';
 import { BedTile } from './BedTile';
 import { DirtTile } from './DirtTile';
 import { FarmTile } from './FarmTile';
@@ -23,10 +23,48 @@ import { TopSnowTile } from './TopSnowTile';
 import { LeafTileItem } from '../../item/LeafTileItem';
 import { StoneSlabTileItem } from '../../item/StoneSlabTileItem';
 import { TileItem } from '../../item/TileItem';
+import { AuxDataTileItem } from '../../item/AuxDataTileItem';
+import { BookshelfTile } from './BookshelfTile';
+import { Bush } from './Bush';
+import { CarriedTile } from './CarriedTile';
+import { ClayTile } from './ClayTile';
+import { ClothTile } from './ClothTile';
+import { ClothTileItem } from '../../item/ClothTileItem';
+import { FenceTile } from './FenceTile';
+import { GlassTile } from './GlassTile';
+import { GravelTile } from './GravelTile';
+import { HeavyTile } from './HeavyTile';
+import { IceTile } from './IceTile';
+import { LadderTile } from './LadderTile';
+import { LightGemTile } from './LightGemTile';
+import { MelonTile } from './MelonTile';
+import { MetalTile } from './MetalTile';
+import { MultiTextureTile } from './MultiTextureTile';
+import { Mushroom } from './Mushroom';
+import { ObsidianTile } from './ObsidianTile';
+import { OreTile } from './OreTile';
+import { QuartzBlockTile } from './QuartzBlockTile';
+import { RedStoneOreTile } from './RedStoneOreTile';
+import { ReedTile } from './ReedTile';
+import { SandStoneTile } from './SandStoneTile';
+import { Sapling } from './Sapling';
+import { SaplingTileItem } from '../../item/SaplingTileItem';
+import { SignTile } from './SignTile';
+import { SnowTile } from './SnowTile';
+import { StemTile } from './StemTile';
+import { ThinFenceTile } from './ThinFenceTile';
+import { TntTile } from './TntTile';
+import { TorchTile } from './TorchTile';
+import { TrapDoorTile } from './TrapDoorTile';
+import { TreeTile } from './TreeTile';
 
-export function initTiles(): void {
-  Tile.initTiles({
+/** 全部已移植的方块类与特殊 TileItem 类（测试可以在它的基础上替换个别类） */
+export const TILE_CLASSES: TileClasses = {
     StoneTile, GrassTile, DirtTile, LiquidTileDynamic, LiquidTileStatic, LeafTile, BedTile, StoneSlabTile,
     FireTile, FarmTile, InvisibleTile, TopSnowTile, TileItem, StoneSlabTileItem, LeafTileItem,
-  });
+    AuxDataTileItem, BookshelfTile, Bush, CarriedTile, ClayTile, ClothTile, ClothTileItem, FenceTile, GlassTile, GravelTile, HeavyTile, IceTile, LadderTile, LightGemTile, MelonTile, MetalTile, MultiTextureTile, Mushroom, ObsidianTile, OreTile, QuartzBlockTile, RedStoneOreTile, ReedTile, SandStoneTile, Sapling, SaplingTileItem, SignTile, SnowTile, StemTile, ThinFenceTile, TntTile, TorchTile, TrapDoorTile, TreeTile,
+};
+
+export function initTiles(): void {
+  Tile.initTiles(TILE_CLASSES);
 }

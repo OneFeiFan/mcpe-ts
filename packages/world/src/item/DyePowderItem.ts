@@ -2,16 +2,18 @@
  * 1:1 移植自 src/world/item/DyePowderItem.h 与 DyePowderItem.cpp（S11 阶段 A，部分移植）。
  * OreTile、ClothTileItem 读它的常量，所以先给出。
  * 部分（useOn 里骨粉催熟的分支）：
- *  - 树苗长树 Sapling::growTree（Sapling 在阶段 C）、作物 CropTile::growCropsToMax（S12）、茎 StemTile::growCropsToMax（你在阶段 B 移植）
- *    的调用 DEFERRED(Tile)，阶段 C / S12 恢复；itemInstance->count-- 与返回值照常。
+ *  - 作物 CropTile::growCropsToMax（S12）的调用 DEFERRED(Tile)；树苗长树与茎的催熟在阶段 C 恢复。
  *  - 草方块上长草的循环照常执行（随机数调用不变），写入 TallGrass::TALL_GRASS 的一句等 TallGrass（S12）就位后恢复。
  *  - interactEnemy 给羊染色（Sheep，计划外）整段 DEFERRED(Entity)。
  * C++ 的 COLOR_RGB 第 7、8 项相同（0x287697），照原样保留。
  */
 import { Mth } from '@mcpe/util';
+import { idOf } from '../Unregistered';
 import type { Mob } from '../entity/Mob';
 import type { Player } from '../entity/player/Player';
 import type { Level } from '../level/Level';
+import type { Sapling } from '../level/tile/Sapling';
+import type { StemTile } from '../level/tile/StemTile';
 import { Tile } from '../level/tile/Tile';
 import { Item } from './Item';
 import type { ItemInstance } from './ItemInstance';
@@ -46,33 +48,33 @@ export class DyePowderItem extends Item {
     this.setMaxDamage(0);
   }
 
-  override getIcon(itemAuxValue: number): number {
+  override getIconForAux(itemAuxValue: number): number {
     const colorValue = Mth.clamp(itemAuxValue, 0, 15);
     return this.icon + (colorValue % 8) * Item.ICON_COLUMNS + ((colorValue / 8) | 0);
   }
 
-  override getDescriptionId$1(itemInstance: ItemInstance | null): string {
+  override getDescriptionIdForInstance(itemInstance: ItemInstance | null): string {
     const colorValue = Mth.clamp(itemInstance!.getAuxValue(), 0, 15);
-    return super.getDescriptionId$0() + '.' + DyePowderItem.COLOR_DESCS[colorValue]!;
+    return super.getDescriptionIdForItem() + '.' + DyePowderItem.COLOR_DESCS[colorValue]!;
   }
 
-  override useOn$10(itemInstance: ItemInstance, _player: Player, level: Level, x: number, y: number, z: number, _face: number, _clickX: number, _clickY: number, _clickZ: number): boolean {
+  override useOnByPlayer(itemInstance: ItemInstance, _player: Player, level: Level, x: number, y: number, z: number, _face: number, _clickX: number, _clickY: number, _clickZ: number): boolean {
     const random = Item.random;
     if (itemInstance.getAuxValue() === DyePowderItem.WHITE) {
       const tile = level.getTile(x, y, z);
       if (tile === Tile.sapling.id) {
         if (!level.isClientSide) {
-          // DEFERRED(Tile): ((Sapling*) Tile::sapling)->growTree(level, x, y, z, &level->random);
+          (Tile.sapling as Sapling).growTree(level, x, y, z, level.random);
         }
         itemInstance.count--;
         return true;
       } else if (tile === Tile.melonStem.id) {
         if (!level.isClientSide) {
-          // DEFERRED(Tile): ((StemTile*) Tile::tiles[tile])->growCropsToMax(level, x, y, z);
+          (Tile.tiles[tile] as StemTile).growCropsToMax(level, x, y, z);
         }
         itemInstance.count--;
         return true;
-      } else if (tile === Tile.crops.id) {
+      } else if (tile === idOf(Tile.crops)) { // crops 在 S12 注册
         if (!level.isClientSide) {
           // DEFERRED(Tile): ((CropTile*) Tile::crops)->growCropsToMax(level, x, y, z);
         }

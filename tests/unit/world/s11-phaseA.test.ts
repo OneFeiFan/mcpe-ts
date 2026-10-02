@@ -1,26 +1,14 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { CompoundTag } from '@mcpe/nbt';
 import { Random } from '@mcpe/util';
 import {
-  DyePowderItem, Facing, FoodItem, HeavyTile, initTileEntities, Item, type CompoundTag, type ItemInstance, type Level, LevelListener,
+  DyePowderItem, Facing, FoodItem, HeavyTile, initTileEntities, Item, ItemInstance, type Level, LevelListener,
   partitionTileEntities, type Player, SignTileEntity, Tile, TileEntity, TileEntityFactory, TileEntityType, TileItem,
 } from '@mcpe/world';
 import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
-// S11 阶段 A：签名补全与先行的部分移植。ItemInstance、CompoundTag、Player 还是前向声明，这里用最小的替身对象。
-class FakeTag implements CompoundTag {
-  m = new Map<string, number | string>();
-  getInt(n: string) { return (this.m.get(n) as number) ?? 0; }
-  putInt(n: string, v: number) { this.m.set(n, v); }
-  getShort(n: string) { return (this.m.get(n) as number) ?? 0; }
-  putShort(n: string, v: number) { this.m.set(n, v); }
-  getByte(n: string) { return (this.m.get(n) as number) ?? 0; }
-  putByte(n: string, v: number) { this.m.set(n, v); }
-  getString(n: string) { return (this.m.get(n) as string) ?? ''; }
-  putString(n: string, v: string) { this.m.set(n, v); }
-  contains(n: string) { return this.m.has(n); }
-}
-const inst = (id: number, count: number, aux = 0) =>
-  ({ id, count, getAuxValue: () => aux, setAuxValue() {}, hurt() {}, getItem: () => null, isNull: () => count <= 0 }) as ItemInstance;
+// S11 阶段 A：签名补全与先行的部分移植。ItemInstance、CompoundTag 已是正身（阶段 B）；Player 仍是前向声明，用最小的替身对象。
+const inst = (id: number, count: number, aux = 0) => new ItemInstance(id, count, aux);
 class TestTE extends TileEntity {
   constructor() { super(TileEntityType.Undefined); }
   shouldSave() { return true; }
@@ -40,7 +28,7 @@ describe('TileEntity 与 SignTileEntity', () => {
     const s = new SignTileEntity();
     s.x = 1; s.y = 2; s.z = 3;
     s.messages = ['hello', '', 'x'.repeat(20), 'end'];
-    const tag = new FakeTag();
+    const tag = new CompoundTag();
     expect(s.save(tag)).toBe(true);
     expect([tag.getString('id'), tag.getInt('x'), tag.getInt('y'), tag.getInt('z'), tag.getString('Text1')]).toEqual(['Sign', 1, 2, 3, 'hello']);
     const back = TileEntity.loadStatic(tag) as SignTileEntity;
@@ -100,7 +88,7 @@ describe('Tile 与 Item 的签名补全', () => {
     expect(Tile.rock.getExplosionResistance(null)).toBeCloseTo(Tile.rock.explosionResistance / 5);
   });
 
-  it('TileItem.useOn$10：在草地上放一块泥土，数量减一', () => {
+  it('TileItem.useOnByPlayer：在草地上放一块泥土，数量减一', () => {
     const item = new TileItem(3 - 256); // 泥土（物品注册在阶段 C）
     const it = inst(3, 1);
     const player = { x: 130, y: 65, z: 130 } as unknown as Player;

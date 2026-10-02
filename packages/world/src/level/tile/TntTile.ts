@@ -15,7 +15,7 @@ export class TntTile extends Tile {
   }
 
   /** C++ getTexture(int face) */
-  override getTexture$1(face: number): number {
+  override getTextureForFace(face: number): number {
     if (face === 0) return this.tex + 2;
     if (face === 1) return this.tex + 1;
     return this.tex;

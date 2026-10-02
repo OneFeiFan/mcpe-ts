@@ -1,0 +1,17 @@
+{
+  "name": "@mcpe/locale",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@mcpe/world": "workspace:*",
+    "@mcpe/util": "workspace:*"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "types": "./src/index.ts"
+}

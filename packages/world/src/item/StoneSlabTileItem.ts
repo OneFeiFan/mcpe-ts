@@ -15,7 +15,7 @@ export class StoneSlabTileItem extends TileItem {
     this.setStackedByData(true);
   }
 
-  override getIcon(itemAuxValue: number): number {
+  override getIconForAux(itemAuxValue: number): number {
     return Tile.stoneSlabHalf.getTexture(2, itemAuxValue);
   }
 
@@ -23,13 +23,13 @@ export class StoneSlabTileItem extends TileItem {
     return auxValue;
   }
 
-  override getDescriptionId$1(instance: ItemInstance | null): string {
+  override getDescriptionIdForInstance(instance: ItemInstance | null): string {
     let auxValue = instance!.getAuxValue();
     if (auxValue < 0 || auxValue >= StoneSlabTile.SLAB_NAMES_COUNT) auxValue = 0;
-    return super.getDescriptionId$0() + '.' + StoneSlabTile.SLAB_NAMES[auxValue]!;
+    return super.getDescriptionIdForItem() + '.' + StoneSlabTile.SLAB_NAMES[auxValue]!;
   }
 
-  override useOn$10(instance: ItemInstance, player: Player, level: Level, x: number, y: number, z: number, face: number, clickX: number, clickY: number, clickZ: number): boolean {
+  override useOnByPlayer(instance: ItemInstance, player: Player, level: Level, x: number, y: number, z: number, face: number, clickX: number, clickY: number, clickZ: number): boolean {
     if (instance.count === 0) return false;
     const currentTile = level.getTile(x, y, z);
     const currentData = level.getData(x, y, z);
@@ -44,7 +44,7 @@ export class StoneSlabTileItem extends TileItem {
       }
       return true;
     } else {
-      return super.useOn$10(instance, player, level, x, y, z, face, clickX, clickY, clickZ);
+      return super.useOnByPlayer(instance, player, level, x, y, z, face, clickX, clickY, clickZ);
     }
   }
 }

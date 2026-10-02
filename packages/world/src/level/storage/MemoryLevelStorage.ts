@@ -31,7 +31,7 @@ export class MemoryLevelStorage extends LevelStorage {
     return (this._storage = new MemoryChunkStorage());
   }
 
-  saveLevelData$2(_levelData: LevelData, _players: Player[] | null): void {}
+  saveLevelData(_levelData: LevelData, _players: Player[] | null = null): void {}
 
   closeAll(): void {}
 

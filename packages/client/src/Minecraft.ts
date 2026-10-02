@@ -3,7 +3,7 @@
  *
  * 【构建开关】PLATFORM_WEB：setLevel 走非线程分支，直接 generateLevel；不是 STANDALONE_SERVER；没有 RPI、__APPLE__、WIN32、CHEATS。
  * 【DEFERRED】见各处标记：网络（raknetInstance）、声音、Gui（gui、font、screenChooser、_perfRenderer）、粒子、GameMode、
- *   动态纹理、玩家与实体、存储（options.load/save 在 Options 内部 DEFERRED）。
+ *   玩家与实体、存储（options.load/save 在 Options 内部 DEFERRED）。
  * 【ADAPTED(DebugCamera)】demo 用 DebugFreeCamera 代替 LocalPlayer，6 处接缝（手册附录 C）：A1 _levelGenerated、A2 tick、
  *   A3 tickInput、A6 releaseMouse 在本文件；A4、A5 在 GameRenderer。移植 LocalPlayer 时逐条删除。
  * 【OMIT】多人游戏、存档选择、暂停、重生、音频开关、截图、统计、创造模式切换等（见文件末尾的标记）。
@@ -31,6 +31,7 @@ import { MouseTurnInput } from './player/input/MouseTurnInput';
 import type { LocalPlayer } from './player/LocalPlayer';
 import { GameRenderer } from './renderer/GameRenderer';
 import { LevelRenderer } from './renderer/LevelRenderer';
+import { FireTexture, LavaSideTexture, LavaTexture, WaterSideTexture, WaterTexture } from './renderer/ptexture/DynamicTexture';
 import { Textures } from './renderer/Textures';
 import { TileRenderer } from './renderer/TileRenderer';
 import { Timer } from './Timer';
@@ -122,18 +123,18 @@ export class Minecraft extends App {
   // 析构函数不移植（R3）
 
   /** C++ 的 void init()（覆盖 App 的 protected virtual init()） */
-  override init$0(): void {
+  override initApp(): void {
     LevelChunk.ChunkBlockCount = LevelConstants.CHUNK_BLOCK_COUNT;
     checkGlError('Init enter');
     this._supportsNonTouchscreen = !this.platform()!.supportsTouchscreen();
     LOGI(`IS TOUCHSCREEN? ${this.options.getBooleanValue(OptionId.OPTIONS_USE_TOUCHSCREEN) ? 1 : 0}`);
     this.textures = new Textures(this.options, this.platform()!);
-    // DEFERRED(DynamicTexture): textures->addDynamicTexture(new WaterTexture());
-    // DEFERRED(DynamicTexture): textures->addDynamicTexture(new WaterSideTexture());
-    // DEFERRED(DynamicTexture): textures->addDynamicTexture(new LavaTexture());
-    // DEFERRED(DynamicTexture): textures->addDynamicTexture(new LavaSideTexture());
-    // DEFERRED(DynamicTexture): textures->addDynamicTexture(new FireTexture(0));
-    // DEFERRED(DynamicTexture): textures->addDynamicTexture(new FireTexture(1));
+    this.textures.addDynamicTexture(new WaterTexture());
+    this.textures.addDynamicTexture(new WaterSideTexture());
+    this.textures.addDynamicTexture(new LavaTexture());
+    this.textures.addDynamicTexture(new LavaSideTexture());
+    this.textures.addDynamicTexture(new FireTexture(0));
+    this.textures.addDynamicTexture(new FireTexture(1));
     // DEFERRED(Gui): gui.texturesLoaded(textures);
     this.levelRenderer = new LevelRenderer(this);
     this.gameRenderer = new GameRenderer(this);
@@ -579,7 +580,7 @@ export class Minecraft extends App {
   // OMIT(Player): respawnPlayer()  Minecraft.cpp:1566
 
   /** C++ 的 void onGraphicsReset()（覆盖 App 的 protected 纯虚函数） */
-  protected onGraphicsReset$0(): void {
+  protected onAppGraphicsReset(): void {
     this.textures!.clear();
     // DEFERRED(Gui): font->onGraphicsReset(); gui.onGraphicsReset();
     if (this.levelRenderer) this.levelRenderer.onGraphicsReset();

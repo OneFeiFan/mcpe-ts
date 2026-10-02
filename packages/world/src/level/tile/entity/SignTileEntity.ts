@@ -1,7 +1,7 @@
 // 1:1 移植自 src/world/level/tile/entity/SignTileEntity.h 与 SignTileEntity.cpp（S11 阶段 A，部分移植）。
 // 部分：getUpdatePacket 构造 SignUpdatePacket（网络未移植）→ DEFERRED(Network)。
 // std::string::resize 截断写成 slice（按 UTF-16 码元；告示牌文字只有 ASCII，与按字节截断相同）。
-import type { CompoundTag } from '../../../nbt/CompoundTag';
+import type { CompoundTag } from '@mcpe/nbt';
 import type { Level } from '../../Level';
 import { Tile } from '../Tile';
 import { TileEntity, TileEntityType } from './TileEntity';

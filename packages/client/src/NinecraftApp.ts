@@ -1,6 +1,6 @@
 /**
  * 1:1 移植自 src/NinecraftApp.h 与 NinecraftApp.cpp（S9）：应用入口，按原顺序初始化静态表、GL 状态与 Minecraft。
- * 【DEFERRED】Item.initItems（Item）、I18n.loadLanguage（Locale）、
+ * 【DEFERRED】I18n.loadLanguage（Locale，S13）、
  *   storageSource 与起始界面（Storage、Gui）、raknet 重启（Network）、updateStats（Stats）。
  * 【ADAPTED(Demo)】在原本设置起始界面的位置调用 startDemoWorld()：demo 唯一的专用入口。
  * 【OMIT】teardown（只被析构函数调用）、restartServer、handleBack、updateStats、testCreationAndDestruction、testJoiningAndDestruction。
@@ -9,7 +9,7 @@
 import { SharedConstants } from '@mcpe/core';
 import { Mouse, Multitouch } from '@mcpe/platform';
 import { Mth } from '@mcpe/util';
-import { FlatDimension, GameType, initBiomes, initMaterials, initTileEntities, initTiles, Level, LevelSettings, MemoryLevelStorage, MobCategory } from '@mcpe/world';
+import { FlatDimension, GameType, initBiomes, initItems, initMaterials, initTileEntities, initTiles, Level, LevelSettings, MemoryLevelStorage, MobCategory } from '@mcpe/world';
 import { DebugFreeCamera } from './camera/DebugFreeCamera';
 import { Minecraft } from './Minecraft';
 import { OptionId } from './Options';
@@ -32,13 +32,13 @@ export class NinecraftApp extends Minecraft {
 
   // 析构函数不移植（R3）；OMIT(Teardown): teardown()  NinecraftApp.cpp:127
 
-  override init$0(): void {
+  override initApp(): void {
     Mth.initMth();
     // #ifdef ANDROID 的 _hasInitedStatics 守卫：网页版不执行
     initMaterials(); // Material::initMaterials()
     MobCategory.initMobCategories();
     initTiles(); // Tile::initTiles()
-    // DEFERRED(Item): Item::initItems();
+    initItems(); // Item::initItems()（子类经 ItemInclude 注入，ADAPTED(ESM)）
     initBiomes(); // Biome::initBiomes()
     initTileEntities(); // TileEntity::initTileEntities()（子类经 TileEntityInclude 注入，ADAPTED(ESM)）
     this.initGLStates();
@@ -47,7 +47,7 @@ export class NinecraftApp extends Minecraft {
     if (this.externalStoragePath !== '') {
       this.options.setOptionsFilePath(this.externalStoragePath);
     }
-    super.init$0(); // Minecraft::init();
+    super.initApp(); // Minecraft::init();
     // DEFERRED(Storage): storageSource = new MemoryLevelStorageSource();（DEMO_MODE 分支）
     this._running = false;
     // DEFERRED(Gui): screenChooser.setScreen(SCREEN_STARTMENU);
@@ -101,10 +101,10 @@ export class NinecraftApp extends Minecraft {
   // OMIT(Network): restartServer()  NinecraftApp.cpp:263
   // OMIT(Gui): handleBack(isDown)  NinecraftApp.cpp:280
 
-  protected override onGraphicsReset$0(): void {
+  protected override onAppGraphicsReset(): void {
     this.initGLStates();
     Tesselator.instance.init();
-    super.onGraphicsReset$0(); // Minecraft::onGraphicsReset();
+    super.onAppGraphicsReset(); // Minecraft::onGraphicsReset();
   }
 
   // OMIT(Test): testCreationAndDestruction()  NinecraftApp.cpp:327

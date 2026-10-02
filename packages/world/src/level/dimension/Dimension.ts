@@ -6,8 +6,8 @@
  *  - createRandomLevelSource()：C++ 里 new RandomLevelSource（世界生成），本轮不移植。原句保留为 DEFERRED(Levelgen)，
  *    调用时抛出写明原因的错误。demo 的 FlatDimension（S5）重写这个方法返回 FlatChunkSource，不会走到这里。
  *
- * 【C++ 的重载】init(Level*) 是 public，init() 是 protected，TS 只能有一个同名方法，按约定把无参版本写成 init$0()；
- *   子类要重写 C++ 的 init() 时重写 init$0。
+ * 【C++ 的重载】init(Level*) 是 public，init() 是 protected，TS 只能有一个同名方法，按约定把无参版本写成 initDimension()；
+ *   子类要重写 C++ 的 init() 时重写 initDimension。
  * 【ADAPTED(ESM)】NormalDayCycleDimension 继承 Dimension，而 Dimension.getNew 又要 new 它：放在两个文件里会形成模块循环，
  *   加载时触发 TDZ。所以把它定义在本文件，NormalDayCycleDimension.ts 只做转出口，import 路径与 C++ 仍然对应。
  * 【C++ 的未初始化字段】FogType 没有初始化，分支里也没有任何地方给它赋值；这里取 0，即默认的 PE 雾色和天空色。
@@ -42,12 +42,12 @@ export class Dimension {
 
   init(level: Level): void {
     this.level = level;
-    this.init$0();
+    this.initDimension();
     this.updateLightRamp();
   }
 
   /** C++ 的 protected virtual void init() */
-  protected init$0(): void {
+  protected initDimension(): void {
     this.biomeSource = new BiomeSource(this.level);
   }
 

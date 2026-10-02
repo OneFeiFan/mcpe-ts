@@ -2,8 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { Random } from '@mcpe/util';
 import {
   BedTile, FarmTile, FireTile, FoliageColor, initMaterials, Item, LeafTile, LeafTileItem, LiquidTile, LiquidTileDynamic,
-  LiquidTileStatic, Material, StoneSlabTile, StoneSlabTileItem, Tile, TileItem, type TileClasses,
-} from '@mcpe/world';
+  LiquidTileStatic, Material, StoneSlabTile, StoneSlabTileItem, Tile, TileItem, type TileClasses, TILE_CLASSES } from '@mcpe/world';
 import { FakeLevel } from '../../helpers/fakeLevel';
 
 // 这一批 10 个类用真实实现；其余 5 个（StoneTile、DirtTile、GrassTile、InvisibleTile、TopSnowTile）还没移植，用替身
@@ -22,7 +21,7 @@ const fakes = {
 beforeAll(() => {
   initMaterials();
   const classes: TileClasses = {
-    ...fakes, LiquidTileDynamic, LiquidTileStatic, LeafTile, BedTile, StoneSlabTile, FireTile, FarmTile,
+    ...TILE_CLASSES, ...fakes, LiquidTileDynamic, LiquidTileStatic, LeafTile, BedTile, StoneSlabTile, FireTile, FarmTile,
     TileItem, StoneSlabTileItem, LeafTileItem,
   };
   Tile.initTiles(classes); // FireTile 构造函数里那 4 行 DEFERRED 没切掉的话，这里就会报错
@@ -59,7 +58,7 @@ describe('StoneSlabTile', () => {
     expect([Tile.stoneSlabHalf.getTexture(0), Tile.stoneSlabHalf.getTexture(2)]).toEqual([6, 5]);
     expect([Tile.stoneSlabHalf.getTexture(0, 1), Tile.stoneSlabHalf.getTexture(1, 1), Tile.stoneSlabHalf.getTexture(3, 1)]).toEqual([208, 176, 192]);
     expect(Tile.stoneSlabHalf.getTexture(2, 4)).toBe(Tile.redBrick.tex);
-    expect(() => Tile.stoneSlabHalf.getTexture(2, 5)).toThrow(/Tile\.stoneBrickSmooth 尚未注册/); // 运行时依赖，照原样保留
+    expect(Tile.stoneSlabHalf.getTexture(2, 5)).toBe(Tile.stoneBrickSmooth.tex); // S11 起 stoneBrickSmooth 已注册
   });
 });
 

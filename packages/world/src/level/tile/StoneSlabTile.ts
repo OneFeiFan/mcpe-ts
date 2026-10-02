@@ -57,7 +57,7 @@ export class StoneSlabTile extends Tile {
   }
 
   /** C++ getTexture(int face, int data) */
-  override getTexture$2(face: number, data: number): number {
+  override getTextureForData(face: number, data: number): number {
     data = data & StoneSlabTile.TYPE_MASK;
     if (data === StoneSlabTile.STONE_SLAB) {
       if (face <= 1) return 6;
@@ -79,8 +79,8 @@ export class StoneSlabTile extends Tile {
   }
 
   /** C++ getTexture(int face) */
-  override getTexture$1(face: number): number {
-    return this.getTexture$2(face, 0);
+  override getTextureForFace(face: number): number {
+    return this.getTextureForData(face, 0);
   }
 
   override isSolidRender(): boolean {

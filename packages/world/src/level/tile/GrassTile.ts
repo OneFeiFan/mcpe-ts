@@ -15,14 +15,14 @@ export class GrassTile extends Tile {
     }
 
     /** C++ getTexture(int face, int data)。GrassTile 没有重写 getTexture(int face)：那个仍是 Tile 的版本，返回 tex（= 3） */
-    override getTexture$2(face: number, _data: number): number {
+    override getTextureForData(face: number, _data: number): number {
         if (face === 1) return 0;
         if (face === 0) return 2;
         return 3;
     }
 
     /** C++ getTexture(LevelSource* level, int x, int y, int z, int face) */
-    override getTexture$5(level: LevelSource, x: number, y: number, z: number, face: number): number {
+    override getTextureAt(level: LevelSource, x: number, y: number, z: number, face: number): number {
         if (face === 1) return 0;
         if (face === 0) return 2;
         const above = level.getMaterial(x, y + 1, z);

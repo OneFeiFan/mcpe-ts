@@ -22,7 +22,7 @@ export class HangingEntityItem extends Item {
     this.entityType = type;
   }
 
-  override useOn$10(itemInstance: ItemInstance, _player: Player, level: Level, x: number, y: number, z: number, face: number, _clickX: number, _clickY: number, _clickZ: number): boolean {
+  override useOnByPlayer(itemInstance: ItemInstance, _player: Player, level: Level, x: number, y: number, z: number, face: number, _clickX: number, _clickY: number, _clickZ: number): boolean {
     if (face === Facing.DOWN) return false;
     if (face === Facing.UP) return false;
     const dir = Direction.FACING_DIRECTION[face]!;

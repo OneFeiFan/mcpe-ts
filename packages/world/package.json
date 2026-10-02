@@ -13,6 +13,8 @@
   "dependencies": {
     "@mcpe/platform": "workspace:*",
     "@mcpe/util": "workspace:*",
-    "@mcpe/core": "workspace:*"
+    "@mcpe/core": "workspace:*",
+    "@mcpe/locale": "workspace:*",
+    "@mcpe/nbt": "workspace:*"
   }
 }

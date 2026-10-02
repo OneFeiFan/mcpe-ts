@@ -64,11 +64,11 @@ export class PerlinNoise extends Synth {
   getRegion(buffer: Float32Array | null, x: number, y: number, z: number, xSize: number, ySize: number, zSize: number, xScale: number, yScale: number, zScale: number): Float32Array;
   getRegion(sr: Float32Array | null, x: number, z: number, xSize: number, zSize: number, xScale: number, zScale: number, pow: number): Float32Array;
   getRegion(buf: Float32Array | null, a: number, b: number, c: number, d: number, e: number, g: number, h: number, i?: number, j?: number): Float32Array {
-    return j === undefined ? this.getRegion$8(buf, a, b, c, d, e, g, h) : this.getRegion$10(buf, a, b, c, d, e, g, h, i!, j);
+    return j === undefined ? this.getRegion2D(buf, a, b, c, d, e, g, h) : this.getRegion3D(buf, a, b, c, d, e, g, h, i!, j);
   }
 
   /** C++ getRegion(float* buffer, float x, float y, float z, int xSize, int ySize, int zSize, float xScale, float yScale, float zScale) */
-  getRegion$10(buffer: Float32Array | null, x: number, y: number, z: number, xSize: number, ySize: number, zSize: number, xScale: number, yScale: number, zScale: number): Float32Array {
+  getRegion3D(buffer: Float32Array | null, x: number, y: number, z: number, xSize: number, ySize: number, zSize: number, xScale: number, yScale: number, zScale: number): Float32Array {
     xScale = f(xScale);
     yScale = f(yScale);
     zScale = f(zScale);
@@ -86,8 +86,8 @@ export class PerlinNoise extends Synth {
   }
 
   /** C++ getRegion(float* sr, int x, int z, int xSize, int zSize, float xScale, float zScale, float pow)：pow 没有用到，照原样 */
-  getRegion$8(sr: Float32Array | null, x: number, z: number, xSize: number, zSize: number, xScale: number, zScale: number, _pow: number): Float32Array {
-    return this.getRegion$10(sr, f(x), 10.0, f(z), xSize, 1, zSize, xScale, 1, zScale);
+  getRegion2D(sr: Float32Array | null, x: number, z: number, xSize: number, zSize: number, xScale: number, zScale: number, _pow: number): Float32Array {
+    return this.getRegion3D(sr, f(x), 10.0, f(z), xSize, 1, zSize, xScale, 1, zScale);
   }
 
   hashCode(): number {

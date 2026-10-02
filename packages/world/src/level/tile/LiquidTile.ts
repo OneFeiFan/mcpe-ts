@@ -16,7 +16,7 @@ export class LiquidTile extends Tile {
   }
 
   /** C++ getTexture(int face) */
-  override getTexture$1(face: number): number {
+  override getTextureForFace(face: number): number {
     if (face === 0 || face === 1) {
       return this.tex;
     } else {
@@ -33,7 +33,7 @@ export class LiquidTile extends Tile {
   }
 
   /** C++ mayPick(int data, bool liquid) */
-  override mayPick$2(data: number, liquid: boolean): boolean {
+  override mayPickWithData(data: number, liquid: boolean): boolean {
     return liquid && data === 0;
   }
 

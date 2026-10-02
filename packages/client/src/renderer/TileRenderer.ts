@@ -9,7 +9,8 @@
  * 渲染用的颜色属于三档规则的“自由处理”，按 JS 数值计算；Tesselator.color(r, g, b) 是 float 版重载（与 C++ 实参一致）。
  * C++ 里 ll000 等成员在构造时没有初始化，这里取 0（第一次读到之前一定会被赋值）。
  */
-import { type LevelSource, LiquidTile, type Material, Tile } from '@mcpe/world';
+import { BedTile, Direction, type FenceTile, type LevelSource, LiquidTile, type Material, type StemTile, type ThinFenceTile, Tile } from '@mcpe/world';
+import { Mth } from '@mcpe/util';
 import { Facing } from '@mcpe/world';
 import { Minecraft } from '../Minecraft';
 import { Tesselator } from './Tesselator';
@@ -57,29 +58,23 @@ export class TileRenderer {
     if (shape === Tile.SHAPE_BLOCK) {
       return this.tesselateBlockInWorld(tt, x, y, z);
     } else if (shape === Tile.SHAPE_WATER) {
-      // DEFERRED(TileShape): return tesselateWaterInWorld(tt, x, y, z);
-      return false;
+      return this.tesselateWaterInWorld(tt, x, y, z);
     } else if (shape === Tile.SHAPE_CACTUS) {
       // DEFERRED(TileShape): return tesselateCactusInWorld(tt, x, y, z);
       return false;
     } else if (shape === Tile.SHAPE_CROSS_TEXTURE) {
-      // DEFERRED(TileShape): return tesselateCrossInWorld(tt, x, y, z);
-      return false;
+      return this.tesselateCrossInWorld(tt, x, y, z);
     } else if (shape === Tile.SHAPE_STEM) {
-      // DEFERRED(TileShape): return tesselateStemInWorld(tt, x, y, z);
-      return false;
+      return this.tesselateStemInWorld(tt, x, y, z);
     } else if (shape === Tile.SHAPE_ROWS) {
       // DEFERRED(TileShape): return tesselateRowInWorld(tt, x, y, z);
       return false;
     } else if (shape === Tile.SHAPE_TORCH) {
-      // DEFERRED(TileShape): return tesselateTorchInWorld(tt, x, y, z);
-      return false;
+      return this.tesselateTorchInWorld(tt, x, y, z);
     } else if (shape === Tile.SHAPE_FIRE) {
-      // DEFERRED(TileShape): return tesselateFireInWorld(tt, x, y, z);
-      return false;
+      return this.tesselateFireInWorld(tt, x, y, z);
     } else if (shape === Tile.SHAPE_LADDER) {
-      // DEFERRED(TileShape): return tesselateLadderInWorld(tt, x, y, z);
-      return false;
+      return this.tesselateLadderInWorld(tt, x, y, z);
     } else if (shape === Tile.SHAPE_DOOR) {
       // DEFERRED(TileShape): return tesselateDoorInWorld(tt, x, y, z);
       return false;
@@ -87,17 +82,14 @@ export class TileRenderer {
       // DEFERRED(TileShape): return tesselateStairsInWorld((StairTile*)tt, x, y, z);
       return false;
     } else if (shape === Tile.SHAPE_FENCE) {
-      // DEFERRED(TileShape): return tesselateFenceInWorld((FenceTile*)tt, x, y, z);
-      return false;
+      return this.tesselateFenceInWorld(tt as FenceTile, x, y, z);
     } else if (shape === Tile.SHAPE_FENCE_GATE) {
       // DEFERRED(TileShape): return tesselateFenceGateInWorld((FenceGateTile*) tt, x, y, z);
       return false;
     } else if (shape === Tile.SHAPE_IRON_FENCE) {
-      // DEFERRED(TileShape): return tesselateThinFenceInWorld((ThinFenceTile*) tt, x, y, z);
-      return false;
+      return this.tesselateThinFenceInWorld(tt as ThinFenceTile, x, y, z);
     } else if (shape === Tile.SHAPE_BED) {
-      // DEFERRED(TileShape): return tesselateBedInWorld(tt, x, y, z);
-      return false;
+      return this.tesselateBedInWorld(tt, x, y, z);
     } else {
       return false;
     }
@@ -109,16 +101,602 @@ export class TileRenderer {
     this.noCulling = false;
   }
 
-  // OMIT(TileShape): tesselateTorchInWorld(tt, x, y, z)  TileRenderer.cpp:222
-  // OMIT(TileShape): tesselateFireInWorld(tt, x, y, z)  TileRenderer.cpp:249
-  // OMIT(TileShape): tesselateLadderInWorld(tt, x, y, z)  TileRenderer.cpp:521
-  // OMIT(TileShape): tesselateCrossInWorld(tt, x, y, z)  TileRenderer.cpp:571
-  // OMIT(TileShape): tesselateStemInWorld(tt, x, y, z)  TileRenderer.cpp:606
-  // OMIT(TileShape): tesselateTorch(tt, x, y, z, xxa, zza)  TileRenderer.cpp:629
-  // OMIT(TileShape): tesselateCrossTexture(tt, data, x, y, z)  TileRenderer.cpp:683
-  // OMIT(TileShape): tesselateStemTexture(tt, data, h, x, y, z)  TileRenderer.cpp:722
-  // OMIT(TileShape): tesselateStemDirTexture(tt, data, dir, h, x, y, z)  TileRenderer.cpp:758
-  // OMIT(TileShape): tesselateWaterInWorld(tt, x, y, z)  TileRenderer.cpp:809（它是 getWaterHeight 唯一的调用方）
+  /** 照 C++ 逐句移植（大量 (float) 强转在 TS 里去掉；int 的 x / 2 写成 (x / 2) | 0） */
+  tesselateFireInWorld(tt: Tile, x: number, y: number, z: number): boolean {
+    const level = this.level!;
+    const t = Tesselator.instance;
+    let tex = tt.getTexture(0);
+    if (this.fixedTexture >= 0) tex = this.fixedTexture;
+    const br = tt.getBrightness( level, x, y, z );
+    t.color( br, br, br );
+    const xt = ((tex & 0xf) << 4);
+    const yt = tex & 0xf0;
+    let u0 = (xt) / 256.0;
+    let u1 = (xt + 15.99) / 256.0;
+    let v0 = (yt) / 256.0;
+    let v1 = (yt + 15.99) / 256.0;
+    let h = 1.4;
+    if ( level.isSolidBlockingTile( x, y - 1, z ) || Tile.fire.canBurn( level, x, y - 1, z ) )
+    {
+      let x0 = x + 0.5 + 0.2;
+      let x1 = x + 0.5 - 0.2;
+      let z0 = z + 0.5 + 0.2;
+      let z1 = z + 0.5 - 0.2;
+      let x0_ = x + 0.5 - 0.3;
+      let x1_ = x + 0.5 + 0.3;
+      let z0_ = z + 0.5 - 0.3;
+      let z1_ = z + 0.5 + 0.3;
+      t.vertexUV( ( x0_ ), ( y + h ), ( z + 1 ), ( u1 ), ( v0 ) );
+      t.vertexUV( ( x0 ), ( y + 0 ), ( z + 1 ), ( u1 ), ( v1 ) );
+      t.vertexUV( ( x0 ), ( y + 0 ), ( z + 0 ), ( u0 ), ( v1 ) );
+      t.vertexUV( ( x0_ ), ( y + h ), ( z + 0 ), ( u0 ), ( v0 ) );
+      t.vertexUV( ( x1_ ), ( y + h ), ( z + 0 ), ( u1 ), ( v0 ) );
+      t.vertexUV( ( x1 ), ( y + 0 ), ( z + 0 ), ( u1 ), ( v1 ) );
+      t.vertexUV( ( x1 ), ( y + 0 ), ( z + 1 ), ( u0 ), ( v1 ) );
+      t.vertexUV( ( x1_ ), ( y + h ), ( z + 1 ), ( u0 ), ( v0 ) );
+      u0 = (xt) / 256.0;
+      u1 = (xt + 15.99) / 256.0;
+      v0 = (yt) / 256.0;
+      v1 = (yt + 15.99) / 256.0;
+      t.vertexUV( ( x + 1 ), ( y + h ), ( z1_ ), ( u1 ), ( v0 ) );
+      t.vertexUV( ( x + 1 ), ( y + 0 ), ( z1 ), ( u1 ), ( v1 ) );
+      t.vertexUV( ( x + 0 ), ( y + 0 ), ( z1 ), ( u0 ), ( v1 ) );
+      t.vertexUV( ( x + 0 ), ( y + h ), ( z1_ ), ( u0 ), ( v0 ) );
+      t.vertexUV( ( x + 0 ), ( y + h ), ( z0_ ), ( u1 ), ( v0 ) );
+      t.vertexUV( ( x + 0 ), ( y + 0 ), ( z0 ), ( u1 ), ( v1 ) );
+      t.vertexUV( ( x + 1 ), ( y + 0 ), ( z0 ), ( u0 ), ( v1 ) );
+      t.vertexUV( ( x + 1 ), ( y + h ), ( z0_ ), ( u0 ), ( v0 ) );
+      x0 = x + 0.5 - 0.5;
+      x1 = x + 0.5 + 0.5;
+      z0 = z + 0.5 - 0.5;
+      z1 = z + 0.5 + 0.5;
+      x0_ = x + 0.5 - 0.4;
+      x1_ = x + 0.5 + 0.4;
+      z0_ = z + 0.5 - 0.4;
+      z1_ = z + 0.5 + 0.4;
+      t.vertexUV( ( x0_ ), ( y + h ), ( z + 0 ), ( u0 ), ( v0 ) );
+      t.vertexUV( ( x0 ), ( y + 0 ), ( z + 0 ), ( u0 ), ( v1 ) );
+      t.vertexUV( ( x0 ), ( y + 0 ), ( z + 1 ), ( u1 ), ( v1 ) );
+      t.vertexUV( ( x0_ ), ( y + h ), ( z + 1 ), ( u1 ), ( v0 ) );
+      t.vertexUV( ( x1_ ), ( y + h ), ( z + 1 ), ( u0 ), ( v0 ) );
+      t.vertexUV( ( x1 ), ( y + 0 ), ( z + 1 ), ( u0 ), ( v1 ) );
+      t.vertexUV( ( x1 ), ( y + 0 ), ( z + 0 ), ( u1 ), ( v1 ) );
+      t.vertexUV( ( x1_ ), ( y + h ), ( z + 0 ), ( u1 ), ( v0 ) );
+      u0 = (xt) / 256.0;
+      u1 = (xt + 15.99) / 256.0;
+      v0 = (yt) / 256.0;
+      v1 = (yt + 15.99) / 256.0;
+      t.vertexUV( ( x + 0 ), ( y + h ), ( z1_ ), ( u0 ), ( v0 ) );
+      t.vertexUV( ( x + 0 ), ( y + 0 ), ( z1 ), ( u0 ), ( v1 ) );
+      t.vertexUV( ( x + 1 ), ( y + 0 ), ( z1 ), ( u1 ), ( v1 ) );
+      t.vertexUV( ( x + 1 ), ( y + h ), ( z1_ ), ( u1 ), ( v0 ) );
+      t.vertexUV( ( x + 1 ), ( y + h ), ( z0_ ), ( u0 ), ( v0 ) );
+      t.vertexUV( ( x + 1 ), ( y + 0 ), ( z0 ), ( u0 ), ( v1 ) );
+      t.vertexUV( ( x + 0 ), ( y + 0 ), ( z0 ), ( u1 ), ( v1 ) );
+      t.vertexUV( ( x + 0 ), ( y + h ), ( z0_ ), ( u1 ), ( v0 ) );
+    }
+    else
+    {
+      const r = 0.2;
+      const yo = 1 / 16.0;
+      if ( ( ( x + y + z ) & 1 ) === 1 )
+      {
+        u0 = (xt) / 256.0;
+        u1 = (xt + 15.99) / 256.0;
+        v0 = (yt) / 256.0;
+        v1 = (yt + 15.99) / 256.0;
+      }
+      if ( ((((x / 2) | 0) + ((y / 2) | 0) + ((z / 2) | 0)) & 1 ) === 1 )
+      {
+        const tmp = u1;
+        u1 = u0;
+        u0 = tmp;
+      }
+      if ( Tile.fire.canBurn( level, x - 1, y, z ) )
+      {
+        t.vertexUV( ( x + r ), ( y + h + yo ), ( z + 1.0 ), ( u1 ), ( v0 ) );
+        t.vertexUV( ( x + 0.0 ), ( y + 0.0 + yo ), ( z + 1.0 ), ( u1 ), ( v1 ) );
+        t.vertexUV( ( x + 0.0 ), ( y + 0.0 + yo ), ( z + 0.0 ), ( u0 ), ( v1 ) );
+        t.vertexUV( ( x + r ), ( y + h + yo ), ( z + 0.0 ), ( u0 ), ( v0 ) );
+        t.vertexUV( ( x + r ), ( y + h + yo ), ( z + 0.0 ), ( u0 ), ( v0 ) );
+        t.vertexUV( ( x + 0.0 ), ( y + 0.0 + yo ), ( z + 0.0 ), ( u0 ), ( v1 ) );
+        t.vertexUV( ( x + 0.0 ), ( y + 0.0 + yo ), ( z + 1.0 ), ( u1 ), ( v1 ) );
+        t.vertexUV( ( x + r ), ( y + h + yo ), ( z + 1.0 ), ( u1 ), ( v0 ) );
+      }
+      if ( Tile.fire.canBurn( level, x + 1, y, z ) )
+      {
+        t.vertexUV( ( x + 1 - r ), ( y + h + yo ), ( z + 0.0 ), ( u0 ), ( v0 ) );
+        t.vertexUV( ( x + 1 - 0 ), ( y + 0 + yo ), ( z + 0.0 ), ( u0 ), ( v1 ) );
+        t.vertexUV( ( x + 1 - 0 ), ( y + 0 + yo ), ( z + 1.0 ), ( u1 ), ( v1 ) );
+        t.vertexUV( ( x + 1 - r ), ( y + h + yo ), ( z + 1.0 ), ( u1 ), ( v0 ) );
+        t.vertexUV( ( x + 1.0 - r ), ( y + h + yo ), ( z + 1.0 ), ( u1 ), ( v0 ) );
+        t.vertexUV( ( x + 1.0 - 0.0 ), ( y + 0.0 + yo ), ( z + 1.0 ), ( u1 ), ( v1 ) );
+        t.vertexUV( ( x + 1.0 - 0 ), ( y + 0.0 + yo ), ( z + 0.0 ), ( u0 ), ( v1 ) );
+        t.vertexUV( ( x + 1.0 - r ), ( y + h + yo ), ( z + 0.0 ), ( u0 ), ( v0 ) );
+      }
+      if ( Tile.fire.canBurn( level, x, y, z - 1 ) )
+      {
+        t.vertexUV( ( x + 0.0 ), ( y + h + yo ), ( z + r ), ( u1 ), ( v0 ) );
+        t.vertexUV( ( x + 0.0 ), ( y + 0.0 + yo ), ( z + 0.0 ), ( u1 ), ( v1 ) );
+        t.vertexUV( ( x + 1.0 ), ( y + 0.0 + yo ), ( z + 0.0 ), ( u0 ), ( v1 ) );
+        t.vertexUV( ( x + 1.0 ), ( y + h + yo ), ( z + r ), ( u0 ), ( v0 ) );
+        t.vertexUV( ( x + 1.0 ), ( y + h + yo ), ( z + r ), ( u0 ), ( v0 ) );
+        t.vertexUV( ( x + 1.0 ), ( y + 0.0 + yo ), ( z + 0.0 ), ( u0 ), ( v1 ) );
+        t.vertexUV( ( x + 0.0 ), ( y + 0.0 + yo ), ( z + 0.0 ), ( u1 ), ( v1 ) );
+        t.vertexUV( ( x + 0.0 ), ( y + h + yo ), ( z + r ), ( u1 ), ( v0 ) );
+      }
+      if ( Tile.fire.canBurn( level, x, y, z + 1 ) )
+      {
+        t.vertexUV( ( x + 1.0 ), ( y + h + yo ), ( z + 1.0 - r ), ( u0 ), ( v0 ) );
+        t.vertexUV( ( x + 1.0 ), ( y + 0.0 + yo ), ( z + 1.0 - 0.0 ), ( u0 ), ( v1 ) );
+        t.vertexUV( ( x + 0.0 ), ( y + 0.0 + yo ), ( z + 1.0 - 0.0 ), ( u1 ), ( v1 ) );
+        t.vertexUV( ( x + 0.0 ), ( y + h + yo ), ( z + 1.0 - r ), ( u1 ), ( v0 ) );
+        t.vertexUV( ( x + 0.0 ), ( y + h + yo ), ( z + 1.0 - r ), ( u1 ), ( v0 ) );
+        t.vertexUV( ( x + 0.0 ), ( y + 0.0 + yo ), ( z + 1.0 - 0.0 ), ( u1 ), ( v1 ) );
+        t.vertexUV( ( x + 1.0 ), ( y + 0.0 + yo ), ( z + 1.0 - 0.0 ), ( u0 ), ( v1 ) );
+        t.vertexUV( ( x + 1.0 ), ( y + h + yo ), ( z + 1.0 - r ), ( u0 ), ( v0 ) );
+      }
+      if ( Tile.fire.canBurn( level, x, y + 1.0, z ) )
+      {
+        const x0 = x + 0.5 + 0.5;
+        const x1 = x + 0.5 - 0.5;
+        const z0 = z + 0.5 + 0.5;
+        const z1 = z + 0.5 - 0.5;
+        const x0_ = x + 0.5 - 0.5;
+        const x1_ = x + 0.5 + 0.5;
+        const z0_ = z + 0.5 - 0.5;
+        const z1_ = z + 0.5 + 0.5;
+        u0 = (xt) / 256.0;
+        u1 = (xt + 15.99) / 256.0;
+        v0 = (yt) / 256.0;
+        v1 = (yt + 15.99) / 256.0;
+        y += 1;
+        h = -0.2;
+        if ( ( ( x + y + z ) & 1 ) === 0 )
+        {
+          t.vertexUV( ( x0_ ), ( y + h ), ( z + 0 ), ( u1 ), ( v0 ) );
+          t.vertexUV( ( x0 ), ( y + 0 ), ( z + 0 ), ( u1 ), ( v1 ) );
+          t.vertexUV( ( x0 ), ( y + 0 ), ( z + 1 ), ( u0 ), ( v1 ) );
+          t.vertexUV( ( x0_ ), ( y + h ), ( z + 1 ), ( u0 ), ( v0 ) );
+          u0 = (xt) / 256.0;
+          u1 = (xt + 15.99) / 256.0;
+          v0 = (yt) / 256.0;
+          v1 = (yt + 15.99) / 256.0;
+          t.vertexUV( ( x1_ ), ( y + h ), ( z + 1.0 ), ( u1 ), ( v0 ) );
+          t.vertexUV( ( x1 ), ( y + 0.0 ), ( z + 1.0 ), ( u1 ), ( v1 ) );
+          t.vertexUV( ( x1 ), ( y + 0.0 ), ( z + 0 ), ( u0 ), ( v1 ) );
+          t.vertexUV( ( x1_ ), ( y + h ), ( z + 0 ), ( u0 ), ( v0 ) );
+        }
+        else
+        {
+          t.vertexUV( ( x + 0.0 ), ( y + h ), ( z1_ ), ( u1 ), ( v0 ) );
+          t.vertexUV( ( x + 0.0 ), ( y + 0.0 ), ( z1 ), ( u1 ), ( v1 ) );
+          t.vertexUV( ( x + 1.0 ), ( y + 0.0 ), ( z1 ), ( u0 ), ( v1 ) );
+          t.vertexUV( ( x + 1.0 ), ( y + h ), ( z1_ ), ( u0 ), ( v0 ) );
+          u0 = (xt) / 256.0;
+          u1 = (xt + 15.99) / 256.0;
+          v0 = (yt) / 256.0;
+          v1 = (yt + 15.99) / 256.0;
+          t.vertexUV( ( x + 1.0 ), ( y + h ), ( z0_ ), ( u1 ), ( v0 ) );
+          t.vertexUV( ( x + 1.0 ), ( y + 0.0 ), ( z0 ), ( u1 ), ( v1 ) );
+          t.vertexUV( ( x + 0.0 ), ( y + 0.0 ), ( z0 ), ( u0 ), ( v1 ) );
+          t.vertexUV( ( x + 0.0 ), ( y + h ), ( z0_ ), ( u0 ), ( v0 ) );
+        }
+      }
+    }
+    return true;
+  }
+
+
+  tesselateTorchInWorld(tt: Tile, x: number, y: number, z: number): boolean {
+    const level = this.level!;
+    const dir = level.getData(x, y, z);
+    const t = Tesselator.instance;
+    let br = tt.getBrightness(level, x, y, z);
+    if (Tile.lightEmission[tt.id]! > 0) br = 1.0;
+    t.color(br, br, br);
+    const r = 0.4;
+    const r2 = 0.5 - r;
+    const h = 0.2;
+    if (dir === 1) {
+      this.tesselateTorch(tt, x - r2, y + h, z, -r, 0);
+    } else if (dir === 2) {
+      this.tesselateTorch(tt, x + r2, y + h, z, +r, 0);
+    } else if (dir === 3) {
+      this.tesselateTorch(tt, x, y + h, z - r2, 0, -r);
+    } else if (dir === 4) {
+      this.tesselateTorch(tt, x, y + h, z + r2, 0, +r);
+    } else {
+      this.tesselateTorch(tt, x, y, z, 0, 0);
+    }
+    return true;
+  }
+
+  tesselateLadderInWorld(tt: Tile, x: number, y: number, z: number): boolean {
+    const level = this.level!;
+    const t = Tesselator.instance;
+    let tex = tt.getTexture(0);
+    if (this.fixedTexture >= 0) tex = this.fixedTexture;
+    const br = tt.getBrightness(level, x, y, z);
+    t.color(br, br, br);
+    const xt = (tex & 0xf) << 4;
+    const yt = tex & 0xf0;
+    const u0 = xt / 256.0;
+    const u1 = (xt + 15.99) / 256.0;
+    const v0 = yt / 256.0;
+    const v1 = (yt + 15.99) / 256.0;
+    const face = level.getData(x, y, z);
+    const o = 0 / 16.0;
+    const r = 0.05;
+    if (face === 5) {
+      t.vertexUV(x + r, y + 1 + o, z + 1 + o, u0, v0);
+      t.vertexUV(x + r, y + 0 - o, z + 1 + o, u0, v1);
+      t.vertexUV(x + r, y + 0 - o, z + 0 - o, u1, v1);
+      t.vertexUV(x + r, y + 1 + o, z + 0 - o, u1, v0);
+    }
+    if (face === 4) {
+      t.vertexUV(x + 1 - r, y + 0 - o, z + 1 + o, u1, v1);
+      t.vertexUV(x + 1 - r, y + 1 + o, z + 1 + o, u1, v0);
+      t.vertexUV(x + 1 - r, y + 1 + o, z + 0 - o, u0, v0);
+      t.vertexUV(x + 1 - r, y + 0 - o, z + 0 - o, u0, v1);
+    }
+    if (face === 3) {
+      t.vertexUV(x + 1 + o, y + 0 - o, z + r, u1, v1);
+      t.vertexUV(x + 1 + o, y + 1 + o, z + r, u1, v0);
+      t.vertexUV(x + 0 - o, y + 1 + o, z + r, u0, v0);
+      t.vertexUV(x + 0 - o, y + 0 - o, z + r, u0, v1);
+    }
+    if (face === 2) {
+      t.vertexUV(x + 1 + o, y + 1 + o, z + 1 - r, u0, v0);
+      t.vertexUV(x + 1 + o, y + 0 - o, z + 1 - r, u0, v1);
+      t.vertexUV(x + 0 - o, y + 0 - o, z + 1 - r, u1, v1);
+      t.vertexUV(x + 0 - o, y + 1 + o, z + 1 - r, u1, v0);
+    }
+    return true;
+  }
+
+  tesselateCrossInWorld(tt: Tile, x: number, y: number, z: number): boolean {
+    const level = this.level!;
+    const t = Tesselator.instance;
+    const br = tt.getBrightness(level, x, y, z);
+    const col = tt.getColor(level, x, y, z);
+    const r = ((col >> 16) & 0xff) / 255.0;
+    const g = ((col >> 8) & 0xff) / 255.0;
+    const b = (col & 0xff) / 255.0;
+    t.color(br * r, br * g, br * b);
+    let xt = x;
+    let yt = y;
+    let zt = z;
+    if (tt === Tile.tallgrass) {
+      // long seed = (x * 3129871) ^ (z * 116129781l) ^ (y);（x * 3129871 是 int 乘法，会溢出；其余按 64 位）
+      let seed = BigInt(Math.imul(x, 3129871)) ^ (BigInt(z) * 116129781n) ^ BigInt(y);
+      seed = BigInt.asIntN(64, seed * seed * 42317861n + seed * 11n);
+      xt += ((Number((seed >> 16n) & 0xfn) / 15.0) - 0.5) * 0.5;
+      yt += ((Number((seed >> 20n) & 0xfn) / 15.0) - 1.0) * 0.2;
+      zt += ((Number((seed >> 24n) & 0xfn) / 15.0) - 0.5) * 0.5;
+    }
+    this.tesselateCrossTexture(tt, level.getData(x, y, z), xt, yt, zt);
+    return true;
+  }
+
+  tesselateStemInWorld(_tt: Tile, x: number, y: number, z: number): boolean {
+    const level = this.level!;
+    const tt = _tt as StemTile;
+    const t = Tesselator.instance;
+    const br = tt.getBrightness(level, x, y, z);
+    const col = tt.getColor(level, x, y, z);
+    const r = ((col >> 16) & 0xff) / 255.0;
+    const g = ((col >> 8) & 0xff) / 255.0;
+    const b = (col & 0xff) / 255.0;
+    t.color(br * r, br * g, br * b);
+    tt.updateShape(level, x, y, z);
+    const dir = tt.getConnectDir(level, x, y, z);
+    if (dir < 0) {
+      this.tesselateStemTexture(tt, level.getData(x, y, z), tt.yy1, x, y - 1 / 16.0, z);
+    } else {
+      this.tesselateStemTexture(tt, level.getData(x, y, z), 0.5, x, y - 1 / 16.0, z);
+      this.tesselateStemDirTexture(tt, level.getData(x, y, z), dir, tt.yy1, x, y - 1 / 16.0, z);
+    }
+    return true;
+  }
+
+  tesselateTorch(tt: Tile, x: number, y: number, z: number, xxa: number, zza: number): void {
+    const t = Tesselator.instance;
+    let tex = tt.getTexture(0);
+    if (this.fixedTexture >= 0) tex = this.fixedTexture;
+    const xt = (tex & 0xf) << 4;
+    const yt = tex & 0xf0;
+    const u0 = xt / 256.0;
+    const u1 = (xt + 15.99) / 256.0;
+    const v0 = yt / 256.0;
+    const v1 = (yt + 15.99) / 256.0;
+    const uc0 = u0 + 7 / 256.0;
+    const vc0 = v0 + 6 / 256.0;
+    const uc1 = u0 + 9 / 256.0;
+    const vc1 = v0 + 8 / 256.0;
+    x += 0.5;
+    z += 0.5;
+    const x0 = x - 0.5;
+    const x1 = x + 0.5;
+    const z0 = z - 0.5;
+    const z1 = z + 0.5;
+    const r = 1 / 16.0;
+    const h = 10.0 / 16.0;
+    t.vertexUV(x + xxa * (1 - h) - r, y + h, z + zza * (1 - h) - r, uc0, vc0);
+    t.vertexUV(x + xxa * (1 - h) - r, y + h, z + zza * (1 - h) + r, uc0, vc1);
+    t.vertexUV(x + xxa * (1 - h) + r, y + h, z + zza * (1 - h) + r, uc1, vc1);
+    t.vertexUV(x + xxa * (1 - h) + r, y + h, z + zza * (1 - h) - r, uc1, vc0);
+    t.vertexUV(x - r, y + 1, z0, u0, v0);
+    t.vertexUV(x - r + xxa, y + 0, z0 + zza, u0, v1);
+    t.vertexUV(x - r + xxa, y + 0, z1 + zza, u1, v1);
+    t.vertexUV(x - r, y + 1, z1, u1, v0);
+    t.vertexUV(x + r, y + 1, z1, u0, v0);
+    t.vertexUV(x + xxa + r, y + 0, z1 + zza, u0, v1);
+    t.vertexUV(x + xxa + r, y + 0, z0 + zza, u1, v1);
+    t.vertexUV(x + r, y + 1, z0, u1, v0);
+    t.vertexUV(x0, y + 1, z + r, u0, v0);
+    t.vertexUV(x0 + xxa, y + 0, z + r + zza, u0, v1);
+    t.vertexUV(x1 + xxa, y + 0, z + r + zza, u1, v1);
+    t.vertexUV(x1, y + 1, z + r, u1, v0);
+    t.vertexUV(x1, y + 1, z - r, u0, v0);
+    t.vertexUV(x1 + xxa, y + 0, z - r + zza, u0, v1);
+    t.vertexUV(x0 + xxa, y + 0, z - r + zza, u1, v1);
+    t.vertexUV(x0, y + 1, z - r, u1, v0);
+  }
+
+  tesselateCrossTexture(tt: Tile, data: number, x: number, y: number, z: number): void {
+    const t = Tesselator.instance;
+    let tex = tt.getTexture(0, data);
+    if (this.fixedTexture >= 0) tex = this.fixedTexture;
+    const xt = (tex & 0xf) << 4;
+    const yt = tex & 0xf0;
+    const u0 = xt / 256.0;
+    const u1 = (xt + 15.99) / 256.0;
+    const v0 = yt / 256.0;
+    const v1 = (yt + 15.99) / 256.0;
+    const x0 = x + 0.5 - 0.45;
+    const x1 = x + 0.5 + 0.45;
+    const z0 = z + 0.5 - 0.45;
+    const z1 = z + 0.5 + 0.45;
+    t.vertexUV(x0, y + 1, z0, u0, v0);
+    t.vertexUV(x0, y + 0, z0, u0, v1);
+    t.vertexUV(x1, y + 0, z1, u1, v1);
+    t.vertexUV(x1, y + 1, z1, u1, v0);
+    t.vertexUV(x1, y + 1, z1, u0, v0);
+    t.vertexUV(x1, y + 0, z1, u0, v1);
+    t.vertexUV(x0, y + 0, z0, u1, v1);
+    t.vertexUV(x0, y + 1, z0, u1, v0);
+    t.vertexUV(x0, y + 1, z1, u0, v0);
+    t.vertexUV(x0, y + 0, z1, u0, v1);
+    t.vertexUV(x1, y + 0, z0, u1, v1);
+    t.vertexUV(x1, y + 1, z0, u1, v0);
+    t.vertexUV(x1, y + 1, z0, u0, v0);
+    t.vertexUV(x1, y + 0, z0, u0, v1);
+    t.vertexUV(x0, y + 0, z1, u1, v1);
+    t.vertexUV(x0, y + 1, z1, u1, v0);
+  }
+
+  tesselateStemTexture(tt: Tile, data: number, h: number, x: number, y: number, z: number): void {
+    const t = Tesselator.instance;
+    let tex = tt.getTexture(0, data);
+    if (this.fixedTexture >= 0) tex = this.fixedTexture;
+    const xt = (tex & 0xf) << 4;
+    const yt = tex & 0xf0;
+    const u0 = xt / 256.0;
+    const u1 = (xt + 15.99) / 256.0;
+    const v0 = yt / 256.0;
+    const v1 = (yt + 15.99 * h) / 256.0;
+    const x0 = x + 0.5 - 0.45;
+    const x1 = x + 0.5 + 0.45;
+    const z0 = z + 0.5 - 0.45;
+    const z1 = z + 0.5 + 0.45;
+    t.vertexUV(x0, y + h, z0, u0, v0);
+    t.vertexUV(x0, y + 0, z0, u0, v1);
+    t.vertexUV(x1, y + 0, z1, u1, v1);
+    t.vertexUV(x1, y + h, z1, u1, v0);
+    t.vertexUV(x1, y + h, z1, u0, v0);
+    t.vertexUV(x1, y + 0, z1, u0, v1);
+    t.vertexUV(x0, y + 0, z0, u1, v1);
+    t.vertexUV(x0, y + h, z0, u1, v0);
+    t.vertexUV(x0, y + h, z1, u0, v0);
+    t.vertexUV(x0, y + 0, z1, u0, v1);
+    t.vertexUV(x1, y + 0, z0, u1, v1);
+    t.vertexUV(x1, y + h, z0, u1, v0);
+    t.vertexUV(x1, y + h, z0, u0, v0);
+    t.vertexUV(x1, y + 0, z0, u0, v1);
+    t.vertexUV(x0, y + 0, z1, u1, v1);
+    t.vertexUV(x0, y + h, z1, u1, v0);
+  }
+
+  tesselateStemDirTexture(tt: Tile, data: number, dir: number, h: number, x: number, y: number, z: number): void {
+    const t = Tesselator.instance;
+    let tex = tt.getTexture(0, data) + 16;
+    if (this.fixedTexture >= 0) tex = this.fixedTexture;
+    const xt = (tex & 0xf) << 4;
+    const yt = tex & 0xf0;
+    let u0 = xt / 256.0;
+    let u1 = (xt + 15.99) / 256.0;
+    const v0 = yt / 256.0;
+    const v1 = (yt + 15.99 * h) / 256.0;
+    const x0 = x + 0.5 - 0.5;
+    const x1 = x + 0.5 + 0.5;
+    const z0 = z + 0.5 - 0.5;
+    const z1 = z + 0.5 + 0.5;
+    const xm = x + 0.5;
+    const zm = z + 0.5;
+    if (((((dir + 1) / 2) | 0) % 2) === 1) {
+      const tmp = u1;
+      u1 = u0;
+      u0 = tmp;
+    }
+    if (dir < 2) {
+      t.vertexUV(x0, y + h, zm, u0, v0);
+      t.vertexUV(x0, y + 0, zm, u0, v1);
+      t.vertexUV(x1, y + 0, zm, u1, v1);
+      t.vertexUV(x1, y + h, zm, u1, v0);
+      t.vertexUV(x1, y + h, zm, u1, v0);
+      t.vertexUV(x1, y + 0, zm, u1, v1);
+      t.vertexUV(x0, y + 0, zm, u0, v1);
+      t.vertexUV(x0, y + h, zm, u0, v0);
+    } else {
+      t.vertexUV(xm, y + h, z1, u0, v0);
+      t.vertexUV(xm, y + 0, z1, u0, v1);
+      t.vertexUV(xm, y + 0, z0, u1, v1);
+      t.vertexUV(xm, y + h, z0, u1, v0);
+      t.vertexUV(xm, y + h, z0, u1, v0);
+      t.vertexUV(xm, y + 0, z0, u1, v1);
+      t.vertexUV(xm, y + 0, z1, u0, v1);
+      t.vertexUV(xm, y + h, z1, u0, v0);
+    }
+  }
+
+  tesselateWaterInWorld(tt: Tile, x: number, y: number, z: number): boolean {
+    const level = this.level!;
+    const t = Tesselator.instance;
+    const up = tt.shouldRenderFace(level, x, y + 1, z, 1);
+    const down = tt.shouldRenderFace(level, x, y - 1, z, 0);
+    const dirs = [
+      tt.shouldRenderFace(level, x, y, z - 1, 2),
+      tt.shouldRenderFace(level, x, y, z + 1, 3),
+      tt.shouldRenderFace(level, x - 1, y, z, 4),
+      tt.shouldRenderFace(level, x + 1, y, z, 5),
+    ];
+    if (!up && !down && !dirs[0] && !dirs[1] && !dirs[2] && !dirs[3]) return false;
+    let changed = false;
+    const c10 = 0.5;
+    const c11 = 1;
+    const c2 = 0.8;
+    const c3 = 0.6;
+    const yo0 = 0;
+    const yo1 = 1;
+    const m = tt.material;
+    const data = level.getData(x, y, z);
+    const h0 = this.getWaterHeight(x, y, z, m);
+    const h1 = this.getWaterHeight(x, y, z + 1, m);
+    const h2 = this.getWaterHeight(x + 1, y, z + 1, m);
+    const h3 = this.getWaterHeight(x + 1, y, z, m);
+    if (this.noCulling || up) {
+      changed = true;
+      let tex = tt.getTexture(1, data);
+      let angle = Math.fround(LiquidTile.getSlopeAngle(level, x, y, z, m));
+      if (angle > -999) {
+        tex = tt.getTexture(2, data);
+      }
+      const xt = (tex & 0xf) << 4;
+      const yt = tex & 0xf0;
+      let uc = (xt + 0.5 * 16) / 256.0;
+      let vc = (yt + 0.5 * 16) / 256.0;
+      if (angle < -999) {
+        angle = 0;
+      } else {
+        uc = (xt + 1 * 16) / 256.0;
+        vc = (yt + 1 * 16) / 256.0;
+      }
+      const s = (Mth.sin(angle) * 8) / 256.5; // @attn: to get rid of "jitter" (caused
+      const c = (Mth.cos(angle) * 8) / 256.5; //  of fp rounding errors) in big oceans)
+      const br = tt.getBrightness(level, x, y, z);
+      t.color(c11 * br, c11 * br, c11 * br);
+      t.vertexUV(x + 0, y + h0, z + 0, uc - c - s, vc - c + s);
+      t.vertexUV(x + 0, y + h1, z + 1, uc - c + s, vc + c + s);
+      t.vertexUV(x + 1, y + h2, z + 1, uc + c + s, vc + c - s);
+      t.vertexUV(x + 1, y + h3, z + 0, uc + c - s, vc - c - s);
+    }
+    if (this.noCulling || down) {
+      const br = tt.getBrightness(level, x, y - 1, z);
+      t.color(c10 * br, c10 * br, c10 * br);
+      this.renderFaceDown(tt, x, y, z, tt.getTexture(0));
+      changed = true;
+    }
+    for (let face = 0; face < 4; face++) {
+      let xt = x;
+      const yt = y;
+      let zt = z;
+      if (face === 0) zt--;
+      if (face === 1) zt++;
+      if (face === 2) xt--;
+      if (face === 3) xt++;
+      const tex = tt.getTexture(face + 2, data);
+      const xTex = (tex & 0xf) << 4;
+      const yTex = tex & 0xf0;
+      if (this.noCulling || dirs[face]) {
+        let hh0: number, hh1: number, x0: number, z0: number, x1: number, z1: number;
+        if (face === 0) {
+          hh0 = h0; hh1 = h3; x0 = x; x1 = x + 1; z0 = z; z1 = z;
+        } else if (face === 1) {
+          hh0 = h2; hh1 = h1; x0 = x + 1; x1 = x; z0 = z + 1; z1 = z + 1;
+        } else if (face === 2) {
+          hh0 = h1; hh1 = h0; x0 = x; x1 = x; z0 = z + 1; z1 = z;
+        } else {
+          hh0 = h3; hh1 = h2; x0 = x + 1; x1 = x + 1; z0 = z; z1 = z + 1;
+        }
+        changed = true;
+        const u0 = (xTex + 0 * 16) / 256.0;
+        const u1 = (xTex + 1 * 16 - 0.01) / 256.0;
+        const v01 = (yTex + (1 - hh0) * 16) / 256.0;
+        const v02 = (yTex + (1 - hh1) * 16) / 256.0;
+        const v1 = (yTex + 1 * 16 - 0.01) / 256.0;
+        let br = tt.getBrightness(level, xt, yt, zt);
+        if (face < 2) br *= c2;
+        else br *= c3;
+        const yf = y;
+        t.color(c11 * br, c11 * br, c11 * br);
+        t.vertexUV(x0, yf + hh0, z0, u0, v01);
+        t.vertexUV(x1, yf + hh1, z1, u1, v02);
+        t.vertexUV(x1, yf + 0, z1, u1, v1);
+        t.vertexUV(x0, yf + 0, z0, u0, v1);
+      }
+    }
+    tt.yy0 = yo0;
+    tt.yy1 = yo1;
+    return changed;
+  }
+
+  tesselateFenceInWorld(tt: FenceTile, x: number, y: number, z: number): boolean {
+    const level = this.level!;
+    const changed = true;
+    let a = 6 / 16.0;
+    let b = 10 / 16.0;
+    tt.setShape(a, 0, a, b, 1, b);
+    this.tesselateBlockInWorld(tt, x, y, z);
+    let vertical = false;
+    let horizontal = false;
+    const l = tt.connectsTo(level, x - 1, y, z);
+    const r = tt.connectsTo(level, x + 1, y, z);
+    const u = tt.connectsTo(level, x, y, z - 1);
+    const d = tt.connectsTo(level, x, y, z + 1);
+    if (l || r) vertical = true;
+    if (u || d) horizontal = true;
+    if (!vertical && !horizontal) vertical = true;
+    a = 7 / 16.0;
+    b = 9 / 16.0;
+    let h0 = 12 / 16.0;
+    let h1 = 15 / 16.0;
+    const x0 = l ? 0 : a;
+    const x1 = r ? 1 : b;
+    const z0 = u ? 0 : a;
+    const z1 = d ? 1 : b;
+    if (vertical) {
+      tt.setShape(x0, h0, a, x1, h1, b);
+      this.tesselateBlockInWorld(tt, x, y, z);
+    }
+    if (horizontal) {
+      tt.setShape(a, h0, z0, b, h1, z1);
+      this.tesselateBlockInWorld(tt, x, y, z);
+    }
+    h0 = 6 / 16.0;
+    h1 = 9 / 16.0;
+    if (vertical) {
+      tt.setShape(x0, h0, a, x1, h1, b);
+      this.tesselateBlockInWorld(tt, x, y, z);
+    }
+    if (horizontal) {
+      tt.setShape(a, h0, z0, b, h1, z1);
+      this.tesselateBlockInWorld(tt, x, y, z);
+    }
+    tt.setShape(0, 0, 0, 1, 1, 1);
+    return changed;
+  }
+
 
   private getWaterHeight(x: number, y: number, z: number, m: Material): number {
     const level = this.level!;
@@ -503,9 +1081,137 @@ export class TileRenderer {
 
   // OMIT(TileShape): tesselateCactusInWorld(tt, x, y, z)  TileRenderer.cpp:1423
   // OMIT(TileShape): tesselateCactusInWorld(tt, x, y, z, r, g, b)  TileRenderer.cpp:1431
-  // OMIT(TileShape): tesselateFenceInWorld(tt, x, y, z)  TileRenderer.cpp:1532
   // OMIT(TileShape): tesselateFenceGateInWorld(tt, x, y, z)  TileRenderer.cpp:1587
-  // OMIT(TileShape): tesselateBedInWorld(tt, x, y, z)  TileRenderer.cpp:1782
+  tesselateBedInWorld(tt: Tile, x: number, y: number, z: number): boolean {
+    const level = this.level!;
+    const t = Tesselator.instance;
+    const data = level.getData(x, y, z);
+    const direction = BedTile.getDirection(data);
+    const isHead = BedTile.isHeadPiece(data);
+    const c10 = 0.5;
+    const c11 = 1;
+    const c2 = 0.8;
+    const c3 = 0.6;
+    const r11 = c11, g11 = c11, b11 = c11;
+    const r10 = c10, r2 = c2, r3 = c3;
+    const g10 = c10, g2 = c2, g3 = c3;
+    const b10 = c10, b2 = c2, b3 = c3;
+    const centerBrightness = tt.getBrightness(level, x, y, z);
+    {
+      t.color(r10 * centerBrightness, g10 * centerBrightness, b10 * centerBrightness);
+      const tex = tt.getTexture(level, x, y, z, Facing.DOWN);
+      const xt = (tex & 0xf) << 4;
+      const yt = tex & 0xf0;
+      const u0 = xt / 256.0;
+      const u1 = (xt + 16 - 0.01) / 256.0;
+      const v0 = yt / 256.0;
+      const v1 = (yt + 16 - 0.01) / 256.0;
+      const x0 = x + tt.xx0;
+      const x1 = x + tt.xx1;
+      const y0 = y + tt.yy0 + 3.0 / 16.0;
+      const z0 = z + tt.zz0;
+      const z1 = z + tt.zz1;
+      t.vertexUV(x0, y0, z1, u0, v1);
+      t.vertexUV(x0, y0, z0, u0, v0);
+      t.vertexUV(x1, y0, z0, u1, v0);
+      t.vertexUV(x1, y0, z1, u1, v1);
+    }
+    const brightness = tt.getBrightness(level, x, y + 1, z);
+    t.color(r11 * brightness, g11 * brightness, b11 * brightness);
+    const tex = tt.getTexture(level, x, y, z, Facing.UP);
+    const xt = (tex & 0xf) << 4;
+    const yt = tex & 0xf0;
+    const u0 = xt / 256.0;
+    const u1 = (xt + 16) / 256.0;
+    const v0 = yt / 256.0;
+    const v1 = (yt + 16) / 256.0;
+    let topLeftU = u0;
+    let topRightU = u1;
+    let topLeftV = v0;
+    let topRightV = v0;
+    let bottomLeftU = u0;
+    let bottomRightU = u1;
+    let bottomLeftV = v1;
+    let bottomRightV = v1;
+    if (direction === Direction.SOUTH) {
+      topRightU = u0;
+      topLeftV = v1;
+      bottomLeftU = u1;
+      bottomRightV = v0;
+    } else if (direction === Direction.NORTH) {
+      topLeftU = u1;
+      topRightV = v1;
+      bottomRightU = u0;
+      bottomLeftV = v0;
+    } else if (direction === Direction.EAST) {
+      topLeftU = u1;
+      topRightV = v1;
+      bottomRightU = u0;
+      bottomLeftV = v0;
+      topRightU = u0;
+      topLeftV = v1;
+      bottomLeftU = u1;
+      bottomRightV = v0;
+    }
+    const x0 = x + tt.xx0;
+    const x1 = x + tt.xx1;
+    const y1 = y + tt.yy1;
+    const z0 = z + tt.zz0;
+    const z1 = z + tt.zz1;
+    t.vertexUV(x1, y1, z1, bottomLeftU, bottomLeftV);
+    t.vertexUV(x1, y1, z0, topLeftU, topLeftV);
+    t.vertexUV(x0, y1, z0, topRightU, topRightV);
+    t.vertexUV(x0, y1, z1, bottomRightU, bottomRightV);
+    let skipEdge = Direction.DIRECTION_FACING[direction]!;
+    if (isHead) {
+      skipEdge = Direction.DIRECTION_FACING[Direction.DIRECTION_OPPOSITE[direction]!]!;
+    }
+    let flipEdge: number = Facing.WEST;
+    switch (direction) {
+      case Direction.NORTH:
+        break;
+      case Direction.SOUTH:
+        flipEdge = Facing.EAST;
+        break;
+      case Direction.EAST:
+        flipEdge = Facing.NORTH;
+        break;
+      case Direction.WEST:
+        flipEdge = Facing.SOUTH;
+        break;
+    }
+    if (skipEdge !== Facing.NORTH && (this.noCulling || tt.shouldRenderFace(level, x, y, z - 1, Facing.NORTH))) {
+      let br = tt.getBrightness(level, x, y, z - 1);
+      if (tt.zz0 > 0) br = centerBrightness;
+      t.color(r2 * br, g2 * br, b2 * br);
+      this.xFlipTexture = flipEdge === Facing.NORTH;
+      this.renderNorth(tt, x, y, z, tt.getTexture(level, x, y, z, 2));
+    }
+    if (skipEdge !== Facing.SOUTH && (this.noCulling || tt.shouldRenderFace(level, x, y, z + 1, Facing.SOUTH))) {
+      let br = tt.getBrightness(level, x, y, z + 1);
+      if (tt.zz1 < 1) br = centerBrightness;
+      t.color(r2 * br, g2 * br, b2 * br);
+      this.xFlipTexture = flipEdge === Facing.SOUTH;
+      this.renderSouth(tt, x, y, z, tt.getTexture(level, x, y, z, 3));
+    }
+    if (skipEdge !== Facing.WEST && (this.noCulling || tt.shouldRenderFace(level, x - 1, y, z, Facing.WEST))) {
+      let br = tt.getBrightness(level, x - 1, y, z);
+      if (tt.xx0 > 0) br = centerBrightness;
+      t.color(r3 * br, g3 * br, b3 * br);
+      this.xFlipTexture = flipEdge === Facing.WEST;
+      this.renderWest(tt, x, y, z, tt.getTexture(level, x, y, z, 4));
+    }
+    if (skipEdge !== Facing.EAST && (this.noCulling || tt.shouldRenderFace(level, x + 1, y, z, Facing.EAST))) {
+      let br = tt.getBrightness(level, x + 1, y, z);
+      if (tt.xx1 < 1) br = centerBrightness;
+      t.color(r3 * br, g3 * br, b3 * br);
+      this.xFlipTexture = flipEdge === Facing.EAST;
+      this.renderEast(tt, x, y, z, tt.getTexture(level, x, y, z, 5));
+    }
+    this.xFlipTexture = false;
+    return true;
+  }
+
   // OMIT(TileShape): tesselateStairsInWorld(tt, x, y, z)  TileRenderer.cpp:1956
   // OMIT(TileShape): tesselateDoorInWorld(tt, x, y, z)  TileRenderer.cpp:1975
   // OMIT(TileShape): tesselateRowInWorld(tt, x, y, z)  TileRenderer.cpp:2070
@@ -765,7 +1471,363 @@ export class TileRenderer {
 
   // OMIT(TileShape): renderTile(tile, data)  TileRenderer.cpp:2367（物品与手持方块，S11）
   // OMIT(TileShape): renderGuiTile(tile, data)  TileRenderer.cpp:2585（物品栏图标，S11）
-  // OMIT(TileShape): tesselateThinFenceInWorld(tt, x, y, z)  TileRenderer.cpp:2717
+  /** 照 C++ 逐句移植 */
+  tesselateThinFenceInWorld(tt: ThinFenceTile, x: number, y: number, z: number): boolean {
+    const level = this.level!;
+    const depth = 128;
+    const t = Tesselator.instance;
+    const br = tt.getBrightness(level, x, y, z);
+    const col = tt.getColor(level, x, y, z);
+    const r = ((col >> 16) & 0xff) / 255.0;
+    const g = ((col >> 8) & 0xff) / 255.0;
+    const b = ((col) & 0xff) / 255.0;
+    t.color(br * r, br * g, br * b);
+    let tex: number;
+    let edgeTex: number;
+    if (this.fixedTexture >= 0) {
+      tex = this.fixedTexture;
+      edgeTex = this.fixedTexture;
+    } else {
+      const data = level.getData(x, y, z);
+      tex = tt.getTexture(0, data);
+      edgeTex = tt.getEdgeTexture();
+    }
+    const xt = (tex & 0xf) << 4;
+    const yt = tex & 0xf0;
+    const u0 = (xt) / 256.0;
+    const u1 = (xt + 7.99) / 256.0;
+    const u2 = (xt + 15.99) / 256.0;
+    const v0 = (yt) / 256.0;
+    const v2 = (yt + 15.99) / 256.0;
+    const xet = (edgeTex & 0xf) << 4;
+    const yet = edgeTex & 0xf0;
+    const iu0 = (xet + 7) / 256.0;
+    const iu1 = (xet + 8.99) / 256.0;
+    const iv0 = (yet) / 256.0;
+    const iv1 = (yet + 8) / 256.0;
+    const iv2 = (yet + 15.99) / 256.0;
+    const x0 = x;
+    const x1 = x0 + .5;
+    const x2 = x0 + 1;
+    const y0 = y + 0.001;
+    const y1 = y0 + 1 - 0.002;
+    const z0 = z;
+    const z1 = z0 + .5;
+    const z2 = z0 + 1;
+    const ix0 = x0 + .5 - 1.0 / 16.0;
+    const ix1 = x0 + .5 + 1.0 / 16.0;
+    const iz0 = z0 + .5 - 1.0 / 16.0;
+    const iz1 = z0 + .5 + 1.0 / 16.0;
+    const n = tt.attachsTo(level.getTile(x, y, z - 1));
+    const s = tt.attachsTo(level.getTile(x, y, z + 1));
+    const w = tt.attachsTo(level.getTile(x - 1, y, z));
+    const e = tt.attachsTo(level.getTile(x + 1, y, z));
+    const up = tt.shouldRenderFace(level, x, y + 1, z, Facing.UP);
+    const down = tt.shouldRenderFace(level, x, y - 1, z, Facing.DOWN);
+    const noZFightingOffset = 0.01;
+    if ((w && e) || (!w && !e && !n && !s)) {
+      t.vertexUV(x0, y1, z1, u0, v0);
+      t.vertexUV(x0, y0, z1, u0, v2);
+      t.vertexUV(x2, y0, z1, u2, v2);
+      t.vertexUV(x2, y1, z1, u2, v0);
+      t.vertexUV(x2, y1, z1, u0, v0);
+      t.vertexUV(x2, y0, z1, u0, v2);
+      t.vertexUV(x0, y0, z1, u2, v2);
+      t.vertexUV(x0, y1, z1, u2, v0);
+      if (up) {
+        t.vertexUV(x0, y1 + noZFightingOffset, iz1, iu1, iv2);
+        t.vertexUV(x2, y1 + noZFightingOffset, iz1, iu1, iv0);
+        t.vertexUV(x2, y1 + noZFightingOffset, iz0, iu0, iv0);
+        t.vertexUV(x0, y1 + noZFightingOffset, iz0, iu0, iv2);
+        t.vertexUV(x2, y1 + noZFightingOffset, iz1, iu1, iv2);
+        t.vertexUV(x0, y1 + noZFightingOffset, iz1, iu1, iv0);
+        t.vertexUV(x0, y1 + noZFightingOffset, iz0, iu0, iv0);
+        t.vertexUV(x2, y1 + noZFightingOffset, iz0, iu0, iv2);
+      } else {
+        if (y < (depth - 1) && level.isEmptyTile(x - 1, y + 1, z)) {
+          t.vertexUV(x0, y1 + noZFightingOffset, iz1, iu1, iv1);
+          t.vertexUV(x1, y1 + noZFightingOffset, iz1, iu1, iv2);
+          t.vertexUV(x1, y1 + noZFightingOffset, iz0, iu0, iv2);
+          t.vertexUV(x0, y1 + noZFightingOffset, iz0, iu0, iv1);
+          t.vertexUV(x1, y1 + noZFightingOffset, iz1, iu1, iv1);
+          t.vertexUV(x0, y1 + noZFightingOffset, iz1, iu1, iv2);
+          t.vertexUV(x0, y1 + noZFightingOffset, iz0, iu0, iv2);
+          t.vertexUV(x1, y1 + noZFightingOffset, iz0, iu0, iv1);
+        }
+        if (y < (depth - 1) && level.isEmptyTile(x + 1, y + 1, z)) {
+          t.vertexUV(x1, y1 + noZFightingOffset, iz1, iu1, iv0);
+          t.vertexUV(x2, y1 + noZFightingOffset, iz1, iu1, iv1);
+          t.vertexUV(x2, y1 + noZFightingOffset, iz0, iu0, iv1);
+          t.vertexUV(x1, y1 + noZFightingOffset, iz0, iu0, iv0);
+          t.vertexUV(x2, y1 + noZFightingOffset, iz1, iu1, iv0);
+          t.vertexUV(x1, y1 + noZFightingOffset, iz1, iu1, iv1);
+          t.vertexUV(x1, y1 + noZFightingOffset, iz0, iu0, iv1);
+          t.vertexUV(x2, y1 + noZFightingOffset, iz0, iu0, iv0);
+        }
+      }
+      if (down) {
+        t.vertexUV(x0, y0 - noZFightingOffset, iz1, iu1, iv2);
+        t.vertexUV(x2, y0 - noZFightingOffset, iz1, iu1, iv0);
+        t.vertexUV(x2, y0 - noZFightingOffset, iz0, iu0, iv0);
+        t.vertexUV(x0, y0 - noZFightingOffset, iz0, iu0, iv2);
+        t.vertexUV(x2, y0 - noZFightingOffset, iz1, iu1, iv2);
+        t.vertexUV(x0, y0 - noZFightingOffset, iz1, iu1, iv0);
+        t.vertexUV(x0, y0 - noZFightingOffset, iz0, iu0, iv0);
+        t.vertexUV(x2, y0 - noZFightingOffset, iz0, iu0, iv2);
+      } else {
+        if (y > 1 && level.isEmptyTile(x - 1, y - 1, z)) {
+          t.vertexUV(x0, y0 - noZFightingOffset, iz1, iu1, iv1);
+          t.vertexUV(x1, y0 - noZFightingOffset, iz1, iu1, iv2);
+          t.vertexUV(x1, y0 - noZFightingOffset, iz0, iu0, iv2);
+          t.vertexUV(x0, y0 - noZFightingOffset, iz0, iu0, iv1);
+          t.vertexUV(x1, y0 - noZFightingOffset, iz1, iu1, iv1);
+          t.vertexUV(x0, y0 - noZFightingOffset, iz1, iu1, iv2);
+          t.vertexUV(x0, y0 - noZFightingOffset, iz0, iu0, iv2);
+          t.vertexUV(x1, y0 - noZFightingOffset, iz0, iu0, iv1);
+        }
+        if (y > 1 && level.isEmptyTile(x + 1, y - 1, z)) {
+          t.vertexUV(x1, y0 - noZFightingOffset, iz1, iu1, iv0);
+          t.vertexUV(x2, y0 - noZFightingOffset, iz1, iu1, iv1);
+          t.vertexUV(x2, y0 - noZFightingOffset, iz0, iu0, iv1);
+          t.vertexUV(x1, y0 - noZFightingOffset, iz0, iu0, iv0);
+          t.vertexUV(x2, y0 - noZFightingOffset, iz1, iu1, iv0);
+          t.vertexUV(x1, y0 - noZFightingOffset, iz1, iu1, iv1);
+          t.vertexUV(x1, y0 - noZFightingOffset, iz0, iu0, iv1);
+          t.vertexUV(x2, y0 - noZFightingOffset, iz0, iu0, iv0);
+        }
+      }
+    } else if (w && !e) {
+      t.vertexUV(x0, y1, z1, u0, v0);
+      t.vertexUV(x0, y0, z1, u0, v2);
+      t.vertexUV(x1, y0, z1, u1, v2);
+      t.vertexUV(x1, y1, z1, u1, v0);
+      t.vertexUV(x1, y1, z1, u0, v0);
+      t.vertexUV(x1, y0, z1, u0, v2);
+      t.vertexUV(x0, y0, z1, u1, v2);
+      t.vertexUV(x0, y1, z1, u1, v0);
+      if (!s && !n) {
+        t.vertexUV(x1, y1, iz1, iu0, iv0);
+        t.vertexUV(x1, y0, iz1, iu0, iv2);
+        t.vertexUV(x1, y0, iz0, iu1, iv2);
+        t.vertexUV(x1, y1, iz0, iu1, iv0);
+        t.vertexUV(x1, y1, iz0, iu0, iv0);
+        t.vertexUV(x1, y0, iz0, iu0, iv2);
+        t.vertexUV(x1, y0, iz1, iu1, iv2);
+        t.vertexUV(x1, y1, iz1, iu1, iv0);
+      }
+      if (up || (y < (depth - 1) && level.isEmptyTile(x - 1, y + 1, z))) {
+        t.vertexUV(x0, y1 + noZFightingOffset, iz1, iu1, iv1);
+        t.vertexUV(x1, y1 + noZFightingOffset, iz1, iu1, iv2);
+        t.vertexUV(x1, y1 + noZFightingOffset, iz0, iu0, iv2);
+        t.vertexUV(x0, y1 + noZFightingOffset, iz0, iu0, iv1);
+        t.vertexUV(x1, y1 + noZFightingOffset, iz1, iu1, iv1);
+        t.vertexUV(x0, y1 + noZFightingOffset, iz1, iu1, iv2);
+        t.vertexUV(x0, y1 + noZFightingOffset, iz0, iu0, iv2);
+        t.vertexUV(x1, y1 + noZFightingOffset, iz0, iu0, iv1);
+      }
+      if (down || (y > 1 && level.isEmptyTile(x - 1, y - 1, z))) {
+        t.vertexUV(x0, y0 - noZFightingOffset, iz1, iu1, iv1);
+        t.vertexUV(x1, y0 - noZFightingOffset, iz1, iu1, iv2);
+        t.vertexUV(x1, y0 - noZFightingOffset, iz0, iu0, iv2);
+        t.vertexUV(x0, y0 - noZFightingOffset, iz0, iu0, iv1);
+        t.vertexUV(x1, y0 - noZFightingOffset, iz1, iu1, iv1);
+        t.vertexUV(x0, y0 - noZFightingOffset, iz1, iu1, iv2);
+        t.vertexUV(x0, y0 - noZFightingOffset, iz0, iu0, iv2);
+        t.vertexUV(x1, y0 - noZFightingOffset, iz0, iu0, iv1);
+      }
+    } else if (!w && e) {
+      t.vertexUV(x1, y1, z1, u1, v0);
+      t.vertexUV(x1, y0, z1, u1, v2);
+      t.vertexUV(x2, y0, z1, u2, v2);
+      t.vertexUV(x2, y1, z1, u2, v0);
+      t.vertexUV(x2, y1, z1, u1, v0);
+      t.vertexUV(x2, y0, z1, u1, v2);
+      t.vertexUV(x1, y0, z1, u2, v2);
+      t.vertexUV(x1, y1, z1, u2, v0);
+      if (!s && !n) {
+        t.vertexUV(x1, y1, iz0, iu0, iv0);
+        t.vertexUV(x1, y0, iz0, iu0, iv2);
+        t.vertexUV(x1, y0, iz1, iu1, iv2);
+        t.vertexUV(x1, y1, iz1, iu1, iv0);
+        t.vertexUV(x1, y1, iz1, iu0, iv0);
+        t.vertexUV(x1, y0, iz1, iu0, iv2);
+        t.vertexUV(x1, y0, iz0, iu1, iv2);
+        t.vertexUV(x1, y1, iz0, iu1, iv0);
+      }
+      if (up || (y < (depth - 1) && level.isEmptyTile(x + 1, y + 1, z))) {
+        t.vertexUV(x1, y1 + noZFightingOffset, iz1, iu1, iv0);
+        t.vertexUV(x2, y1 + noZFightingOffset, iz1, iu1, iv1);
+        t.vertexUV(x2, y1 + noZFightingOffset, iz0, iu0, iv1);
+        t.vertexUV(x1, y1 + noZFightingOffset, iz0, iu0, iv0);
+        t.vertexUV(x2, y1 + noZFightingOffset, iz1, iu1, iv0);
+        t.vertexUV(x1, y1 + noZFightingOffset, iz1, iu1, iv1);
+        t.vertexUV(x1, y1 + noZFightingOffset, iz0, iu0, iv1);
+        t.vertexUV(x2, y1 + noZFightingOffset, iz0, iu0, iv0);
+      }
+      if (down || (y > 1 && level.isEmptyTile(x + 1, y - 1, z))) {
+        t.vertexUV(x1, y0 - noZFightingOffset, iz1, iu1, iv0);
+        t.vertexUV(x2, y0 - noZFightingOffset, iz1, iu1, iv1);
+        t.vertexUV(x2, y0 - noZFightingOffset, iz0, iu0, iv1);
+        t.vertexUV(x1, y0 - noZFightingOffset, iz0, iu0, iv0);
+        t.vertexUV(x2, y0 - noZFightingOffset, iz1, iu1, iv0);
+        t.vertexUV(x1, y0 - noZFightingOffset, iz1, iu1, iv1);
+        t.vertexUV(x1, y0 - noZFightingOffset, iz0, iu0, iv1);
+        t.vertexUV(x2, y0 - noZFightingOffset, iz0, iu0, iv0);
+      }
+    }
+    if ((n && s) || (!w && !e && !n && !s)) {
+      t.vertexUV(x1, y1, z2, u0, v0);
+      t.vertexUV(x1, y0, z2, u0, v2);
+      t.vertexUV(x1, y0, z0, u2, v2);
+      t.vertexUV(x1, y1, z0, u2, v0);
+      t.vertexUV(x1, y1, z0, u0, v0);
+      t.vertexUV(x1, y0, z0, u0, v2);
+      t.vertexUV(x1, y0, z2, u2, v2);
+      t.vertexUV(x1, y1, z2, u2, v0);
+      if (up) {
+        t.vertexUV(ix1, y1, z2, iu1, iv2);
+        t.vertexUV(ix1, y1, z0, iu1, iv0);
+        t.vertexUV(ix0, y1, z0, iu0, iv0);
+        t.vertexUV(ix0, y1, z2, iu0, iv2);
+        t.vertexUV(ix1, y1, z0, iu1, iv2);
+        t.vertexUV(ix1, y1, z2, iu1, iv0);
+        t.vertexUV(ix0, y1, z2, iu0, iv0);
+        t.vertexUV(ix0, y1, z0, iu0, iv2);
+      } else {
+        if (y < (depth - 1) && level.isEmptyTile(x, y + 1, z - 1)) {
+          t.vertexUV(ix0, y1, z0, iu1, iv0);
+          t.vertexUV(ix0, y1, z1, iu1, iv1);
+          t.vertexUV(ix1, y1, z1, iu0, iv1);
+          t.vertexUV(ix1, y1, z0, iu0, iv0);
+          t.vertexUV(ix0, y1, z1, iu1, iv0);
+          t.vertexUV(ix0, y1, z0, iu1, iv1);
+          t.vertexUV(ix1, y1, z0, iu0, iv1);
+          t.vertexUV(ix1, y1, z1, iu0, iv0);
+        }
+        if (y < (depth - 1) && level.isEmptyTile(x, y + 1, z + 1)) {
+          t.vertexUV(ix0, y1, z1, iu0, iv1);
+          t.vertexUV(ix0, y1, z2, iu0, iv2);
+          t.vertexUV(ix1, y1, z2, iu1, iv2);
+          t.vertexUV(ix1, y1, z1, iu1, iv1);
+          t.vertexUV(ix0, y1, z2, iu0, iv1);
+          t.vertexUV(ix0, y1, z1, iu0, iv2);
+          t.vertexUV(ix1, y1, z1, iu1, iv2);
+          t.vertexUV(ix1, y1, z2, iu1, iv1);
+        }
+      }
+      if (down) {
+        t.vertexUV(ix1, y0, z2, iu1, iv2);
+        t.vertexUV(ix1, y0, z0, iu1, iv0);
+        t.vertexUV(ix0, y0, z0, iu0, iv0);
+        t.vertexUV(ix0, y0, z2, iu0, iv2);
+        t.vertexUV(ix1, y0, z0, iu1, iv2);
+        t.vertexUV(ix1, y0, z2, iu1, iv0);
+        t.vertexUV(ix0, y0, z2, iu0, iv0);
+        t.vertexUV(ix0, y0, z0, iu0, iv2);
+      } else {
+        if (y > 1 && level.isEmptyTile(x, y - 1, z - 1)) {
+          t.vertexUV(ix0, y0, z0, iu1, iv0);
+          t.vertexUV(ix0, y0, z1, iu1, iv1);
+          t.vertexUV(ix1, y0, z1, iu0, iv1);
+          t.vertexUV(ix1, y0, z0, iu0, iv0);
+          t.vertexUV(ix0, y0, z1, iu1, iv0);
+          t.vertexUV(ix0, y0, z0, iu1, iv1);
+          t.vertexUV(ix1, y0, z0, iu0, iv1);
+          t.vertexUV(ix1, y0, z1, iu0, iv0);
+        }
+        if (y > 1 && level.isEmptyTile(x, y - 1, z + 1)) {
+          t.vertexUV(ix0, y0, z1, iu0, iv1);
+          t.vertexUV(ix0, y0, z2, iu0, iv2);
+          t.vertexUV(ix1, y0, z2, iu1, iv2);
+          t.vertexUV(ix1, y0, z1, iu1, iv1);
+          t.vertexUV(ix0, y0, z2, iu0, iv1);
+          t.vertexUV(ix0, y0, z1, iu0, iv2);
+          t.vertexUV(ix1, y0, z1, iu1, iv2);
+          t.vertexUV(ix1, y0, z2, iu1, iv1);
+        }
+      }
+    } else if (n && !s) {
+      t.vertexUV(x1, y1, z0, u0, v0);
+      t.vertexUV(x1, y0, z0, u0, v2);
+      t.vertexUV(x1, y0, z1, u1, v2);
+      t.vertexUV(x1, y1, z1, u1, v0);
+      t.vertexUV(x1, y1, z1, u0, v0);
+      t.vertexUV(x1, y0, z1, u0, v2);
+      t.vertexUV(x1, y0, z0, u1, v2);
+      t.vertexUV(x1, y1, z0, u1, v0);
+      if (!e && !w) {
+        t.vertexUV(ix0, y1, z1, iu0, iv0);
+        t.vertexUV(ix0, y0, z1, iu0, iv2);
+        t.vertexUV(ix1, y0, z1, iu1, iv2);
+        t.vertexUV(ix1, y1, z1, iu1, iv0);
+        t.vertexUV(ix1, y1, z1, iu0, iv0);
+        t.vertexUV(ix1, y0, z1, iu0, iv2);
+        t.vertexUV(ix0, y0, z1, iu1, iv2);
+        t.vertexUV(ix0, y1, z1, iu1, iv0);
+      }
+      if (up || (y < (depth - 1) && level.isEmptyTile(x, y + 1, z - 1))) {
+        t.vertexUV(ix0, y1, z0, iu1, iv0);
+        t.vertexUV(ix0, y1, z1, iu1, iv1);
+        t.vertexUV(ix1, y1, z1, iu0, iv1);
+        t.vertexUV(ix1, y1, z0, iu0, iv0);
+        t.vertexUV(ix0, y1, z1, iu1, iv0);
+        t.vertexUV(ix0, y1, z0, iu1, iv1);
+        t.vertexUV(ix1, y1, z0, iu0, iv1);
+        t.vertexUV(ix1, y1, z1, iu0, iv0);
+      }
+      if (down || (y > 1 && level.isEmptyTile(x, y - 1, z - 1))) {
+        t.vertexUV(ix0, y0, z0, iu1, iv0);
+        t.vertexUV(ix0, y0, z1, iu1, iv1);
+        t.vertexUV(ix1, y0, z1, iu0, iv1);
+        t.vertexUV(ix1, y0, z0, iu0, iv0);
+        t.vertexUV(ix0, y0, z1, iu1, iv0);
+        t.vertexUV(ix0, y0, z0, iu1, iv1);
+        t.vertexUV(ix1, y0, z0, iu0, iv1);
+        t.vertexUV(ix1, y0, z1, iu0, iv0);
+      }
+    } else if (!n && s) {
+      t.vertexUV(x1, y1, z1, u1, v0);
+      t.vertexUV(x1, y0, z1, u1, v2);
+      t.vertexUV(x1, y0, z2, u2, v2);
+      t.vertexUV(x1, y1, z2, u2, v0);
+      t.vertexUV(x1, y1, z2, u1, v0);
+      t.vertexUV(x1, y0, z2, u1, v2);
+      t.vertexUV(x1, y0, z1, u2, v2);
+      t.vertexUV(x1, y1, z1, u2, v0);
+      if (!e && !w) {
+        t.vertexUV(ix1, y1, z1, iu0, iv0);
+        t.vertexUV(ix1, y0, z1, iu0, iv2);
+        t.vertexUV(ix0, y0, z1, iu1, iv2);
+        t.vertexUV(ix0, y1, z1, iu1, iv0);
+        t.vertexUV(ix0, y1, z1, iu0, iv0);
+        t.vertexUV(ix0, y0, z1, iu0, iv2);
+        t.vertexUV(ix1, y0, z1, iu1, iv2);
+        t.vertexUV(ix1, y1, z1, iu1, iv0);
+      }
+      if (up || (y < (depth - 1) && level.isEmptyTile(x, y + 1, z + 1))) {
+        t.vertexUV(ix0, y1, z1, iu0, iv1);
+        t.vertexUV(ix0, y1, z2, iu0, iv2);
+        t.vertexUV(ix1, y1, z2, iu1, iv2);
+        t.vertexUV(ix1, y1, z1, iu1, iv1);
+        t.vertexUV(ix0, y1, z2, iu0, iv1);
+        t.vertexUV(ix0, y1, z1, iu0, iv2);
+        t.vertexUV(ix1, y1, z1, iu1, iv2);
+        t.vertexUV(ix1, y1, z2, iu1, iv1);
+      }
+      if (down || (y > 1 && level.isEmptyTile(x, y - 1, z + 1))) {
+        t.vertexUV(ix0, y0, z1, iu0, iv1);
+        t.vertexUV(ix0, y0, z2, iu0, iv2);
+        t.vertexUV(ix1, y0, z2, iu1, iv2);
+        t.vertexUV(ix1, y0, z1, iu1, iv1);
+        t.vertexUV(ix0, y0, z2, iu0, iv1);
+        t.vertexUV(ix0, y0, z1, iu0, iv2);
+        t.vertexUV(ix1, y0, z1, iu1, iv2);
+        t.vertexUV(ix1, y0, z2, iu1, iv1);
+      }
+    }
+    return true;
+  }
+
   // OMIT(TileShape): tesselateRowTexture(tt, data, x, y, z)  TileRenderer.cpp:3165
 
   static canRender(renderShape: number): boolean {

@@ -8,7 +8,7 @@
  * partitionTileEntities 里的 std::map<TilePos, …> 按 TilePos::operator<（比较 hashCode）判等，所以用 hashCode 作键。
  */
 import { LOGE, LOGI } from '@mcpe/platform';
-import type { CompoundTag } from '../../../nbt/CompoundTag';
+import type { CompoundTag } from '@mcpe/nbt';
 import type { Level } from '../../Level';
 import { TilePos } from '../../TilePos';
 import { Tile } from '../Tile';

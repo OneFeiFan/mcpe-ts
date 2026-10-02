@@ -7,6 +7,7 @@ import type { LevelSource } from '../LevelSource';
 import { Material } from '../material/Material';
 import type { Player } from '../../entity/player/Player';
 import { Item } from '../../item/Item';
+import { ItemInstance } from '../../item/ItemInstance';
 import { Tile } from './Tile';
 import { TransparentTile } from './TransparentTile';
 
@@ -132,7 +133,7 @@ export class LeafTile extends TransparentTile {
     if (!level.isClientSide) {
       const item = player.inventory.getSelected();
       if (item && item.id === Item.shears.id) {
-        // DEFERRED(ItemInstance): popResource(level, x, y, z, ItemInstance(Tile::leaves->id, 1, data & LEAF_TYPE_MASK));
+        this.popResource(level, x, y, z, new ItemInstance(Tile.leaves.id, 1, data & LeafTile.LEAF_TYPE_MASK));
         return;
       }
     }
@@ -147,17 +148,16 @@ export class LeafTile extends TransparentTile {
     return Tile.sapling.id; // 依赖未注册：sapling（S11 阶段 C 注册）
   }
 
-  /** C++ 只重写 spawnResources(level, x, y, z, data, odds)：随机数调用与 C++ 相同，生成物品的两句在阶段 C 恢复 */
-  override spawnResources$6(level: Level, x: number, y: number, z: number, data: number, _odds: number): void {
+  /** C++ 只重写带 odds 的 spawnResources（随机数调用与 C++ 相同） */
+  override spawnResources(level: Level, x: number, y: number, z: number, data: number, _odds = 1): void {
     if (!level.isClientSide) {
       const chance = 20;
       if (level.random.nextInt(chance) === 0) {
         const type = this.getResource(data, level.random);
-        void type;
-        // DEFERRED(ItemInstance): popResource(level, x, y, z, ItemInstance(type, 1, getSpawnResourcesAuxValue(data)));
+        this.popResource(level, x, y, z, new ItemInstance(type, 1, this.getSpawnResourcesAuxValue(data)));
       }
       if ((data & LeafTile.LEAF_TYPE_MASK) === LeafTile.NORMAL_LEAF && level.random.nextInt(200) === 0) {
-        // DEFERRED(ItemInstance): popResource(level, x, y, z, ItemInstance(Item::apple, 1, 0));
+        this.popResource(level, x, y, z, new ItemInstance(Item.apple, 1, 0));
       }
     }
   }
@@ -167,7 +167,7 @@ export class LeafTile extends TransparentTile {
   }
 
   /** C++ getTexture(int face, int data) */
-  override getTexture$2(_face: number, data: number): number {
+  override getTextureForData(_face: number, data: number): number {
     if ((data & LeafTile.LEAF_TYPE_MASK) === LeafTile.EVERGREEN_LEAF) {
       return this === Tile.leaves ? this.tex + 5 * 16 : this.tex - 16;
     }

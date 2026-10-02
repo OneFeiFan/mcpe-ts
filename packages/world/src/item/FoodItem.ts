@@ -1,11 +1,11 @@
 // 1:1 移植自 src/world/item/FoodItem.h（S11 阶段 A，部分移植）。BowlFoodItem 继承它。
-// 部分：player->foodData.eat(this) 等食物数据（SimpleFoodData，S12）DEFERRED(Player)；按值返回 *instance 的副本 DEFERRED(ItemInstance)（阶段 C）。
+// 部分：player->foodData.eat(this) 等食物数据（SimpleFoodData，S12）DEFERRED(Player)。
 // 注释掉的 setEatEffect、getSaturationModifier 与效果字段不移植。
 import type { Player } from '../entity/player/Player';
 import type { Level } from '../level/Level';
 import { Item } from './Item';
-import type { ItemInstance } from './ItemInstance';
-import { UseAnim, type UseAnimation } from './UseAnim';
+import { ItemInstance } from './ItemInstance';
+import { UseAnim } from './UseAnim';
 
 export class FoodItem extends Item {
   private static readonly EAT_DURATION = Math.trunc(20 * 1.6);
@@ -30,15 +30,14 @@ export class FoodItem extends Item {
     instance.count--;
     // DEFERRED(Player): player->foodData.eat(this);
     level.playSound(player, 'random.burp', 0.5, level.random.nextFloat() * 0.1 + 0.9);
-    // DEFERRED(ItemInstance): return *instance;（按值复制）
-    return instance;
+    return new ItemInstance(instance); // C++ 按值返回 *instance 的副本
   }
 
   override getUseDuration(_itemInstance: ItemInstance): number {
     return FoodItem.EAT_DURATION;
   }
 
-  override getUseAnimation(): UseAnimation {
+  override getUseAnimation(): UseAnim.UseAnimation {
     return UseAnim.eat;
   }
 

@@ -36,7 +36,7 @@ export class FarmTile extends Tile {
   }
 
   /** C++ getTexture(int face, int data) */
-  override getTexture$2(face: number, data: number): number {
+  override getTextureForData(face: number, data: number): number {
     if (face === 1 && data > 0) return this.tex - 1;
     if (face === 1) return this.tex;
     return 2;

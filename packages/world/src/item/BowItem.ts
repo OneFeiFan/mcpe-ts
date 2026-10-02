@@ -3,7 +3,7 @@ import type { Player } from '../entity/player/Player';
 import type { Level } from '../level/Level';
 import { Item } from './Item';
 import type { ItemInstance } from './ItemInstance';
-import { UseAnim, type UseAnimation } from './UseAnim';
+import { UseAnim } from './UseAnim';
 
 export class BowItem extends Item {
   static readonly MAX_DRAW_DURATION = 20 * 1;
@@ -39,7 +39,7 @@ export class BowItem extends Item {
     return instance;
   }
 
-  override getUseAnimation(): UseAnimation {
+  override getUseAnimation(): UseAnim.UseAnimation {
     return UseAnim.bow;
   }
 }

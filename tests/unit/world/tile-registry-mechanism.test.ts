@@ -1,8 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   initMaterials, isUnregistered, Item, ItemCategory, Material, StoneSlabTileItem, Tile, TileItem,
-  type Level, type LevelSource, type TileClasses,
-} from '@mcpe/world';
+  type Level, type LevelSource, type TileClasses, TILE_CLASSES } from '@mcpe/world';
 
 // S3 注册表机制测试：用最小的替身子类代替 16 个方块类（它们由你按 1:1 移植），
 // 只验证本轮新写的非 1:1 部分——注入、逐行 DEFERRED、静态表、物品注册、重载分派、未注册哨兵。
@@ -12,10 +11,11 @@ class NonSolid extends Tile {
   override isSolidRender(): boolean { return false; }
 }
 const fakes: TileClasses = {
+  ...TILE_CLASSES,
   StoneTile: class extends Solid { constructor(id: number, tex: number) { super(id, tex, Material.stone); } },
   GrassTile: class extends Solid {
     constructor(id: number) { super(id, Material.dirt); this.tex = 3; }
-    override getTexture$2(face: number, data: number): number { return face === 1 ? 0 : data === 5 ? 77 : 3; }
+    override getTextureForData(face: number, data: number): number { return face === 1 ? 0 : data === 5 ? 77 : 3; }
   },
   DirtTile: class extends Solid { constructor(id: number, tex: number) { super(id, tex, Material.dirt); } },
   LiquidTileDynamic: class extends NonSolid { constructor(id: number, m: Material) { super(id, 14, m); } },
@@ -28,14 +28,16 @@ const fakes: TileClasses = {
   InvisibleTile: class extends Solid { constructor(id: number, tex: number, m: Material) { super(id, tex, m); } },
   TopSnowTile: class extends NonSolid {
     constructor(id: number, tex: number) { super(id, tex, Material.topSnow); }
-    override mayPlace$4(): boolean { return false; }
+    override mayPlaceAt(): boolean { return false; }
   },
   TileItem,
   StoneSlabTileItem,
   LeafTileItem: class extends TileItem {},
 };
 
-const REGISTERED = [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 18, 22, 26, 43, 44, 45, 48, 51, 60, 78, 87, 95, 112, 248, 249, 254, 255];
+/** C++ 注册的 89 个方块减去 S12 才注册的 20 个（依赖玩家、实体的 12 个类：网、草丛、楼梯、箱子、工作台、作物、熔炉、门、仙人掌、栅栏门、切石机、下界反应堆） */
+const S12_IDS = [30,  31,  53,  54,  58,  59,  61,  62,  64,  67,  71,  81,  107,  108,  109,  114,  128,  156,  245,  247];
+const REGISTERED = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  20,  21,  22,  24,  26,  35,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  56,  57,  60,  63,  65,  68,  73,  74,  78,  79,  80,  82,  83,  85,  87,  89,  95,  96,  98,  102,  103,  105,  112,  155,  246,  248,  249,  253,  254,  255];
 let errors: string[] = [];
 
 beforeAll(() => {
@@ -47,13 +49,13 @@ beforeAll(() => {
 });
 
 describe('Tile.initTiles（注入 + 逐行 DEFERRED）', () => {
-  it('恰好注册 27 个方块，其余槽位为空', () => {
+  it('恰好注册 69 个方块（S3 的 27 个 + S11 的 42 个），其余槽位为空', () => {
     const ids = Tile.tiles.map((t, i) => (t ? i : -1)).filter((i) => i >= 0);
     expect(ids).toEqual(REGISTERED);
   });
 
   it('DEFERRED 的具名字段是哨兵：访问即报错，并写明字段名', () => {
-    expect(isUnregistered(Tile.sapling)).toBe(true);
+    expect(isUnregistered(Tile.chest)).toBe(true); // S12 才注册
     expect(isUnregistered(Tile.rock)).toBe(false);
     expect(() => Tile.door_wood.id).toThrow(/Tile\.door_wood 尚未注册/);
     expect(isUnregistered(Item.apple)).toBe(true);
@@ -82,19 +84,19 @@ describe('Tile.initTiles（注入 + 逐行 DEFERRED）', () => {
     expect(Item.items[18]!.getDescriptionId()).toBe('tile.leaves'); // TileItem 取方块的描述
   });
 
-  it('缺 category 的方块照 C++ 打错误日志：netherrack、invisible_bedrock、info_reserved6', () => {
+  it('缺 category 的方块照 C++ 打错误日志：netherrack、invisible_bedrock、grass_carried、info_reserved6', () => {
     const ids = errors.map((e) => Number(/tile (\d+):/.exec(e)?.[1])).filter((n) => !Number.isNaN(n));
-    expect(ids).toEqual([87, 95, 255]);
+    expect(ids).toEqual([87, 95, 253, 255]); // 与 C++ 的输出一致（黄金样本 harness 的日志）
   });
 });
 
 describe('C++ 重载的分派', () => {
   const level = { getData: () => 5, getTile: () => 0 } as unknown as LevelSource & Level;
-  it('getTexture 三个重载分别落到 $1、$2、$5', () => {
-    expect(Tile.rock.getTexture(0)).toBe(1); // $1：tex
-    expect(Tile.grass.getTexture(1, 0)).toBe(0); // 子类重写的 $2
-    expect(Tile.grass.getTexture(level, 0, 0, 0, 2)).toBe(77); // $5 → $2(face, level.getData)
-    expect(Tile.grass.getTexture(2)).toBe(3); // $1 未重写：tex
+  it('getTexture 三个重载分别落到 getTextureForFace、getTextureForData、getTextureAt', () => {
+    expect(Tile.rock.getTexture(0)).toBe(1); // getTextureForFace：tex
+    expect(Tile.grass.getTexture(1, 0)).toBe(0); // 子类重写的 getTextureForData
+    expect(Tile.grass.getTexture(level, 0, 0, 0, 2)).toBe(77); // getTextureAt → getTextureForData(face, level.getData)
+    expect(Tile.grass.getTexture(2)).toBe(3); // getTextureForFace 未重写：tex
   });
   it('mayPlace 两个重载：$5 默认转到 $4', () => {
     expect(Tile.rock.mayPlace(level, 0, 0, 0)).toBe(true); // getTile 为 0
@@ -118,8 +120,8 @@ describe('Tile 基类行为', () => {
     expect(Tile.rock.shouldRenderFace(snowAbove, 0, 64, 0, 1)).toBe(false); // 需要 topSnow 已注册
   });
   it('transformToValidBlockId：未注册的 id 按坐标奇偶换成 info_updateGame1/2', () => {
-    expect(Tile.transformToValidBlockId(6, 1, 0, 0)).toBe(248);
-    expect(Tile.transformToValidBlockId(6, 0, 0, 0)).toBe(249);
+    expect(Tile.transformToValidBlockId(30, 1, 0, 0)).toBe(248); // 30（网）S12 才注册
+    expect(Tile.transformToValidBlockId(30, 0, 0, 0)).toBe(249);
     expect(Tile.transformToValidBlockId(1)).toBe(1);
   });
   it('getAABB 返回共享的 tmpBB；addAABBs 放入的是拷贝', () => {

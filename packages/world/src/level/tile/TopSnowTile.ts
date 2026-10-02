@@ -36,7 +36,7 @@ export class TopSnowTile extends Tile {
   }
 
   /** C++ mayPlace(Level* level, int x, int y, int z) */
-  override mayPlace$4(level: Level, x: number, y: number, z: number): boolean {
+  override mayPlaceAt(level: Level, x: number, y: number, z: number): boolean {
     const t = level.getTile(x, y - 1, z);
     if (t === 0 || !Tile.tiles[t]!.isSolidRender()) return false;
     return level.getMaterial(x, y - 1, z).blocksMotion();

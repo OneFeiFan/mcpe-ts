@@ -45,15 +45,15 @@ export class AppPlatform {
   /** C++ 的两个重载：virtual createUserInput() 与非虚的 createUserInput(int dialogId)（先 showDialog 再调前者） */
   createUserInput(dialogId?: number): void {
     if (dialogId === undefined) {
-      this.createUserInput$0();
+      this.createDefaultUserInput();
       return;
     }
     this.showDialog(dialogId);
-    this.createUserInput$0();
+    this.createDefaultUserInput();
   }
 
   /** C++ virtual void createUserInput() */
-  createUserInput$0(): void {}
+  createDefaultUserInput(): void {}
 
   is_big_endian(): boolean {
     const u = new Uint32Array([0x01020304]);

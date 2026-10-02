@@ -151,9 +151,9 @@ describe('MemoryLevelStorage', () => {
     st.createChunkStorage(dim);
     expect(warn).toHaveBeenCalledTimes(1);
     expect(st.prepareLevel(new FakeLevel())).toBeNull();
-    const spy = vi.spyOn(st, 'saveLevelData$2');
-    st.saveLevelData(new LevelData());
-    expect(spy).toHaveBeenCalledWith(expect.any(LevelData), null); // 单参数重载转给 $2，players 为 null
+    // C++ 的单参数重载以 players = NULL 转调双参数版本；TS 合并成一个可选参数的方法，省略时按 null 处理
+    expect(() => st.saveLevelData(new LevelData())).not.toThrow();
+    expect(() => st.saveLevelData(new LevelData(), null)).not.toThrow();
     expect(st.loadPlayer({} as never)).toBe(false);
     warn.mockRestore();
   });

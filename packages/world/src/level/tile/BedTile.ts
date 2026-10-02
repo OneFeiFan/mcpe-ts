@@ -38,7 +38,7 @@ export class BedTile extends DirectionalTile {
   }
 
   /** C++ getTexture(int face, int data) */
-  override getTexture$2(face: number, data: number): number {
+  override getTextureForData(face: number, data: number): number {
     if (face === Facing.DOWN) {
       return Tile.wood.tex;
     }
@@ -87,7 +87,7 @@ export class BedTile extends DirectionalTile {
       if (level.getTile(x + off[0], y, z + off[1]) !== this.id) {
         level.setTile(x, y, z, 0);
         if (!level.isClientSide) {
-          // DEFERRED(ItemInstance): popResource(level, x, y, z, ItemInstance(Item::bed));
+          // DEFERRED(Item): popResource(level, x, y, z, ItemInstance(Item::bed));  —— Item::bed（BedItem）S12 注册
         }
       }
     }
@@ -126,9 +126,9 @@ export class BedTile extends DirectionalTile {
     return false;
   }
 
-  override spawnResources$6(_level: Level, _x: number, _y: number, _z: number, data: number, _odds: number): void {
+  override spawnResources(_level: Level, _x: number, _y: number, _z: number, data: number, _odds = 1): void {
     if (!BedTile.isHeadPiece(data)) {
-      // DEFERRED(ItemInstance): popResource(level, x, y, z, ItemInstance(Item::bed));
+      // DEFERRED(Item): popResource(level, x, y, z, ItemInstance(Item::bed));  —— Item::bed（BedItem）S12 注册
     }
   }
 

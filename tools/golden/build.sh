@@ -27,4 +27,31 @@ printf '#pragma once\nclass ChunkPos { public: int x, z; };\n' > "$BS/world/leve
 "$CXX" -O0 -std=c++17 -fwrapv -I"$BS" -o "$TMP/harness_biomesource" "$ROOT/tools/golden/harness_biomesource.cpp" "$BS/world/level/biome/BiomeSource.cpp" \
   "$S/ImprovedNoise.cpp" "$S/PerlinNoise.cpp" "$S/Synth.cpp"
 "$TMP/harness_biomesource" "$OUT/biomesource.json"
+# ---- S11：方块、物品注册表（G11-1、G11-2），NBT 与 ItemInstance（G11-3、G11-4），本地化（G11-5）
+# 编译全部方块类、物品类与少量数据类；client 头文件要的 GL 类型由 stub/glad/glad.h 提供。
+# 这些源码引用了很多不在此处链接的函数（Level、Entity、网络……）。链接前先收集未定义符号，生成“陷阱替身”：
+# 被调用就执行 ud2（SIGILL），从而暴露真正需要的依赖；RakNet 的构造函数在静态初始化里被调用，替身直接返回。
+REG="$TMP/reg"; mkdir -p "$REG"
+RSRC=(world/level/material/Material.cpp world/level/tile/*.cpp world/item/*.cpp locale/I18n.cpp nbt/Tag.cpp util/Mth.cpp util/StringUtils.cpp
+      util/DataIO.cpp world/Direction.cpp world/level/LightLayer.cpp world/level/GrassColor.cpp world/level/FoliageColor.cpp
+      world/level/LevelConstants.cpp world/phys/HitResult.cpp platform/time.cpp)
+CF=(-O0 -std=c++17 -w -fpermissive -DPLATFORM_WEB -DNO_EGL -I"$REF/src" -I"$ROOT/tools/golden/stub")
+( cd "$REF/src" && for f in ${RSRC[@]}; do "$CXX" "${CF[@]}" -c "$f" -o "$REG/$(basename "$f" .cpp).o"; done )
+"$CXX" -c "$ROOT/tools/golden/stub/sigill_diag.cpp" -o "$REG/sigill_diag.oo"
+build_with_stubs() { # $1 = harness 名
+  "$CXX" "${CF[@]}" -c "$ROOT/tools/golden/$1.cpp" -o "$REG/$1.oo"
+  { "$CXX" -o /dev/null "$REG/$1.oo" "$REG"/*.o -Wl,--no-demangle 2>&1 || true; } | grep -oE "undefined reference to \`[^']+'" \
+    | sed "s/undefined reference to \`//; s/'$//" | sort -u \
+    | awk 'BEGIN{print ".section .note.GNU-stack,\"\",@progbits"; print ".text"} {b = ($0 ~ /RakNet/) ? "ret" : "ud2"; printf ".globl %s\n.type %s,@function\n%s:\n  %s\n", $0, $0, $0, b}' > "$REG/$1.stubs.s"
+  "$CXX" -c "$REG/$1.stubs.s" -o "$REG/$1.stubs.oo"
+  "$CXX" -no-pie -o "$REG/$1" "$REG/$1.oo" "$REG"/*.o "$REG/$1.stubs.oo" "$REG/sigill_diag.oo"
+}
+build_with_stubs harness_registry
+"$REG/harness_registry" "$TMP/registry_a.json" 2>/dev/null
+MALLOC_PERTURB_=165 "$REG/harness_registry" "$TMP/registry_b.json" 2>/dev/null
+node "$ROOT/tools/golden/merge-uninit.mjs" "$TMP/registry_a.json" "$TMP/registry_b.json" "$OUT/registry.json"
+build_with_stubs harness_nbt
+"$REG/harness_nbt" "$OUT/nbt.json" 2>/dev/null
+build_with_stubs harness_i18n
+"$REG/harness_i18n" "$OUT/i18n.json" "$REF/data" 2>/dev/null
 echo "黄金样本已写入 $OUT"

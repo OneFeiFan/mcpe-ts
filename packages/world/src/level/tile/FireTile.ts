@@ -113,7 +113,7 @@ export class FireTile extends Tile {
   }
 
   /** C++ mayPick() */
-  override mayPick$0(): boolean {
+  override mayPickBasic(): boolean {
     return false;
   }
 
@@ -132,7 +132,7 @@ export class FireTile extends Tile {
   }
 
   /** C++ mayPlace(Level* level, int x, int y, int z, unsigned char face) */
-  override mayPlace$5(level: Level, x: number, y: number, z: number, _face: number): boolean {
+  override mayPlaceOnFace(level: Level, x: number, y: number, z: number, _face: number): boolean {
     return level.isSolidBlockingTile(x, y - 1, z) || this.isValidFireLocation(level, x, y, z);
   }
 

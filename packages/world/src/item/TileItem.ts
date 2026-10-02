@@ -22,7 +22,7 @@ export class TileItem extends Item {
     return this.tileId;
   }
 
-  override useOn$10(instance: ItemInstance, player: Player, level: Level, x: number, y: number, z: number, face: number, clickX: number, clickY: number, clickZ: number): boolean {
+  override useOnByPlayer(instance: ItemInstance, player: Player, level: Level, x: number, y: number, z: number, face: number, clickX: number, clickY: number, clickZ: number): boolean {
     if (level.adventureSettings.immutableWorld) {
       const tile = Tile.tiles[this.tileId]!;
       if (this.tileId !== Tile.leaves.id && tile.material !== Material.plant) {
@@ -56,11 +56,11 @@ export class TileItem extends Item {
     return false;
   }
 
-  override getDescriptionId$1(_instance: ItemInstance | null): string {
+  override getDescriptionIdForInstance(_instance: ItemInstance | null): string {
     return Tile.tiles[this.tileId]!.getDescriptionId();
   }
 
-  override getDescriptionId$0(): string {
+  override getDescriptionIdForItem(): string {
     return Tile.tiles[this.tileId]!.getDescriptionId();
   }
 }

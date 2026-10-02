@@ -15,7 +15,7 @@ export class LeafTileItem extends TileItem {
     return auxValue | LeafTile.PERSISTENT_LEAF_BIT;
   }
 
-  override getIcon(itemAuxValue: number): number {
+  override getIconForAux(itemAuxValue: number): number {
     return Tile.leaves.getTexture(0, itemAuxValue);
   }
 
