@@ -39,21 +39,75 @@ import { CompoundTag, NbtIo } from '@mcpe/nbt';
 import { LOGE, LOGI, SEEK_END, SEEK_SET, getVfs } from '@mcpe/platform';
 import { BitStream, RakDataInput, RakDataOutput } from '@mcpe/util';
 import type { Player } from '../../entity/player/Player';
+import { LevelChunk } from '../chunk/LevelChunk';
 import type { ChunkStorage } from '../chunk/storage/ChunkStorage';
 import type { Dimension } from '../dimension/Dimension';
 import type { Level } from '../Level';
+import { Tile } from '../tile/Tile';
 import { LevelConstants } from '../LevelConstants';
 import { createFolderIfNotExists, getRemainingFileSize } from './FolderMethods';
 import { LevelData } from './LevelData';
 import { LevelStorage } from './LevelStorage';
 import type { PlayerData } from './PlayerData';
-import type { RegionFile } from './RegionFile';
+import { RegionFile } from './RegionFile';
+
+/**
+ * C++ 里这是文件内的 `static const int ChunkVersion_Light = 1;`。
+ * 它跟 level.dat 的 storageVersion 是**两个不同的东西**，但 load 里拿后者当版本号用了 —— 照抄。
+ * （另一个常量 ChunkVersion_Entity = 2 要到 B5c 的 loadEntities 才用到，那时再加。）
+ */
+const ChunkVersion_Light = 1;
 
 // C++ 里这四个是文件内的 const char* const，有内部链接；导出是因为 B5/B6 也要用同样的文件名
 export const fnLevelDatOld = 'level.dat_old';
 export const fnLevelDatNew = 'level.dat_new';
 export const fnLevelDat = 'level.dat';
 export const fnPlayerDat = 'player.dat';
+
+/**
+ * C++ 里这个类定义在 ExternalFileLevelStorage.cpp **文件内部**（不在头文件里），只有本文件的 load 用它。
+ * 这里对应地放在同一个文件、不导出。
+ *
+ * 两个函数都是"就地改区块里的方块数组"，返回有没有改过；调用方拿它决定 `unsaved`。
+ */
+class LevelConverters {
+  /** 老存档里羊毛是 101..115 这 15 个独立方块 id，后来合并成"羊毛 + 颜色数据"，这里做那个迁移 */
+  static v1_ClothIdToClothData(c: LevelChunk): boolean {
+    let changed = false;
+    const blocks = c.getBlockData()!;
+    const newTile = Tile.cloth.id;
+    for (let i = 0; i < 16 * 16 * 128; ++i) {
+      const oldTile = blocks[i]!;
+      if (oldTile >= 101 && oldTile <= 115) {
+        const color = 0xf - (oldTile - 101);
+        blocks[i] = newTile;
+        c.data.set(i, color);
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
+  /**
+   * 把"注册表里已经不存在"的方块 id 换成 info_updateGame1 / info_updateGame2。
+   *
+   * 【注意这个函数在 load 里是**无条件执行**的】原文的缩进看着像在 `if (loadedStorageVersion == 1)`
+   * 里面，但 C++ 的 if 不带花括号时只管第一条语句 —— 所以它其实每次都跑。见 load 里的注释。
+   */
+  static ReplaceUnavailableBlocks(c: LevelChunk): boolean {
+    let changed = false;
+    const blocks = c.getBlockData()!;
+    for (let i = 0; i < 16 * 16 * 128; ++i) {
+      const oldTile = blocks[i]!;
+      const newTile = Tile.transformToValidBlockId(oldTile);
+      if (oldTile !== newTile) {
+        blocks[i] = newTile;
+        changed = true;
+      }
+    }
+    return changed;
+  }
+}
 
 /**
  * PlayerData 在 player.dat 里的**内存布局**（ADAPTED(Cpp)）。
@@ -304,6 +358,94 @@ export class ExternalFileLevelStorage extends LevelStorage {
       // C++ 之后还 tag->deleteChildren(); delete tag; —— TS 交给 GC
     }
     return true;
+  }
+
+  /**
+   * 把一个区块写进 chunks.dat。
+   *
+   * 【regionFile 是懒打开的】第一次用到才 new + open；打不开就把指针清回 null 并直接返回 ——
+   * 于是下次调用会**再试一遍**。全类只有 save / load 两处这么做（loadEntities 之类是 B5c）。
+   *
+   * 区块在文件里的布局就是五个数组首尾相接，**没有长度前缀也没有版本号**：
+   *     CHUNK_BLOCK_COUNT    字节  方块 id
+   *     CHUNK_BLOCK_COUNT/2  字节  数据层（每方块 4 位）
+   *     CHUNK_BLOCK_COUNT/2  字节  天空光
+   *     CHUNK_BLOCK_COUNT/2  字节  方块光
+   *     CHUNK_COLUMNS        字节  updateMap
+   *
+   * 【写的时候不看版本】读的时候才按 loadedStorageVersion 决定读不读光照那两段（见 load）。
+   * 所以"用旧版本读、再用当前版本写回去"会把光照补上，反过来则会读错位。照抄，不修。
+   */
+  save(_level: Level, levelChunk: LevelChunk): void {
+    if (!this.regionFile) {
+      this.regionFile = new RegionFile(this.levelPath);
+      if (!this.regionFile.open()) {
+        this.regionFile = null;
+        return;
+      }
+    }
+    const chunkData = new BitStream();
+    chunkData.writeBytes(levelChunk.getBlockData()!, LevelConstants.CHUNK_BLOCK_COUNT);
+    chunkData.writeBytes(levelChunk.data.data!, Math.trunc(LevelConstants.CHUNK_BLOCK_COUNT / 2));
+    chunkData.writeBytes(
+      levelChunk.skyLight.data!,
+      Math.trunc(LevelConstants.CHUNK_BLOCK_COUNT / 2),
+    );
+    chunkData.writeBytes(
+      levelChunk.blockLight.data!,
+      Math.trunc(LevelConstants.CHUNK_BLOCK_COUNT / 2),
+    );
+    chunkData.writeBytes(levelChunk.updateMap, LevelConstants.CHUNK_COLUMNS);
+    this.regionFile.writeChunk(levelChunk.x, levelChunk.z, chunkData);
+  }
+
+  /**
+   * 从 chunks.dat 读一个区块出来。读不到（regionFile 打不开、或这个坐标没有区块）返回 null。
+   *
+   * 【光照那两段按版本读】`loadedStorageVersion >= ChunkVersion_Light(=1)` 才读天空光与方块光
+   * —— 老存档里没有这两段，硬读就会把后面的 updateMap 读错位。
+   */
+  load(level: Level, x: number, z: number): LevelChunk | null {
+    if (!this.regionFile) {
+      this.regionFile = new RegionFile(this.levelPath);
+      if (!this.regionFile.open()) {
+        this.regionFile = null;
+        return null;
+      }
+    }
+    const chunkData = this.regionFile.readChunk(x, z);
+    if (!chunkData) return null;
+
+    chunkData.resetReadPointer();
+    const half = Math.trunc(LevelConstants.CHUNK_BLOCK_COUNT / 2);
+    const blockIds = chunkData.readBytes(LevelConstants.CHUNK_BLOCK_COUNT);
+    const levelChunk = new LevelChunk(level, blockIds, x, z);
+    levelChunk.data.data!.set(chunkData.readBytes(half));
+    if (this.loadedStorageVersion >= ChunkVersion_Light) {
+      levelChunk.skyLight.data!.set(chunkData.readBytes(half));
+      levelChunk.blockLight.data!.set(chunkData.readBytes(half));
+    }
+    levelChunk.updateMap.set(chunkData.readBytes(LevelConstants.CHUNK_COLUMNS));
+    // C++ 这里还有 `delete[] chunkData->GetData(); delete chunkData;` —— 那是内存归属
+    // （readChunk 把数据的所有权交给调用方），TS 由 GC 负责。
+
+    let changed = false;
+    // 【原样保留一个"缺花括号的 if"】C++ 写的是：
+    //     if (loadedStorageVersion == 1)
+    //       changed |= LevelConverters::v1_ClothIdToClothData(levelChunk);
+    //       changed |= LevelConverters::ReplaceUnavailableBlocks(levelChunk);
+    // 不带花括号的 if 只管**第一条**语句，所以 ReplaceUnavailableBlocks **每次都跑**，
+    // 跟 loadedStorageVersion 无关。缩进骗人，但这是真实行为，照抄别"修好"。
+    if (this.loadedStorageVersion === 1) {
+      changed = LevelConverters.v1_ClothIdToClothData(levelChunk) || changed;
+    }
+    changed = LevelConverters.ReplaceUnavailableBlocks(levelChunk) || changed;
+
+    levelChunk.recalcHeightmap();
+    levelChunk.unsaved = changed;
+    levelChunk.terrainPopulated = true;
+    levelChunk.createdFromSave = true;
+    return levelChunk;
   }
 
   /**
