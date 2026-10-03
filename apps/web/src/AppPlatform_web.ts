@@ -62,8 +62,23 @@ export class AppPlatform_web extends AppPlatform {
     return this.canvas.height;
   }
 
+  /**
+   * 对照 `AppPlatform_glfw.h:135` 的 hideCursor —— **注意那个三元表达式是反的**：
+   *
+   *     int isHide = hide ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN;
+   *
+   * 形参叫 `hide`，可 `hide == true` 设的却是 NORMAL（**显示**）。所以这个参数的实际含义是"显示"。
+   * `GameRenderer` 是按 C++ 原句调的 `hideCursor(!rpiCursor)`：
+   *   - `rpiCursor` 默认 false → `hideCursor(true)` → 系统光标**可见**；
+   *   - 开了 `rpiCursor` → `hideCursor(false)` → 藏起系统光标，改由 `renderCursor` 画 `gui/cursor.png`。
+   * （基类 `AppPlatform::hideCursor` 是个空函数，win32/android 那边干脆什么都不做 —— 也是可见。）
+   *
+   * 【这个坑踩过】原来照着**形参名**写成了 `hide ? 'none' : ''`，于是每进一个界面系统光标就被藏掉，
+   * 而 `rpiCursor` 默认又是 false、游戏也不画自己的光标 —— 两边都没有，只能盲选。
+   * 教训：判据是参考实现的**行为**，不是它的变量名。名字骗人的时候以行为为准。
+   */
   override hideCursor(hide: boolean): void {
-    this.canvas.style.cursor = hide ? 'none' : '';
+    this.canvas.style.cursor = hide ? '' : 'none';
   }
 
   /**

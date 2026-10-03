@@ -64,9 +64,34 @@
 
 25. **纹理必须预加载**。`loadTexture` 只从 `apps/web/src/assets.ts` 的预加载表取。漏了一张，会沿用上一次绑定的纹理，表现为“画错了图”（S13 左上角残影 = 暗角画成了 icons.png）。用到新纹理就加进 `PRELOAD`；读文件（语言、存档）加进 `PRELOAD_FILES` 或走存储层。
 26. **同步 vs 异步**。C++ 的文件读写、`sleep` 是同步的；浏览器不能阻塞主线程。需要时改为启动时预加载 + 内存缓存 + 异步落盘，标 ADAPTED(Web) 并在文件头说明。
+27. **形参名会骗人 —— 判据永远是参考实现的"行为"，不是它的变量名。** 移植时最容易犯的错是
+   "照名字翻译"，而原版的名字本身可能是错的。
+   例（真踩过）：`AppPlatform_glfw.h` 的
+   ```cpp
+   virtual void hideCursor(bool hide) override {
+     int isHide = hide ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN;   // ← 反的
+     glfwSetInputMode(window, GLFW_CURSOR, isHide);
+   }
+   ```
+   形参叫 `hide`，`hide == true` 设的却是 NORMAL（**显示**）—— 参数的实际含义是"显示"。
+   照着名字写成 `hide ? 'none' : ''` 的结果是：进任何界面系统光标都被藏掉，而默认选项又关着
+   "游戏自己画光标"，两边都没有，只能盲选。
+   **遇到可疑的名字，去追调用方**：`GameRenderer` 调的是 `hideCursor(!rpiCursor)`，
+   默认 `rpiCursor = false` —— 这一句就说明了参数真意。查完把结论写进注释（名字照留，别改签名）。
+28. **画布坐标与鼠标坐标的单位必须一致（CSS 像素 ≠ 设备像素）。** 浏览器的事件坐标
+   （`clientX/Y`、`getBoundingClientRect`、`movementX/Y`）是 **CSS 像素**；
+   而 `canvas.width/height` 是 **设备像素**（= CSS × `devicePixelRatio`，为高分屏清晰而放大）。
+   把后者当"屏幕尺寸"喂给游戏（`getScreenWidth()`、`app.setSize()`）之后，鼠标就只能够到
+   屏幕左上角的 **1/dpr** —— Windows 缩放 125% 是 1/1.25，150% 是 1/1.5，右下角一片点不到。
+   **必须在入口处换算一次**：`设备像素 = CSS 像素 × (canvas.width / rect.width)`。
+   用这个比值而不是直接读 `devicePixelRatio`，画布尺寸不严格按 dpr 算时也不会跑偏。
+   ⚠ 这类 bug 在 `deviceScaleFactor: 1` 的无头测试里**完全测不出来** —— 见下面 F 节。
 
 ## F. 验证时的坑
 
 - 无头浏览器锁定鼠标指针后渲染极慢（每秒约 1 帧），截图会超时。场景里不要点击画面，用 `window.__app` 直接操作（`app.screenChooser.setScreen(id)`、`app.player.xRot = …`）。
 - 浏览器里的状态检查要看“值”，不要只看“没报错”。例：选中格子后读 `inventory.getItem(0).getName()`。
-- 截图一定要用图片查看工具打开看一眼。只看脚本退出码，发现不了“画错了图”这类问题。
+- 截图一定要用图片查看工具打开看一眼。只看脚本退出码，发现不了”画错了图”这类问题。
+- **`tools/verify/smoke.mjs` 默认 `deviceScaleFactor: 1`，会掩盖一整类高分屏 bug**（见第 28 条）。
+  要测坐标换算就跑 `SMOKE_DPR=1.5 node tools/verify/smoke.mjs tools/verify/scenarios/cursor.mjs`。
+  凡是”点得准不准””光标的坐标对不对”这类问题，**光看脚本过不过没用，要换 dpr 再跑一遍**。

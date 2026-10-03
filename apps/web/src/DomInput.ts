@@ -102,10 +102,28 @@ export class DomInput {
     }
   }
 
+  /**
+   * 一个 CSS 像素对应几个设备像素。
+   *
+   * 【为什么必须换算】浏览器给的鼠标坐标是 **CSS 像素**（相对画布的 clientX/Y），
+   * 而游戏里的"屏幕尺寸"是 **设备像素**：`AppPlatform_web.getScreenWidth()` 返回 `canvas.width`，
+   * 而 `main.ts` 里 `canvas.width = clientWidth * devicePixelRatio`（为了在高分屏上不糊）。
+   * dpr ≠ 1 时两者差一个系数，鼠标就只能够到屏幕左上角的 **1/dpr** ——
+   * 右下角那一大片按钮永远点不到（Windows 缩放 125% 就是 1/1.25，150% 就是 1/1.5）。
+   *
+   * 用 `canvas.width / rect.width` 而不是直接读 `devicePixelRatio`：它就是"一个 CSS 像素
+   * 对应几个设备像素"的实测值，画布尺寸不是严格按 dpr 算的时候也不会跑偏。
+   */
+  private pixelScale(): number {
+    const r = this.canvas.getBoundingClientRect();
+    return r.width > 0 ? this.canvas.width / r.width : 1;
+  }
+
   private pos(e: MouseEvent): [number, number] {
     if (this.locked) return [this.vx, this.vy];
     const r = this.canvas.getBoundingClientRect();
-    return [Math.round(e.clientX - r.left), Math.round(e.clientY - r.top)];
+    const s = this.pixelScale();
+    return [Math.round((e.clientX - r.left) * s), Math.round((e.clientY - r.top) * s)];
   }
 
   private onKey(e: KeyboardEvent, isDown: boolean): void {
@@ -131,10 +149,12 @@ export class DomInput {
       // ADAPTED(Web): 锁定状态下 Chromium 偶尔会给出一个不真实的大位移（光标被移到锁定点时按旧位置算出的差，例如正好等于
       //   −(画布中心坐标)）；刚进入锁定时的第一个事件也可能如此。一次事件里移动超过画布宽或高的三分之一不是真实的手部动作，丢弃。
       const r = this.canvas.getBoundingClientRect();
+      // 尖峰判据用 CSS 像素量（阈值说的是"手动了多少"，跟 dpr 无关）；累加进去的要是设备像素。
       const spike = Math.abs(e.movementX) > r.width / 3 || Math.abs(e.movementY) > r.height / 3;
       if (spike) return;
-      this.vx += e.movementX;
-      this.vy += e.movementY;
+      const s = this.pixelScale();
+      this.vx += e.movementX * s;
+      this.vy += e.movementY * s;
       Mouse.feed(MouseAction.ACTION_MOVE, 0, this.vx, this.vy, e.movementX, e.movementY);
       Multitouch.feed(0, 0, this.vx, this.vy, 0);
       return;
@@ -165,9 +185,9 @@ export class DomInput {
   private onLockChange(): void {
     const locked = document.pointerLockElement === this.canvas;
     if (locked && !this.locked) {
-      const r = this.canvas.getBoundingClientRect();
-      this.vx = Math.round(r.width / 2);
-      this.vy = Math.round(r.height / 2);
+      // 锁定时把虚拟光标放到屏幕正中 —— 用**设备像素**，跟上面 pos()/onMove() 一个单位
+      this.vx = Math.round(this.canvas.width / 2);
+      this.vy = Math.round(this.canvas.height / 2);
     }
     const was = this.locked;
     this.locked = locked;

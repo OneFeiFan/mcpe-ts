@@ -26,7 +26,10 @@ const PORT = Number(process.env.SMOKE_PORT ?? 5173);
 const URL_ = `http://127.0.0.1:${PORT}/`;
 // 画布尺寸由 viewport × devicePixelRatio 决定。GuiScale = 3 时，界面坐标 × 3 = 页面像素（见 browser-verify skill）。
 const VIEWPORT = { width: 960, height: 540 };
-const DEVICE_SCALE = 1;
+// 设备像素比。**默认 1，但这会掩盖一整类 bug**：画布是按 devicePixelRatio 放大的
+// （main.ts 里 canvas.width = clientWidth * dpr），而浏览器给的鼠标坐标是 CSS 像素 ——
+// dpr 不是 1 时两者就不是一个坐标系了。要测这类问题就跑 SMOKE_DPR=1.5。
+const DEVICE_SCALE = Number(process.env.SMOKE_DPR ?? 1);
 
 const scenarioPath = resolve(process.argv[2] ?? join(ROOT, 'tools/verify/scenarios/default.mjs'));
 if (!existsSync(scenarioPath)) {
