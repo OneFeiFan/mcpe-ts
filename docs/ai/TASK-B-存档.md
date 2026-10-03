@@ -102,17 +102,35 @@ C++ 用 `FILE*`（fopen/fread/fwrite/fseek/fclose）同步读写磁盘。浏览�
   再移植 `ExternalFileLevelStorage` 里的静态函数 `readLevelData`、`writeLevelData`、`readPlayerData`（level.dat 的文件头 + NBT）。
 - **黄金样本 G14-2**：固定 LevelData（种子、出生点、时间、游戏模式、世界名）写出的 level.dat 字节一致，读回来字段一致。
 
-## B5 ExternalFileLevelStorage（702 行，分三步）
+## B5 ExternalFileLevelStorage（702 行原始 / 485 行网页版，分四步）
 
-- B5a：构造函数、`prepareLevel`、`saveLevelData`、`savePlayer`/`loadPlayer`。
-- B5b：区块 `load`/`save`（LevelChunk 的序列化：方块、数据、光照数组）、`saveAll`、`saveGame`、`tick` 与 `savePendingUnsavedChunks`（未保存区块列表的时间戳用 `getTimeMs`）。
-  **黄金样本 G14-3**：一个固定内容的区块经 C++ `save` 写出的字节与 TS 一致；TS 读回后方块、数据、光照与原样一致。
-- B5c：`loadEntities`/`saveEntities`（实体文件，用 RegionFile 的第二个实例）。只保存已移植的实体（掉落物）；其余实体类型的创建在 EntityFactory 里标 DEFERRED。
-- 验收：三个样本通过；浏览器场景 “放一个方块 → 调用 `app.level.saveGame()` → 新建 Level 读同一个世界 → 方块还在”。
+**开工前实测发现三件事，改动了原拆分：**
 
-## B6 ExternalFileLevelStorageSource + FolderMethods（193 + 77 行）
+1. **`FolderMethods` 被提前到 B5a-1。** 原计划它在 B6，但 B5a 一开头就要用：
+   构造函数要 `createFolderIfNotExists` 建世界目录和 `players/` 子目录，`saveLevelData` 要
+   `exists`/`remove`/`rename`。而且 B4c 已经因为同样原因把 `getRemainingFileSize` **临时**塞进了
+   `ExternalFileLevelStorage`（注释写着"B6 时再挪过去"）—— 再拖下去这处临时代码会有三份。
+2. **`savePlayer`/`loadPlayer` 能真移植，不用标 DEFERRED。** 它们调 `player.saveWithoutId(tag)` 与
+   `player.load(tag)`；`Player` **不覆盖**这两个，只覆盖 `readAdditionalSaveData`/`addAdditonalSaveData`
+   —— 这四个在 TS 里都已经有且都没有 DEFERRED。
+3. **它们用的是 `std::ofstream`/`ifstream`，不是 `FILE*`**（B1 造的 `CFile` 只对应 `FILE*`），
+   需要单独一层 ADAPTED(Web) 映射。
+
+| 步骤      | 内容                                                                                                                                                                                          | 状态              |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **B5a-1** | `FolderMethods`（7 个函数，其中 3 个 POSIX 裸原语标 `OMIT(Web)`）+ `getRemainingFileSize` 归位 + 补上 `LevelData.createTagForPlayers` 里那处 `DEFERRED(Player)`                               | 完成（`e627cc5`） |
+| **B5a-2** | 构造函数、析构、`prepareLevel`、`saveLevelData`（成员 + 静态）、`savePlayer`/`loadPlayer`（各两个重载）+ **黄金样本 G14-4**（跑一遍完整 `saveLevelData`，记录目录里最终留下的文件与各自字节） | 待办              |
+| **B5b**   | 区块 `load`/`save`（LevelChunk 序列化：方块、数据、光照数组）、`saveAll`、`saveGame`、`tick` 与 `savePendingUnsavedChunks`（未保存区块列表的时间戳用 `getTimeMs`）。**黄金样本 G14-5**        | 待办              |
+| **B5c**   | `loadEntities`/`saveEntities`（实体文件，RegionFile 的第二个实例）。只保存已移植的实体（掉落物）；其余实体类型的创建在 EntityFactory 里标 DEFERRED                                            | 待办              |
+
+样本编号说明：G14-3 已被 B4d 的 `player.dat` 用掉，所以 B5b 的区块样本是 **G14-5**。
+
+- 验收：四个样本通过；浏览器场景 "放一个方块 → 调用 `app.level.saveGame()` → 新建 Level 读同一个世界 → 方块还在"。
+
+## B6 ExternalFileLevelStorageSource（193 行）
 
 - 世界列表（`getLevelList`，读每个世界的 level.dat 生成 LevelSummary，按 lastPlayed 排序）、`selectLevel`、`deleteLevel`、`renameLevel`、`isNewLevelIdAcceptable`。
+- `FolderMethods` 已在 B5a-1 做完，本步不再包含。
 - 路径：网页版的根目录固定为 `/games/com.mojang/minecraftWorlds/`（照 C++ 的 externalPath 结构，ADAPTED(Web)）。
 
 ## B7 接进 Minecraft

@@ -1,11 +1,11 @@
 /**
  * 1:1 移植自 src/world/level/storage/ExternalFileLevelStorage.cpp/.h。
  *
- * 【B4 做了三个静态函数】readLevelData / writeLevelData（level.dat）与 readPlayerData（player.dat）。
- * 其余部分（构造、prepareLevel、saveLevelData、区块的 save/load、实体读写、savePlayer）在 B5 分三步做。
- * 所以这里先建出这个类，B5 再往同一个类里加成员。
+ * 【进度】B4 做了三个静态函数：readLevelData / writeLevelData（level.dat）与 readPlayerData（player.dat）。
+ * B5a 补上构造、析构、prepareLevel、saveLevelData、savePlayer/loadPlayer。仍是 OMIT 的：
+ * 区块的 load/save、saveAll、saveGame、tick（B5b）与 loadEntities/saveEntities（B5c）。
  *
- * level.dat 的文件布局（两个函数一起看）：
+ * level.dat 的文件布局（readLevelData / writeLevelData 两个函数一起看）：
  *     int32 version     ← 存档版本号，同时决定载荷用哪种格式
  *     int32 size        ← 载荷字节数
  *     byte[size] data   ← version==1 走 v1_write 的裸字节，version>=2 走 NBT
@@ -14,17 +14,40 @@
  * 而 `writeLevelData` 只在 storageVersion == 1 时才用 v1_write。也就是说 **v1 那条分支在默认
  * 配置下是死代码** —— 但它是 C++ 里真实存在的分支，照原样留着（读的时候 version==1 仍要能读）。
  *
+ * 【R10 改名：静态与成员同名】C++ 里 saveLevelData / savePlayer / loadPlayer 各有**一个成员版和
+ * 一个静态版**（成员版转调静态版），同名。TS 一个类里不能静态与实例同名，按 R10 情形 B 处理：
+ * **成员版保留原名**（它是 LevelStorage 接口的实现，是"分派入口"），静态版按区分参数改名 ——
+ * 与手册里 `静态的 Player::animateRespawn(...)` → `animateRespawnFor` 同一做法：
+ *     saveLevelData(directory, levelData, players) → saveLevelDataTo
+ *     savePlayer(player, worldDir)                 → savePlayerTo
+ *     loadPlayer(player, worldDir)                 → loadPlayerFrom
+ *
+ * 【ADAPTED(Web)：C++ 的 ofstream/ifstream】savePlayer/loadPlayer 用的是 `std::ofstream` /
+ * `std::ifstream`，不是 `FILE*` —— B1 造的 CFile 对应的是后者，套不上。这里直接走 VirtualFS：
+ *   - ofstream(path, out|binary)：默认**截断**，打不开时 write **静默失败**（不抛、不报错）。
+ *     对应 open(path,'wb') 返回 null 时直接跳过写入 —— 效果一样，而且都不会凭空建出文件。
+ *   - ifstream：`if (!file.is_open()) return false;` 对应 open 返回 null 就 return false。
+ *
+ * 【析构】C++ 的 `~ExternalFileLevelStorage` 是 `delete regionFile; delete loadedLevelData;`。
+ * TS 没有析构，交给 GC —— 见文件末尾的说明。
+ *
  * 【getRemainingFileSize 已经挪回 FolderMethods】B4c 时它临时放在这里（注释写着"B6 时再挪过去"），
  * B5a 顺势把它和 FolderMethods 的其它函数一起归位了。
  */
-import { getVfs } from '@mcpe/platform';
-import { NbtIo } from '@mcpe/nbt';
+import { SharedConstants } from '@mcpe/core';
+import { CompoundTag, NbtIo } from '@mcpe/nbt';
+import { LOGE, LOGI, SEEK_END, SEEK_SET, getVfs } from '@mcpe/platform';
 import { BitStream, RakDataInput, RakDataOutput } from '@mcpe/util';
 import type { Player } from '../../entity/player/Player';
+import type { ChunkStorage } from '../chunk/storage/ChunkStorage';
+import type { Dimension } from '../dimension/Dimension';
+import type { Level } from '../Level';
 import { LevelConstants } from '../LevelConstants';
-import { getRemainingFileSize } from './FolderMethods';
+import { createFolderIfNotExists, getRemainingFileSize } from './FolderMethods';
 import { LevelData } from './LevelData';
+import { LevelStorage } from './LevelStorage';
 import type { PlayerData } from './PlayerData';
+import type { RegionFile } from './RegionFile';
 
 // C++ 里这四个是文件内的 const char* const，有内部链接；导出是因为 B5/B6 也要用同样的文件名
 export const fnLevelDatOld = 'level.dat_old';
@@ -88,7 +111,201 @@ function decodePlayerData(buf: Uint8Array, out: PlayerData): void {
   }
 }
 
-export class ExternalFileLevelStorage {
+export class ExternalFileLevelStorage extends LevelStorage {
+  private levelId: string;
+  private levelPath: string;
+  /** C++ 是 LevelData* 且可能为 NULL（两个文件都读不出来时就 delete 掉了），所以这里要能是 null */
+  private loadedLevelData: LevelData | null;
+  // regionFile / entitiesFile 只有 B5b/B5c 的区块与实体读写会用到，这里先按 C++ 的初始化列表演成 null
+  private regionFile: RegionFile | null = null;
+  private entitiesFile: RegionFile | null = null;
+  private level: Level | null = null;
+  private tickCount = 0;
+  private loadedStorageVersion: number;
+  // C++ 的 lastSavedEntitiesTick(-999999)；unsavedChunkList 是 B5b 的 tick 才用的，本步不声明
+  private lastSavedEntitiesTick = -999999;
+
+  /**
+   * 建目录、读 level.dat、再读 player.dat。
+   *
+   * 【原样保留】注意 `readLevelData` **读坏了也返回 true**（见那个函数的注释），所以"文件存在但内容
+   * 是坏的"这条路上，`loadedLevelData` 会保留一个全默认值的 LevelData，构造函数照样往下走。
+   * 只有"两个文件都打不开"才会把它丢掉、置 null。
+   */
+  constructor(levelId: string, fullPath: string) {
+    super(); // LevelStorage 没有显式构造函数，这里只是满足 TS 对派生类的要求
+    this.levelId = levelId;
+    this.levelPath = fullPath;
+    this.loadedLevelData = null;
+    this.loadedStorageVersion = SharedConstants.StorageVersion;
+
+    createFolderIfNotExists(this.levelPath);
+    const playerFolder = this.levelPath + '/players';
+    createFolderIfNotExists(playerFolder);
+    // C++ 在这里还算了 `std::string datFileName = levelPath + "/" + fnLevelDat;`，但**从头到尾没用到**
+    // （真正用的是下面的 levelFileName）。原样保留一个没人读的局部变量没有意义，这里略去。
+    const levelFileName = this.levelPath + '/' + fnPlayerDat;
+
+    this.loadedLevelData = new LevelData();
+    if (ExternalFileLevelStorage.readLevelData(this.levelPath, this.loadedLevelData)) {
+      this.loadedStorageVersion = this.loadedLevelData.getStorageVersion();
+      ExternalFileLevelStorage.readPlayerData(levelFileName, this.loadedLevelData);
+    } else {
+      // C++: delete loadedLevelData; loadedLevelData = NULL;
+      this.loadedLevelData = null;
+    }
+  }
+
+  /**
+   * C++ 的析构是 `delete regionFile; delete loadedLevelData;`。
+   * TS 没有析构函数，这两个对象交给 GC —— 不写等价物是**有意的**，不是什么都没做。
+   * （regionFile/entitiesFile 在 B5b/B5c 里才真正被打开。）
+   */
+
+  prepareLevel(_level: Level): LevelData | null {
+    this.level = _level;
+    return this.loadedLevelData;
+  }
+
+  /**
+   * C++ 的 `ChunkStorage* createChunkStorage(Dimension*) { return this; }` —— 返回自己。
+   *
+   * 【B5b 之前先挡一下】C++ 里这个类**同时继承 LevelStorage 和 ChunkStorage**，TS 只能单继承，
+   * 所以返回 this 时得断言一下：ChunkStorage 那一半（load / save / saveAll / tick / flush）要到
+   * B5b 才补齐。也就是说**现在这个对象还不能当 ChunkStorage 用**（去调 load 会 undefined）——
+   * B5b 补齐之后这个断言才名副其实。这个类要到 B7 才接进 Minecraft，之前没人会调它。
+   */
+  createChunkStorage(_dimension: Dimension): ChunkStorage {
+    return this as unknown as ChunkStorage;
+  }
+
+  /** C++ 的空实现：`void checkSession() {}` */
+  checkSession(): void {}
+
+  /** C++ 的空实现：`void closeAll() {}` */
+  closeAll(): void {}
+
+  /** C++ 的成员版 `saveLevelData(levelData, players)`：只是转到静态版，用 this.levelPath */
+  saveLevelData(levelData: LevelData, players: Player[] | null = null): void {
+    ExternalFileLevelStorage.saveLevelDataTo(this.levelPath, levelData, players);
+  }
+
+  /**
+   * 静态版 `saveLevelData(directory, levelData, players)` —— 真正干活的那个（R10 改名，见文件头）。
+   *
+   * 整个流程就是"写临时文件 → 挪旧的 → 改名 → 收拾"这一套原子写的套路：
+   *   1. 把 levelData 的 storageVersion 强制设成 SharedConstants::StorageVersion（所以存下去永远是当前版本）
+   *   2. 写 level.dat_new
+   *   3. 删 level.dat_old（无论存不存在）
+   *   4. 若 level.dat 存在：改名成 level.dat_old，再删一次 level.dat
+   *      —— 注意第 4 步的 `remove(datFile)` 在 rename 成功之后，看着多余（旧名已经没了），
+   *         照抄不动
+   *   5. 把 level.dat_new 改名成 level.dat，再删一次 level.dat_new（同样多余，照抄）
+   * 任一步失败就 LOGE 并**直接返回**（后面一步都不做）。
+   *
+   * 【路径里有双斜杠】传下去的 directory 末尾带 `/`，而 savePlayer 自己又拼 `/players/`，
+   * 于是玩家文件路径是 `levelPath//players//名字.dat`。VirtualFS.normalize 会合并连续的 `/`，
+   * 所以能正常工作 —— 这是 C++ 就有的写法，不改。
+   */
+  static saveLevelDataTo(levelPath: string, levelData: LevelData, players: Player[] | null): void {
+    const directory = levelPath + '/';
+    const tmpFile = directory + fnLevelDatNew;
+    const datFile = directory + fnLevelDat;
+    const oldFile = directory + fnLevelDatOld;
+
+    levelData.setStorageVersion(SharedConstants.StorageVersion);
+
+    if (!ExternalFileLevelStorage.writeLevelData(tmpFile, levelData, players)) return;
+
+    const vfs = getVfs();
+    vfs.remove(oldFile); // C++ 的 remove() 不管文件在不在都不报错
+
+    if (vfs.exists(datFile)) {
+      if (!vfs.rename(datFile, oldFile)) {
+        LOGE("Error@saveLevelData: Couldn't move savefile to level.dat_old\n");
+        return;
+      }
+      vfs.remove(datFile);
+    }
+    if (!vfs.rename(tmpFile, datFile)) {
+      LOGE("Error@saveLevelData: Couldn't move new file to level.dat\n");
+      return;
+    }
+    vfs.remove(tmpFile);
+
+    if (!players || players.length === 0) return;
+    for (const player of players) {
+      if (player !== null) {
+        ExternalFileLevelStorage.savePlayerTo(player, directory);
+      }
+    }
+  }
+
+  /** C++ 的成员版 `savePlayer(Player&)`：转到静态版，用 this.levelPath */
+  savePlayer(player: Player): void {
+    ExternalFileLevelStorage.savePlayerTo(player, this.levelPath);
+  }
+
+  /** C++ 的成员版 `loadPlayer(Player&)`：转到静态版，用 this.levelPath */
+  loadPlayer(player: Player): boolean {
+    return ExternalFileLevelStorage.loadPlayerFrom(player, this.levelPath);
+  }
+
+  /**
+   * 静态版 `savePlayer(player, worldDir)`：把玩家的 NBT 写进 `players/<名字>.dat`。
+   *
+   * 注意这个路径**不是** player.dat（那是 readPlayerData 读的遗留格式），两者不是一回事。
+   * C++ 用 `std::ofstream`，见文件头的 ADAPTED(Web) 说明。
+   */
+  static savePlayerTo(player: Player, worldDir: string): void {
+    const playerPath = worldDir + '/players/' + player.name + '.dat';
+    LOGI(`Saving player ${player.name} to ${playerPath}...\n`);
+
+    const data = new BitStream();
+    const buf = new RakDataOutput(data);
+    const playerTag = new CompoundTag();
+    player.saveWithoutId(playerTag);
+    NbtIo.write(playerTag, buf);
+    // C++ 之后还 tag->deleteChildren(); delete tag; —— TS 交给 GC
+
+    const file = getVfs().open(playerPath, 'wb');
+    // C++ 的 ofstream 打不开时 write 是静默失败的（不抛不报错），这里跳过写入 —— 一样不报错
+    if (!file) return;
+    file.write(data.getData(), 1, data.getNumberOfBytesUsed());
+    file.close();
+  }
+
+  /**
+   * 静态版 `loadPlayer(player, worldDir)`：读回 `players/<名字>.dat` 并 load 进 player。
+   *
+   * 【返回值】只有**文件打不开**才 false。文件打得开但 NBT 读不出来（tag 为 null）**照样返回 true**
+   * —— 照抄，调用方别拿它判断"玩家数据读到了没有"。
+   */
+  static loadPlayerFrom(player: Player, worldDir: string): boolean {
+    const playerPath = worldDir + '/players/' + player.name + '.dat';
+    LOGI(`Loading player ${player.name} from ${playerPath}...\n`);
+
+    const file = getVfs().open(playerPath, 'rb');
+    if (!file) return false;
+
+    // C++ 是 `vector<uint8_t> data((istreambuf_iterator...), ...)` 一次读完，再喂给 BitStream
+    file.seek(0, SEEK_END);
+    const size = file.tell();
+    file.seek(0, SEEK_SET);
+    const data = new Uint8Array(size);
+    file.read(data, 1, size);
+    file.close();
+
+    const bitStream = new BitStream(data, data.length, false);
+    const stream = new RakDataInput(bitStream);
+    const tag = NbtIo.read(stream);
+    if (tag) {
+      player.load(tag);
+      // C++ 之后还 tag->deleteChildren(); delete tag; —— TS 交给 GC
+    }
+    return true;
+  }
+
   /**
    * 先试 level.dat，失败再试 level.dat_old。
    *

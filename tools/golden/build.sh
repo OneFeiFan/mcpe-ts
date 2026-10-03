@@ -13,8 +13,8 @@
 #
 # 【节与公共目标文件的对应】给节名时只会编它真正需要的那组公共目标文件：
 #   $REG（30 个方块/物品/数据类） ← registry nbt i18n inventory entity font
-#   $LVL（121 个 world+nbt+locale+util）← collision leveldata playerdata
-#   raknet 的 7 个源文件 ← leveldata playerdata
+#   $LVL（121 个 world+nbt+locale+util）← collision leveldata playerdata saveleveldata
+#   raknet 的 7 个源文件 ← leveldata playerdata saveleveldata
 # 其余节各自单独编译，不依赖任何公共目标文件。
 set -euo pipefail
 
@@ -25,7 +25,7 @@ CXX="${CXX:-g++}"
 JOBS="${JOBS:-$(nproc 2>/dev/null || echo 4)}"
 
 # ---- 选择性生成：不给节名就全生成，给了就只生成这几节 ----
-ALL_SECTIONS=(random mth util s4 synth biomesource registry nbt i18n inventory entity collision font regionfile leveldata playerdata)
+ALL_SECTIONS=(random mth util s4 synth biomesource registry nbt i18n inventory entity collision font regionfile leveldata playerdata saveleveldata)
 SECTIONS=("$@")
 if [ "${#SECTIONS[@]}" -gt 0 ] && [ "${SECTIONS[0]}" = "--list" ]; then
     printf '%s\n' "${ALL_SECTIONS[@]}"
@@ -115,7 +115,7 @@ fi
 
 # 诊断用：撞到 ud2 陷阱桩时打印地址。放在 $TMP 而不是 $REG —— 因为 collision 与 leveldata
 # 只需要这一个文件，不需要 $REG 那 30 个方块/物品类，放 $REG 会白编一大堆。
-if any_want registry nbt i18n inventory entity collision font leveldata playerdata; then
+if any_want registry nbt i18n inventory entity collision font leveldata playerdata saveleveldata; then
     "$CXX" -c "$ROOT/tools/golden/stub/sigill_diag.cpp" -o "$TMP/sigill_diag.oo"
 fi
 
@@ -171,7 +171,7 @@ fi
 
 # ---- S12：碰撞轨迹（G12-2）。要用真实的 Level：world、nbt、locale、util 下的全部源码另建一组目标文件
 LVL="$TMP/lvl"
-if any_want collision leveldata playerdata; then
+if any_want collision leveldata playerdata saveleveldata; then
     mkdir -p "$LVL"
     lvl_pairs=()
     while IFS= read -r f; do lvl_pairs+=("$f" "${f//\//_}"); done < <(cd "$REF/src" && { find world nbt locale util -name '*.cpp' ! -name 'PerfRenderer.cpp'; echo platform/time.cpp; })
@@ -227,7 +227,7 @@ fi
 # 【位置有讲究】这组必须放在 collision **之后**才编进 $LVL：collision 的桩文件是按它链接
 # 当时的未定义符号生成的，提前把 raknet 的定义带进 $LVL，那些符号就不再未定义，
 # collision 的链接结果会变，夹具就可能跟着变。
-if any_want leveldata playerdata; then
+if any_want leveldata playerdata saveleveldata; then
     raknet_pairs=()
     for f in BitStream RakString RakMemoryOverride SimpleMutex GetTime RakNetTypes StringCompressor; do
         raknet_pairs+=("raknet/$f.cpp" "raknet_$f")
@@ -255,6 +255,18 @@ if want playerdata; then
     "$CXX" -c "$LVL/pd.stubs.s" -o "$LVL/pd.stubs.oo"
     "$CXX" -no-pie -o "$LVL/harness_playerdata" "$LVL/harness_playerdata.oo" "$LVL"/*.o "$LVL/pd.stubs.oo" "$TMP/sigill_diag.oo"
     "$LVL/harness_playerdata" "$OUT/playerdata.json"
+fi
+
+# ---- S-B5：saveLevelData 的"写临时文件 → 挪旧的 → 改名"流程（G14-4）。与 G14-3 同一组 $LVL 目标文件。
+# 这个函数的可观测结果全在文件系统上，所以夹具记的是每次调用后**目录里的文件清单与各自字节**。
+if want saveleveldata; then
+    "$CXX" "${CF[@]}" -c "$ROOT/tools/golden/harness_saveleveldata.cpp" -o "$LVL/harness_saveleveldata.oo"
+    { "$CXX" -o /dev/null "$LVL/harness_saveleveldata.oo" "$LVL"/*.o -Wl,--no-demangle 2>&1 || true; } | grep -oE "undefined reference to \`[^']+'" \
+      | sed "s/undefined reference to \`//; s/'$//" | sort -u \
+      | awk 'BEGIN{print ".section .note.GNU-stack,\"\",@progbits"; print ".text"} {b = ($0 ~ /RakNet/) ? "ret" : "ud2"; printf ".globl %s\n.type %s,@function\n%s:\n  %s\n", $0, $0, $0, b}' > "$LVL/sld.stubs.s"
+    "$CXX" -c "$LVL/sld.stubs.s" -o "$LVL/sld.stubs.oo"
+    "$CXX" -no-pie -o "$LVL/harness_saveleveldata" "$LVL/harness_saveleveldata.oo" "$LVL"/*.o "$LVL/sld.stubs.oo" "$TMP/sigill_diag.oo"
+    "$LVL/harness_saveleveldata" "$OUT/saveleveldata.json"
 fi
 
 if [ "${#SECTIONS[@]}" -eq 0 ]; then
