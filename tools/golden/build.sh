@@ -25,7 +25,7 @@ CXX="${CXX:-g++}"
 JOBS="${JOBS:-$(nproc 2>/dev/null || echo 4)}"
 
 # ---- 选择性生成：不给节名就全生成，给了就只生成这几节 ----
-ALL_SECTIONS=(random mth util s4 synth biomesource optionsfile registry nbt i18n inventory entity collision font regionfile leveldata playerdata saveleveldata chunk entities)
+ALL_SECTIONS=(random mth util s4 synth biomesource optionsfile registry nbt i18n inventory entity collision font regionfile leveldata playerdata saveleveldata chunk entities randomlevelsource)
 SECTIONS=("$@")
 if [ "${#SECTIONS[@]}" -gt 0 ] && [ "${SECTIONS[0]}" = "--list" ]; then
     printf '%s\n' "${ALL_SECTIONS[@]}"
@@ -121,7 +121,7 @@ fi
 
 # 诊断用：撞到 ud2 陷阱桩时打印地址。放在 $TMP 而不是 $REG —— 因为 collision 与 leveldata
 # 只需要这一个文件，不需要 $REG 那 30 个方块/物品类，放 $REG 会白编一大堆。
-if any_want registry nbt i18n inventory entity collision font leveldata playerdata saveleveldata chunk entities; then
+if any_want registry nbt i18n inventory entity collision font leveldata playerdata saveleveldata chunk entities randomlevelsource; then
     "$CXX" -c "$ROOT/tools/golden/stub/sigill_diag.cpp" -o "$TMP/sigill_diag.oo"
 fi
 
@@ -177,7 +177,7 @@ fi
 
 # ---- S12：碰撞轨迹（G12-2）。要用真实的 Level：world、nbt、locale、util 下的全部源码另建一组目标文件
 LVL="$TMP/lvl"
-if any_want collision leveldata playerdata saveleveldata chunk entities; then
+if any_want collision leveldata playerdata saveleveldata chunk entities randomlevelsource; then
     mkdir -p "$LVL"
     lvl_pairs=()
     while IFS= read -r f; do lvl_pairs+=("$f" "${f//\//_}"); done < <(cd "$REF/src" && { find world nbt locale util -name '*.cpp' ! -name 'PerfRenderer.cpp'; echo platform/time.cpp; })
@@ -300,6 +300,26 @@ if want entities; then
     "$CXX" -c "$LVL/ent.stubs.s" -o "$LVL/ent.stubs.oo"
     "$CXX" -no-pie -o "$LVL/harness_entities" "$LVL/harness_entities.oo" "$LVL"/*.o "$LVL/ent.stubs.oo" "$TMP/sigill_diag.oo"
     "$LVL/harness_entities" "$OUT/entities.json"
+fi
+
+# ---- C-1：普通维度的地形生成（G15-1）。与 G14-4/5/6 同一组 $LVL 目标文件。
+#
+# 这一段与别的 $LVL 节只差一件事：**它不需要任何替身**。
+# RandomLevelSource 要的 Level 是真的 —— harness 里用一个 `GoldenStorage : MemoryLevelStorage`
+# 就能建起来（Level 的构造函数会自己 `dimension->init(this)`，BiomeSource 跟着出来），
+# 做法与 harness_collision.cpp 完全一样。所以 `world/level/levelgen/*.cpp` 直接吃 $LVL
+# 那份按真 Level.h 编出来的目标文件就行，不必另编一组、也不必排除什么。
+#
+# 夹具记四份快照（高度场 / prepareHeights 后 / buildSurfaces 后 / 洞穴峡谷后），
+# 外加一份自检：真 `getChunk` 的结果与上面那条重放路径逐字节比对，对不上就说明重放不忠实。
+if want randomlevelsource; then
+    "$CXX" "${CF[@]}" -c "$ROOT/tools/golden/harness_randomlevelsource.cpp" -o "$LVL/harness_rls.oo"
+    { "$CXX" -o /dev/null "$LVL/harness_rls.oo" "$LVL"/*.o -Wl,--no-demangle 2>&1 || true; } | grep -oE "undefined reference to \`[^']+'" \
+      | sed "s/undefined reference to \`//; s/'$//" | sort -u \
+      | awk 'BEGIN{print ".section .note.GNU-stack,\"\",@progbits"; print ".text"} {b = ($0 ~ /RakNet/) ? "ret" : "ud2"; printf ".globl %s\n.type %s,@function\n%s:\n  %s\n", $0, $0, $0, b}' > "$LVL/rls.stubs.s"
+    "$CXX" -c "$LVL/rls.stubs.s" -o "$LVL/rls.stubs.oo"
+    "$CXX" -no-pie -o "$LVL/harness_randomlevelsource" "$LVL/harness_rls.oo" "$LVL"/*.o "$LVL/rls.stubs.oo" "$TMP/sigill_diag.oo"
+    "$LVL/harness_randomlevelsource" "$OUT/randomlevelsource.json"
 fi
 
 if [ "${#SECTIONS[@]}" -eq 0 ]; then
