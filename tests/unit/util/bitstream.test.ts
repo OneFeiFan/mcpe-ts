@@ -5,24 +5,26 @@ const bytes = (u: Uint8Array): number[] => [...u];
 
 describe('util/bitstream', () => {
   describe('写入的字节布局', () => {
-    it('writeInt 是 4 字节小端（对应 C++ 的 Write(int)）', () => {
+    it('writeInt 是 4 字节**大端**（对应 C++ 的 Write(int)）', () => {
+      // 是黄金样本 G14-2 发现这里该是大端的：模板 Write<T> 会先调 ReverseBytes 再交给 WriteBits。
+      // 我最初只读了 WriteBits 那条路（原样 memcpy），漏了交换那一步。
       const bs = new BitStream();
       bs.writeInt(0x04030201);
       expect(bs.getNumberOfBytesUsed()).toBe(4);
-      expect(bytes(bs.getData())).toEqual([0x01, 0x02, 0x03, 0x04]);
+      expect(bytes(bs.getData())).toEqual([0x04, 0x03, 0x02, 0x01]);
     });
 
     it('writeInt 写负数按补码', () => {
       const bs = new BitStream();
       bs.writeInt(-2);
-      expect(bytes(bs.getData())).toEqual([0xfe, 0xff, 0xff, 0xff]);
+      expect(bytes(bs.getData())).toEqual([0xff, 0xff, 0xff, 0xfe]);
     });
 
-    it('writeLong 是 8 字节小端（x86-64 LP64 下 C++ 的 long）', () => {
+    it('writeLong 是 8 字节**大端**（x86-64 LP64 下 C++ 的 long）', () => {
       const bs = new BitStream();
       bs.writeLong(0x0001020304050607); // 见下条：要挑一个 JS number 存得下的值
       expect(bs.getNumberOfBytesUsed()).toBe(LONG_BYTES);
-      expect(bytes(bs.getData())).toEqual([7, 6, 5, 4, 3, 2, 1, 0]);
+      expect(bytes(bs.getData())).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
     });
 
     it('超过 2^53 的值存不进 JS number —— 这是已知限制，不是静默出错', () => {
@@ -41,10 +43,10 @@ describe('util/bitstream', () => {
       expect(bs2.readLong()).toBe(fine);
     });
 
-    it('writeUint16 是 2 字节小端（RakString 的长度前缀）', () => {
+    it('writeUint16 是 2 字节**大端**（RakString 的长度前缀，它也走 Write<T>）', () => {
       const bs = new BitStream();
       bs.writeUint16(0x0201);
-      expect(bytes(bs.getData())).toEqual([0x01, 0x02]);
+      expect(bytes(bs.getData())).toEqual([0x02, 0x01]);
     });
 
     it('writeBytes 原样写入，不补任何东西', () => {
@@ -56,11 +58,12 @@ describe('util/bitstream', () => {
   });
 
   describe('RakString 的序列化格式', () => {
-    it('长度前缀 2 字节 + 裸字节，不带结尾 0', () => {
-      // 参考 RakString::Serialize（RakString.cpp:980-985）
+    it('长度前缀 2 字节（大端）+ 裸字节，不带结尾 0', () => {
+      // 参考 RakString::Serialize（RakString.cpp:980-985）：先 bs->Write(l)（无符号短整型，
+      // 走 Write<T> 因此是大端），再 WriteAlignedBytes（原样）。
       const bs = new BitStream();
       bs.writeString('ab');
-      expect(bytes(bs.getData())).toEqual([2, 0, 0x61, 0x62]);
+      expect(bytes(bs.getData())).toEqual([0, 2, 0x61, 0x62]);
     });
 
     it('空串只有长度前缀', () => {
@@ -72,7 +75,7 @@ describe('util/bitstream', () => {
     it('非 ASCII 按字节算长度', () => {
       const bs = new BitStream();
       bs.writeString('世界'); // 每个汉字 3 字节
-      expect(bytes(bs.getData())).toEqual([6, 0, 0xe4, 0xb8, 0x96, 0xe7, 0x95, 0x8c]);
+      expect(bytes(bs.getData())).toEqual([0, 6, 0xe4, 0xb8, 0x96, 0xe7, 0x95, 0x8c]);
     });
 
     it('读回来字符串一致（含非 ASCII）', () => {
@@ -131,7 +134,7 @@ describe('util/bitstream', () => {
       expect(bs.getNumberOfBytesUsed()).toBe(8); // 借用时长度就是传入的长度
       expect(bs.getData().buffer).toBe(raw.buffer); // 同一块内存，没拷贝
       bs.resetReadPointer();
-      expect(bs.readInt()).toBe(0x04030201);
+      expect(bs.readInt()).toBe(0x01020304); // 大端：字节 01 02 03 04 读出来是 0x01020304
       expect(bytes(bs.getData())).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
       expect(bs.getData().buffer).toBe(raw.buffer); // 同一块内存，不是副本
     });
@@ -140,7 +143,7 @@ describe('util/bitstream', () => {
       const raw = new Uint8Array([1, 2, 3, 4]);
       const bs = new BitStream(raw, 4, true);
       bs.resetReadPointer();
-      expect(bs.readInt()).toBe(0x04030201);
+      expect(bs.readInt()).toBe(0x01020304); // 大端：字节 01 02 03 04 读出来是 0x01020304
       expect(bs.getData().buffer).not.toBe(raw.buffer);
     });
 

@@ -61,6 +61,7 @@ export * from './level/storage/LevelData.js';
 export * from './level/storage/LevelStorage.js';
 export * from './level/storage/MemoryLevelStorage.js';
 export * from './level/storage/RegionFile.js';
+export * from './level/storage/ExternalFileLevelStorage.js';
 export * from './level/chunk/EmptyLevelChunk.js';
 export * from './level/TickNextTickData.js';
 export * from './level/LightUpdate.js';

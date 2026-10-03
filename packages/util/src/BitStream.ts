@@ -2,12 +2,18 @@
  * RakNet::BitStream 的最小子集（ADAPTED(Network)，S-B2）。只实现存档代码实际用到的那几个重载，
  * 不是把 RakNet 的位流搬过来（它还有压缩、增量、向量编码等一大批用不上的东西）。
  *
- * 【字节序：小端、字节对齐】从参考源码确认，不是猜的：
- * RakNet 的 BitStream::WriteBits 在「当前字节对齐 且 要写的是 8 的整数倍位」时直接走
- * `memcpy(data + numberOfBitsUsed / 8, inByteArray, numberOfBitsToWrite / 8)`
- * （src/raknet/BitStream.cpp:424-428），也就是**把变量在内存里的样子原样拷进去**。
- * 而所有调用点（整数、字节数组、RakString 的裸字节）都满足这个条件，所以落盘格式就是
- * 宿主内存序 —— 在本项目生成黄金样本的 x86-64 Linux 上是**小端**。
+ * 【字节序：两条路不一样，别搞混】这一点最初读错过，是黄金样本 G14-2 抓出来的：
+ *
+ *   1. **模板 `Write<T>(整数)` → 大端。** 它先判断 `DoEndianSwap()`，为真时调 `ReverseBytes`
+ *      把变量翻过来，再交给 WriteBits（src/raknet/BitStream.h:1277-1283）。
+ *      `DoEndianSwap()` = `IsNetworkOrder() == false`，x86-64 小端机上恒为真；
+ *      而且 RakNetDefines.h:24 那行 `#define __BITSTREAM_NATIVE_END` 是**被注释掉的**，
+ *      所以交换一直是开着的。`v1_write` 的那几个整数和 RakString 的长度前缀都走这条路。
+ *   2. **`Write(const char*, n)` 与 `WriteBits` → 原样（宿主序，x86-64 上是小端）。**
+ *      WriteBits 在字节对齐且长度是 8 的倍数时直接 memcpy（BitStream.cpp:424-428）。
+ *      NBT 走的就是这条（RakDataOutput::writeBytes → WriteBits）。
+ *
+ * 所以：writeBytes 原样、writeInt/writeLong/writeUint16 **大端**。
  *
  * 【宽度必须显式指定】C++ 靠 `sizeof(T)` 决定写几个字节，TS 没有这个信息，所以这里拆成
  * writeInt / writeLong / writeUint16 几个方法，由移植时逐个字段判断（对应 C++ 的字段类型）：
@@ -81,35 +87,35 @@ export class BitStream {
 
   // ---- 写 ----
 
-  /** 对应 C++ 的 `Write(int)`；4 字节小端 */
+  /** 对应 C++ 的 `Write(int)`；**4 字节大端**（见文件头：模板 Write<T> 会做端序交换） */
   writeInt(value: number): void {
     this.ensure(this.writeOffset + 4);
     new DataView(this.data.buffer, this.data.byteOffset, this.data.byteLength).setInt32(
       this.writeOffset,
       value | 0,
-      true,
+      false,
     );
     this.writeOffset += 4;
   }
 
-  /** 对应 C++ 的 `Write(long)`；8 字节小端（见文件头关于宽度的说明） */
+  /** 对应 C++ 的 `Write(long)`；**8 字节大端**（宽度说明见文件头） */
   writeLong(value: number): void {
     this.ensure(this.writeOffset + LONG_BYTES);
     new DataView(this.data.buffer, this.data.byteOffset, this.data.byteLength).setBigInt64(
       this.writeOffset,
       BigInt(Math.trunc(value)),
-      true,
+      false,
     );
     this.writeOffset += LONG_BYTES;
   }
 
-  /** RakString::Serialize 内部用；存档代码不直接调 */
+  /** RakString::Serialize 内部用（写长度）；**2 字节大端**，因为它也是走 Write<T> */
   writeUint16(value: number): void {
     this.ensure(this.writeOffset + 2);
     new DataView(this.data.buffer, this.data.byteOffset, this.data.byteLength).setUint16(
       this.writeOffset,
       value & 0xffff,
-      true,
+      false,
     );
     this.writeOffset += 2;
   }
@@ -137,7 +143,7 @@ export class BitStream {
     this.need(4);
     const v = new DataView(this.data.buffer, this.data.byteOffset, this.data.byteLength).getInt32(
       this.readOffset,
-      true,
+      false,
     );
     this.readOffset += 4;
     return v;
@@ -149,7 +155,7 @@ export class BitStream {
       this.data.buffer,
       this.data.byteOffset,
       this.data.byteLength,
-    ).getBigInt64(this.readOffset, true);
+    ).getBigInt64(this.readOffset, false);
     this.readOffset += LONG_BYTES;
     return Number(v);
   }
@@ -158,7 +164,7 @@ export class BitStream {
     this.need(2);
     const v = new DataView(this.data.buffer, this.data.byteOffset, this.data.byteLength).getUint16(
       this.readOffset,
-      true,
+      false,
     );
     this.readOffset += 2;
     return v;

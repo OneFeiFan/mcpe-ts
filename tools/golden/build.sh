@@ -92,4 +92,24 @@ cp "$ROOT/tools/golden/stub/platform/log.h" "$RF/platform/"
 "$CXX" -O0 -std=c++17 -I"$RF" -o "$TMP/harness_regionfile" \
   "$ROOT/tools/golden/harness_regionfile.cpp" "$RF/world/level/storage/RegionFile.cpp"
 "$TMP/harness_regionfile" "$OUT/regionfile.json"
+# ---- S-B4：level.dat 的文件格式（G14-2）。
+# 与 G14-1 不同，这里用**真实的** RakNet::BitStream —— NBT 载荷就是它写出来的，用替身就没意义了。
+# 复用上面碰撞样本那一组 $LVL 目标文件（注意 *.o 不会匹配到 .oo 结尾的 harness 与桩）。
+#
+# 【必须编下面这一整组，不能只编 BitStream + RakString】这是踩过的坑：上面的桩规则按
+# `/RakNet/` 匹配才给 `ret`，而 RakString 用到的内存分配器是 `rakMalloc_Ex` / `rakFree_Ex` /
+# `rakRealloc_Ex` / `notifyOutOfMemory` —— 全是小写 rak 开头、**不含 "RakNet" 字样**，
+# 于是被打成 ud2 陷阱。RakString 有静态初始化，程序还没进 main 就踩上去，表现为段错误
+# （或者说是 SIGILL），而且 level.dat 已经 fopen 出来了、留个 0 字节空文件，很误导人。
+# 解法是老老实实把这组源文件编进来，别指望桩。
+for f in BitStream RakString RakMemoryOverride SimpleMutex GetTime RakNetTypes StringCompressor; do
+    ( cd "$REF/src" && "$CXX" "${CF[@]}" -c "raknet/$f.cpp" -o "$LVL/raknet_$f.o" )
+done
+"$CXX" "${CF[@]}" -c "$ROOT/tools/golden/harness_leveldata.cpp" -o "$LVL/harness_leveldata.oo"
+{ "$CXX" -o /dev/null "$LVL/harness_leveldata.oo" "$LVL"/*.o -Wl,--no-demangle 2>&1 || true; } | grep -oE "undefined reference to \`[^']+'" \
+  | sed "s/undefined reference to \`//; s/'$//" | sort -u \
+  | awk 'BEGIN{print ".section .note.GNU-stack,\"\",@progbits"; print ".text"} {b = ($0 ~ /RakNet/) ? "ret" : "ud2"; printf ".globl %s\n.type %s,@function\n%s:\n  %s\n", $0, $0, $0, b}' > "$LVL/ld.stubs.s"
+"$CXX" -c "$LVL/ld.stubs.s" -o "$LVL/ld.stubs.oo"
+"$CXX" -no-pie -o "$LVL/harness_leveldata" "$LVL/harness_leveldata.oo" "$LVL"/*.o "$LVL/ld.stubs.oo" "$REG/sigill_diag.oo"
+"$LVL/harness_leveldata" "$OUT/leveldata.json"
 echo "黄金样本已写入 $OUT"
