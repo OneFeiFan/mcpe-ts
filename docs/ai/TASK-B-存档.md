@@ -174,11 +174,55 @@ B5b-2 那半（tick / savePendingUnsavedChunks / saveGame / saveAll 要真 Level
 
 - 验收：四个样本通过；浏览器场景 "放一个方块 → 调用 `app.level.saveGame()` → 新建 Level 读同一个世界 → 方块还在"。
 
-## B6 ExternalFileLevelStorageSource（193 行）
+## B6 ExternalFileLevelStorageSource（193 行）—— 已完成
 
-- 世界列表（`getLevelList`，读每个世界的 level.dat 生成 LevelSummary，按 lastPlayed 排序）、`selectLevel`、`deleteLevel`、`renameLevel`、`isNewLevelIdAcceptable`。
+- 世界列表（`getLevelList`，读每个世界的 level.dat 生成 LevelSummary）、`selectLevel`、
+  `deleteLevel`、`renameLevel`、`isNewLevelIdAcceptable`。
 - `FolderMethods` 已在 B5a-1 做完，本步不再包含。
 - 路径：网页版的根目录固定为 `/games/com.mojang/minecraftWorlds/`（照 C++ 的 externalPath 结构，ADAPTED(Web)）。
+- **新建了两个文件**：`LevelStorageSource.ts`（基类 + `LevelSummary` + `TempLevelId`，
+  顺带把 `levelSummaryLess`（C++ 的 `operator<`，其实是倒序）也移进来）与
+  `ExternalFileLevelStorageSource.ts`。
+
+### B6 记录
+
+**开工前发现 B1 已经替这一步铺好了路**：`VirtualFS.deleteDirectory` 在 B1 就按 C++
+`platform/file.h` 的语义造好了，注释里还点名了 `ExternalFileLevelStorageSource::deleteLevel`。
+所以这一步没动 FolderMethods。
+
+**三处原样保留的怪癖（都写了测试钉住）：**
+
+1. **`renameLevel` 里那个 `if` 是个空块**：
+   ```cpp
+   bool couldRename = false;
+   if (hasTempDirectory() && isTempFile) {
+   }
+     couldRename = couldRename || rename(_renFULLPATH(old), _renFULLPATH(new)) == 0;
+   ```
+   花括号里什么都没有 —— 改名在**外面**、无条件执行。而 `_renFULLPATH` 这个宏
+   `#define _renFULLPATH(s) ((basePath + "/" + s).c_str())` **只拼 basePath**，根本不看
+   tmpBasePath。所以临时世界（`_LastJoinedServer`）的改名也发生在 basePath 里，
+   `isTempFile` 算出来除了喂这个空条件没人用。
+2. **`readLevelData` 读坏了也算成功**，于是"目录在、level.dat 是坏的"照样会往世界列表里塞
+   一条**字段全默认**（名字空、lastPlayed 0）的摘要。世界列表里因此可能出现空白条目。
+3. **`deleteLevel` 的兜底分支不是死代码**：`DeleteDirectory` 不是真递归（它把每一项交给
+   `remove`，而 `remove` 删不掉非空子目录 —— 这条 B1 就照抄了），所以世界目录里只要有
+   `region/` 这种带文件的子目录，整目录删就失败，转到"逐个删 chunks.dat / player.dat /
+   level.dat"—— 而那三个 remove **不会碰子目录**，留下一个残缺目录。
+
+**两处 ADAPTED(Web) 偏离（台账 244 → 246）：**
+
+1. `getLevelList` 失败时 C++ 会打 `_errno()`，VirtualFS 没有错误码可取（B5a-1 已标 `OMIT(Web)`）。
+2. C++ 的 `readdir` 会把 `.` 和 `..` 也交给循环（它们同样是 `DT_DIR`），由**操作系统**把
+   `<basePath>/./level.dat` 解析回 `<basePath>/level.dat`。VirtualFS 的路径规范化明确不解析
+   `.` / `..`，那两次探测在这里必然打不开、什么也不会加 —— **结果一样，机制不同**，所以不试。
+
+**测试里又踩了一次同一个坑**：`makeWorld` 忘了设 `storageVersion`（默认 0，而 `readLevelData`
+只认 `==1` 与 `>=2`，版本 0 静默什么都不读），症状是"世界列表里名字是空的"。B5a-2 记过这条，
+这次又中招 —— 已经写进测试助手的注释里。
+
+**没写黄金样本**：这一步的产物是"哪些世界被列出来、删/改名之后文件系统长什么样"，
+不是字节格式；字节那一层（level.dat）已由 G14-2 / G14-4 逐字节盖住。用单元测试盖（20 条）。
 
 ## B7 接进 Minecraft
 
