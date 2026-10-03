@@ -124,6 +124,16 @@
   照抄，别"顺手补上"。NBT 用 `putByte` 存 int，读回时**没有 `& 0xff`**（与 Arrow/Throwable 不一致，原样保留）。
 - **D2**：⚠ `SandTile` 那条写法**和 `HeavyTile` 不一样**：没有 `!isClientSide` 守卫、不传 data、
   不调 `falling()`。别照 HeavyTile 抄。
+  > **D2 做完后补记（实测）**：`SandTile` 这个类在参考源码里**根本没被实例化** ——
+  > `Tile.cpp:173` 是 `sand = (new HeavyTile(12, 18))->init()...`，**游戏里的沙子是 HeavyTile**。
+  > 真正 `public HeavyTile` 的子类只有 `GravelTile`。所以：
+  > 上面那条"写法不一样"是对**那个类**说的，接线的确要照原样接（1:1 的规矩），
+  > 但**世界里跑的沙子走的是 HeavyTile 那条路**。详见 progress.md 的 D2 段。
+  >
+  > **D2 还暴露出一个 D0 没算到的缺口**：实体**渲染器**没移植 →
+  > **降落的方块在画面上看不见**，落地才重新出现。补 `FallingTileRenderer` 约 30 行 + 一行注册
+  > （`FallingTileRenderer.cpp` 32 行；`TileRenderer` 3227 行已移植）。
+  > 要不要把它提到 D3 之前，等用户定。
 - **D3**：`Level.explode` 里 `ExplodePacket` 那句照旧 `DEFERRED(Network)`。
 - **D4**：`TntTile.ts:38-40` 的 `wasExploded` **连着一条随机数调用**
   （`level.random.nextInt(primed.life/4) + primed.life/8`），必须一起还原，不然随机流会错位。
