@@ -304,22 +304,28 @@ B5b-2 那半（tick / savePendingUnsavedChunks / saveGame / saveAll 要真 Level
 （联机，`OMIT(Network)`）真正继承 `ScrolledSelectionList`；两个 `StartMenuScreen` 里的 `#include`
 是没人用的残留。所以 B8 一个屏都不需要它。
 
-### 拆分（八小步，每步单独提交、单独汇报）
+### 拆分（十小步，每步单独提交、单独汇报）
 
-| 步骤      | 内容                                                     | 说明                                   |
-| --------- | -------------------------------------------------------- | -------------------------------------- |
-| **B8a**   | `TweenData` + `RolledSelectionListH`                     | 横向翻牌列表（滚动、惯性、拖动、补间） |
-| **B8b-1** | `LargeImageButton` + `ConfirmScreen`                     | 两个小零件                             |
-| **B8b-2** | `TextBox` + `AppPlatform_web` 的隐藏 input               | 文本框（含 `ADAPTED(Web)` 的输入接线） |
-| **B8c**   | `Touch::StartMenuScreen` + 接线                          | **这一步起浏览器里能看见东西**         |
-| **B8d**   | `ProgressScreen` + `Touch::SelectWorldScreen`            | 世界列表能翻牌、能选、能删             |
-| **B8e**   | `ChooseLevelScreen` + `SimpleChooseLevelScreen`          | 新建世界                               |
-| **B8f**   | `Minecraft::leaveGame` + 暂停界面 "Quit to title"        | 收尾                                   |
-| **B8g**   | 场景扩写（新建世界 → 放方块 → 回标题 → 重进 → 方块还在） | 受下面待决问题影响                     |
+| 步骤      | 内容                                                           | 说明                                   |
+| --------- | -------------------------------------------------------------- | -------------------------------------- |
+| **B8a**   | `TweenData` + `RolledSelectionListH`                           | 横向翻牌列表（滚动、惯性、拖动、补间） |
+| **B8b-1** | `LargeImageButton` + `ConfirmScreen`                           | 两个小零件                             |
+| **B8b-2** | `TextBox` + `AppPlatform_web` 的隐藏 input                     | 文本框（含 `ADAPTED(Web)` 的输入接线） |
+| **B8c**   | `Touch::StartMenuScreen` + 接线                                | **这一步起浏览器里能看见东西**         |
+| **B8d-1** | `ProgressScreen`                                               | "正在生成世界"那个屏                   |
+| **B8d-2** | `Touch::WorldSelectionList`                                    | 世界列表本体（翻牌、补间、贴图）       |
+| **B8d-3** | `Touch::SelectWorldScreen` + `Touch::DeleteWorldScreen` + 接线 | 「开始游戏」真的能点进去               |
+| **B8e**   | `ChooseLevelScreen` + `SimpleChooseLevelScreen`                | 新建世界                               |
+| **B8f**   | `Minecraft::leaveGame` + 暂停界面 "Quit to title"              | 收尾                                   |
+| **B8g**   | 场景扩写（新建世界 → 放方块 → 回标题 → 重进 → 方块还在）       | 受下面待决问题影响                     |
 
 **B8b 为什么又拆**：`LargeImageButton` + `ConfirmScreen` 约 130 行，`TextBox` 加上网页版的输入接线
 （隐藏 `<input>`）和它自己的测试约 270 行 —— 合起来 ~400，超了「约 300 行」的线，
 按 B5 的先例拆成 `B8b-1` / `B8b-2`。
+
+**B8d 为什么又拆**：`TouchSelectWorldScreen.cpp` 一个文件里装了三个类、605 行（外加
+`ProgressScreen` 99 行），合起来 ~700。按类拆成三小步：`ProgressScreen` / 翻牌列表 /
+外层屏 + 删除确认。三个类在 C++ 里都在同一个 .cpp，但职责清楚，拆开不别扭。
 
 前几步画面上看不到，只能靠单测；B8c 起开截图验证。**验证菜单的办法**：场景里直接
 `__app.screenChooser.setScreen(ScreenId.SCREEN_STARTMENU)` 把菜单调出来截图（不用走启动入口）。
