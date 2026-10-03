@@ -120,10 +120,12 @@ C++ 用 `FILE*`（fopen/fread/fwrite/fseek/fclose）同步读写磁盘。浏览�
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
 | **B5a-1** | `FolderMethods`（7 个函数，其中 3 个 POSIX 裸原语标 `OMIT(Web)`）+ `getRemainingFileSize` 归位 + 补上 `LevelData.createTagForPlayers` 里那处 `DEFERRED(Player)`                               | 完成（`e627cc5`） |
 | **B5a-2** | 构造函数、析构、`prepareLevel`、`saveLevelData`（成员 + 静态）、`savePlayer`/`loadPlayer`（各两个重载）+ **黄金样本 G14-4**（跑一遍完整 `saveLevelData`，记录目录里最终留下的文件与各自字节） | 完成（`0b96738`） |
-| **B5b**   | 区块 `load`/`save`（LevelChunk 序列化：方块、数据、光照数组）、`saveAll`、`saveGame`、`tick` 与 `savePendingUnsavedChunks`（未保存区块列表的时间戳用 `getTimeMs`）。**黄金样本 G14-5**        | 待办              |
+| **B5b-1** | `LevelConverters`（两个转换函数）+ 区块 `save`/`load`（LevelChunk 序列化：方块、数据、光照数组）+ **黄金样本 G14-5**                                                                          | 完成（`f5d1ed0`） |
+| **B5b-2** | `tick`、`savePendingUnsavedChunks`（未保存区块列表的时间戳用 `getTimeMs`）、`saveGame`、`saveAll`；顺手把 `createChunkStorage` 返回 `this` 时缺的 ChunkStorage 那一半补上                     | 待办              |
 | **B5c**   | `loadEntities`/`saveEntities`（实体文件，RegionFile 的第二个实例）。只保存已移植的实体（掉落物）；其余实体类型的创建在 EntityFactory 里标 DEFERRED                                            | 待办              |
 
-样本编号说明：G14-3 已被 B4d 的 `player.dat` 用掉，所以 B5b 的区块样本是 **G14-5**。
+样本编号说明：G14-3 已被 B4d 的 `player.dat` 用掉，所以区块样本是 **G14-5**。
+B5b-2 那半（tick / savePendingUnsavedChunks / saveGame / saveAll 要真 Level + 区块缓存）不再加样本，用单元测试盖。
 
 - 验收：四个样本通过；浏览器场景 "放一个方块 → 调用 `app.level.saveGame()` → 新建 Level 读同一个世界 → 方块还在"。
 

@@ -2,8 +2,10 @@
  * 1:1 移植自 src/world/level/storage/ExternalFileLevelStorage.cpp/.h。
  *
  * 【进度】B4 做了三个静态函数：readLevelData / writeLevelData（level.dat）与 readPlayerData（player.dat）。
- * B5a 补上构造、析构、prepareLevel、saveLevelData、savePlayer/loadPlayer。仍是 OMIT 的：
- * 区块的 load/save、saveAll、saveGame、tick（B5b）与 loadEntities/saveEntities（B5c）。
+ * B5a 补上构造、析构、prepareLevel、saveLevelData、savePlayer/loadPlayer；
+ * B5b 补上区块的 save/load、tick、savePendingUnsavedChunks、saveAll。
+ * **只剩 loadEntities / saveEntities（B5c）** —— 相关的三处已经是 DEFERRED(Entity)：
+ * tick 里的"存实体"分支、saveGame 整体、createChunkStorage 的断言还差 saveEntities 一个方法。
  *
  * level.dat 的文件布局（readLevelData / writeLevelData 两个函数一起看）：
  *     int32 version     ← 存档版本号，同时决定载荷用哪种格式
@@ -36,7 +38,7 @@
  */
 import { SharedConstants } from '@mcpe/core';
 import { CompoundTag, NbtIo } from '@mcpe/nbt';
-import { LOGE, LOGI, SEEK_END, SEEK_SET, getVfs } from '@mcpe/platform';
+import { LOGE, LOGI, SEEK_END, SEEK_SET, getTimeMs, getVfs } from '@mcpe/platform';
 import { BitStream, RakDataInput, RakDataOutput } from '@mcpe/util';
 import type { Player } from '../../entity/player/Player';
 import { LevelChunk } from '../chunk/LevelChunk';
@@ -57,6 +59,17 @@ import { RegionFile } from './RegionFile';
  * （另一个常量 ChunkVersion_Entity = 2 要到 B5c 的 loadEntities 才用到，那时再加。）
  */
 const ChunkVersion_Light = 1;
+
+/**
+ * C++ 的 `UnsavedLevelChunk`（ExternalFileLevelStorage.h 里那个 struct）：
+ * 一个"等着被存下去"的区块。`pos` 是它在区块缓存里的扁平下标。
+ */
+interface UnsavedLevelChunk {
+  pos: number;
+  /** 进列表的时间（`RakNet::TimeMS` → `getTimeMs()`）；挑"最老的"就是按它比 */
+  addedToList: number;
+  chunk: LevelChunk;
+}
 
 // C++ 里这四个是文件内的 const char* const，有内部链接；导出是因为 B5/B6 也要用同样的文件名
 export const fnLevelDatOld = 'level.dat_old';
@@ -176,7 +189,12 @@ export class ExternalFileLevelStorage extends LevelStorage {
   private level: Level | null = null;
   private tickCount = 0;
   private loadedStorageVersion: number;
-  // C++ 的 lastSavedEntitiesTick(-999999)；unsavedChunkList 是 B5b 的 tick 才用的，本步不声明
+  /**
+   * C++ 的 `std::list<UnsavedLevelChunk> unsavedChunkList`：等着一批批存下去的区块。
+   * 用数组代替 —— 这里只需要"追加""按下标删""从头扫"，list 的迭代器稳定性用不上。
+   */
+  private unsavedChunkList: UnsavedLevelChunk[] = [];
+  /** C++ 的 lastSavedEntitiesTick(-999999)；只有 saveEntities 会写它（B5c） */
   private lastSavedEntitiesTick = -999999;
 
   /**
@@ -224,10 +242,11 @@ export class ExternalFileLevelStorage extends LevelStorage {
   /**
    * C++ 的 `ChunkStorage* createChunkStorage(Dimension*) { return this; }` —— 返回自己。
    *
-   * 【B5b 之前先挡一下】C++ 里这个类**同时继承 LevelStorage 和 ChunkStorage**，TS 只能单继承，
-   * 所以返回 this 时得断言一下：ChunkStorage 那一半（load / save / saveAll / tick / flush）要到
-   * B5b 才补齐。也就是说**现在这个对象还不能当 ChunkStorage 用**（去调 load 会 undefined）——
-   * B5b 补齐之后这个断言才名副其实。这个类要到 B7 才接进 Minecraft，之前没人会调它。
+   * 【B5c 之前还差一个函数】C++ 里这个类**同时继承 LevelStorage 和 ChunkStorage**，TS 只能单继承，
+   * 所以返回 this 时得断言一下。ChunkStorage 那一半共六个：load / save / saveAll / tick / flush
+   * 已经补齐（B5b-1 与 B5b-2），**只差 saveEntities**（B5c）。所以现在这个对象还不能真的当
+   * ChunkStorage 用 —— B5c 补上之后这个断言才完全名副其实。这个类要到 B7 才接进 Minecraft，
+   * 在那之前没人会调它。
    */
   createChunkStorage(_dimension: Dimension): ChunkStorage {
     return this as unknown as ChunkStorage;
@@ -447,6 +466,108 @@ export class ExternalFileLevelStorage extends LevelStorage {
     levelChunk.createdFromSave = true;
     return levelChunk;
   }
+
+  /**
+   * 每 tick 调一次，做两件节奏不同的事：
+   *   1. **每 1000 tick**（且已经 prepareLevel 过）：把区块缓存 16×16 扫一遍，凡是标了
+   *      `unsaved` 的收进"待保存列表"并把标记清掉；然后挑最老的存两个。
+   *   2. **距上次存实体超过 60 秒**（`60 * TicksPerSecond` = 1200 tick）：存实体。
+   *
+   * 【`savePendingUnsavedChunks(2)` 在 if 里面】只有每 1000 tick 那一拍会顺带存两个区块，
+   * 平时一个都不存。照抄。
+   *
+   * 【已经在列表里的会"重新排队"】扫到同一个 pos 时是**更新时间戳**而不是再 push 一条，
+   * 所以一个区块在列表里最多出现一次。
+   */
+  tick(): void {
+    this.tickCount++;
+    if (this.tickCount % 1000 === 0 && this.level) {
+      LOGI('Saving level...\n');
+      for (let z = 0; z < LevelConstants.CHUNK_CACHE_WIDTH; z++) {
+        for (let x = 0; x < LevelConstants.CHUNK_CACHE_WIDTH; x++) {
+          const chunk = this.level.getChunk(x, z);
+          if (chunk && chunk.unsaved) {
+            const pos = x + z * LevelConstants.CHUNK_CACHE_WIDTH;
+            let found = false;
+            for (const prev of this.unsavedChunkList) {
+              if (prev.pos === pos) {
+                prev.addedToList = getTimeMs();
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              this.unsavedChunkList.push({ pos, addedToList: getTimeMs(), chunk });
+            }
+            chunk.unsaved = false;
+          }
+        }
+      }
+      this.savePendingUnsavedChunks(2);
+    }
+    if (this.tickCount - this.lastSavedEntitiesTick > 60 * SharedConstants.TicksPerSecond) {
+      // DEFERRED(Entity): saveEntities(level, NULL);  ExternalFileLevelStorage.cpp:263
+      //   saveEntities 是 B5c 的。它顺带会把 lastSavedEntitiesTick 设成 tickCount（那里 527/590 行），
+      //   本步没做，所以这个分支现在每 tick 都成立 —— B5c 补上之后才恢复正常节奏。
+    }
+  }
+
+  /**
+   * 从"待保存列表"里挑最老的几个存下去。**返回的是"存的个数 + 1"**。
+   *
+   * 【返回值多一个，原样保留】原文是 `while (++count <= maxCount && !list.empty())` ——
+   * 先自增再判断，所以存满 maxCount 个之后 count 要到 maxCount + 1 才退出；列表提前空掉时
+   * 也是"存的个数 + 1"。`saveAll` 拿它打日志，于是那句 "Saving %d additional chunks."
+   * 报的数字总是比实际多一个。照抄，别"修好"。
+   *
+   * 【maxCount < 0 表示不限】saveAll 就是传 -1。
+   */
+  savePendingUnsavedChunks(maxCount: number): number {
+    if (maxCount < 0) maxCount = this.unsavedChunkList.length;
+    let count = 0;
+    while (++count <= maxCount && this.unsavedChunkList.length > 0) {
+      let removeIdx = 0;
+      let oldest = this.unsavedChunkList[0]!;
+      for (let i = 0; i < this.unsavedChunkList.length; i++) {
+        const e = this.unsavedChunkList[i]!;
+        // 严格小于：时间戳一样时保持先碰到的那个，与 C++ 的 `<` 一致
+        if (e.addedToList < oldest.addedToList) {
+          oldest = e;
+          removeIdx = i;
+        }
+      }
+      const chunk = oldest.chunk;
+      this.unsavedChunkList.splice(removeIdx, 1);
+      // save 根本不用 level 这个参数（C++ 那边传的也是成员 level，函数体里没读过它）
+      this.save(this.level!, chunk);
+    }
+    return count;
+  }
+
+  /**
+   * C++ 的 `ChunkStorage::saveAll` 那一半，加一句"再清空待保存列表"。
+   *
+   * 【为什么把基类那两行抄过来】C++ 里这个类同时继承 LevelStorage 与 ChunkStorage，
+   * `ChunkStorage::saveAll(level, levelChunks)` 是显式限定调用的。TS 只能单继承
+   * （这里继承的是 LevelStorage），所以照抄基类那两行 —— 它本来就是个两行的循环。
+   * 也正因为 saveAll 在 TS 的 LevelStorage 上并不存在，这里不能写 `override`。
+   */
+  saveAll(level: Level, levelChunks: LevelChunk[]): void {
+    for (let i = 0; i < levelChunks.length; ++i) this.save(level, levelChunks[i]!);
+    const numChunks = this.savePendingUnsavedChunks(-1);
+    LOGI(`Saving ${numChunks} additional chunks.\n`);
+  }
+
+  /**
+   * C++ 是 `saveEntities(level, NULL);` 一句 —— 整个都在 B5c。
+   * 基类 LevelStorage 的默认实现就是空的，这里覆盖只为把"还欠这一句"写明白。
+   */
+  override saveGame(_level: Level): void {
+    // DEFERRED(Entity): saveEntities(level, NULL);  ExternalFileLevelStorage.cpp:457
+  }
+
+  /** C++ 的空实现：`virtual void flush() {}` */
+  flush(): void {}
 
   /**
    * 先试 level.dat，失败再试 level.dat_old。
