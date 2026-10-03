@@ -49,6 +49,8 @@ beforeAll(() => {
   app = new NinecraftApp();
   app.init({ platform: new FakePlatform(), doRender: true });
   app.setSize(854, 480);
+  // B8g 起启动入口是起始菜单，不再自动进世界 —— 这里显式走一遍。
+  app.startDemoWorld();
   app.tick(0, 0); // 首个 tick 触发 _levelGenerated：建玩家
 });
 

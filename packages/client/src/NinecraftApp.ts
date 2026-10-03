@@ -1,14 +1,15 @@
 /**
  * 1:1 移植自 src/NinecraftApp.h 与 NinecraftApp.cpp（S9）：应用入口，按原顺序初始化静态表、GL 状态与 Minecraft。
  * 【DEFERRED】
- *   storageSource 与起始界面（Storage、Gui）、raknet 重启（Network）、updateStats（Stats）。
- * 【ADAPTED(Demo)】在原本设置起始界面的位置调用 startDemoWorld()：demo 唯一的专用入口。
+ *   raknet 重启（Network）、updateStats（Stats）、用户名界面（Gui）、`LOGI("This: %p\n", this)`。
+ * 【ADAPTED(Demo)】`startDemoWorld()` 建/进 demo 世界。**B8g 起启动入口已经换回 C++ 原样的
+ *   `screenChooser.setScreen(SCREEN_STARTMENU)`**，它现在只剩场景/测试在用（原因见该函数的注释）。
  * 【OMIT】teardown（只被析构函数调用）、restartServer、handleBack、updateStats、testCreationAndDestruction、testJoiningAndDestruction。
  * 构建开关：_EMSCRIPTEN_（单下划线）没有定义，所以 initGLStates 里的 glHint 照常调用（WebGL 下是空操作）。
  */
 import { I18n } from '@mcpe/locale';
 import { SharedConstants } from '@mcpe/core';
-import { LOGI, Mouse, Multitouch } from '@mcpe/platform';
+import { Mouse, Multitouch } from '@mcpe/platform';
 import { Mth } from '@mcpe/util';
 import {
   ExternalFileLevelStorageSource,
@@ -20,13 +21,12 @@ import {
   initTileEntities,
   initTiles,
   LevelSettings,
-  type LevelSummary,
-  levelSummaryLess,
   MobCategory,
   ServerLevel,
 } from '@mcpe/world';
 import { Minecraft } from './Minecraft';
 import { OptionId } from './Options';
+import { ScreenId } from './gui/screens/ScreenChooser';
 import {
   GL_ALPHA_TEST,
   GL_BACK,
@@ -84,23 +84,10 @@ export class NinecraftApp extends Minecraft {
       this.externalCacheStoragePath,
     );
     this._running = false;
-    // DEFERRED(Gui): screenChooser.setScreen(SCREEN_STARTMENU);
-    // ADAPTED(Demo): 没有起始界面，在这里直接进世界。setScreen(起始界面) 的副作用 releaseMouse() 照样执行：
-    //   mouseGrabbed 的初值是 true，C++ 靠起始界面把它置回 false，进游戏时 setScreen(NULL) → grabMouse() 才真正锁定光标。
-    //   这里没有界面，第一次点击画面时由 tickInput 的“点击即 grabMouse”完成锁定；否则光标没锁定时移动鼠标也会转动视角。
-    this.releaseMouse();
-    // ADAPTED(Demo)：C++ 由起始界面选世界，这里退化成"有存档就进最近的那个、没有就新建一个 demo"。
-    const levels: LevelSummary[] = [];
-    this.storageSource.getLevelList(levels);
-    if (levels.length > 0) {
-      levels.sort((a, b) => (levelSummaryLess(a, b) ? -1 : 1));
-      const best = levels[0]!;
-      LOGI(`Loading world '${best.name}' (${best.id})`);
-      this.startLevel(best.id, best.name);
-    } else {
-      LOGI('No saved world found, creating a new demo world');
-      this.startDemoWorld();
-    }
+    // C++ 是 `LOGI("This: %p\n", this);`（打指针，网页版没有意义，不移植）。
+    this.screenChooser.setScreen(ScreenId.SCREEN_STARTMENU);
+    // setScreen 里的 releaseMouse() 顺带把 mouseGrabbed 置回 false —— C++ 就靠这一下，
+    // 否则初值 true 会让玩家还没进世界就锁住光标（详见 Screen.setScreen 的实现）。
     if (this.options.getBooleanValue(OptionId.OPTIONS_FIRST_LAUNCH)) {
       this.options.toggle(OptionId.OPTIONS_FIRST_LAUNCH);
       // DEFERRED(Gui): setScreen(new UsernameScreen());
@@ -111,7 +98,11 @@ export class NinecraftApp extends Minecraft {
   static readonly DEMO_LEVEL_ID = 'demo';
 
   /**
-   * ADAPTED(Demo)：没有任何存档时新建一个平坦世界，**并且它真的会存下去**。
+   * ADAPTED(Demo)：建/进 demo 世界（一个平坦世界，**并且它真的会存下去**）。
+   *
+   * 【B8g 起它不是"入口"了】启动入口已经换回 C++ 原样的 `screenChooser.setScreen(SCREEN_STARTMENU)`。
+   * 现在只剩**场景/测试**会调它 —— 因为从菜单进世界要走 `Minecraft.selectLevel`，而那条路
+   * 会抛（见下面的说明）。所以这是个后门，正常玩家点不出来。
    *
    * 【为什么不走 Minecraft.selectLevel】它不传维度，于是走 `DimensionFactory` 的默认维度，
    * 而普通维度的 `createRandomLevelSource()` 在 TS 里还是 `DEFERRED(Levelgen)`（`RandomLevelSource`

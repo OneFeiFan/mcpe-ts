@@ -36,6 +36,14 @@ beforeAll(() => {
   app = new NinecraftApp();
   app.init({ platform: new FakePlatform(), doRender: true });
   app.setSize(854, 480);
+  // B8g 起启动入口是起始菜单（与 C++ 的 NinecraftApp::init 一致），不再自动进世界。
+  // 这个文件检查的是**进了世界之后**的那一整条链（正是标题里写的 init → startDemoWorld → tick → render），
+  // 所以在这里把进世界那几步显式做一遍。断言一条没动。
+  app.startDemoWorld(); // 建/进 demo 世界
+  app.setScreen(null); // 关掉起始菜单（真实流程里是 ProgressScreen 干的）
+  // 进世界那一下 setScreen(null) 会顺手 grabMouse()。这里松回去，因为下面几条测的正是
+  // 「光标还没锁 → 点击才锁」那条路（浏览器里指针锁本来也要等一次用户手势）。
+  app.releaseMouse();
 });
 
 describe('S9 检查点', () => {
@@ -48,7 +56,7 @@ describe('S9 检查点', () => {
     expect(app.inputHolder).not.toBeNull();
     expect(app.isCreativeMode()).toBe(true); // demo 世界是创造模式（与 Minecraft::selectLevel 一样按 GameType 设置）
     expect(app.gameMode!.isCreativeType()).toBe(true);
-    expect(app.mouseGrabbed).toBe(false); // 起始界面的 releaseMouse（ADAPTED(Demo)），等第一次点击
+    expect(app.mouseGrabbed).toBe(false); // 起始界面的 releaseMouse，等第一次点击才锁定光标
   });
 
   it('首个 tick 触发 _levelGenerated：创建玩家，cameraTargetPlayer === player，玩家加入世界并获得创造模式能力', () => {

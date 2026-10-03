@@ -47,7 +47,17 @@ export default async function (h) {
 
   await h.wait(1500);
 
-  const s0 = await h.state('首次进入：没有存档，自动建 demo 世界', (a) => ({
+  // ---- B8g：启动入口是起始菜单，场景自己把世界造出来 ----
+  // 【为什么走后门】从菜单点进世界要走 `Minecraft.selectLevel`，那条路会抛（世界生成没移植）。
+  // `startDemoWorld()` 是 ADAPTED(Demo) 的公开方法，走的还是真存档 —— 所以存档这条链照旧能测。
+  await h.state('建/进 demo 世界（场景后门）', (a) => {
+    a.startDemoWorld();
+    a.setScreen(null);
+    return { screen: a.screen === null ? null : a.screen.constructor.name };
+  });
+  await h.wait(1000); // 等第一个 tick 的 _levelGenerated 把玩家建出来
+
+  const s0 = await h.state('首次进入：没有存档，建出 demo 世界', (a) => ({
     dimension: a.level.dimension.constructor.name,
     worlds: window.__vfs.listDir('/games/com.mojang/minecraftWorlds'),
     files: window.__vfs.listDir('/games/com.mojang/minecraftWorlds/demo'),
@@ -76,6 +86,21 @@ export default async function (h) {
   await h.page.reload({ waitUntil: 'load' });
   await h.page.waitForFunction(() => globalThis.__app !== undefined, null, { timeout: 60_000 });
   await h.wait(1500);
+
+  // 刷新之后又回到起始菜单（B8g 起启动入口就是它），照样从后门进世界 ——
+  // 只不过这次 demo 已经存在了，走的是"读回来"那条路（`isNew()` 下面会断言）。
+  const fresh = await h.state('刷新之后：先确认落到起始菜单', (a) => ({
+    screen: a.screen && a.screen.constructor.name,
+    level: a.level === null ? null : 'loaded',
+  }));
+  h.expect(fresh.screen === 'TouchStartMenuScreen', '刷新后回到起始菜单，不是直接进世界');
+  h.expect(fresh.level === null, '刷新后世界里还没东西');
+  await h.state('再进那个世界（场景后门）', (a) => {
+    a.startDemoWorld();
+    a.setScreen(null);
+    return { screen: a.screen === null ? null : a.screen.constructor.name };
+  });
+  await h.wait(1000);
 
   const s2 = await h.state('刷新之后', (a) => ({
     levelName: a.level.getLevelData().getLevelName(),

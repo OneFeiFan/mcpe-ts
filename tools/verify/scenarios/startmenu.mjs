@@ -1,8 +1,11 @@
-// B8c 场景：起始菜单能出来、长得对。
+// B8c 场景：起始菜单能出来、长得对；从它能进世界列表、能进新建世界。
 //
-// 【为什么不走启动入口】任务单里定了两条：B8 期间启动入口不动（打开页面还是直接进 demo 世界），
-// 而且现在从菜单进世界会撞上 `selectLevel` 抛异常（世界生成还没移植）。所以这里直接调
-// `screenChooser.setScreen(SCREEN_STARTMENU)` 把菜单摆出来看 —— 验证的是**界面本身**。
+// 【B8g 起它就是启动入口了】打开页面就在菜单上，所以下面第一句
+// `screenChooser.setScreen(SCREEN_STARTMENU)` 是幂等的 —— 留着是为了让场景不依赖
+// "启动入口是什么"这个前提。
+// 【但世界列表得有东西可列】以前是启动时自动建 demo 世界，现在不会了。所以下面先走一遍
+// 「进世界 → 退回标题」把世界造出来再存下去 —— 顺带把 B8f 那条路也覆盖了。
+// 从菜单真去点「开始游戏 → 进世界」走的还是 `selectLevel`，那条路会抛（世界生成没移植）。
 //
 // 【h.state 的 fn 只能写字面量】它会被 toString() 之后在页面里重新求值，闭包全丢。
 // 所以进页面的数字一律写死（ScreenId.SCREEN_STARTMENU = 1）。
@@ -10,6 +13,25 @@ export default async function (h) {
   h.allowConsole('Missing category for tile'); // 见 default.mjs 里的说明
 
   await h.wait(1500);
+
+  // ---- 先造一个世界出来（场景后门），再退回标题 ----
+  await h.state('建/进 demo 世界', (a) => {
+    a.startDemoWorld();
+    a.setScreen(null);
+    return { screen: a.screen === null ? null : a.screen.constructor.name };
+  });
+  await h.wait(1000); // 等第一个 tick 的 _levelGenerated
+  const back = await h.state('退回标题', (a) => {
+    a.leaveGame();
+    return {
+      screen: a.screen && a.screen.constructor.name,
+      level: a.level === null ? null : 'still-there',
+      worlds: window.__vfs.listDir('/games/com.mojang/minecraftWorlds'),
+    };
+  });
+  h.expect(back.screen === 'TouchStartMenuScreen', '退回标题，又回到起始菜单');
+  h.expect(back.level === null, '世界拆掉了');
+  h.expect(back.worlds.includes('demo'), 'demo 世界留在了存档里（不然下面的世界列表是空的）');
 
   const s0 = await h.state('把起始菜单调出来', (a) => {
     a.screenChooser.setScreen(1); // ScreenId.SCREEN_STARTMENU

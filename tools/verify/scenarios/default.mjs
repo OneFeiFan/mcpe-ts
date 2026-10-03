@@ -1,4 +1,4 @@
-// 默认场景：进入世界、HUD、F3、物品选择界面、暂停界面都能正常出现，且没有页面错误。
+// 默认场景：启动入口、进入世界、HUD、物品选择界面、暂停界面都能正常出现，且没有页面错误。
 export default async function (h) {
   // 进世界时 Tile::initTiles / Item::initItems 会打 4 条 “Missing category for tile”。
   // 这是原版自己的诊断，不是移植问题：黄金样本 fixtures/golden/registry.json 里
@@ -7,6 +7,32 @@ export default async function (h) {
   h.allowConsole('Missing category for tile');
 
   await h.wait(1500);
+
+  // ---- B8g：启动入口是起始菜单（与 C++ 的 NinecraftApp::init 逐行一致）----
+  const boot = await h.state('打开页面时', (a) => ({
+    screen: a.screen && a.screen.constructor.name,
+    isInGame: a.screen && a.screen.isInGameScreen(),
+    level: a.level === null ? null : 'loaded',
+    grabbed: a.mouseGrabbed,
+  }));
+  h.expect(boot.screen === 'TouchStartMenuScreen', '启动入口是起始菜单');
+  h.expect(boot.isInGame === false, '它不算游戏内界面');
+  h.expect(boot.level === null, '这时候还没有世界');
+  // 起始界面的 releaseMouse 把 mouseGrabbed 置回 false —— 没这一下玩家会在菜单上就锁住光标
+  h.expect(boot.grabbed === false, '鼠标还没被锁（等第一次点击才锁定）');
+  await h.shot('00-启动入口');
+
+  // ---- 场景从这里开始要把世界造出来 ----
+  // 【为什么走后门】从菜单进世界要走 `Minecraft.selectLevel`，而那条路会抛（世界生成没移植，
+  // 见 B8 的决策 1）。`startDemoWorld()` 是 ADAPTED(Demo) 的公开方法，走的还是真存档，
+  // 所以后面这一整条链（渲染、HUD、暂停、退出落盘）照旧能测。
+  await h.state('建/进 demo 世界（场景后门）', (a) => {
+    a.startDemoWorld();
+    a.setScreen(null); // 关掉起始菜单，回到游戏画面
+    return { screen: a.screen === null ? null : a.screen.constructor.name };
+  });
+  await h.wait(1000); // 等第一个 tick 的 _levelGenerated 把玩家建出来
+
   const s0 = await h.state('进入世界', (a) => ({
     creative: a.isCreativeMode(),
     pos: [a.player.x, a.player.y, a.player.z],
