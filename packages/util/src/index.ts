@@ -15,3 +15,4 @@ export {
 export type { IDataOutput, IDataInput } from './DataIO.js';
 
 export { SmoothFloat } from './SmoothFloat.js';
+export { BitStream, LONG_BYTES } from './BitStream.js';
