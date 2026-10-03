@@ -1,8 +1,9 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
-  BuildActionIntention, Config, createConfig, CustomInputHolder, DebugFreeCamera, Gui, KeyboardInput, Minecraft, MouseBuildInput, MouseHandler,
+  BuildActionIntention, Config, createConfig, CustomInputHolder, Gui, KeyboardInput, Minecraft, MouseBuildInput, MouseHandler,
   MouseTurnInput, OptionId, Options, PixelCalc,
 } from '@mcpe/client';
+import { DebugFreeCamera } from '../../../apps/web/dev/camera/DebugFreeCamera'; // S12 起只供 dev 页使用
 import { Mouse, MouseAction } from '@mcpe/platform';
 import { Level, Material } from '@mcpe/world';
 import { DomInput } from '../../../apps/web/src/DomInput';

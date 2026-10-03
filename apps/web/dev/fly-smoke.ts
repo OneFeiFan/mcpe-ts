@@ -1,7 +1,7 @@
 // S8 的 dev 页（长期保留）：DomInput → Keyboard/Mouse → KeyboardInput、MouseTurnInput → DebugFreeCamera，在 S7 的地形上飞行。
 // 主循环、转向系数与相机变换是 S9 里 Minecraft、GameRenderer 的简化版；S9 完成后这里只作为输入链路的单独检查。
 import {
-  AppPlatform, Chunk, CustomInputHolder, DebugFreeCamera, FrustumCuller, GL_ALPHA_TEST, GL_BACK, GL_COLOR_BUFFER_BIT, GL_CULL_FACE,
+  AppPlatform, Chunk, CustomInputHolder, FrustumCuller, GL_ALPHA_TEST, GL_BACK, GL_COLOR_BUFFER_BIT, GL_CULL_FACE,
   GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_GREATER, GL_LEQUAL, GL_MODELVIEW, GL_PROJECTION, GL_TEXTURE_2D, GLES1, glAlphaFunc, glClear,
   glClearColor, glCullFace, glDepthFunc, glEnable, glGenBuffers, glLoadIdentity, glMatrixMode, glRotatef, glSetContext, glTranslatef,
   gluPerspective, glViewport, KeyboardInput, Minecraft, MouseBuildInput, MouseHandler, MouseTurnInput, OptionId, Options, RenderList,
@@ -10,6 +10,7 @@ import {
 import { SharedConstants } from '@mcpe/core';
 import { Keyboard, KeyboardAction, Mouse } from '@mcpe/platform';
 import { DomInput } from '../src/DomInput';
+import { DebugFreeCamera } from './camera/DebugFreeCamera';
 import { createDemoLevel, loadImage } from './demoWorld';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#c')!;

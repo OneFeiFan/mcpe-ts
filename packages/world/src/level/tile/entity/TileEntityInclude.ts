@@ -3,6 +3,7 @@
 // S12 阶段 A 加入 FurnaceTileEntity、ChestTileEntity；阶段 C 加入 NetherReactorTileEntity。
 import { ChestTileEntity } from './ChestTileEntity';
 import { FurnaceTileEntity } from './FurnaceTileEntity';
+import { NetherReactorTileEntity } from './NetherReactorTileEntity';
 import { SignTileEntity } from './SignTileEntity';
 import { TileEntity, TileEntityFactory } from './TileEntity';
 
@@ -11,6 +12,7 @@ export function initTileEntities(): void {
     Sign: SignTileEntity,
     Furnace: FurnaceTileEntity,
     Chest: ChestTileEntity,
+    NetherReactor: NetherReactorTileEntity,
   };
   TileEntity.initTileEntities();
 }

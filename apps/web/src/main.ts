@@ -5,7 +5,7 @@
  */
 import { GLES1, glSetContext, NinecraftApp } from '@mcpe/client';
 import { AppPlatform_web } from './AppPlatform_web';
-import { preloadAssets } from './assets';
+import { preloadAssets, preloadFiles } from './assets';
 import { DomInput } from './DomInput';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
@@ -16,7 +16,7 @@ async function main(): Promise<void> {
   if (!gl) throw new Error('浏览器不支持 WebGL2');
   glSetContext(new GLES1(gl));
   const images = await preloadAssets();
-  const platform = new AppPlatform_web(canvas, images);
+  const platform = new AppPlatform_web(canvas, images, await preloadFiles());
 
   const app = new NinecraftApp();
   const resize = () => {

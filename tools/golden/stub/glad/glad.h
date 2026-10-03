@@ -4,3 +4,9 @@ typedef unsigned int GLuint; typedef int GLint; typedef float GLfloat; typedef u
 typedef int GLsizei; typedef void GLvoid; typedef unsigned int GLbitfield; typedef float GLclampf; typedef unsigned char GLubyte;
 typedef double GLdouble; typedef short GLshort; typedef signed char GLbyte; typedef unsigned short GLushort; typedef int GLfixed; typedef long GLsizeiptr; typedef long GLintptr;
 #define GL_TRIANGLES 0x0004
+#define GL_TEXTURE_2D 0
+void glBindTexture(...);
+void glColor4f(...);
+void glPushMatrix(...);
+void glTranslatef(...);
+void glPopMatrix(...);

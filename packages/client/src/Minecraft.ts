@@ -4,19 +4,17 @@
  * 【构建开关】PLATFORM_WEB：setLevel 走非线程分支，直接 generateLevel；不是 STANDALONE_SERVER；没有 RPI、__APPLE__、WIN32、CHEATS。
  * 【DEFERRED】见各处标记：网络（raknetInstance）、声音、Gui（gui、font、screenChooser、_perfRenderer）、粒子、GameMode、
  *   玩家与实体、存储（options.load/save 在 Options 内部 DEFERRED）。
- * 【ADAPTED(DebugCamera)】demo 用 DebugFreeCamera 代替 LocalPlayer，6 处接缝（手册附录 C）：A1 _levelGenerated、A2 tick、
- *   A3 tickInput、A6 releaseMouse 在本文件；A4、A5 在 GameRenderer。移植 LocalPlayer 时逐条删除。
  * 【OMIT】多人游戏、存档选择、暂停、重生、音频开关、截图、统计、创造模式切换等（见文件末尾的标记）。
- * cameraTargetPlayer 在 C++ 里是 Mob*；这里的类型是 CameraTarget（成员名与 Mob 一致，附录 A）。
  */
 import { getTimeMs, Keyboard, KeyboardAction, LOGI, Mouse, MouseAction, Multitouch, Stopwatch } from '@mcpe/platform';
 import { PerfTimer, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH } from '@mcpe/util';
-import { Difficulty, FoliageColor, GrassColor, HitResult, type Level, LevelChunk, LevelConstants } from '@mcpe/world';
+import { Difficulty, FoliageColor, GrassColor, HitResult, HitResultType, type Level, LevelChunk, LevelConstants, type Mob, Tile } from '@mcpe/world';
 import { App } from './App';
 import { PlatformStringVars } from './AppPlatform';
-import type { CameraTarget } from './camera/CameraTarget';
-import type { DebugFreeCamera } from './camera/DebugFreeCamera';
+import { CreativeMode } from './gamemode/CreativeMode';
 import type { GameMode } from './gamemode/GameMode';
+import { SurvivalMode } from './gamemode/SurvivalMode';
+import { BuildActionIntention } from './player/input/IBuildInput';
 import { Gui } from './gui/Gui';
 import type { Screen } from './gui/Screen';
 import { createConfig } from './IConfigListener';
@@ -38,6 +36,9 @@ import { Timer } from './Timer';
 
 /** Minecraft.cpp 的 checkGlError：只在定义了 GLDEBUG 时有内容 */
 function checkGlError(_tag: string): void {}
+
+/** C++ Minecraft::tickInput 里的两个 static 局部变量 */
+const tickInputStatics = { prevMouseDownLeft: false, buildHoldTicks: 0 };
 
 /** Player::resetPos 是公开的，而 Entity::resetPos 是 protected；LocalPlayer 正身（S12 阶段 C）就位前经这里调用 */
 function resetPlayerPos(player: LocalPlayer, clearMore: boolean): void {
@@ -84,7 +85,7 @@ export class Minecraft extends App {
   level: Level | null = null;
   player: LocalPlayer | null = null;
   inputHolder: IInputHolder | null = null;
-  cameraTargetPlayer: CameraTarget | null = null;
+  cameraTargetPlayer: Mob | null = null;
   // DEFERRED(Gui): Gui gui;
   generateLevelThread: unknown = null;
   screen: Screen | null = null;
@@ -96,8 +97,6 @@ export class Minecraft extends App {
   progressStagePercentage = 0;
   externalStoragePath = '';
   externalCacheStoragePath = '';
-  /** ADAPTED(DebugCamera)：demo 的自由相机（NinecraftApp.startDemoWorld 创建） */
-  debugCamera: DebugFreeCamera | null = null;
 
   // ---------------------------------------------------------------- protected
   protected timer = new Timer(20);
@@ -159,7 +158,7 @@ export class Minecraft extends App {
     // DEFERRED(Gui): _perfRenderer = new PerfRenderer(this, font);
     checkGlError('Init complete');
     this.options.load();
-    // DEFERRED(GameMode): setIsCreativeMode(false); // false means it's Survival Mode
+    this.setIsCreativeMode(false); // false means it's Survival Mode
     this.reloadOptions();
   }
 
@@ -241,9 +240,6 @@ export class Minecraft extends App {
     }
     if (this.player) {
       this.player.releaseAllKeys();
-    } else if (this.inputHolder) {
-      // ADAPTED(DebugCamera): A6 —— 等价于 LocalPlayer::releaseAllKeys → input->releaseAllKeys()
-      this.inputHolder.getMoveInput().releaseAllKeys();
     }
     this.mouseGrabbed = false;
     this.mouseHandler.release();
@@ -265,13 +261,13 @@ export class Minecraft extends App {
     if (level !== null) {
       LOGI(`Seed is ${level.getSeed()}`);
       level.raknetInstance = this.raknetInstance;
-      // DEFERRED(GameMode): gameMode->initLevel(level);
+      this.gameMode!.initLevel(level);
       if (!this.player && forceInsertPlayer) {
         this.player = forceInsertPlayer;
         resetPlayerPos(this.player, false);
       } else if (this.player !== null) {
         resetPlayerPos(this.player, false);
-        // DEFERRED(Entity): if (level != NULL) level->addEntity(player);
+        if (level !== null) level.addEntity(this.player);
       }
       this.level = level;
       const op = this.options.getStringValue(OptionId.OPTIONS_USERNAME).toLowerCase();
@@ -401,7 +397,7 @@ export class Minecraft extends App {
     }
     TIMER_PUSH('gameMode');
     if (this.level && !this.pause) {
-      // DEFERRED(GameMode): gameMode->tick();
+      this.gameMode!.tick();
     }
     TIMER_POP_PUSH('commandServer');
     // DEFERRED(Network): if (level && _commandServer) _commandServer->tick();
@@ -424,9 +420,7 @@ export class Minecraft extends App {
         this.level.difficulty = this.options.getIntValue(OptionId.OPTIONS_DIFFICULTY);
         if (this.level.isClientSide) this.level.difficulty = Difficulty.EASY;
         TIMER_POP_PUSH('level');
-        // DEFERRED(Entity): level->tickEntities();
-        // ADAPTED(DebugCamera): A2 —— 自由相机在 tickEntities 的位置更新
-        if (this.debugCamera && !this.player) this.debugCamera.tick(this.inputHolder!.getMoveInput());
+        this.level.tickEntities();
         this.level.tick();
         TIMER_POP_PUSH('animateTick');
         if (this.player) {
@@ -468,8 +462,7 @@ export class Minecraft extends App {
         }
         return;
       }
-      // ADAPTED(DebugCamera): A3 —— C++ 是 if (!player) return;
-      if (!this.player && !this.debugCamera) {
+      if (!this.player) {
         return;
       }
       // DEFERRED(Gui): bool mouseDiggable = !gui.isInside(Mouse::getX(), Mouse::getY()); bool allowGuiClicks = true;
@@ -490,16 +483,11 @@ export class Minecraft extends App {
       while (Keyboard.next()) {
         const key = Keyboard.getEventKey();
         const isPressed = Keyboard.getEventKeyState() === KeyboardAction.KEYDOWN;
-        if (this.player) {
-          this.player.setKey(key, isPressed);
-        } else {
-          // ADAPTED(DebugCamera): A3 —— 等价于 LocalPlayer::setKey → input->setKey
-          this.inputHolder!.getMoveInput().setKey(key, isPressed);
-        }
+        this.player.setKey(key, isPressed);
         if (isPressed) {
           // DEFERRED(Gui): gui.handleKeyPressed(key); 数字键选物品栏格子
           if (key === Keyboard.KEY_LEFT_CTRL) {
-            // DEFERRED(Player): player->setSprinting(true);
+            this.player.setSprinting(true);
           }
           // DEFERRED(Gui): KEY_E 物品选择界面；KEY_T 控制台界面
           if (key === Keyboard.KEY_F3) {
@@ -522,7 +510,45 @@ export class Minecraft extends App {
         }
       }
       TIMER_POP_PUSH('handlemouse');
-      // DEFERRED(GameMode): 鼠标左右键的破坏、放置与 releaseUsingItem（gameMode、handleBuildAction 未移植）
+      const gameMode = this.gameMode!;
+      if (!this.useTouchscreen()) {
+        if (Mouse.getButtonState(MouseAction.ACTION_LEFT) === 0) {
+          gameMode.stopDestroyBlock();
+        }
+        if (!Mouse.isButtonDown(MouseAction.ACTION_RIGHT)) {
+          gameMode.releaseUsingItem(this.player);
+        }
+      }
+      if (this.useTouchscreen()) {
+        // Touch: gesture recognizer classifies the action type (turn/destroy/build)
+        const bai = new BuildActionIntention();
+        if (this.inputHolder && this.inputHolder.getBuildInput().tickBuild(this.player, bai)) {
+          this.handleBuildAction(bai);
+        } else {
+          gameMode.stopDestroyBlock();
+          if (this.player && this.player.isUsingItem()) {
+            gameMode.releaseUsingItem(this.player);
+          }
+        }
+      } else {
+        // Desktop: left mouse = destroy/attack
+        if (Mouse.isButtonDown(MouseAction.ACTION_LEFT)) {
+          let baiFlags = BuildActionIntention.BAI_REMOVE | BuildActionIntention.BAI_ATTACK;
+          if (!tickInputStatics.prevMouseDownLeft) baiFlags |= BuildActionIntention.BAI_FIRSTREMOVE;
+          this.handleBuildAction(new BuildActionIntention(baiFlags));
+        }
+        tickInputStatics.prevMouseDownLeft = Mouse.isButtonDown(MouseAction.ACTION_LEFT);
+        // Build and use/interact is on same button
+        if (Mouse.isButtonDown(MouseAction.ACTION_RIGHT)) {
+          if (tickInputStatics.buildHoldTicks >= 5) tickInputStatics.buildHoldTicks = 0;
+          if (++tickInputStatics.buildHoldTicks === 1) {
+            this.handleBuildAction(new BuildActionIntention(BuildActionIntention.BAI_BUILD | BuildActionIntention.BAI_INTERACT));
+          }
+        } else {
+          tickInputStatics.buildHoldTicks = 0;
+          gameMode.releaseUsingItem(this.player);
+        }
+      }
       this.lastTickTime = getTimeMs();
       TIMER_POP();
     } finally {
@@ -531,7 +557,71 @@ export class Minecraft extends App {
     }
   }
 
-  // OMIT(GameMode): handleBuildAction(action)  Minecraft.cpp:960
+  handleBuildAction(action: BuildActionIntention): void {
+    const player = this.player!;
+    const gameMode = this.gameMode!;
+    const level = this.level!;
+    if (action.isRemove()) {
+      if (this.missTime > 0) return;
+      player.swing();
+    }
+    if (player.isUsingItem()) return;
+    let mayUse = true;
+    if (!this.hitResult.isHit()) {
+      if (action.isRemove() && !gameMode.isCreativeType()) {
+        this.missTime = 10;
+      }
+    } else if (this.hitResult.type === HitResultType.ENTITY) {
+      const entity = this.hitResult.entity!;
+      if (action.isAttack()) {
+        player.swing();
+        // DEFERRED(Network): InteractPacket packet(InteractPacket::Attack, player->entityId, hitResult.entity->entityId); raknetInstance->send(packet);
+        gameMode.attack(player, entity);
+      } else if (action.isInteract()) {
+        if (entity.interactPreventDefault()) mayUse = false;
+        // DEFERRED(Network): InteractPacket packet(InteractPacket::Interact, …); raknetInstance->send(packet);
+        gameMode.interact(player, entity);
+      }
+    } else if (this.hitResult.type === HitResultType.TILE) {
+      const x = this.hitResult.x;
+      const y = this.hitResult.y;
+      const z = this.hitResult.z;
+      const face = this.hitResult.f;
+      const oldTileId = level.getTile(x, y, z);
+      const oldTile = Tile.tiles[oldTileId] ?? null;
+      if (action.isRemove()) {
+        if (!oldTile) return;
+        level.extinguishFire(x, y, z, this.hitResult.f);
+        if (action.isFirstRemove()) {
+          gameMode.startDestroyBlock(x, y, z, this.hitResult.f);
+        } else {
+          gameMode.continueDestroyBlock(x, y, z, this.hitResult.f);
+        }
+        // DEFERRED(Particle): particleEngine->crack(x, y, z, hitResult.f);
+        player.swing();
+      } else {
+        const item = player.inventory.getSelected();
+        if (gameMode.useItemOn(player, level, item, x, y, z, face, this.hitResult.pos)) {
+          mayUse = false;
+          player.swing();
+        }
+        if (item && item.count <= 0) {
+          player.inventory.clearSlot(player.inventory.selected);
+        }
+      }
+    }
+    if (mayUse && action.isInteract()) {
+      const item = player.inventory.getSelected();
+      if (item && !player.isUsingItem()) {
+        if (gameMode.useItem(player, level, item)) {
+          // DEFERRED(ItemInHand): gameRenderer->itemInHandRenderer->itemUsed();
+        }
+        if (item && item.count <= 0) {
+          player.inventory.clearSlot(player.inventory.selected);
+        }
+      }
+    }
+  }
   // OMIT(Network): isOnlineClient()  Minecraft.cpp:1048
   // OMIT(Network): isOnline()  Minecraft.cpp:1053
   // OMIT(Gui): pauseGame(isBackPaused)  Minecraft.cpp:1058
@@ -556,25 +646,25 @@ export class Minecraft extends App {
   protected _levelGenerated(): void {
     const level = this.level!;
     if (this.player === null) {
-      // DEFERRED(GameMode): player = (LocalPlayer*) gameMode->createPlayer(level); gameMode->initPlayer(player);
+      this.player = this.gameMode!.createPlayer(level) as LocalPlayer;
+      this.gameMode!.initPlayer(this.player);
     }
     if (this.player) {
       this.player.input = this.inputHolder!.getMoveInput();
     }
     if (this.levelRenderer !== null) this.levelRenderer.setLevel(level);
     // DEFERRED(Particle): if (particleEngine != NULL) particleEngine->setLevel(level);
-    // DEFERRED(GameMode): gameMode->adjustPlayer(player);
+    this.gameMode!.adjustPlayer(this.player!);
     // DEFERRED(Gui): gui.onLevelGenerated();
     level.validateSpawn();
-    // DEFERRED(Player): level->loadPlayer(player, true);
+    level.loadPlayer(this.player, true);
     if (this.player && !level.isClientSide) {
       resetPlayerPos(this.player, false);
     }
     if (level && level.dimension) {
       level.dimension.FogType = this.options.getIntValue(OptionId.OPTIONS_FOG_TYPE);
     }
-    // ADAPTED(DebugCamera): A1 —— C++ 是 cameraTargetPlayer = player;
-    this.cameraTargetPlayer = this.player ?? this.debugCamera;
+    this.cameraTargetPlayer = this.player;
     // DEFERRED(Network): raknetInstance->announceServer(serverName); netCallback->levelGenerated(level);
     this._hasSignaledGeneratingLevelFinished = true;
   }
@@ -608,8 +698,19 @@ export class Minecraft extends App {
   // OMIT(Storage): getLevelSource()  Minecraft.cpp:1611
   // OMIT(Sound): audioEngineOn()  Minecraft.cpp:1622
   // OMIT(Sound): audioEngineOff()  Minecraft.cpp:1627
-  // OMIT(GameMode): setIsCreativeMode(isCreative)  Minecraft.cpp:1633
-  // OMIT(GameMode): isCreativeMode()  Minecraft.cpp:1652
+  setIsCreativeMode(isCreative: boolean): void {
+    // CREATORMODE 未定义（网页版构建），走 #else 分支
+    if (!this.gameMode || isCreative !== this._isCreativeMode) {
+      if (isCreative) this.gameMode = new CreativeMode(this);
+      else this.gameMode = new SurvivalMode(this);
+      this._isCreativeMode = isCreative;
+    }
+    if (this.player) this.gameMode.initAbilities(this.player.abilities);
+  }
+
+  isCreativeMode(): boolean {
+    return this._isCreativeMode;
+  }
 
   isPowerVR(): boolean {
     return this._powerVr;

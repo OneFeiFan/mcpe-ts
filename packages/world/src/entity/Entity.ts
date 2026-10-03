@@ -87,9 +87,10 @@ export abstract class Entity {
   protected isStuckInWeb = false;
 
   constructor(level: Level) {
+    // ADAPTED(Cpp)：C++ 在构造函数里调用虚函数时只会调到本类（Entity）的版本；JS 会派发到子类，所以显式调用 Entity.prototype 上的版本。
     this.level = level;
     this.bb = new AABB(0, 0, 0, 0, 0, 0);
-    this._init();
+    Entity.prototype._init.call(this);
     this.entityId = ++Entity.entityCounter;
     this.setPos(0, 0, 0);
   }

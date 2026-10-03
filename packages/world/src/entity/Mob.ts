@@ -139,6 +139,7 @@ export abstract class Mob extends Entity {
   getCapePrevZ(): number { return this.zc; }
 
   constructor(level: Level) {
+    // ADAPTED(Cpp)：C++ 在构造函数里调用虚函数时只会调到本类（Mob）的版本；JS 会派发到子类，所以显式调用 Mob.prototype 上的版本。
       super(level);
       this.invulnerableDuration = 20;
       this.textureName = "mob/char.png";
@@ -195,8 +196,8 @@ export abstract class Mob extends Entity {
     this.entityData.defineByte(SharedFlagsInformation.DATA_SHARED_FLAGS_ID, 0);
     this.entityData.defineShort(Entity.DATA_AIR_SUPPLY_ID, Entity.TOTAL_AIR_SUPPLY);
   
-    this._init();
-    this.health = this.getMaxHealth();
+    Mob.prototype._init.call(this);
+    this.health = Mob.prototype.getMaxHealth.call(this);
   
     this.blocksBuilding = true;
     this.ambientSoundTime = -level.random.nextInt(100);

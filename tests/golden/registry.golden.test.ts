@@ -10,9 +10,9 @@ import { initItems, initMaterials, initTiles, Item, Material, Tile } from '@mcpe
  *   CarriedTile（253）的 tex（构造函数把尚未初始化的成员 tex 传给了基类）、info_reserved6（255）的硬度。
  * - REQUIRE_ALL：S11 阶段 C 把剩下的方块、物品注册完之后改为 true；在此之前只比较 TS 已经注册的条目，并列出尚未注册的 id。
  */
-const REQUIRE_ALL = false;
-/** 还没注册的方块：下界反应堆（247，S12 阶段 C 后半） */
-const S12_IDS = new Set([247]);
+const REQUIRE_ALL = true; // S12 起方块与物品全部注册
+/** 还没注册的方块（S12 起没有） */
+const S12_IDS = new Set<number>();
 /** 方块形状属于第二档（结构一致、数值放宽）：C++ 用 float 计算（如 0.5f - 0.4f），TS 用 double，末位可差 1 ulp */
 const BOUNDS_TOL = 1e-6;
 type TileRec = {

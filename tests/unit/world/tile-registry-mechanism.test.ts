@@ -35,9 +35,9 @@ const fakes: TileClasses = {
   LeafTileItem: class extends TileItem {},
 };
 
-/** C++ 注册的 89 个方块减去还没移植的下界反应堆（247，S12 阶段 C 后半） */
-const S12_IDS = [247];
-const REGISTERED = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  20,  21,  22,  24,  26,  30,  31,  35,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  53,  54,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  67,  68,  71,  73,  74,  78,  79,  80,  81,  82,  83,  85,  87,  89,  95,  96,  98,  102,  103,  105,  107,  108,  109,  112,  114,  128,  155,  156,  245,  246,  248,  249,  253,  254,  255];
+/** C++ 注册的全部 89 个方块（S12 起全部移植） */
+const S12_IDS: number[] = [];
+const REGISTERED = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  20,  21,  22,  24,  26,  30,  31,  35,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  53,  54,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  67,  68,  71,  73,  74,  78,  79,  80,  81,  82,  83,  85,  87,  89,  95,  96,  98,  102,  103,  105,  107,  108,  109,  112,  114,  128,  155,  156,  245,  246,  247,  248,  249,  253,  254,  255];
 let errors: string[] = [];
 
 beforeAll(() => {
@@ -49,15 +49,13 @@ beforeAll(() => {
 });
 
 describe('Tile.initTiles（注入 + 逐行 DEFERRED）', () => {
-  it('恰好注册 88 个方块（S3 27 + S11 42 + S12 19），其余槽位为空', () => {
+  it('注册 C++ 的全部 89 个方块，其余槽位为空', () => {
     const ids = Tile.tiles.map((t, i) => (t ? i : -1)).filter((i) => i >= 0);
     expect(ids).toEqual(REGISTERED);
   });
 
   it('DEFERRED 的具名字段是哨兵：访问即报错，并写明字段名', () => {
-    expect(isUnregistered(Tile.netherReactor)).toBe(true); // 下界反应堆还没移植
     expect(isUnregistered(Tile.rock)).toBe(false);
-    expect(() => Tile.netherReactor.id).toThrow(/Tile\.netherReactor 尚未注册/);
     expect(isUnregistered(Item.apple)).toBe(true);
     expect(() => Item.snowBall.id).toThrow(/Item\.snowBall 尚未注册/);
   });

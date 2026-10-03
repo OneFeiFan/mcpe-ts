@@ -10,7 +10,8 @@
     "@mcpe/platform": "workspace:*",
     "@mcpe/util": "workspace:*",
     "@mcpe/core": "workspace:*",
-    "@mcpe/world": "workspace:*"
+    "@mcpe/world": "workspace:*",
+    "@mcpe/locale": "workspace:*"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

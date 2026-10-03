@@ -73,6 +73,7 @@ import type { StonecutterTile } from './StonecutterTile';
 import type { TallGrass } from './TallGrass';
 import type { WebTile } from './WebTile';
 import type { WorkbenchTile } from './WorkbenchTile';
+import type { NetherReactor } from './NetherReactor';
 import { TileEntityType } from './entity/TileEntity';
 import type { Random } from '@mcpe/util';
 import { Facing } from '../../Facing';
@@ -156,6 +157,7 @@ export interface TileClasses {
   readonly StoneSlabTileItem: new (id: number) => Item;
   readonly LeafTileItem: new (id: number) => Item;
   // S12 阶段 C 注册的类
+  readonly NetherReactor: typeof NetherReactor;
   readonly CactusTile: typeof CactusTile;
   readonly ChestTile: typeof ChestTile;
   readonly CropTile: typeof CropTile;
@@ -470,7 +472,7 @@ export class Tile {
     Tile.stairs_quartz = new c.StairTile(156, Tile.quartzBlock).init().setCategory(ItemCategory.Structures).setDescriptionId('stairsQuartz');
     Tile.stonecutterBench = new c.StonecutterTile(245).init().setDestroyTime(2.5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('stonecutter');
     Tile.glowingObsidian = new c.ObsidianTile(246, 10 + 16 * 13, true).init().setDestroyTime(10.0).setLightEmission(14 / 16.0).setExplodeable(2000).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('glowingobsidian');
-    // DEFERRED(Tile): netherReactor = (new NetherReactor(247, 10 + 14 * 16, Material::metal))->init()->setDestroyTime(3.0f)->setSoundType(SOUND_METAL)->setCategory(ItemCategory::Structures)->setDescriptionId("netherreactor");
+    Tile.netherReactor = new c.NetherReactor(247, 10 + 14 * 16, Material.metal).init().setDestroyTime(3.0).setSoundType(Tile.SOUND_METAL).setCategory(ItemCategory.Structures).setDescriptionId('netherreactor');
     Tile.info_updateGame1 = new Tile(248, 252, Material.dirt).init().setDestroyTime(1.0).setSoundType(Tile.SOUND_GRAVEL).setCategory(ItemCategory.Structures).setDescriptionId('info_update');
     Tile.info_updateGame2 = new Tile(249, 253, Material.dirt).init().setDestroyTime(1.0).setSoundType(Tile.SOUND_GRAVEL).setCategory(ItemCategory.Structures).setDescriptionId('info_update');
     Tile.grass_carried = new c.CarriedTile(253, 3, 12*16 + 12).init().setDescriptionId('grass');

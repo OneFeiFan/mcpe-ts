@@ -38,8 +38,8 @@ describe('TileEntity 与 SignTileEntity', () => {
     expect([TileEntity.isType(back, TileEntityType.Sign), back.isType(TileEntityType.Furnace), TileEntity.isType(null, TileEntityType.Sign)]).toEqual([true, false, false]);
   });
 
-  it('工厂：还没移植的子类报出写明原因的错误；未知类型返回 null', () => {
-    expect(() => TileEntityFactory.createTileEntity(TileEntityType.NetherReactor)).toThrow(/NetherReactorTileEntity 尚未移植/);
+  it('工厂：四种方块实体都能创建；未知类型返回 null', () => {
+    expect(TileEntityFactory.createTileEntity(TileEntityType.NetherReactor)).not.toBeNull(); // S12 阶段 C 起已移植
     expect(TileEntityFactory.createTileEntity(TileEntityType.Furnace)).not.toBeNull(); // S12 阶段 A 起已移植
     expect(TileEntityFactory.createTileEntity(99)).toBeNull();
   });

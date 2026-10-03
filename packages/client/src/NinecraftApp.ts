@@ -1,16 +1,16 @@
 /**
  * 1:1 移植自 src/NinecraftApp.h 与 NinecraftApp.cpp（S9）：应用入口，按原顺序初始化静态表、GL 状态与 Minecraft。
- * 【DEFERRED】I18n.loadLanguage（Locale，S13）、
+ * 【DEFERRED】
  *   storageSource 与起始界面（Storage、Gui）、raknet 重启（Network）、updateStats（Stats）。
  * 【ADAPTED(Demo)】在原本设置起始界面的位置调用 startDemoWorld()：demo 唯一的专用入口。
  * 【OMIT】teardown（只被析构函数调用）、restartServer、handleBack、updateStats、testCreationAndDestruction、testJoiningAndDestruction。
  * 构建开关：_EMSCRIPTEN_（单下划线）没有定义，所以 initGLStates 里的 glHint 照常调用（WebGL 下是空操作）。
  */
+import { I18n } from '@mcpe/locale';
 import { SharedConstants } from '@mcpe/core';
 import { Mouse, Multitouch } from '@mcpe/platform';
 import { Mth } from '@mcpe/util';
 import { FlatDimension, GameType, initBiomes, initItems, initMaterials, initTileEntities, initTiles, Level, LevelSettings, MemoryLevelStorage, MobCategory } from '@mcpe/world';
-import { DebugFreeCamera } from './camera/DebugFreeCamera';
 import { Minecraft } from './Minecraft';
 import { OptionId } from './Options';
 import {
@@ -43,7 +43,7 @@ export class NinecraftApp extends Minecraft {
     initTileEntities(); // TileEntity::initTileEntities()（子类经 TileEntityInclude 注入，ADAPTED(ESM)）
     this.initGLStates();
     Tesselator.instance.init();
-    // DEFERRED(Locale): I18n::loadLanguage(platform(), "en_US");
+    I18n.loadLanguage(this.platform()!, 'en_US');
     if (this.externalStoragePath !== '') {
       this.options.setOptionsFilePath(this.externalStoragePath);
     }
@@ -62,14 +62,11 @@ export class NinecraftApp extends Minecraft {
     }
   }
 
-  /** ADAPTED(Demo)：新建平坦世界并放好自由相机（手册 S9 的 startDemoWorld 规格） */
+  /** ADAPTED(Demo)：新建平坦世界（手册 S9 的 startDemoWorld 规格）；S12 起由真正的玩家进入世界 */
   startDemoWorld(): void {
     const level = new Level(new MemoryLevelStorage(), 'demo', new LevelSettings(0, GameType.Creative), SharedConstants.GeneratorVersion, new FlatDimension());
+    this.setIsCreativeMode(level.getLevelData().getGameType() === GameType.Creative); // 与 Minecraft::selectLevel 相同
     this.setLevel(level, 'Generating level');
-    const camera = new DebugFreeCamera(level, 136, 72, 104);
-    camera.yRot = camera.yRotO = 0;
-    camera.xRot = camera.xRotO = 30;
-    this.debugCamera = camera;
     this._running = true;
   }
 

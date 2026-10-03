@@ -4,15 +4,13 @@
  * 【OMIT】updateFreeformPickDirection、pick、renderItemInHand、prepareAndRenderClouds（拾取、手持物品、PE 云）。
  * 【DEFERRED】见各处标记：构造里的 ItemInHandRenderer 与 EntityRenderDispatcher；render 里的 gui.render；renderLevel 里的
  *   pick、粒子、实体、选中框、云、Beta 天空、手持物品；tick 末尾的 itemInHandRenderer->tick()。
- * 【ADAPTED(DebugCamera)】A4：render 的鼠标转向块对 player ?? debugCamera 生效；A5：tick 开头的提前返回改为两者都没有才返回
  *   （否则 _rotXlast 与 fogBr 永不更新，清屏色与雾一直是黑的）。
  * 【未使用的成员】smoothTurnX、smoothTurnY（SmoothFloat）只被已 OMIT 的拾取代码使用，不移植。
  * 渲染数学属于三档规则的“自由处理”，按 JS 数值计算。
  */
 import { Mouse, Multitouch } from '@mcpe/platform';
 import { Mth, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH } from '@mcpe/util';
-import { HitResultType, Material, Tile, Vec3 } from '@mcpe/world';
-import { asEntity, type CameraTarget } from '../camera/CameraTarget';
+import { type Entity, HitResult, HitResultType, Material, type Mob, type Player, Tile, Vec3 } from '@mcpe/world';
 import { IntRectangle } from '../gui/components/ImageButton';
 import { Gui } from '../gui/Gui';
 import type { Minecraft } from '../Minecraft';
@@ -124,8 +122,7 @@ export class GameRenderer {
   render(a: number): void {
     const mc = this.mc;
     TIMER_PUSH('mouse');
-    // ADAPTED(DebugCamera): A4 —— C++ 是 if (mc->player && mc->mouseGrabbed)，转向对象是 mc->player
-    const turnTarget: CameraTarget | null = mc.player ?? mc.debugCamera;
+    const turnTarget = mc.player;
     if (turnTarget && mc.mouseGrabbed) {
       mc.mouseHandler.poll();
       const ss = mc.options.getProgressValue(OptionId.OPTIONS_SENSITIVITY) * 0.6 + 0.2;
@@ -214,7 +211,7 @@ export class GameRenderer {
       }
     }
     TIMER_PUSH('pick');
-    // DEFERRED(Pick): pick(a);
+    this.pick(a);
     const cameraEntity = mc.cameraTargetPlayer;
     const levelRenderer = mc.levelRenderer!;
     // DEFERRED(Particle): ParticleEngine* particleEngine = mc->particleEngine;
@@ -310,7 +307,13 @@ export class GameRenderer {
       if (this.zoom === 1 && cameraEntity.isPlayer()) {
         if (mc.hitResult.isHit() && !cameraEntity.isUnderLiquid(Material.water)) {
           TIMER_POP_PUSH('select');
-          // DEFERRED(HitSelect): Player* player = (Player*) cameraEntity; renderHitOutline / renderHitSelect（按 OPTIONS_BLOCK_OUTLINE 二选一）; levelRenderer->renderHit(player, mc->hitResult, 0, NULL, a);
+          const player = cameraEntity as unknown as Player;
+          if (mc.options.getBooleanValue(OptionId.OPTIONS_BLOCK_OUTLINE)) {
+            levelRenderer.renderHitOutline(player, mc.hitResult, 0, null, a); // java block outline one
+          } else {
+            levelRenderer.renderHitSelect(player, mc.hitResult, 0, null, a); // normal pe one - shredder
+          }
+          // DEFERRED(HitSelect): levelRenderer->renderHit(player, mc->hitResult, 0, NULL, a);（挖掘裂纹，S13）
         }
       }
       glDisable2(GL_FOG);
@@ -335,8 +338,86 @@ export class GameRenderer {
     TIMER_POP();
   }
 
-  // OMIT(Pick): pick(a)  GameRenderer.cpp:685
-  // OMIT(Pick): updateFreeformPickDirection(a, outDir)  GameRenderer.cpp:638
+  pick(a: number): void {
+    const mc = this.mc;
+    if (mc.level === null) return;
+    const target = mc.cameraTargetPlayer;
+    if (target === null) return;
+    if (!target.isAlive()) return;
+    let range = mc.gameMode!.getPickRange();
+    let isPicking = true;
+    const freeform = mc.useTouchscreen() && !mc.options.getBooleanValue(OptionId.OPTIONS_IS_JOY_TOUCH_AREA);
+    if (freeform) {
+      isPicking = this.updateFreeformPickDirection(a, this.pickDirection);
+    } else {
+      mc.hitResult = target.pick(range, a);
+      this.pickDirection = target.getViewVector(a);
+    }
+    const from = target.getPos(a);
+    let dist = range;
+    if (mc.hitResult.isHit()) {
+      dist = mc.hitResult.pos.distanceTo(from.x, from.y, from.z);
+    }
+    if (mc.gameMode!.isCreativeType()) {
+      /*dist =*/ range = 12;
+    } else {
+      if (dist > 3) dist = 3;
+      range = dist;
+    }
+    const pv = this.pickDirection.multiply(range); // pickDirection * range
+    const to = from.add(pv.x, pv.y, pv.z); // from + pv
+    target.aimDirection = this.pickDirection;
+    let hovered: Entity | null = null;
+    const g = 1;
+    const aabb = target.bb.expand(pv.x, pv.y, pv.z).grow(g, g, g);
+    const objects = mc.level.getEntities(target, aabb);
+    let nearest = 0;
+    for (let i = 0; i < objects.length; i++) {
+      const e = objects[i]!;
+      if (!e.isPickable()) continue;
+      const rr = e.getPickRadius();
+      const bb = e.bb.grow(rr, rr, rr);
+      const p = bb.clip(from, to);
+      if (bb.contains(from.x, from.y, from.z)) {
+        if (nearest >= 0) {
+          hovered = e;
+          nearest = 0;
+        }
+      } else if (p.isHit()) {
+        const dd = from.distanceTo(p.pos.x, p.pos.y, p.pos.z);
+        if (dd < nearest || nearest === 0) {
+          hovered = e;
+          nearest = dd;
+        }
+      }
+    }
+    if (hovered !== null) {
+      if (nearest < dist) {
+        mc.hitResult = new HitResult(hovered);
+      }
+    } else if (isPicking && !mc.hitResult.isHit()) {
+      if (this.pickDirection.y < -0.7) {
+        const to2 = from.add(0, -2.0, 0);
+        const downHitResult = mc.level.clip(from, to2);
+        if (downHitResult.isHit()) {
+          mc.hitResult = downHitResult;
+          mc.hitResult.indirectHit = true;
+          if (Math.abs(this.pickDirection.x) > Math.abs(this.pickDirection.z)) {
+            mc.hitResult.f = this.pickDirection.x < 0 ? 4 : 5;
+          } else {
+            mc.hitResult.f = this.pickDirection.z < 0 ? 2 : 3;
+          }
+        }
+      }
+    }
+  }
+
+  /** 触屏的自由拾取（反投影触点）：桌面输入不经过这里 */
+  private updateFreeformPickDirection(_a: number, _outDir: Vec3): boolean {
+    // DEFERRED(Touch): glhUnProjectf 反投影 mc->inputHolder->mousex/mousey，clip 后写回 outDir（GameRenderer.cpp:638）
+    _shTicks = 1;
+    return false;
+  }
   // OMIT(ItemInHand): renderItemInHand(a, eye)  GameRenderer.cpp:912
   // OMIT(Clouds): prepareAndRenderClouds(levelRenderer, a)  GameRenderer.cpp:961
 
@@ -494,8 +575,7 @@ export class GameRenderer {
   tick(nTick: number, maxTick: number): void {
     const mc = this.mc;
     --_t_keepPic.value;
-    // ADAPTED(DebugCamera): A5 —— C++ 是 if (!mc->player) return;
-    if (!mc.player && !mc.debugCamera) {
+    if (!mc.player) {
       return;
     }
     if (--_shTicks === 0) mc.hitResult.type = HitResultType.NO_HIT;
@@ -534,7 +614,7 @@ export class GameRenderer {
     const player = mc.cameraTargetPlayer!;
     let whiteness = 1.0 / (4 - mc.options.getIntValue(OptionId.OPTIONS_VIEW_DISTANCE));
     whiteness = 1 - Math.pow(whiteness, 0.25);
-    const skyColor = level.getSkyColor(asEntity(player), a);
+    const skyColor = level.getSkyColor(player, a);
     const sr = skyColor.x;
     const sg = skyColor.y;
     const sb = skyColor.z;

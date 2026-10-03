@@ -1,3 +1,4 @@
+// S12 起只供 dev 页 fly-smoke 使用（游戏本身用真正的 LocalPlayer）；原在 packages/client/src/camera/。
 /**
  * NEW（S8）：demo 用来代替玩家的自由飞行相机，实现 CameraTarget。没有碰撞、没有重力。
  *  - heightOffset = 1.62（与 Player 一致），GameRenderer 里 heightOffset − 1.62 = 0，视点就在 y 处。
@@ -8,7 +9,7 @@
  */
 import { Mth } from '@mcpe/util';
 import { type Level, LiquidTile, type Material, Tile, Vec3 } from '@mcpe/world';
-import type { IMoveInput } from '../player/input/IMoveInput';
+import type { IMoveInput } from '@mcpe/client';
 import type { CameraTarget } from './CameraTarget';
 
 export class DebugFreeCamera implements CameraTarget {

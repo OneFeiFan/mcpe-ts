@@ -35,13 +35,18 @@ describe('S9 检查点', () => {
     expect(app.levelRenderer!._statsForTest().level).toBeNull();
     expect(app.useTouchscreen()).toBe(false);
     expect(app.inputHolder).not.toBeNull();
-    expect(app.debugCamera).toMatchObject({ x: 136, y: 72, z: 104, xRot: 30, yRot: 0 });
+    expect(app.isCreativeMode()).toBe(true); // demo 世界是创造模式（与 Minecraft::selectLevel 一样按 GameType 设置）
+    expect(app.gameMode!.isCreativeType()).toBe(true);
     expect(app.mouseGrabbed).toBe(false); // 起始界面的 releaseMouse（ADAPTED(Demo)），等第一次点击
   });
 
-  it('首个 tick 触发 _levelGenerated：cameraTargetPlayer === debugCamera，levelRenderer.level === level（A1）', () => {
+  it('首个 tick 触发 _levelGenerated：创建玩家，cameraTargetPlayer === player，玩家加入世界并获得创造模式能力', () => {
     app.tick(0, 0);
-    expect(app.cameraTargetPlayer).toBe(app.debugCamera);
+    expect(app.player).not.toBeNull();
+    expect(app.cameraTargetPlayer).toBe(app.player);
+    expect(app.level!.players).toContain(app.player);
+    expect(app.player!.abilities.mayfly).toBe(true);
+    expect(app.player!.inventory.getSelected()).not.toBeNull(); // 创造模式的默认物品栏
     expect(app.levelRenderer!._statsForTest().level).toBe(app.level);
   });
 
@@ -50,7 +55,7 @@ describe('S9 检查点', () => {
     expect([s.xChunks, s.yChunks, s.zChunks, s.chunksLength]).toEqual([9, 8, 9, 648]);
   });
 
-  it('清屏色与雾不是黑色：A5 让 GameRenderer.tick 在没有 player 时也更新 fogBr', () => {
+  it('清屏色与雾不是黑色（GameRenderer.tick 按玩家更新 fogBr）', () => {
     for (let i = 1; i <= 40; i++) app.tick(0, 0);
     const g = app.gameRenderer as unknown as Priv;
     expect(g.fogBr).toBeGreaterThan(0.5);
@@ -68,7 +73,7 @@ describe('S9 检查点', () => {
     expect(app.levelRenderer!._statsForTest().rendered).toBeGreaterThan(0);
   });
 
-  it('S8 检查点 4 接到 GameRenderer.render：默认灵敏度下 sens = 1.0，鼠标 dx = 10 → _rotX 增加 10 × 1.0 × 4（A4）', () => {
+  it('S8 检查点 4 接到 GameRenderer.render：默认灵敏度下 sens = 1.0，鼠标 dx = 10 → _rotX 增加 10 × 1.0 × 4', () => {
     const g = app.gameRenderer as unknown as Priv;
     // 第一次点击：tickInput 的“点击即 grabMouse”
     Mouse.feed(MouseAction.ACTION_LEFT, MouseAction.DATA_DOWN, 10, 10);
@@ -85,8 +90,9 @@ describe('S9 检查点', () => {
     Mouse.reset();
   });
 
-  it('WASD 经 tickInput（A3）进入移动输入，tick 里自由相机前进（A2）；releaseMouse 松开全部按键（A6）', () => {
-    const cam = app.debugCamera!;
+  it('WASD 经 tickInput 进入玩家的移动输入，玩家前进；releaseMouse 松开全部按键', () => {
+    const cam = app.player!;
+    const x0 = cam.x;
     const z0 = cam.z;
     const yRot0 = cam.yRot;
     Mouse.reset();
@@ -95,14 +101,17 @@ describe('S9 检查点', () => {
       Keyboard.feed(87, KeyboardAction.KEYDOWN);
       app.tick(0, 0);
       app.tick(0, 0);
-      const moved = Math.hypot(cam.x - 136, cam.z - z0);
+      for (let i = 0; i < 8; i++) app.tick(0, 0);
+      const moved = Math.hypot(cam.x - x0, cam.z - z0);
       expect(moved).toBeGreaterThan(0.4);
       void yRot0;
       app.releaseMouse();
       expect(app.mouseGrabbed).toBe(false);
+      for (let i = 0; i < 20; i++) app.tick(0, 0); // 松开后摩擦力让玩家停下
       const z1 = cam.z;
+      const x1 = cam.x;
       app.tick(0, 0);
-      expect(cam.z).toBe(z1);
+      expect(Math.hypot(cam.x - x1, cam.z - z1)).toBeLessThan(0.01);
       Keyboard.feed(87, KeyboardAction.KEYUP);
     });
   });

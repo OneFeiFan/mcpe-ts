@@ -11,8 +11,7 @@
  */
 import { LOGI, Stopwatch } from '@mcpe/platform';
 import { Mth, Random, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH } from '@mcpe/util';
-import { FoliageColor, GrassColor, type Level, LevelConstants, LevelListener, Tile } from '@mcpe/world';
-import { asEntity, type CameraTarget } from '../camera/CameraTarget';
+import { type AABB, FoliageColor, GrassColor, type HitResult, HitResultType, type Level, LevelConstants, LevelListener, type Mob, type Player, Tile } from '@mcpe/world';
 import { Minecraft } from '../Minecraft';
 import { OptionId } from '../Options';
 import { Chunk } from './Chunk';
@@ -20,8 +19,9 @@ import type { Culler } from './culling/Culler';
 import { DirtyChunkSorter, sorterComparator } from './DirtyChunkSorter';
 import { DistanceChunkSorter } from './DistanceChunkSorter';
 import {
-  GL_ALPHA_TEST, GL_FOG, GL_LIGHTING, GL_TEXTURE_2D, glColorMask, glDepthMask, glDisable2, glEnable2, glGenBuffers2, glPopMatrix2,
-  glPushMatrix2, glTranslatef2,
+  GL_ALPHA_TEST, GL_BLEND, GL_DEPTH_TEST, GL_DST_COLOR, GL_FOG, GL_LIGHTING, GL_LINE_STRIP, GL_LINES, GL_ONE, GL_ONE_MINUS_SRC_ALPHA,
+  GL_POLYGON_OFFSET_FILL, GL_SRC_ALPHA, GL_SRC_COLOR, GL_TEXTURE_2D, glBlendFunc2, glColor4f2, glColorMask, glDepthMask, glDisable2,
+  glEnable2, glGenBuffers2, glLineWidth, glPolygonOffset, glPopMatrix2, glPushMatrix2, glTranslatef2,
 } from './gles';
 import { RenderList } from './RenderList';
 import { Tesselator } from './Tesselator';
@@ -273,7 +273,7 @@ export class LevelRenderer extends LevelListener {
       const player = mc.cameraTargetPlayer;
       if (player !== null) {
         this.resortChunks(Mth.floor(player.x), Mth.floor(player.y), Mth.floor(player.z));
-        sortedChunks.sort(sorterComparator(new DistanceChunkSorter(asEntity(player))));
+        sortedChunks.sort(sorterComparator(new DistanceChunkSorter(player)));
       }
     }
     this.noEntityRenderFrames = 2;
@@ -332,7 +332,7 @@ export class LevelRenderer extends LevelListener {
   }
 
   /** C++ 的 int render(Mob* player, int layer, float alpha)；render(const AABB&) 是 OMIT */
-  render(player: CameraTarget, layer: number, alpha: number): number {
+  render(player: Mob, layer: number, alpha: number): number {
     const mc = this.mc;
     if (mc.options.getIntValue(OptionId.OPTIONS_VIEW_DISTANCE) !== this.lastViewDistance) {
       this.allChanged();
@@ -391,7 +391,7 @@ export class LevelRenderer extends LevelListener {
       this.yOld = player.y;
       this.zOld = player.z;
       this.resortChunks(Mth.floor(player.x), Mth.floor(player.y), Mth.floor(player.z));
-      this.sortedChunks!.sort(sorterComparator(new DistanceChunkSorter(asEntity(player))));
+      this.sortedChunks!.sort(sorterComparator(new DistanceChunkSorter(player)));
     }
     let count = 0;
     if (this.occlusionCheck && !mc.options.getBooleanValue(OptionId.OPTIONS_ANAGLYPH_3D) && layer === 0) {
@@ -427,7 +427,7 @@ export class LevelRenderer extends LevelListener {
             ci.occlusion_visible = true;
           }
           if (ci.visible && !ci.occlusion_querying) {
-            const dist = Mth.sqrt(ci.distanceToSqr(asEntity(player)));
+            const dist = Mth.sqrt(ci.distanceToSqr(player));
             const frequency = Math.trunc(1 + dist / 128);
             if (this.ticks % frequency === i % frequency) {
               const xt = ci.x - xOff;
@@ -511,18 +511,18 @@ export class LevelRenderer extends LevelListener {
     this.ticks++;
   }
 
-  updateDirtyChunks(player: CameraTarget, force: boolean): boolean {
+  updateDirtyChunks(player: Mob, force: boolean): boolean {
     const slow = false;
     const dirtyChunks = this.dirtyChunks;
     if (slow) {
       // 慢速分支：slow 恒为 false，照原样保留
-      (dirtyChunks as Chunk[]).sort(sorterComparator(new DirtyChunkSorter(asEntity(player))));
+      (dirtyChunks as Chunk[]).sort(sorterComparator(new DirtyChunkSorter(player)));
       const s = dirtyChunks.length - 1;
       const amount = dirtyChunks.length;
       for (let i = 0; i < amount; i++) {
         const chunk = dirtyChunks[s - i]!;
         if (!force) {
-          if (chunk.distanceToSqr(asEntity(player)) > 16 * 16) {
+          if (chunk.distanceToSqr(player) > 16 * 16) {
             if (chunk.visible) {
               if (i >= LevelRenderer.MAX_VISIBLE_REBUILDS_PER_FRAME) return false;
             } else {
@@ -539,7 +539,7 @@ export class LevelRenderer extends LevelListener {
       return dirtyChunks.length === 0;
     } else {
       const count = 3;
-      const dirtyChunkSorter = new DirtyChunkSorter(asEntity(player));
+      const dirtyChunkSorter = new DirtyChunkSorter(player);
       const toAdd: (Chunk | null)[] = [null, null, null];
       let nearChunks: Chunk[] | null = null;
       const pendingChunkSize = dirtyChunks.length;
@@ -547,7 +547,7 @@ export class LevelRenderer extends LevelListener {
       for (let i = 0; i < pendingChunkSize; i++) {
         const chunk = dirtyChunks[i]!;
         if (!force) {
-          if (chunk.distanceToSqr(asEntity(player)) > 1024.0) {
+          if (chunk.distanceToSqr(player) > 1024.0) {
             let index: number;
             for (index = 0; index < count; index++) {
               if (toAdd[index] !== null && dirtyChunkSorter.compare(toAdd[index]!, chunk) === false) {
@@ -631,7 +631,60 @@ export class LevelRenderer extends LevelListener {
   }
 
   // OMIT(HitSelect): renderHit(player, h, mode, inventoryItem, a)  LevelRenderer.cpp:836
-  // OMIT(HitSelect): renderHitOutline(player, h, mode, inventoryItem, a)  LevelRenderer.cpp:901
+  renderHitOutline(player: Player, h: HitResult, mode: number, _inventoryItem: unknown, a: number): void {
+    if (mode === 0 && h.type === HitResultType.TILE) {
+      glEnable2(GL_BLEND);
+      glBlendFunc2(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glColor4f2(0, 0, 0, 0.4);
+      glLineWidth(1.0);
+      glDisable2(GL_TEXTURE_2D);
+      glDepthMask(false);
+      const ss = 0.002;
+      const level = this.level!;
+      const tileId = level.getTile(h.x, h.y, h.z);
+      if (tileId > 0) {
+        Tile.tiles[tileId]!.updateShape(level, h.x, h.y, h.z);
+        const xo = player.xOld + (player.x - player.xOld) * a;
+        const yo = player.yOld + (player.y - player.yOld) * a;
+        const zo = player.zOld + (player.z - player.zOld) * a;
+        this.renderAABB(Tile.tiles[tileId]!.getTileAABB(level, h.x, h.y, h.z).grow(ss, ss, ss).cloneMove(-xo, -yo, -zo));
+      }
+      glDepthMask(true);
+      glEnable2(GL_TEXTURE_2D);
+      glDisable2(GL_BLEND);
+    }
+  }
+
+  /** C++ 的 render(const AABB&)：与 render(Mob*, int, float) 同名（R10 情形 B） */
+  renderAABB(b: AABB): void {
+    const t = Tesselator.instance;
+    glLineWidth(2.0); // make it more thick - shredder
+    t.begin(GL_LINE_STRIP);
+    t.vertex(b.x0, b.y0, b.z0);
+    t.vertex(b.x1, b.y0, b.z0);
+    t.vertex(b.x1, b.y0, b.z1);
+    t.vertex(b.x0, b.y0, b.z1);
+    t.vertex(b.x0, b.y0, b.z0);
+    t.draw();
+    t.begin(GL_LINE_STRIP);
+    t.vertex(b.x0, b.y1, b.z0);
+    t.vertex(b.x1, b.y1, b.z0);
+    t.vertex(b.x1, b.y1, b.z1);
+    t.vertex(b.x0, b.y1, b.z1);
+    t.vertex(b.x0, b.y1, b.z0);
+    t.draw();
+    t.begin(GL_LINES);
+    t.vertex(b.x0, b.y0, b.z0);
+    t.vertex(b.x0, b.y1, b.z0);
+    t.vertex(b.x1, b.y0, b.z0);
+    t.vertex(b.x1, b.y1, b.z0);
+    t.vertex(b.x1, b.y0, b.z1);
+    t.vertex(b.x1, b.y1, b.z1);
+    t.vertex(b.x0, b.y0, b.z1);
+    t.vertex(b.x0, b.y1, b.z1);
+    t.offset(0, 0, 0);
+    t.draw();
+  }
 
   setDirty(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): void {
     const CS = LevelRenderer.CHUNK_SIZE;
@@ -690,7 +743,43 @@ export class LevelRenderer extends LevelListener {
   // OMIT(Sound): playSound(name, x, y, z, volume, pitch)  LevelRenderer.cpp:1453
   // OMIT(Particle): addParticle(name, ...)  LevelRenderer.cpp:1463
   // OMIT(Particle): addParticle(ParticleType::Id, ...)  LevelRenderer.cpp:1509
-  // OMIT(HitSelect): renderHitSelect(player, h, mode, inventoryItem, a)  LevelRenderer.cpp:1560
+  renderHitSelect(player: Player, h: HitResult, mode: number, _inventoryItem: unknown, a: number): void {
+    if (mode === 0) {
+      const t = Tesselator.instance;
+      glEnable2(GL_BLEND);
+      glDisable2(GL_TEXTURE_2D);
+      glBlendFunc2(GL_SRC_ALPHA, GL_ONE);
+      glBlendFunc2(GL_DST_COLOR, GL_SRC_COLOR);
+      glEnable2(GL_DEPTH_TEST);
+      this.textures!.loadAndBindTexture('terrain.png');
+      const level = this.level!;
+      const tileId = level.getTile(h.x, h.y, h.z);
+      let tile = tileId > 0 ? (Tile.tiles[tileId] ?? null) : null;
+      glDisable2(GL_ALPHA_TEST);
+      const br = 0.65;
+      glColor4f2(br * 1.0, br * 1.0, br * 1.0, br * 1.0);
+      glPushMatrix2();
+      glPolygonOffset(-1, -1); // Implementation dependent units
+      glEnable2(GL_POLYGON_OFFSET_FILL);
+      const xo = player.xOld + (player.x - player.xOld) * a;
+      const yo = player.yOld + (player.y - player.yOld) * a;
+      const zo = player.zOld + (player.z - player.zOld) * a;
+      t.begin();
+      t.offset(-xo, -yo, -zo);
+      t.noColor();
+      if (tile === null) tile = Tile.rock;
+      this.tileRenderer!.tesselateInWorld(tile, h.x, h.y, h.z);
+      t.draw();
+      t.offset(0, 0, 0);
+      glPolygonOffset(0.0, 0.0);
+      glDisable2(GL_POLYGON_OFFSET_FILL);
+      glEnable2(GL_TEXTURE_2D);
+      glDepthMask(true);
+      glPopMatrix2();
+      glEnable2(GL_ALPHA_TEST);
+      glDisable2(GL_BLEND);
+    }
+  }
 
   onGraphicsReset(): void {
     this.generateStars();

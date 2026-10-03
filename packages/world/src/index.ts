@@ -177,3 +177,5 @@ export * from './level/tile/StonecutterTile.js';
 export * from './level/tile/TallGrass.js';
 export * from './level/tile/WebTile.js';
 export * from './level/tile/WorkbenchTile.js';
+export * from './level/tile/NetherReactor.js';
+export * from './level/tile/entity/NetherReactorTileEntity.js';

@@ -1,3 +1,4 @@
+// S12 起只供 dev 页 fly-smoke 使用（游戏本身用真正的 LocalPlayer）；原在 packages/client/src/camera/。
 /**
  * NEW（S8，决策 D7）：渲染与相机代码从“相机目标”读取的成员。成员名与 Mob（及 Entity）完全一致，
  * 将来真正的 Mob、LocalPlayer 按结构类型直接满足，GameRenderer、LevelRenderer 不用改（手册附录 A）。

@@ -9,7 +9,7 @@
  * 渲染用的颜色属于三档规则的“自由处理”，按 JS 数值计算；Tesselator.color(r, g, b) 是 float 版重载（与 C++ 实参一致）。
  * C++ 里 ll000 等成员在构造时没有初始化，这里取 0（第一次读到之前一定会被赋值）。
  */
-import { BedTile, Direction, type FenceTile, type LevelSource, LiquidTile, type Material, type StemTile, type ThinFenceTile, Tile } from '@mcpe/world';
+import { BedTile, Direction, FenceGateTile, type FenceTile, type StairTile, type LevelSource, LiquidTile, type Material, type StemTile, type ThinFenceTile, Tile } from '@mcpe/world';
 import { Mth } from '@mcpe/util';
 import { Facing } from '@mcpe/world';
 import { Minecraft } from '../Minecraft';
@@ -60,15 +60,13 @@ export class TileRenderer {
     } else if (shape === Tile.SHAPE_WATER) {
       return this.tesselateWaterInWorld(tt, x, y, z);
     } else if (shape === Tile.SHAPE_CACTUS) {
-      // DEFERRED(TileShape): return tesselateCactusInWorld(tt, x, y, z);
-      return false;
+      return this.tesselateCactusInWorld(tt, x, y, z);
     } else if (shape === Tile.SHAPE_CROSS_TEXTURE) {
       return this.tesselateCrossInWorld(tt, x, y, z);
     } else if (shape === Tile.SHAPE_STEM) {
       return this.tesselateStemInWorld(tt, x, y, z);
     } else if (shape === Tile.SHAPE_ROWS) {
-      // DEFERRED(TileShape): return tesselateRowInWorld(tt, x, y, z);
-      return false;
+      return this.tesselateRowInWorld(tt, x, y, z);
     } else if (shape === Tile.SHAPE_TORCH) {
       return this.tesselateTorchInWorld(tt, x, y, z);
     } else if (shape === Tile.SHAPE_FIRE) {
@@ -76,16 +74,13 @@ export class TileRenderer {
     } else if (shape === Tile.SHAPE_LADDER) {
       return this.tesselateLadderInWorld(tt, x, y, z);
     } else if (shape === Tile.SHAPE_DOOR) {
-      // DEFERRED(TileShape): return tesselateDoorInWorld(tt, x, y, z);
-      return false;
+      return this.tesselateDoorInWorld(tt, x, y, z);
     } else if (shape === Tile.SHAPE_STAIRS) {
-      // DEFERRED(TileShape): return tesselateStairsInWorld((StairTile*)tt, x, y, z);
-      return false;
+      return this.tesselateStairsInWorld(tt as StairTile, x, y, z);
     } else if (shape === Tile.SHAPE_FENCE) {
       return this.tesselateFenceInWorld(tt as FenceTile, x, y, z);
     } else if (shape === Tile.SHAPE_FENCE_GATE) {
-      // DEFERRED(TileShape): return tesselateFenceGateInWorld((FenceGateTile*) tt, x, y, z);
-      return false;
+      return this.tesselateFenceGateInWorld(tt as FenceGateTile, x, y, z);
     } else if (shape === Tile.SHAPE_IRON_FENCE) {
       return this.tesselateThinFenceInWorld(tt as ThinFenceTile, x, y, z);
     } else if (shape === Tile.SHAPE_BED) {
@@ -1079,9 +1074,6 @@ export class TileRenderer {
     return i;
   }
 
-  // OMIT(TileShape): tesselateCactusInWorld(tt, x, y, z)  TileRenderer.cpp:1423
-  // OMIT(TileShape): tesselateCactusInWorld(tt, x, y, z, r, g, b)  TileRenderer.cpp:1431
-  // OMIT(TileShape): tesselateFenceGateInWorld(tt, x, y, z)  TileRenderer.cpp:1587
   tesselateBedInWorld(tt: Tile, x: number, y: number, z: number): boolean {
     const level = this.level!;
     const t = Tesselator.instance;
@@ -1212,9 +1204,6 @@ export class TileRenderer {
     return true;
   }
 
-  // OMIT(TileShape): tesselateStairsInWorld(tt, x, y, z)  TileRenderer.cpp:1956
-  // OMIT(TileShape): tesselateDoorInWorld(tt, x, y, z)  TileRenderer.cpp:1975
-  // OMIT(TileShape): tesselateRowInWorld(tt, x, y, z)  TileRenderer.cpp:2070
 
   /** 贴图坐标：tex 的低 4 位是列、高 4 位是行；方块边界越出 [0, 1] 时用整格 */
   private static uv(tex: number): [number, number] {
@@ -1469,8 +1458,258 @@ export class TileRenderer {
     }
   }
 
-  // OMIT(TileShape): renderTile(tile, data)  TileRenderer.cpp:2367（物品与手持方块，S11）
-  // OMIT(TileShape): renderGuiTile(tile, data)  TileRenderer.cpp:2585（物品栏图标，S11）
+  // ---- S13 阶段 A：物品与手持方块（renderTile）、物品栏图标（renderGuiTile），照 C++ 逐句移植 ----
+  renderTile(tile: Tile, data: number): void {
+    const t = Tesselator.instance;
+    t.color(0xff, 0xff, 0xff); // i disabled this, this is normally enabled in normal mcpe see if this fits OPTION_NORMAL_LIGHTING - shredder
+    let shape = tile.getRenderShape();
+    if (shape === Tile.SHAPE_BLOCK) {
+      tile.updateDefaultShape();
+      t.addOffset(-0.5, -0.5, -0.5);
+      t.begin();
+      t.normal(0.0, -1.0, 0.0);// most normal calls in this file has been added me since they existed in java - shredder
+      this.renderFaceDown(tile, 0, 0, 0, tile.getTexture(0, data));
+      t.normal(0.0, 1.0, 0.0);
+      this.renderFaceUp(tile, 0, 0, 0, tile.getTexture(1, data));
+      t.normal(0.0, 0.0, -1.0);
+      this.renderNorth(tile, 0, 0, 0, tile.getTexture(2, data));
+      t.normal(0.0, 0.0, 1.0);
+      this.renderSouth(tile, 0, 0, 0, tile.getTexture(3, data));
+      t.normal(-1.0, 0.0, 0.0);
+      this.renderWest(tile, 0, 0, 0, tile.getTexture(4, data));
+      t.normal(1.0, 0.0, 0.0);
+      this.renderEast(tile, 0, 0, 0, tile.getTexture(5, data));
+      t.draw();
+      t.addOffset(0.5, 0.5, 0.5);
+    } else if (shape === Tile.SHAPE_CROSS_TEXTURE) { // uhh java has this but is this even ever used??? - shredder
+      t.begin();
+      t.normal(0.0, -1.0, 0.0);
+      this.tesselateCrossTexture(tile, data, -0.5, -0.5, -0.5);
+      t.draw();
+    } else if(shape === Tile.SHAPE_STEM) {
+      t.begin();
+      t.normal(0.0, -1.0, 0.0);
+      tile.updateDefaultShape();
+      this.tesselateStemTexture(tile, data, tile.yy1, -0.5, -0.5, -0.5);
+      t.draw();
+    } else if (shape === Tile.SHAPE_CACTUS) {
+      tile.updateDefaultShape();
+      t.offset(-0.5, -0.5, -0.5);
+      let s = 1 / 16.0;
+      t.begin();
+      t.normal(0.0, -1.0, 0.0);
+      this.renderFaceDown(tile, 0, 0, 0, tile.getTexture(0));
+      t.normal(0.0, 1.0, 0.0);
+      this.renderFaceUp(tile, 0, 0, 0, tile.getTexture(1));
+      t.normal(0.0, 0.0, -1.0);
+      t.addOffset(0, 0, s);
+      this.renderNorth(tile, 0, 0, 0, tile.getTexture(2));
+      t.normal(0.0, 0.0, 1.0);
+      t.addOffset(0, 0, -s);
+      t.addOffset(0, 0, -s);
+      this.renderSouth(tile, 0, 0, 0, tile.getTexture(3));
+      t.normal(-1.0, 0.0, 0.0);
+      t.addOffset(0, 0, s);
+      t.addOffset(s, 0, 0);
+      this.renderWest(tile, 0, 0, 0, tile.getTexture(4));
+      t.normal(1.0, 0.0, 0.0);
+      t.addOffset(-s, 0, 0);
+      t.addOffset(-s, 0, 0);
+      this.renderEast(tile, 0, 0, 0, tile.getTexture(5));
+      t.addOffset(s, 0, 0);
+      t.draw();
+      t.offset(0, 0, 0);//0.5, 0.5, 0.5);
+    } else if (shape === Tile.SHAPE_ROWS) {
+      t.begin();
+      t.normal(0, -1, 0);
+      this.tesselateRowTexture(tile, data, -0.5, -0.5, -0.5);
+    } else if (shape === Tile.SHAPE_ENTITYTILE_ANIMATED) {
+      // DEFERRED(EntityRender): EntityTileRenderer::instance->render(tile, data, 1.0f);（箱子的物品形态，S13 阶段 C）
+    } else if (shape === Tile.SHAPE_STAIRS) {
+      t.addOffset(-0.5, -0.5, -0.5);
+      t.begin();
+      for (let i = 0; i < 2; i++) {
+        if (i === 0) tile.setShape(0, 0, 0, 1, 1, 0.5);
+        if (i === 1) tile.setShape(0, 0, 0.5, 1, 0.5, 1);
+        t.normal(0.0, -1.0, 0.0);
+        this.renderFaceDown(tile, 0, 0, 0, tile.getTexture(0));
+        t.normal(0.0, 1.0, 0.0);
+        this.renderFaceUp(tile, 0, 0, 0, tile.getTexture(1));
+        t.normal(0.0, 0.0, -1.0);
+        this.renderNorth(tile, 0, 0, 0, tile.getTexture(2));
+        t.normal(0.0, 0.0, 1.0);
+        this.renderSouth(tile, 0, 0, 0, tile.getTexture(3));
+        t.normal(-1.0, 0.0, 0.0);
+        this.renderWest(tile, 0, 0, 0, tile.getTexture(4));
+        t.normal(1.0, 0.0, 0.0);
+        this.renderEast(tile, 0, 0, 0, tile.getTexture(5));
+      }
+      t.draw();
+      t.addOffset(0.5, 0.5, 0.5);
+    }
+    else if (shape === Tile.SHAPE_FENCE) {
+      t.addOffset(-0.5, -0.5, -0.5);
+      t.begin();
+      for (let i = 0; i < 4; i++) {
+        let w = 2 / 16.0;
+        if (i === 0) tile.setShape(0.5 - w, 0, 0, 0.5 + w, 1, w * 2);
+        if (i === 1) tile.setShape(0.5 - w, 0, 1 - w * 2, 0.5 + w, 1, 1);
+        w = 1 / 16.0;
+        if (i === 2) tile.setShape(0.5 - w, 1 - w * 3, -w * 2, 0.5 + w, 1 - w, 1 + w * 2);
+        if (i === 3) tile.setShape(0.5 - w, 0.5 - w * 3, -w * 2, 0.5 + w, 0.5 - w, 1 + w * 2);
+        t.normal(0.0, -1.0, 0.0);
+        this.renderFaceDown(tile, 0, 0, 0, tile.getTexture(0));
+        t.normal(0.0, 1.0, 0.0);
+        this.renderFaceUp(tile, 0, 0, 0, tile.getTexture(1));
+        t.normal(0.0, 0.0, -1.0);
+        this.renderNorth(tile, 0, 0, 0, tile.getTexture(2));
+        t.normal(0.0, 0.0, 1.0);
+        this.renderSouth(tile, 0, 0, 0, tile.getTexture(3));
+        t.normal(-1.0, 0.0, 0.0);
+        this.renderWest(tile, 0, 0, 0, tile.getTexture(4));
+        t.normal(1.0, 0.0, 0.0);
+        this.renderEast(tile, 0, 0, 0, tile.getTexture(5));
+      }
+      t.draw();
+      t.addOffset(0.5, 0.5, 0.5);
+      tile.setShape(0, 0, 0, 1, 1, 1);
+    } else if (shape === Tile.SHAPE_FENCE_GATE) {
+      t.addOffset(-0.5, -0.5, -0.5);
+      t.begin();
+      for (let i = 0; i < 3; i++) {
+        let w = 1 / 16.0;
+        if (i === 0) tile.setShape(0.5 - w, .3, 0, 0.5 + w, 1, w * 2);
+        if (i === 1) tile.setShape(0.5 - w, .3, 1 - w * 2, 0.5 + w, 1, 1);
+        if (i === 2) tile.setShape(0.5 - w, .5, w * 2, 0.5 + w, 1 - w, 1 - w * 2);
+        t.normal(0.0, -1.0, 0.0);
+        this.renderFaceDown(tile, 0, 0, 0, tile.getTexture(0));
+        t.normal(0.0, 1.0, 0.0);
+        this.renderFaceUp(tile, 0, 0, 0, tile.getTexture(1));
+        t.normal(0.0, 0.0, -1.0);
+        this.renderNorth(tile, 0, 0, 0, tile.getTexture(2));
+        t.normal(0.0, 0.0, 1.0);
+        this.renderSouth(tile, 0, 0, 0, tile.getTexture(3));
+        t.normal(-1.0, 0.0, 0.0);
+        this.renderWest(tile, 0, 0, 0, tile.getTexture(4));
+        t.normal(1.0, 0.0, 0.0);
+        this.renderEast(tile, 0, 0, 0, tile.getTexture(5));
+      }
+      t.draw();
+      t.addOffset(0.5, 0.5, 0.5);
+      tile.setShape(0, 0, 0, 1, 1, 1);
+    }
+  }
+
+  renderGuiTile(tile: Tile, data: number): void {
+    const t = Tesselator.instance;
+    let shape = tile.getRenderShape();
+    if (shape === Tile.SHAPE_BLOCK) {
+      tile.updateDefaultShape();
+      t.begin();
+      t.addOffset(-0.5, -0.5, -0.5);
+      t.color(0xff, 0xff, 0xff);
+      this.renderFaceUp(tile, 0, 0, 0, tile.getTexture(1, data));
+      this.renderFaceDown(tile, 0, 0, 0, tile.getTexture(0, data));
+      t.color(0x80, 0x80, 0x80);
+      this.renderNorth(tile, 0, 0, 0, tile.getTexture(2, data));
+      this.renderSouth(tile, 0, 0, 0, tile.getTexture(3, data));
+      t.color(0xbb, 0xbb, 0xbb);
+      this.renderEast(tile, 0, 0, 0, tile.getTexture(5, data));
+      this.renderWest(tile, 0, 0, 0, tile.getTexture(4, data));
+      t.draw();
+      t.addOffset(0.5, 0.5, 0.5);
+    } else if (shape === Tile.SHAPE_CROSS_TEXTURE) {
+      t.begin();
+      t.normal(0, -1, 0);
+      this.tesselateCrossTexture(tile, data, -0.5, -0.5, -0.5);
+      t.draw();
+    } else if (shape === Tile.SHAPE_CACTUS) {
+      tile.updateDefaultShape();
+      t.begin();
+      t.offset(-0.5, -0.5, -0.5);
+      let s = 1 / 16.0;
+      t.color(0xff, 0xff, 0xff);
+      this.renderFaceDown(tile, 0, 0, 0, tile.getTexture(0));
+      this.renderFaceUp(tile, 0, 0, 0, tile.getTexture(1));
+      t.color(0x80, 0x80, 0x80);
+      t.addOffset(0, 0, s);
+      this.renderNorth(tile, 0, 0, 0, tile.getTexture(2));
+      t.addOffset(0, 0, -s-s);
+      this.renderSouth(tile, 0, 0, 0, tile.getTexture(3));
+      t.color(0xbb, 0xbb, 0xbb);
+      t.addOffset(s, 0, s);
+      this.renderWest(tile, 0, 0, 0, tile.getTexture(4));
+      t.addOffset(-s-s, 0, 0);
+      this.renderEast(tile, 0, 0, 0, tile.getTexture(5));
+      t.draw();
+      t.addOffset(s+0.5, 0.5, 0.5);
+    } else if (shape === Tile.SHAPE_STAIRS) {
+      t.offset(-0.5, -0.5, -0.5);
+      t.begin();
+      for (let i = 0; i < 2; i++) {
+        if (i === 0) tile.setShape(0, 0, 0, 1, 1, 0.5);
+        if (i === 1) tile.setShape(0, 0, 0.5, 1, 0.5, 1);
+        t.color(0xff, 0xff, 0xff);
+        this.renderFaceDown(tile, 0, 0, 0, tile.getTexture(0));
+        this.renderFaceUp(tile, 0, 0, 0, tile.getTexture(1));
+        t.color(0x80, 0x80, 0x80);
+        this.renderNorth(tile, 0, 0, 0, tile.getTexture(2));
+        this.renderSouth(tile, 0, 0, 0, tile.getTexture(3));
+        t.color(0xbb, 0xbb, 0xbb);
+        this.renderWest(tile, 0, 0, 0, tile.getTexture(4));
+        this.renderEast(tile, 0, 0, 0, tile.getTexture(5));
+      }
+      t.draw();
+      t.offset(0, 0, 0);
+    }
+    else if (shape === Tile.SHAPE_FENCE) {
+      t.addOffset(-0.5, -0.5, -0.5);
+      t.begin();
+      for (let i = 0; i < 4; i++) {
+        let w = 2 / 16.0;
+        if (i === 0) tile.setShape(0.5 - w, 0, 0, 0.5 + w, 1, w * 2);
+        if (i === 1) tile.setShape(0.5 - w, 0, 1 - w * 2, 0.5 + w, 1, 1);
+        w = 1 / 16.0;
+        if (i === 2) tile.setShape(0.5 - w, 1 - w * 3, -w * 2, 0.5 + w, 1 - w, 1 + w * 2);
+        if (i === 3) tile.setShape(0.5 - w, 0.5 - w * 3, -w * 2, 0.5 + w, 0.5 - w, 1 + w * 2);
+        t.color(0xff, 0xff, 0xff);
+        this.renderFaceDown(tile, 0, 0, 0, tile.getTexture(0));
+        this.renderFaceUp(tile, 0, 0, 0, tile.getTexture(1));
+        t.color(0x80, 0x80, 0x80);
+        this.renderNorth(tile, 0, 0, 0, tile.getTexture(2));
+        this.renderSouth(tile, 0, 0, 0, tile.getTexture(3));
+        t.color(0xbb, 0xbb, 0xbb);
+        this.renderWest(tile, 0, 0, 0, tile.getTexture(4));
+        this.renderEast(tile, 0, 0, 0, tile.getTexture(5));
+      }
+      t.draw();
+      t.addOffset(0.5, 0.5, 0.5);
+      tile.setShape(0, 0, 0, 1, 1, 1);
+    }
+    else if (shape === Tile.SHAPE_FENCE_GATE) {
+      t.addOffset(-0.5, -0.5, -0.5);
+      t.begin();
+      for (let i = 0; i < 3; i++) {
+        let w = 1 / 16.0;
+        if (i === 0) tile.setShape(0.5 - w, .3, 0, 0.5 + w, 1, w * 2);
+        if (i === 1) tile.setShape(0.5 - w, .3, 1 - w * 2, 0.5 + w, 1, 1);
+        w = 1 / 16.0;
+        if (i === 2) tile.setShape(0.5 - w, .5, 0, 0.5 + w, 1 - w, 1);
+        t.color(0xff, 0xff, 0xff);
+        this.renderFaceUp(tile, 0, 0, 0, tile.getTexture(0));
+        this.renderFaceDown(tile, 0, 0, 0, tile.getTexture(1));
+        t.color(0x80, 0x80, 0x80);
+        this.renderNorth(tile, 0, 0, 0, tile.getTexture(2));
+        this.renderSouth(tile, 0, 0, 0, tile.getTexture(3));
+        t.color(0xbb, 0xbb, 0xbb);
+        this.renderWest(tile, 0, 0, 0, tile.getTexture(4));
+        this.renderEast(tile, 0, 0, 0, tile.getTexture(5));
+      }
+      t.draw();
+      tile.setShape(0, 0, 0, 1, 1, 1);
+      t.addOffset(0.5, 0.5, 0.5);
+    }
+  }
   /** 照 C++ 逐句移植 */
   tesselateThinFenceInWorld(tt: ThinFenceTile, x: number, y: number, z: number): boolean {
     const level = this.level!;
@@ -1828,7 +2067,6 @@ export class TileRenderer {
     return true;
   }
 
-  // OMIT(TileShape): tesselateRowTexture(tt, data, x, y, z)  TileRenderer.cpp:3165
 
   static canRender(renderShape: number): boolean {
     if (renderShape === Tile.SHAPE_BLOCK) return true;
@@ -1842,5 +2080,424 @@ export class TileRenderer {
   /** 只给测试用：getWaterHeight 是 private，唯一的调用方 tesselateWaterInWorld 还没移植 */
   _getWaterHeightForTest(x: number, y: number, z: number, m: Material): number {
     return this.getWaterHeight(x, y, z, m);
+  }
+
+  // ---- S12 阶段 C：仙人掌、栅栏门、楼梯、门、作物行（照 C++ 逐句移植） ----
+  tesselateCactusInWorld(tt: Tile, x: number, y: number, z: number): boolean {
+    const level = this.level!;
+    const col = tt.getColor(level, x, y, z);
+    const r = ((col >> 16) & 0xff) / 255.0;
+    const g = ((col >> 8) & 0xff) / 255.0;
+    const b = ((col) & 0xff) / 255.0;
+    return this.tesselateCactusInWorldRGB(tt, x, y, z, r, g, b);
+  }
+
+  /** C++ 的 tesselateCactusInWorld(tt, x, y, z, r, g, b) 重载（与 tesselateBlockInWorldRGB 同一命名） */
+  private tesselateCactusInWorldRGB(tt: Tile, x: number, y: number, z: number, r: number, g: number, b: number): boolean {
+    const level = this.level!;
+    const t = Tesselator.instance;
+    let changed = false;
+    const c10 = 0.5;
+    const c11 = 1;
+    const c2 = 0.8;
+    const c3 = 0.6;
+    const r10 = c10 * r;
+    const r11 = c11 * r;
+    const r2 = c2 * r;
+    const r3 = c3 * r;
+    const g10 = c10 * g;
+    const g11 = c11 * g;
+    const g2 = c2 * g;
+    const g3 = c3 * g;
+    const b10 = c10 * b;
+    const b11 = c11 * b;
+    const b2 = c2 * b;
+    const b3 = c3 * b;
+    const s = 1 / 16.0;
+    const X = x;
+    const Y = y;
+    const Z = z;
+    const centerBrightness = tt.getBrightness(level, x, y, z);
+    if (this.noCulling || tt.shouldRenderFace(level, x, y - 1, z, 0)) {
+      const br = tt.getBrightness(level, x, y - 1, z);
+      t.color(r10 * br, g10 * br, b10 * br);
+      this.renderFaceDown(tt, X, Y, Z, tt.getTexture(level, x, y, z, 0));
+      changed = true;
+    }
+    if (this.noCulling || tt.shouldRenderFace(level, x, y + 1, z, 1)) {
+      let br = tt.getBrightness(level, x, y + 1, z);
+      if (tt.yy1 !== 1 && !tt.material.isLiquid()) br = centerBrightness;
+      t.color(r11 * br, g11 * br, b11 * br);
+      this.renderFaceUp(tt, X, Y, Z, tt.getTexture(level, x, y, z, 1));
+      changed = true;
+    }
+    if (this.noCulling || tt.shouldRenderFace(level, x, y, z - 1, 2)) {
+      let br = tt.getBrightness(level, x, y, z - 1);
+      if (tt.zz0 > 0) br = centerBrightness;
+      t.color(r2 * br, g2 * br, b2 * br);
+      t.addOffset(0, 0, s);
+      this.renderNorth(tt, X, Y, Z, tt.getTexture(level, x, y, z, 2));
+      t.addOffset(0, 0, -s);
+      changed = true;
+    }
+    if (this.noCulling || tt.shouldRenderFace(level, x, y, z + 1, 3)) {
+      let br = tt.getBrightness(level, x, y, z + 1);
+      if (tt.zz1 < 1) br = centerBrightness;
+      t.color(r2 * br, g2 * br, b2 * br);
+      t.addOffset(0, 0, -s);
+      this.renderSouth(tt, X, Y, Z, tt.getTexture(level, x, y, z, 3));
+      t.addOffset(0, 0, s);
+      changed = true;
+    }
+    if (this.noCulling || tt.shouldRenderFace(level, x - 1, y, z, 4)) {
+      let br = tt.getBrightness(level, x - 1, y, z);
+      if (tt.xx0 > 0) br = centerBrightness;
+      t.color(r3 * br, g3 * br, b3 * br);
+      t.addOffset(s, 0, 0);
+      this.renderWest(tt, X, Y, Z, tt.getTexture(level, x, y, z, 4));
+      t.addOffset(-s, 0, 0);
+      changed = true;
+    }
+    if (this.noCulling || tt.shouldRenderFace(level, x + 1, y, z, 5)) {
+      let br = tt.getBrightness(level, x + 1, y, z);
+      if (tt.xx1 < 1) br = centerBrightness;
+      t.color(r3 * br, g3 * br, b3 * br);
+      t.addOffset(-s, 0, 0);
+      this.renderEast(tt, X, Y, Z, tt.getTexture(level, x, y, z, 5));
+      t.addOffset(s, 0, 0);
+      changed = true;
+    }
+    return changed;
+  }
+
+  tesselateFenceGateInWorld(tt: FenceGateTile, x: number, y: number, z: number): boolean {
+    const level = this.level!;
+    const changed = true;
+    const data = level.getData(x, y, z);
+    const isOpen = FenceGateTile.isOpen(data);
+    const direction = FenceGateTile.getDirection(data);
+    const h00 = 6 / 16.0;
+    const h01 = 9 / 16.0;
+    const h10 = 12 / 16.0;
+    const h11 = 15 / 16.0;
+    const h20 = 5 / 16.0;
+    const h21 = 16 / 16.0;
+    if (direction === Direction.EAST || direction === Direction.WEST) {
+      const x0 = 7 / 16.0;
+      const x1 = 9 / 16.0;
+      let z0 = 0 / 16.0;
+      let z1 = 2 / 16.0;
+      tt.setShape(x0, h20, z0, x1, h21, z1);
+      this.tesselateBlockInWorld(tt, x, y, z);
+      z0 = 14 / 16.0;
+      z1 = 16 / 16.0;
+      tt.setShape(x0, h20, z0, x1, h21, z1);
+      this.tesselateBlockInWorld(tt, x, y, z);
+    } else {
+      let x0 = 0 / 16.0;
+      let x1 = 2 / 16.0;
+      const z0 = 7 / 16.0;
+      const z1 = 9 / 16.0;
+      tt.setShape(x0, h20, z0, x1, h21, z1);
+      this.tesselateBlockInWorld(tt, x, y, z);
+      x0 = 14 / 16.0;
+      x1 = 16 / 16.0;
+      tt.setShape(x0, h20, z0, x1, h21, z1);
+      this.tesselateBlockInWorld(tt, x, y, z);
+    }
+    if (!isOpen) {
+      if (direction === Direction.EAST || direction === Direction.WEST) {
+        const x0 = 7 / 16.0;
+        const x1 = 9 / 16.0;
+        let z0 = 6 / 16.0;
+        let z1 = 8 / 16.0;
+        tt.setShape(x0, h00, z0, x1, h11, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        z0 = 8 / 16.0;
+        z1 = 10 / 16.0;
+        tt.setShape(x0, h00, z0, x1, h11, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        z0 = 10 / 16.0;
+        z1 = 14 / 16.0;
+        tt.setShape(x0, h00, z0, x1, h01, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x0, h10, z0, x1, h11, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        z0 = 2 / 16.0;
+        z1 = 6 / 16.0;
+        tt.setShape(x0, h00, z0, x1, h01, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x0, h10, z0, x1, h11, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+      } else {
+        let x0 = 6 / 16.0;
+        let x1 = 8 / 16.0;
+        const z0 = 7 / 16.0;
+        const z1 = 9 / 16.0;
+        tt.setShape(x0, h00, z0, x1, h11, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        x0 = 8 / 16.0;
+        x1 = 10 / 16.0;
+        tt.setShape(x0, h00, z0, x1, h11, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        x0 = 10 / 16.0;
+        x1 = 14 / 16.0;
+        tt.setShape(x0, h00, z0, x1, h01, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x0, h10, z0, x1, h11, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        x0 = 2 / 16.0;
+        x1 = 6 / 16.0;
+        tt.setShape(x0, h00, z0, x1, h01, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x0, h10, z0, x1, h11, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+      }
+    } else {
+      if (direction === Direction.EAST) {
+        const z00 = 0 / 16.0;
+        const z01 = 2 / 16.0;
+        const z10 = 14 / 16.0;
+        const z11 = 16 / 16.0;
+        const x0 = 9 / 16.0;
+        const x1 = 13 / 16.0;
+        const x2 = 15 / 16.0;
+        tt.setShape(x1, h00, z00, x2, h11, z01);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x1, h00, z10, x2, h11, z11);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x0, h00, z00, x1, h01, z01);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x0, h00, z10, x1, h01, z11);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x0, h10, z00, x1, h11, z01);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x0, h10, z10, x1, h11, z11);
+        this.tesselateBlockInWorld(tt, x, y, z);
+      } else if (direction === Direction.WEST) {
+        const z00 = 0 / 16.0;
+        const z01 = 2 / 16.0;
+        const z10 = 14 / 16.0;
+        const z11 = 16 / 16.0;
+        const x0 = 1 / 16.0;
+        const x1 = 3 / 16.0;
+        const x2 = 7 / 16.0;
+        tt.setShape(x0, h00, z00, x1, h11, z01);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x0, h00, z10, x1, h11, z11);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x1, h00, z00, x2, h01, z01);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x1, h00, z10, x2, h01, z11);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x1, h10, z00, x2, h11, z01);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x1, h10, z10, x2, h11, z11);
+        this.tesselateBlockInWorld(tt, x, y, z);
+      } else if (direction === Direction.SOUTH) {
+        const x00 = 0 / 16.0;
+        const x01 = 2 / 16.0;
+        const x10 = 14 / 16.0;
+        const x11 = 16 / 16.0;
+        const z0 = 9 / 16.0;
+        const z1 = 13 / 16.0;
+        const z2 = 15 / 16.0;
+        tt.setShape(x00, h00, z1, x01, h11, z2);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x10, h00, z1, x11, h11, z2);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x00, h00, z0, x01, h01, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x10, h00, z0, x11, h01, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x00, h10, z0, x01, h11, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x10, h10, z0, x11, h11, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+      } else if (direction === Direction.NORTH) {
+        const x00 = 0 / 16.0;
+        const x01 = 2 / 16.0;
+        const x10 = 14 / 16.0;
+        const x11 = 16 / 16.0;
+        const z0 = 1 / 16.0;
+        const z1 = 3 / 16.0;
+        const z2 = 7 / 16.0;
+        tt.setShape(x00, h00, z0, x01, h11, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x10, h00, z0, x11, h11, z1);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x00, h00, z1, x01, h01, z2);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x10, h00, z1, x11, h01, z2);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x00, h10, z1, x01, h11, z2);
+        this.tesselateBlockInWorld(tt, x, y, z);
+        tt.setShape(x10, h10, z1, x11, h11, z2);
+        this.tesselateBlockInWorld(tt, x, y, z);
+      }
+    }
+    tt.setShape(0, 0, 0, 1, 1, 1);
+    return changed;
+  }
+
+  tesselateStairsInWorld(tt: StairTile, x: number, y: number, z: number): boolean {
+    const level = this.level!;
+    tt.setBaseShape(level, x, y, z);
+    this.tesselateBlockInWorld(tt, x, y, z);
+    const checkInnerPiece = tt.setStepShape(level, x, y, z);
+    this.tesselateBlockInWorld(tt, x, y, z);
+    if (checkInnerPiece) {
+      if (tt.setInnerPieceShape(level, x, y, z)) {
+        this.tesselateBlockInWorld(tt, x, y, z);
+      }
+    }
+    return true;
+  }
+
+  tesselateDoorInWorld(tt: Tile, x: number, y: number, z: number): boolean {
+    const level = this.level!;
+    const t = Tesselator.instance;
+    const dt = tt;
+    let changed = false;
+    const c10 = 0.5;
+    const c11 = 1;
+    const c2 = 0.8;
+    const c3 = 0.6;
+    const centerBrightness = tt.getBrightness(level, x, y, z);
+    {
+      let br = tt.getBrightness(level, x, y - 1, z);
+      if (dt.yy0 > 0) br = centerBrightness;
+      if (Tile.lightEmission[tt.id]! > 0) br = 1.0;
+      t.color(c10 * br, c10 * br, c10 * br);
+      this.renderFaceDown(tt, x, y, z, tt.getTexture(level, x, y, z, 0));
+      changed = true;
+    }
+    {
+      let br = tt.getBrightness(level, x, y + 1, z);
+      if (dt.yy1 < 1) br = centerBrightness;
+      if (Tile.lightEmission[tt.id]! > 0) br = 1.0;
+      t.color(c11 * br, c11 * br, c11 * br);
+      this.renderFaceUp(tt, x, y, z, tt.getTexture(level, x, y, z, 1));
+      changed = true;
+    }
+    {
+      let br = tt.getBrightness(level, x, y, z - 1);
+      if (dt.zz0 > 0) br = centerBrightness;
+      if (Tile.lightEmission[tt.id]! > 0) br = 1.0;
+      t.color(c2 * br, c2 * br, c2 * br);
+      let tex = tt.getTexture(level, x, y, z, 2);
+      if (tex < 0) {
+        this.xFlipTexture = true;
+        tex = -tex;
+      }
+      this.renderNorth(tt, x, y, z, tex);
+      changed = true;
+      this.xFlipTexture = false;
+    }
+    {
+      let br = tt.getBrightness(level, x, y, z + 1);
+      if (dt.zz1 < 1) br = centerBrightness;
+      if (Tile.lightEmission[tt.id]! > 0) br = 1.0;
+      t.color(c2 * br, c2 * br, c2 * br);
+      let tex = tt.getTexture(level, x, y, z, 3);
+      if (tex < 0) {
+        this.xFlipTexture = true;
+        tex = -tex;
+      }
+      this.renderSouth(tt, x, y, z, tex);
+      changed = true;
+      this.xFlipTexture = false;
+    }
+    {
+      let br = tt.getBrightness(level, x - 1, y, z);
+      if (dt.xx0 > 0) br = centerBrightness;
+      if (Tile.lightEmission[tt.id]! > 0) br = 1.0;
+      t.color(c3 * br, c3 * br, c3 * br);
+      let tex = tt.getTexture(level, x, y, z, 4);
+      if (tex < 0) {
+        this.xFlipTexture = true;
+        tex = -tex;
+      }
+      this.renderWest(tt, x, y, z, tex);
+      changed = true;
+      this.xFlipTexture = false;
+    }
+    {
+      let br = tt.getBrightness(level, x + 1, y, z);
+      if (dt.xx1 < 1) br = centerBrightness;
+      if (Tile.lightEmission[tt.id]! > 0) br = 1.0;
+      t.color(c3 * br, c3 * br, c3 * br);
+      let tex = tt.getTexture(level, x, y, z, 5);
+      if (tex < 0) {
+        this.xFlipTexture = true;
+        tex = -tex;
+      }
+      this.renderEast(tt, x, y, z, tex);
+      changed = true;
+      this.xFlipTexture = false;
+    }
+    return changed;
+  }
+
+  tesselateRowInWorld(tt: Tile, x: number, y: number, z: number): boolean {
+    const level = this.level!;
+    const t = Tesselator.instance;
+    const br = tt.getBrightness(level, x, y, z);
+    t.color(br, br, br);
+    this.tesselateRowTexture(tt, level.getData(x, y, z), (x), y - 1 / 16.0, (z));
+    return true;
+  }
+
+  tesselateRowTexture(tt: Tile, data: number, x: number, y: number, z: number): void {
+    const t = Tesselator.instance;
+    let tex = tt.getTexture(0, data);
+    if(this.fixedTexture >= 0)
+      tex = this.fixedTexture;
+    const xt = (tex & 0xf) << 4;
+    const yt = tex & 0xf0;
+    const u0 = (xt) / 256.0;
+    const u1 = (xt + 15.99) / 256.;
+    const v0 = (yt) / 256.0;
+    const v1 = (yt + 15.99) / 256.0;
+    let x0 = x + 0.5 - 0.25;
+    let x1 = x + 0.5 + 0.25;
+    let z0 = z + 0.5 - 0.5;
+    let z1 = z + 0.5 + 0.5;
+    t.vertexUV(x0, y + 1, z0, u0, v0);
+    t.vertexUV(x0, y + 0, z0, u0, v1);
+    t.vertexUV(x0, y + 0, z1, u1, v1);
+    t.vertexUV(x0, y + 1, z1, u1, v0);
+    t.vertexUV(x0, y + 1, z1, u0, v0);
+    t.vertexUV(x0, y + 0, z1, u0, v1);
+    t.vertexUV(x0, y + 0, z0, u1, v1);
+    t.vertexUV(x0, y + 1, z0, u1, v0);
+    t.vertexUV(x1, y + 1, z1, u0, v0);
+    t.vertexUV(x1, y + 0, z1, u0, v1);
+    t.vertexUV(x1, y + 0, z0, u1, v1);
+    t.vertexUV(x1, y + 1, z0, u1, v0);
+    t.vertexUV(x1, y + 1, z0, u0, v0);
+    t.vertexUV(x1, y + 0, z0, u0, v1);
+    t.vertexUV(x1, y + 0, z1, u1, v1);
+    t.vertexUV(x1, y + 1, z1, u1, v0);
+    x0 = x + 0.5 - 0.5;
+    x1 = x + 0.5 + 0.5;
+    z0 = z + 0.5 - 0.25;
+    z1 = z + 0.5 + 0.25;
+    t.vertexUV(x0, y + 1, z0, u0, v0);
+    t.vertexUV(x0, y + 0, z0, u0, v1);
+    t.vertexUV(x1, y + 0, z0, u1, v1);
+    t.vertexUV(x1, y + 1, z0, u1, v0);
+    t.vertexUV(x1, y + 1, z0, u0, v0);
+    t.vertexUV(x1, y + 0, z0, u0, v1);
+    t.vertexUV(x0, y + 0, z0, u1, v1);
+    t.vertexUV(x0, y + 1, z0, u1, v0);
+    t.vertexUV(x1, y + 1, z1, u0, v0);
+    t.vertexUV(x1, y + 0, z1, u0, v1);
+    t.vertexUV(x0, y + 0, z1, u1, v1);
+    t.vertexUV(x0, y + 1, z1, u1, v0);
+    t.vertexUV(x0, y + 1, z1, u0, v0);
+    t.vertexUV(x0, y + 0, z1, u0, v1);
+    t.vertexUV(x1, y + 0, z1, u1, v1);
+    t.vertexUV(x1, y + 1, z1, u1, v0);
   }
 }

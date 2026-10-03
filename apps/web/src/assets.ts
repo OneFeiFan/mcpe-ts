@@ -12,7 +12,25 @@ import { TextureData } from '@mcpe/client';
  *   云、Beta 天空：environment/clouds.png、terrain/sun.png、terrain/moon.png
  *   粒子：particles.png；生物：mob/*.png；水下与阴影：misc/water.png、misc/vignette.png、misc/shadow.png
  */
-export const PRELOAD: readonly string[] = ['terrain.png', 'misc/grasscolor.png', 'misc/foliagecolor.png'];
+export const PRELOAD: readonly string[] = [
+  'terrain.png', 'misc/grasscolor.png', 'misc/foliagecolor.png',
+  // S13：Gui 与 Font
+  'gui/gui.png', 'gui/icons.png', 'gui/items.png', 'gui/gui_blocks.png', 'font/default8.png',
+];
+
+/** 启动时预加载的其他资源文件（AppPlatform::readAssetFile 读取，ADAPTED(Web)）：文件在 public/ 的同名路径下 */
+export const PRELOAD_FILES: readonly string[] = ['lang/en_US.lang'];
+
+export async function preloadFiles(base = '/'): Promise<Map<string, Uint8Array>> {
+  const entries = await Promise.all(
+    PRELOAD_FILES.map(async (name) => {
+      const res = await fetch(base + name);
+      if (!res.ok) throw new Error(`加载 ${base + name} 失败：HTTP ${res.status}`);
+      return [name, new Uint8Array(await res.arrayBuffer())] as const;
+    }),
+  );
+  return new Map(entries);
+}
 
 export async function decodeImage(url: string): Promise<TextureData> {
   const res = await fetch(url);

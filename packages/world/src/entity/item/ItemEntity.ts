@@ -192,7 +192,7 @@ export class ItemEntity extends Entity {
   /** C++ ItemEntity::addAdditonalSaveData(CompoundTag*) — protected，注意拼写 */
   protected override addAdditonalSaveData(entityTag: CompoundTag): void {
     // C++: putShort("Health", (char) health)
-    entityTag.putShort("Health", this.health & 0xff);
+    entityTag.putShort("Health", (this.health << 24) >> 24); // (char) 是有符号的：-1 写成 -1，而不是 255
     entityTag.putShort("Age", this.age);
     entityTag.putCompound("Item", this.item.save(new CompoundTag()));
   }

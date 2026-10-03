@@ -104,6 +104,7 @@ export abstract class Player extends Mob {
   override getEntityTypeId(): number { return 0; }
 
   constructor(level: Level, isCreative: boolean) {
+    // ADAPTED(Cpp)：C++ 在构造函数里调用虚函数时只会调到本类（Player）的版本；JS 会派发到子类，所以显式调用 Player.prototype 上的版本。
       super(level);
       this.userType = 0;
       this.playerHasRespawnPosition = false;
@@ -119,7 +120,7 @@ export abstract class Player extends Mob {
       this.allPlayersSleeping = false;
     this.canRemove = false;
   
-    this._init();
+    Player.prototype._init.call(this);
     this.entityRendererId = EntityRendererId.ER_PLAYER_RENDERER;
   
     this.autoSendPosRot = false;
@@ -263,7 +264,7 @@ export abstract class Player extends Mob {
     return 1.0;
   }
 
-  override die(source: Entity): void {
+  override die(source: Entity | null): void {
       super.die(source);
       this.setSize(0.2, 0.2);
       this.setPos(this.x, this.y, this.z);

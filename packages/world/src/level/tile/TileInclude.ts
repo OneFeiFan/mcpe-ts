@@ -23,6 +23,7 @@ import { TopSnowTile } from './TopSnowTile';
 import { LeafTileItem } from '../../item/LeafTileItem';
 import { StoneSlabTileItem } from '../../item/StoneSlabTileItem';
 import { TileItem } from '../../item/TileItem';
+import { NetherReactor } from './NetherReactor';
 import { CactusTile } from './CactusTile';
 import { ChestTile } from './ChestTile';
 import { CropTile } from './CropTile';
@@ -71,6 +72,7 @@ import { TreeTile } from './TreeTile';
 
 /** 全部已移植的方块类与特殊 TileItem 类（测试可以在它的基础上替换个别类） */
 export const TILE_CLASSES: TileClasses = {
+  NetherReactor,
   CactusTile, ChestTile, CropTile, DoorTile, FenceGateTile, FurnaceTile, StairTile, StonecutterTile, TallGrass, WebTile, WorkbenchTile,
     StoneTile, GrassTile, DirtTile, LiquidTileDynamic, LiquidTileStatic, LeafTile, BedTile, StoneSlabTile,
     FireTile, FarmTile, InvisibleTile, TopSnowTile, TileItem, StoneSlabTileItem, LeafTileItem,

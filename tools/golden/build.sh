@@ -34,7 +34,8 @@ printf '#pragma once\nclass ChunkPos { public: int x, z; };\n' > "$BS/world/leve
 REG="$TMP/reg"; mkdir -p "$REG"
 RSRC=(world/level/material/Material.cpp world/level/tile/*.cpp world/item/*.cpp locale/I18n.cpp nbt/Tag.cpp util/Mth.cpp util/StringUtils.cpp
       util/DataIO.cpp world/Direction.cpp world/level/LightLayer.cpp world/level/GrassColor.cpp world/level/FoliageColor.cpp
-      world/level/LevelConstants.cpp world/phys/HitResult.cpp platform/time.cpp)
+      world/level/LevelConstants.cpp world/phys/HitResult.cpp platform/time.cpp world/inventory/FillingContainer.cpp
+      world/entity/player/Inventory.cpp world/item/crafting/Recipe.cpp world/entity/Entity.cpp world/entity/item/ItemEntity.cpp)
 CF=(-O0 -std=c++17 -w -fpermissive -DPLATFORM_WEB -DNO_EGL -I"$REF/src" -I"$ROOT/tools/golden/stub")
 ( cd "$REF/src" && for f in ${RSRC[@]}; do "$CXX" "${CF[@]}" -c "$f" -o "$REG/$(basename "$f" .cpp).o"; done )
 "$CXX" -c "$ROOT/tools/golden/stub/sigill_diag.cpp" -o "$REG/sigill_diag.oo"
@@ -54,4 +55,30 @@ build_with_stubs harness_nbt
 "$REG/harness_nbt" "$OUT/nbt.json" 2>/dev/null
 build_with_stubs harness_i18n
 "$REG/harness_i18n" "$OUT/i18n.json" "$REF/data" 2>/dev/null
+# ---- S12：物品栏（G12-3）
+build_with_stubs harness_inventory
+"$REG/harness_inventory" "$OUT/inventory.json" 2>/dev/null
+# ---- S12：实体存档格式（G12-1）
+build_with_stubs harness_entity
+"$REG/harness_entity" "$OUT/entity.json" 2>/dev/null
+# ---- S12：碰撞轨迹（G12-2）。要用真实的 Level：world、nbt、locale、util 下的全部源码另建一组目标文件
+LVL="$TMP/lvl"; mkdir -p "$LVL"
+( cd "$REF/src" && for f in $(find world nbt locale util -name '*.cpp' ! -name 'PerfRenderer.cpp') platform/time.cpp; do
+    "$CXX" "${CF[@]}" -c "$f" -o "$LVL/$(echo "$f" | tr '/' '_' | sed 's/\.cpp$/.o/')"; done )
+"$CXX" "${CF[@]}" -c "$ROOT/tools/golden/harness_collision.cpp" -o "$LVL/harness_collision.oo"
+{ "$CXX" -o /dev/null "$LVL/harness_collision.oo" "$LVL"/*.o -Wl,--no-demangle 2>&1 || true; } | grep -oE "undefined reference to \`[^']+'" \
+  | sed "s/undefined reference to \`//; s/'$//" | sort -u \
+  | awk 'BEGIN{print ".section .note.GNU-stack,\"\",@progbits"; print ".text"} {b = ($0 ~ /RakNet/) ? "ret" : "ud2"; printf ".globl %s\n.type %s,@function\n%s:\n  %s\n", $0, $0, $0, b}' > "$LVL/stubs.s"
+"$CXX" -c "$LVL/stubs.s" -o "$LVL/stubs.oo"
+"$CXX" -no-pie -o "$LVL/harness_collision" "$LVL/harness_collision.oo" "$LVL"/*.o "$LVL/stubs.oo" "$REG/sigill_diag.oo"
+"$LVL/harness_collision" "$OUT/collision.json" 2>/dev/null
+# ---- S13：字体字宽（G13-1）
+( cd "$REF/src" && "$CXX" "${CF[@]}" -c client/gui/Font.cpp -o "$REG/Font.oo" )
+"$CXX" "${CF[@]}" -c "$ROOT/tools/golden/harness_font.cpp" -o "$REG/harness_font.oo"
+{ "$CXX" -o /dev/null "$REG/harness_font.oo" "$REG/Font.oo" "$REG"/*.o -Wl,--no-demangle 2>&1 || true; } | grep -oE "undefined reference to \`[^']+'" \
+  | sed "s/undefined reference to \`//; s/'$//" | sort -u \
+  | awk 'BEGIN{print ".section .note.GNU-stack,\"\",@progbits"; print ".text"} {b = ($0 ~ /RakNet/) ? "ret" : "ud2"; printf ".globl %s\n.type %s,@function\n%s:\n  %s\n", $0, $0, $0, b}' > "$REG/font.stubs.s"
+"$CXX" -c "$REG/font.stubs.s" -o "$REG/font.stubs.oo"
+"$CXX" -no-pie -o "$REG/harness_font" "$REG/harness_font.oo" "$REG/Font.oo" "$REG"/*.o "$REG/font.stubs.oo" "$REG/sigill_diag.oo"
+"$REG/harness_font" "$OUT/font.json" "$ROOT/tools/golden/inputs/default8.rgba"
 echo "黄金样本已写入 $OUT"
