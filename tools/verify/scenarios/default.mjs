@@ -1,5 +1,11 @@
 // 默认场景：进入世界、HUD、F3、物品选择界面、暂停界面都能正常出现，且没有页面错误。
 export default async function (h) {
+  // 进世界时 Tile::initTiles / Item::initItems 会打 4 条 “Missing category for tile”。
+  // 这是原版自己的诊断，不是移植问题：黄金样本 fixtures/golden/registry.json 里
+  // tile 87(hellrock)、95(InvisibleTile)、253(CarriedTile)、255 的 category 就是 -1，
+  // 参考源码 Tile.cpp:298 也照样 LOGE。所以在这里声明为“预期内”。
+  h.allowConsole('Missing category for tile');
+
   await h.wait(1500);
   const s0 = await h.state('进入世界', (a) => ({ creative: a.isCreativeMode(), pos: [a.player.x, a.player.y, a.player.z], slots: a.gui.getNumSlots() }));
   h.expect(s0.creative === true, 'demo 世界是创造模式');

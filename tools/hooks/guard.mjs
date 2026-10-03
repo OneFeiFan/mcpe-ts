@@ -9,8 +9,14 @@ const problems = [];
 
 // 1. 黄金样本夹具只能由 tools/golden/build.sh 从参考 C++ 重新生成，禁止手改（手改 = 让测试“假通过”）
 if (/\/fixtures\/golden\//.test(file)) problems.push('不能手改 fixtures/golden/ 下的夹具。夹具只能用 REF=<参考源码> bash tools/golden/build.sh 从参考 C++ 生成。测试不过时去修 TS 实现。');
-// 2. 参考 C++ 源码只读
-if (/(^|\/)(ref|reference|mcpe-src)\/src\//.test(file) || /\.(cpp|h|hpp|mm)$/.test(file) && !/tools\/golden\//.test(file))
+// 2. 参考 C++ 源码只读。
+// 以 $REF 为准（REF 在 .claude/settings.json 的 env 里），因为源码树的形状不固定：
+// 本机是 <REF>/src，但中间可能多出项目名一层（如 reference/minecraft-pe/src），
+// 光靠目录名匹配会漏。$REF 没设时退回“后缀是 C++ 源码”的判断兜底。
+const refRoot = String(process.env.REF ?? '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+const inRef = refRoot !== '' && (file.toLowerCase() === refRoot || file.toLowerCase().startsWith(refRoot + '/'));
+const isHarness = /\/tools\/golden\//.test(file);
+if ((inRef || /\.(cpp|h|hpp|mm)$/.test(file)) && !isHarness)
   problems.push('参考 C++ 源码是只读的，不能修改（tools/golden/ 下的 harness 除外）。');
 // 3. 不许删改已有测试的断言来“修好”测试：写入测试文件时检查是否新加了 skip / only
 const newText = String(ti.content ?? ti.new_string ?? '') + (Array.isArray(ti.edits) ? ti.edits.map((e) => e.new_string).join('\n') : '');

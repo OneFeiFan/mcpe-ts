@@ -6,19 +6,25 @@
 
 | 需要 | 用途 | 安装 |
 |---|---|---|
-| Node 20+、pnpm 10 | 构建与测试 | 已有 |
+| Node 22、pnpm 12 | 构建与测试 | 已有（本机实测 Node v22.14.0 / pnpm 12.8.1） |
 | Claude Code | 终端里的代理 | `npm i -g @anthropic-ai/claude-code` |
 | Python 3.10+ | `tools/porting/*.py`（读 C++、出草稿、检查） | python.org，安装时勾 “Add to PATH” |
-| WSL（Ubuntu）+ g++ | 重新生成黄金样本（`tools/golden/build.sh`） | `wsl --install`，然后 `sudo apt install g++` |
+| g++（WSL 或 MinGW-w64） | 重新生成黄金样本（`tools/golden/build.sh`） | 见下方说明 |
 | Playwright + Chromium | 浏览器实测 | `pnpm add -D -w playwright && npx playwright install chromium` |
-| 参考 C++ 源码 | 移植依据 | 放在仓库外，例如 `D:\mcpe-src`（里面有 `src\`） |
+| 参考 C++ 源码 | 移植依据 | 放在仓库外，本机在 `D:\Work\mcpe-reimplementation\reference\minecraft-pe`（里面有 `src\` 和 `data\`） |
+
+**g++ 用哪个**：`tools/golden/build.sh` 原本是给 Linux/WSL 写的。本机实测过 `E:\mingw64`（MinGW-w64 g++ 15.1，即 `c++.exe`）：
+- 能编、能跑，**算出来的数值和 Linux 生成的夹具逐字节一致**（只差换行符 CRLF）；
+- 但 build.sh 里还有几处 Linux 专用的东西要改才跑得通（`ld` 的名字、CRLF、汇编桩的 ELF 语法、`sigill_diag.cpp` 用的 POSIX `sigaction`）；
+- 而且 `MALLOC_PERTURB_` 在 Windows 上无效，**`registry.json` 依赖它检测未初始化内存（58 个字段），不要在 Windows 上重新生成**。
+
+`REF` 已经写进 `.claude/settings.json` 的 `env` 里，Claude Code 每次会话自动带上，不用再手动设。
 
 把 DeepSeek 接到 Claude Code（以 DeepSeek 官方文档 https://api-docs.deepseek.com/guides/anthropic_api 为准）：
 ```powershell
 $env:ANTHROPIC_BASE_URL = "https://api.deepseek.com/anthropic"
 $env:ANTHROPIC_AUTH_TOKEN = "<你的 DeepSeek API Key>"
-$env:REF = "D:/mcpe-src"          # 参考源码根目录（CLAUDE.md 和脚本都用 $REF 指代它）
-claude
+claude                            # REF 由 .claude/settings.json 提供，不必再设
 ```
 进入后先运行 `/doctor`（检查环境），再输入“读 CLAUDE.md，然后告诉我你理解的工作流程”，确认它读到了规则。
 

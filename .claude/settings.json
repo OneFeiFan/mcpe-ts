@@ -1,4 +1,7 @@
 {
+  "env": {
+    "REF": "D:/Work/mcpe-reimplementation/reference/minecraft-pe"
+  },
   "permissions": {
     "allow": [
       "Bash(pnpm *)",

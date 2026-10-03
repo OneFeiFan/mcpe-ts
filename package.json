@@ -19,21 +19,22 @@
   },
   "devDependencies": {
     "@eslint/js": "latest",
+    "@mcpe/client": "workspace:*",
+    "@mcpe/core": "workspace:*",
+    "@mcpe/locale": "workspace:*",
+    "@mcpe/nbt": "workspace:*",
+    "@mcpe/platform": "workspace:*",
+    "@mcpe/util": "workspace:*",
+    "@mcpe/world": "workspace:*",
     "@types/node": "latest",
     "eslint": "latest",
     "eslint-config-prettier": "latest",
+    "playwright": "^1.63.0",
     "prettier": "latest",
     "tsx": "latest",
     "typescript": "6.0.3",
     "typescript-eslint": "latest",
     "vite": "latest",
-    "vitest": "latest",
-    "@mcpe/platform": "workspace:*",
-    "@mcpe/util": "workspace:*",
-    "@mcpe/core": "workspace:*",
-    "@mcpe/world": "workspace:*",
-    "@mcpe/client": "workspace:*",
-    "@mcpe/nbt": "workspace:*",
-    "@mcpe/locale": "workspace:*"
+    "vitest": "latest"
   }
 }
