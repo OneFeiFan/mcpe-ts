@@ -13,10 +13,27 @@
 | Playwright + Chromium | 浏览器实测 | `pnpm add -D -w playwright && npx playwright install chromium` |
 | 参考 C++ 源码 | 移植依据 | 放在仓库外，本机在 `D:\Work\mcpe-reimplementation\reference\minecraft-pe`（里面有 `src\` 和 `data\`） |
 
-**g++ 用哪个**：`tools/golden/build.sh` 原本是给 Linux/WSL 写的。本机实测过 `E:\mingw64`（MinGW-w64 g++ 15.1，即 `c++.exe`）：
-- 能编、能跑，**算出来的数值和 Linux 生成的夹具逐字节一致**（只差换行符 CRLF）；
-- 但 build.sh 里还有几处 Linux 专用的东西要改才跑得通（`ld` 的名字、CRLF、汇编桩的 ELF 语法、`sigill_diag.cpp` 用的 POSIX `sigaction`）；
+**g++ 用哪个**：`tools/golden/build.sh` 是给 Linux/WSL 写的。
+
+**首选 WSL**（本机 Ubuntu-24.04 + g++ 13.3.0，已实测跑通全流程）：
+```bash
+# WSL 里还需要 node —— build.sh 最后一步 merge-uninit.mjs 要用它（apt 的 nodejs 18 就够）
+sudo apt install -y nodejs
+
+# 在 WSL 里执行（注意是 WSL 内的路径，不是 Windows 路径）
+cd /mnt/d/Work/mcpe-reimplementation/implementation/mcpe-ts
+REF=/mnt/d/Work/mcpe-reimplementation/reference/minecraft-pe bash tools/golden/build.sh
+```
+实测结果：14 个夹具全部重新生成，**与仓库里已有的逐字节一致**，连依赖 `MALLOC_PERTURB_` 检测未初始化内存的 `registry.json` 也完全对得上。所以这台机器上重新生成夹具是安全的。
+
+从 Git Bash 里调 WSL 时记得加 `MSYS_NO_PATHCONV=1`，否则 `/mnt/c/...` 会被改写成 `D:/ProgramFiles/Git/mnt/c/...` 而找不到文件。
+
+**备选：Windows 原生 MinGW-w64**（本机 `E:\mingw64`，g++ 15.1，即 `c++.exe`）。实测能用但不完整：
+- 能编、能跑，**算出来的数值和 Linux 夹具逐字节一致**（只差换行符 CRLF）；
+- 但 build.sh 里几处 Linux 专用的东西要改才跑得通（`ld` 的名字、CRLF、汇编桩的 ELF 语法、`sigill_diag.cpp` 用的 POSIX `sigaction`），目前没改；
 - 而且 `MALLOC_PERTURB_` 在 Windows 上无效，**`registry.json` 依赖它检测未初始化内存（58 个字段），不要在 Windows 上重新生成**。
+
+结论：用 WSL，别折腾 MinGW。
 
 `REF` 已经写进 `.claude/settings.json` 的 `env` 里，Claude Code 每次会话自动带上，不用再手动设。
 
