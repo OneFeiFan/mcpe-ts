@@ -31,7 +31,10 @@ export class AppPlatform_web extends AppPlatform {
   override loadTexture(filename: string, _textureFolder: boolean): TextureData {
     const t = this.images.get(filename);
     if (!t) {
-      if (IMAGE_NAMES.has(filename)) LOGI(`AppPlatform_web: ${filename} 在材质包里，但没有预加载——把它加进 assets.ts 的 PRELOAD`);
+      if (IMAGE_NAMES.has(filename))
+        LOGI(
+          `AppPlatform_web: ${filename} 在材质包里，但没有预加载——把它加进 assets.ts 的 PRELOAD`,
+        );
       else LOGI(`AppPlatform_web: 材质包里没有 ${filename}`);
       return new TextureData();
     }

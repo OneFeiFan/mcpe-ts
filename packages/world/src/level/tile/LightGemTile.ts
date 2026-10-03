@@ -1,7 +1,7 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Item } from "../../item/Item";
-import type { Random } from "@mcpe/util";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Item } from '../../item/Item';
+import type { Random } from '@mcpe/util';
 
 export class LightGemTile extends Tile {
   /** C++ LightGemTile::LightGemTile(int id, int tex, const Material* material) */

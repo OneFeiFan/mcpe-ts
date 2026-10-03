@@ -33,7 +33,11 @@ export class TickNextTickData {
 
   hashCode(): number {
     // (((x * 128 * 1024) + (z * 128) + y) * 256) + tileId，按 C++ 的 int 回绕
-    return (Math.imul((Math.imul(this.x, 128 * 1024) + Math.imul(this.z, 128) + this.y) | 0, 256) + this.tileId) | 0;
+    return (
+      (Math.imul((Math.imul(this.x, 128 * 1024) + Math.imul(this.z, 128) + this.y) | 0, 256) +
+        this.tileId) |
+      0
+    );
   }
 
   /** C++ 的 operator==：只比较坐标与方块（std::set 不用它） */

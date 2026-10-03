@@ -1,5 +1,5 @@
-import { Tag, TAG_Byte_Array } from "./Tag";
-import type { IDataInput, IDataOutput } from "@mcpe/util";
+import { Tag, TAG_Byte_Array } from './Tag';
+import type { IDataInput, IDataOutput } from '@mcpe/util';
 
 export class ByteArrayTag extends Tag {
   public data: Uint8Array;

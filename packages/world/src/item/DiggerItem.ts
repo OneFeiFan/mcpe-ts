@@ -1,9 +1,8 @@
-import { Item, Tier } from "./Item";
-import { ItemInstance } from "./ItemInstance";
-import { Tile } from "../level/tile/Tile";
-import type { Entity } from "../entity/Entity";
-import type { Mob } from "../entity/Mob";
-
+import { Item, Tier } from './Item';
+import { ItemInstance } from './ItemInstance';
+import { Tile } from '../level/tile/Tile';
+import type { Entity } from '../entity/Entity';
+import type { Mob } from '../entity/Mob';
 
 export class DiggerItem extends Item {
   protected speed: number;
@@ -13,12 +12,7 @@ export class DiggerItem extends Item {
   private attackDamage: number;
   private readonly _bTiles = new Uint8Array(256);
 
-  constructor(
-    id: number,
-    attackDamage: number,
-    tier: Tier,
-    tiles: Tile[] = [],
-  ) {
+  constructor(id: number, attackDamage: number, tier: Tier, tiles: Tile[] = []) {
     super(id);
     this.speed = tier.getSpeed();
     this.tier = tier;

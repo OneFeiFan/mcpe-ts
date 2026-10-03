@@ -53,10 +53,14 @@ async function startServer() {
   if (!existsSync(vite)) throw new Error(`找不到 vite：${vite}（先在仓库根目录跑 pnpm install）`);
   // 显式 --host 127.0.0.1：vite 默认只绑 localhost，在 Windows 上常解析成 IPv6 的 ::1，
   // 那样下面探 127.0.0.1 会一直探不到。
-  const child = spawn(process.execPath, [vite, '--port', String(PORT), '--strictPort', '--host', '127.0.0.1'], {
-    cwd: join(ROOT, 'apps/web'),
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  const child = spawn(
+    process.execPath,
+    [vite, '--port', String(PORT), '--strictPort', '--host', '127.0.0.1'],
+    {
+      cwd: join(ROOT, 'apps/web'),
+      stdio: ['ignore', 'pipe', 'pipe'],
+    },
+  );
   let log = '';
   child.stdout.on('data', (d) => (log += d));
   child.stderr.on('data', (d) => (log += d));
@@ -73,7 +77,8 @@ async function startServer() {
 // vite 是 pnpm 拉起来的子进程，只 kill 它自己会留下孤儿进程占着端口，所以整棵树一起杀。
 function killTree(child) {
   if (!child || child.exitCode !== null) return;
-  if (process.platform === 'win32') spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
+  if (process.platform === 'win32')
+    spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
   else child.kill('SIGTERM');
 }
 
@@ -111,7 +116,9 @@ try {
   page.on('console', (m) => {
     if (m.type() === 'error') report.consoleErrors.push(m.text());
   });
-  page.on('requestfailed', (r) => report.requestErrors.push(`${r.url()} —— ${r.failure()?.errorText ?? '未知原因'}`));
+  page.on('requestfailed', (r) =>
+    report.requestErrors.push(`${r.url()} —— ${r.failure()?.errorText ?? '未知原因'}`),
+  );
 
   await page.goto(URL_, { waitUntil: 'load' });
   // __app 是 main.ts 最后一行挂上去的；init 抛异常时会挂不上，那时 #status 里写着“启动失败：…”。
@@ -129,11 +136,14 @@ try {
     /** 在页面里执行 fn(window.__app)，把返回值记进报告。fn 必须是纯函数、返回值能 JSON 序列化。 */
     async state(name, fn) {
       const src = fn.toString();
-      const value = await page.evaluate(([s]) => {
-        const a = globalThis.__app;
-        // 场景函数写在 Node 侧，要过桥就得在页面里重新求值一次（参数 a = window.__app）
-        return new Function(`return (${s})`)()(a);
-      }, [src]);
+      const value = await page.evaluate(
+        ([s]) => {
+          const a = globalThis.__app;
+          // 场景函数写在 Node 侧，要过桥就得在页面里重新求值一次（参数 a = window.__app）
+          return new Function(`return (${s})`)()(a);
+        },
+        [src],
+      );
       report.states.push({ name, value });
       return value;
     },

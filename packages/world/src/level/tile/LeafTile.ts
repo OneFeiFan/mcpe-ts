@@ -68,7 +68,10 @@ export class LeafTile extends TransparentTile {
   override tick(level: Level, x: number, y: number, z: number, _random: Random): void {
     if (level.isClientSide) return;
     const currentData = level.getData(x, y, z);
-    if ((currentData & LeafTile.UPDATE_LEAF_BIT) !== 0 && (currentData & LeafTile.PERSISTENT_LEAF_BIT) === 0) {
+    if (
+      (currentData & LeafTile.UPDATE_LEAF_BIT) !== 0 &&
+      (currentData & LeafTile.PERSISTENT_LEAF_BIT) === 0
+    ) {
       const r = LeafTile.REQUIRED_WOOD_RANGE;
       const r2 = r + 1;
       const W = 32;
@@ -128,11 +131,24 @@ export class LeafTile extends TransparentTile {
     }
   }
 
-  override playerDestroy(level: Level, player: Player, x: number, y: number, z: number, data: number): void {
+  override playerDestroy(
+    level: Level,
+    player: Player,
+    x: number,
+    y: number,
+    z: number,
+    data: number,
+  ): void {
     if (!level.isClientSide) {
       const item = player.inventory.getSelected();
       if (item && item.id === Item.shears.id) {
-        this.popResource(level, x, y, z, new ItemInstance(Tile.leaves.id, 1, data & LeafTile.LEAF_TYPE_MASK));
+        this.popResource(
+          level,
+          x,
+          y,
+          z,
+          new ItemInstance(Tile.leaves.id, 1, data & LeafTile.LEAF_TYPE_MASK),
+        );
         return;
       }
     }
@@ -148,14 +164,30 @@ export class LeafTile extends TransparentTile {
   }
 
   /** C++ 只重写带 odds 的 spawnResources（随机数调用与 C++ 相同） */
-  override spawnResources(level: Level, x: number, y: number, z: number, data: number, _odds = 1): void {
+  override spawnResources(
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    data: number,
+    _odds = 1,
+  ): void {
     if (!level.isClientSide) {
       const chance = 20;
       if (level.random.nextInt(chance) === 0) {
         const type = this.getResource(data, level.random);
-        this.popResource(level, x, y, z, new ItemInstance(type, 1, this.getSpawnResourcesAuxValue(data)));
+        this.popResource(
+          level,
+          x,
+          y,
+          z,
+          new ItemInstance(type, 1, this.getSpawnResourcesAuxValue(data)),
+        );
       }
-      if ((data & LeafTile.LEAF_TYPE_MASK) === LeafTile.NORMAL_LEAF && level.random.nextInt(200) === 0) {
+      if (
+        (data & LeafTile.LEAF_TYPE_MASK) === LeafTile.NORMAL_LEAF &&
+        level.random.nextInt(200) === 0
+      ) {
         this.popResource(level, x, y, z, new ItemInstance(Item.apple, 1, 0));
       }
     }

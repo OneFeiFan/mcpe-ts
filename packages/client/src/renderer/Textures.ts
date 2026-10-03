@@ -11,9 +11,28 @@ import { Util } from '@mcpe/util';
 import type { AppPlatform } from '../AppPlatform';
 import type { Options } from '../Options';
 import {
-  GL_CLAMP_TO_EDGE, GL_LINEAR, GL_LINEAR_MIPMAP_LINEAR, GL_NEAREST, GL_REPEAT, GL_RGB, GL_RGBA, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-  GL_TEXTURE_MIN_FILTER, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT_4_4_4_4, GL_UNSIGNED_SHORT_5_5_5_1,
-  GL_UNSIGNED_SHORT_5_6_5, glBindTexture2, glDeleteTextures, glGenTextures, glTexImage2D2, glTexParameteri2, glTexSubImage2D2,
+  GL_CLAMP_TO_EDGE,
+  GL_LINEAR,
+  GL_LINEAR_MIPMAP_LINEAR,
+  GL_NEAREST,
+  GL_REPEAT,
+  GL_RGB,
+  GL_RGBA,
+  GL_TEXTURE_2D,
+  GL_TEXTURE_MAG_FILTER,
+  GL_TEXTURE_MIN_FILTER,
+  GL_TEXTURE_WRAP_S,
+  GL_TEXTURE_WRAP_T,
+  GL_UNSIGNED_BYTE,
+  GL_UNSIGNED_SHORT_4_4_4_4,
+  GL_UNSIGNED_SHORT_5_5_5_1,
+  GL_UNSIGNED_SHORT_5_6_5,
+  glBindTexture2,
+  glDeleteTextures,
+  glGenTextures,
+  glTexImage2D2,
+  glTexParameteri2,
+  glTexSubImage2D2,
 } from './gles';
 import type { DynamicTexture } from './ptexture/DynamicTexture';
 import { type TextureData, TextureFormat } from './TextureData';
@@ -57,7 +76,8 @@ export class Textures {
   loadTexture(resourceName: string, inTextureFolder = true): TextureId {
     const it = this.idMap.get(resourceName);
     if (it !== undefined) return it;
-    const isUrl = Util.startsWith(resourceName, 'http://') || Util.startsWith(resourceName, 'https://');
+    const isUrl =
+      Util.startsWith(resourceName, 'http://') || Util.startsWith(resourceName, 'https://');
     const texdata = this.platform.loadTexture(resourceName, isUrl ? false : inTextureFolder);
     if (texdata.data) return this.assignTexture(resourceName, texdata);
     else if (texdata.identifier !== Textures.InvalidId) {
@@ -106,11 +126,41 @@ export class Textures {
       default: {
         const mode = img.transparent ? GL_RGBA : GL_RGB;
         if (img.format === TextureFormat.TEXF_UNCOMPRESSED_565) {
-          glTexImage2D2(GL_TEXTURE_2D, 0, mode, img.w, img.h, 0, mode, GL_UNSIGNED_SHORT_5_6_5, img.data);
+          glTexImage2D2(
+            GL_TEXTURE_2D,
+            0,
+            mode,
+            img.w,
+            img.h,
+            0,
+            mode,
+            GL_UNSIGNED_SHORT_5_6_5,
+            img.data,
+          );
         } else if (img.format === TextureFormat.TEXF_UNCOMPRESSED_4444) {
-          glTexImage2D2(GL_TEXTURE_2D, 0, mode, img.w, img.h, 0, mode, GL_UNSIGNED_SHORT_4_4_4_4, img.data);
+          glTexImage2D2(
+            GL_TEXTURE_2D,
+            0,
+            mode,
+            img.w,
+            img.h,
+            0,
+            mode,
+            GL_UNSIGNED_SHORT_4_4_4_4,
+            img.data,
+          );
         } else if (img.format === TextureFormat.TEXF_UNCOMPRESSED_5551) {
-          glTexImage2D2(GL_TEXTURE_2D, 0, mode, img.w, img.h, 0, mode, GL_UNSIGNED_SHORT_5_5_5_1, img.data);
+          glTexImage2D2(
+            GL_TEXTURE_2D,
+            0,
+            mode,
+            img.w,
+            img.h,
+            0,
+            mode,
+            GL_UNSIGNED_SHORT_5_5_5_1,
+            img.data,
+          );
         } else {
           glTexImage2D2(GL_TEXTURE_2D, 0, mode, img.w, img.h, 0, mode, GL_UNSIGNED_BYTE, img.data);
         }
@@ -150,7 +200,17 @@ export class Textures {
         tex.bindTexture(this);
         for (let xx = 0; xx < tex.replicate; xx++)
           for (let yy = 0; yy < tex.replicate; yy++) {
-            glTexSubImage2D2(GL_TEXTURE_2D, 0, ((tex.tex % 16) * 16) + xx * 16, (((tex.tex / 16) | 0) * 16) + yy * 16, 16, 16, GL_RGBA, GL_UNSIGNED_BYTE, tex.pixels);
+            glTexSubImage2D2(
+              GL_TEXTURE_2D,
+              0,
+              (tex.tex % 16) * 16 + xx * 16,
+              ((tex.tex / 16) | 0) * 16 + yy * 16,
+              16,
+              16,
+              GL_RGBA,
+              GL_UNSIGNED_BYTE,
+              tex.pixels,
+            );
           }
       }
     }

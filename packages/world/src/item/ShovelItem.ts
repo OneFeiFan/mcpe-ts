@@ -1,6 +1,6 @@
-import { DiggerItem } from "./DiggerItem";
-import { Tile } from "../level/tile/Tile";
-import type { Tier } from "./Item";
+import { DiggerItem } from './DiggerItem';
+import { Tile } from '../level/tile/Tile';
+import type { Tier } from './Item';
 
 export class ShovelItem extends DiggerItem {
   /** C++ ShovelItem::ShovelItem(int id, const Tier& tier) */

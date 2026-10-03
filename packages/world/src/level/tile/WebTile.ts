@@ -1,10 +1,10 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { AABB } from "../../phys/AABB";
-import { Entity } from "../../entity/Entity";
-import { Item } from "../../item/Item";
-import type { Random } from "@mcpe/util";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { AABB } from '../../phys/AABB';
+import { Entity } from '../../entity/Entity';
+import { Item } from '../../item/Item';
+import type { Random } from '@mcpe/util';
 
 export class WebTile extends Tile {
   /** C++ WebTile::WebTile(int id, int tex) */
@@ -19,11 +19,7 @@ export class WebTile extends Tile {
   }
 
   /** C++ WebTile::entityInside(Level*, int, int, int, Entity*) */
-  override entityInside(
-    _level: Level,
-    _x: number, _y: number, _z: number,
-    entity: Entity,
-  ): void {
+  override entityInside(_level: Level, _x: number, _y: number, _z: number, entity: Entity): void {
     entity.makeStuckInWeb();
   }
 

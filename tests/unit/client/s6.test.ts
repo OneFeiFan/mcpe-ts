@@ -1,8 +1,29 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  AppPlatform, GL_PROJECTION, GL_PROJECTION_MATRIX, GL_MODELVIEW, GL_MODELVIEW_MATRIX, GL_VERTEX_ARRAY, GLES1, glGetContext, glGetFloatv,
-  glhUnProjectf, glLoadIdentity, glMatrixMode, glPopMatrix, glPushMatrix, glRotatef, glSetContext, glTranslatef, gluPerspective,
-  Minecraft, OptionId, Options, Tesselator, TextureData, Textures,
+  AppPlatform,
+  GL_PROJECTION,
+  GL_PROJECTION_MATRIX,
+  GL_MODELVIEW,
+  GL_MODELVIEW_MATRIX,
+  GL_VERTEX_ARRAY,
+  GLES1,
+  glGetContext,
+  glGetFloatv,
+  glhUnProjectf,
+  glLoadIdentity,
+  glMatrixMode,
+  glPopMatrix,
+  glPushMatrix,
+  glRotatef,
+  glSetContext,
+  glTranslatef,
+  gluPerspective,
+  Minecraft,
+  OptionId,
+  Options,
+  Tesselator,
+  TextureData,
+  Textures,
 } from '@mcpe/client';
 
 beforeEach(() => {
@@ -67,7 +88,24 @@ describe('gles', () => {
     const f = Math.fround;
     const rad = f(f(f(70 / 2) * f(Math.PI)) / 180);
     const cot = f(Math.cos(rad) / f(Math.sin(rad)));
-    const want = [cot / (16 / 9), 0, 0, 0, 0, cot, 0, 0, 0, 0, -(256 + 0.05) / (256 - 0.05), -1, 0, 0, (-2 * 0.05 * 256) / (256 - 0.05), 0];
+    const want = [
+      cot / (16 / 9),
+      0,
+      0,
+      0,
+      0,
+      cot,
+      0,
+      0,
+      0,
+      0,
+      -(256 + 0.05) / (256 - 0.05),
+      -1,
+      0,
+      0,
+      (-2 * 0.05 * 256) / (256 - 0.05),
+      0,
+    ];
     want.forEach((v, i) => expect(m[i]).toBeCloseTo(v, 5));
     expect(m[11]).toBe(-1); // m[2][3]
   });
@@ -96,13 +134,16 @@ describe('gles', () => {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glTranslatef(0, 0, -10);
-    const P = new Float32Array(16), M = new Float32Array(16);
+    const P = new Float32Array(16),
+      M = new Float32Array(16);
     glGetFloatv(GL_PROJECTION_MATRIX, P);
     glGetFloatv(GL_MODELVIEW_MATRIX, M);
     const vp = [0, 0, 100, 100];
     // 物体坐标 (1, 2, 0) → 窗口坐标
     const eye = [1, 2, -10, 1];
-    const clip = [0, 1, 2, 3].map((r) => P[r]! * eye[0]! + P[4 + r]! * eye[1]! + P[8 + r]! * eye[2]! + P[12 + r]! * eye[3]!);
+    const clip = [0, 1, 2, 3].map(
+      (r) => P[r]! * eye[0]! + P[4 + r]! * eye[1]! + P[8 + r]! * eye[2]! + P[12 + r]! * eye[3]!,
+    );
     const ndc = clip.slice(0, 3).map((v) => v / clip[3]!);
     const win = [(ndc[0]! + 1) * 50, (ndc[1]! + 1) * 50, (ndc[2]! + 1) / 2];
     const out = new Float32Array(3);
@@ -115,16 +156,23 @@ describe('gles', () => {
 
 describe('Options', () => {
   const updates: [number, boolean | number][] = [];
-  const mc = { optionUpdated: (k: number, v: boolean | number) => updates.push([k, v]) } as unknown as Minecraft;
+  const mc = {
+    optionUpdated: (k: number, v: boolean | number) => updates.push([k, v]),
+  } as unknown as Minecraft;
 
   it('默认值（分支默认选项，网页版不乘 0.4 的灵敏度）', () => {
     const o = new Options(mc);
     expect([
-      o.getBooleanValue(OptionId.OPTIONS_FANCY_GRAPHICS), o.getBooleanValue(OptionId.OPTIONS_AMBIENT_OCCLUSION),
-      o.getIntValue(OptionId.OPTIONS_VIEW_DISTANCE), o.getBooleanValue(OptionId.OPTIONS_FOLIAGE_TINT),
-      o.getBooleanValue(OptionId.OPTIONS_TINTED_SIDE), o.getBooleanValue(OptionId.OPTIONS_BETA_SKY),
-      o.getProgressValue(OptionId.OPTIONS_SENSITIVITY), o.getBooleanValue(OptionId.OPTIONS_NORMAL_LIGHTING),
-      o.getBooleanValue(OptionId.OPTIONS_USE_TOUCHSCREEN), o.getIntValue(OptionId.OPTIONS_FOG_TYPE),
+      o.getBooleanValue(OptionId.OPTIONS_FANCY_GRAPHICS),
+      o.getBooleanValue(OptionId.OPTIONS_AMBIENT_OCCLUSION),
+      o.getIntValue(OptionId.OPTIONS_VIEW_DISTANCE),
+      o.getBooleanValue(OptionId.OPTIONS_FOLIAGE_TINT),
+      o.getBooleanValue(OptionId.OPTIONS_TINTED_SIDE),
+      o.getBooleanValue(OptionId.OPTIONS_BETA_SKY),
+      o.getProgressValue(OptionId.OPTIONS_SENSITIVITY),
+      o.getBooleanValue(OptionId.OPTIONS_NORMAL_LIGHTING),
+      o.getBooleanValue(OptionId.OPTIONS_USE_TOUCHSCREEN),
+      o.getIntValue(OptionId.OPTIONS_FOG_TYPE),
     ]).toEqual([true, true, 2, false, false, false, 0.5, true, true, 0]);
     expect(o.getIntValue(OptionId.OPTIONS_COMPLETE_LIGHTING)).toBe(0); // 没登记进表的 id
     expect(o.getStringValue(OptionId.OPTIONS_USERNAME)).toBe('Steve');
@@ -136,8 +184,16 @@ describe('Options', () => {
     o.set(OptionId.OPTIONS_VIEW_DISTANCE, 9);
     o.toggle(OptionId.OPTIONS_AMBIENT_OCCLUSION);
     o.set(OptionId.OPTIONS_SENSITIVITY, 0.75);
-    expect([o.getIntValue(OptionId.OPTIONS_VIEW_DISTANCE), o.getBooleanValue(OptionId.OPTIONS_AMBIENT_OCCLUSION), o.getProgressValue(OptionId.OPTIONS_SENSITIVITY)]).toEqual([4, false, 0.75]);
-    expect(updates).toEqual([[OptionId.OPTIONS_VIEW_DISTANCE, 9], [OptionId.OPTIONS_AMBIENT_OCCLUSION, false], [OptionId.OPTIONS_SENSITIVITY, 0.75]]);
+    expect([
+      o.getIntValue(OptionId.OPTIONS_VIEW_DISTANCE),
+      o.getBooleanValue(OptionId.OPTIONS_AMBIENT_OCCLUSION),
+      o.getProgressValue(OptionId.OPTIONS_SENSITIVITY),
+    ]).toEqual([4, false, 0.75]);
+    expect(updates).toEqual([
+      [OptionId.OPTIONS_VIEW_DISTANCE, 9],
+      [OptionId.OPTIONS_AMBIENT_OCCLUSION, false],
+      [OptionId.OPTIONS_SENSITIVITY, 0.75],
+    ]);
     // 选项是模块级全局对象（C++ 的文件级全局变量），恢复默认，免得影响其他用例
     o.set(OptionId.OPTIONS_VIEW_DISTANCE, 2);
     o.toggle(OptionId.OPTIONS_AMBIENT_OCCLUSION);
@@ -150,7 +206,12 @@ describe('Options', () => {
     expect(o.getOpt(OptionId.OPTIONS_SENSITIVITY)!.serialize()).toBe('options.sensitivity:0.5');
     expect(o.getOpt(OptionId.OPTIONS_KEY_SNEAK)!.serialize()).toBe('options.key.sneak:10');
     const fog = o.getOpt(OptionId.OPTIONS_FOG_TYPE)!;
-    expect([fog.parse('2abc'), o.getIntValue(OptionId.OPTIONS_FOG_TYPE), fog.parse('x'), o.getIntValue(OptionId.OPTIONS_FOG_TYPE)]).toEqual([true, 2, false, 2]);
+    expect([
+      fog.parse('2abc'),
+      o.getIntValue(OptionId.OPTIONS_FOG_TYPE),
+      fog.parse('x'),
+      o.getIntValue(OptionId.OPTIONS_FOG_TYPE),
+    ]).toEqual([true, 2, false, 2]);
     fog.parse('0');
   });
 });
@@ -172,7 +233,9 @@ describe('Textures', () => {
     const id = tex.loadTexture('terrain.png');
     expect(id).not.toBe(Textures.InvalidId);
     expect(tex.loadTexture('terrain.png')).toBe(id);
-    expect(Array.from(tex.loadTexturePixels(id, 'terrain.png'), (p) => p >>> 0)).toEqual([0xff0a141e, 0x00010203]);
+    expect(Array.from(tex.loadTexturePixels(id, 'terrain.png'), (p) => p >>> 0)).toEqual([
+      0xff0a141e, 0x00010203,
+    ]);
     expect(tex.loadTexture('missing.png')).toBe(Textures.InvalidId);
     expect(glGetContext().boundTexture).toBe(id);
   });

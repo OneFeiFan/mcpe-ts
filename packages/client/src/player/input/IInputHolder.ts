@@ -45,7 +45,13 @@ export class CustomInputHolder extends IInputHolder {
     this._build = build;
   }
 
-  getMoveInput(): IMoveInput { return this._move; }
-  getTurnInput(): ITurnInput { return this._turn; }
-  getBuildInput(): IBuildInput { return this._build; }
+  getMoveInput(): IMoveInput {
+    return this._move;
+  }
+  getTurnInput(): ITurnInput {
+    return this._turn;
+  }
+  getBuildInput(): IBuildInput {
+    return this._build;
+  }
 }

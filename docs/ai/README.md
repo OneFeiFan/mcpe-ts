@@ -4,18 +4,19 @@
 
 ## 1. 环境（Windows）
 
-| 需要 | 用途 | 安装 |
-|---|---|---|
-| Node 22、pnpm 12 | 构建与测试 | 已有（本机实测 Node v22.14.0 / pnpm 12.8.1） |
-| Claude Code | 终端里的代理 | `npm i -g @anthropic-ai/claude-code` |
-| Python 3.10+ | `tools/porting/*.py`（读 C++、出草稿、检查） | python.org，安装时勾 “Add to PATH” |
-| g++（WSL 或 MinGW-w64） | 重新生成黄金样本（`tools/golden/build.sh`） | 见下方说明 |
-| Playwright + Chromium | 浏览器实测 | `pnpm add -D -w playwright && npx playwright install chromium` |
-| 参考 C++ 源码 | 移植依据 | 放在仓库外，本机在 `D:\Work\mcpe-reimplementation\reference\minecraft-pe`（里面有 `src\` 和 `data\`） |
+| 需要                    | 用途                                         | 安装                                                                                                  |
+| ----------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Node 22、pnpm 12        | 构建与测试                                   | 已有（本机实测 Node v22.14.0 / pnpm 12.8.1）                                                          |
+| Claude Code             | 终端里的代理                                 | `npm i -g @anthropic-ai/claude-code`                                                                  |
+| Python 3.10+            | `tools/porting/*.py`（读 C++、出草稿、检查） | python.org，安装时勾 “Add to PATH”                                                                    |
+| g++（WSL 或 MinGW-w64） | 重新生成黄金样本（`tools/golden/build.sh`）  | 见下方说明                                                                                            |
+| Playwright + Chromium   | 浏览器实测                                   | `pnpm add -D -w playwright && npx playwright install chromium`                                        |
+| 参考 C++ 源码           | 移植依据                                     | 放在仓库外，本机在 `D:\Work\mcpe-reimplementation\reference\minecraft-pe`（里面有 `src\` 和 `data\`） |
 
 **g++ 用哪个**：`tools/golden/build.sh` 是给 Linux/WSL 写的。
 
 **首选 WSL**（本机 Ubuntu-24.04 + g++ 13.3.0，已实测跑通全流程）：
+
 ```bash
 # WSL 里还需要 node —— build.sh 最后一步 merge-uninit.mjs 要用它（apt 的 nodejs 18 就够）
 sudo apt install -y nodejs
@@ -24,11 +25,13 @@ sudo apt install -y nodejs
 cd /mnt/d/Work/mcpe-reimplementation/implementation/mcpe-ts
 REF=/mnt/d/Work/mcpe-reimplementation/reference/minecraft-pe bash tools/golden/build.sh
 ```
+
 实测结果：14 个夹具全部重新生成，**与仓库里已有的逐字节一致**，连依赖 `MALLOC_PERTURB_` 检测未初始化内存的 `registry.json` 也完全对得上。所以这台机器上重新生成夹具是安全的。
 
 从 Git Bash 里调 WSL 时记得加 `MSYS_NO_PATHCONV=1`，否则 `/mnt/c/...` 会被改写成 `D:/ProgramFiles/Git/mnt/c/...` 而找不到文件。
 
 **备选：Windows 原生 MinGW-w64**（本机 `E:\mingw64`，g++ 15.1，即 `c++.exe`）。实测能用但不完整：
+
 - 能编、能跑，**算出来的数值和 Linux 夹具逐字节一致**（只差换行符 CRLF）；
 - 但 build.sh 里几处 Linux 专用的东西要改才跑得通（`ld` 的名字、CRLF、汇编桩的 ELF 语法、`sigill_diag.cpp` 用的 POSIX `sigaction`），目前没改；
 - 而且 `MALLOC_PERTURB_` 在 Windows 上无效，**`registry.json` 依赖它检测未初始化内存（58 个字段），不要在 Windows 上重新生成**。
@@ -38,29 +41,32 @@ REF=/mnt/d/Work/mcpe-reimplementation/reference/minecraft-pe bash tools/golden/b
 `REF` 已经写进 `.claude/settings.json` 的 `env` 里，Claude Code 每次会话自动带上，不用再手动设。
 
 把 DeepSeek 接到 Claude Code（以 DeepSeek 官方文档 https://api-docs.deepseek.com/guides/anthropic_api 为准）：
+
 ```powershell
 $env:ANTHROPIC_BASE_URL = "https://api.deepseek.com/anthropic"
 $env:ANTHROPIC_AUTH_TOKEN = "<你的 DeepSeek API Key>"
 claude                            # REF 由 .claude/settings.json 提供，不必再设
 ```
+
 进入后先运行 `/doctor`（检查环境），再输入“读 CLAUDE.md，然后告诉我你理解的工作流程”，确认它读到了规则。
 
 ## 2. 仓库里为它准备的东西
 
-| 位置 | 作用 |
-|---|---|
-| `CLAUDE.md` | 每次启动自动读：目标、硬规则、每个单元的标准流程、常用命令 |
-| `.claude/skills/mcpe-porting/` | 移植流程 + **PITFALLS.md（26 条 C++→TS 语言差异，全是本项目真实踩过的坑）** |
-| `.claude/skills/golden-sample/` | 怎么写 C++ harness 生成标准答案、怎么比较 |
-| `.claude/skills/browser-verify/` | 怎么用 Playwright 跑场景、读游戏状态、截图并查看 |
-| `.claude/commands/` | 斜杠命令：`/port-unit`、`/verify`、`/golden`、`/review-port` |
-| `.claude/agents/port-reviewer.md` | 只读的审查子代理：逐函数对照 C++ 找问题 |
-| `.claude/settings.json` | 权限 + 三个**钩子**（见下） |
-| `tools/porting/` | 我用过的全部移植脚本（预处理、草稿生成、整数除法清单、漏加 this. 检查） |
-| `tools/verify/smoke.mjs` | 浏览器实测脚本（场景在 `tools/verify/scenarios/`） |
-| `docs/ai/TASK-B-存档.md` | 下一阶段的任务单，拆成 9 步，每步有范围、样本、验收 |
+| 位置                              | 作用                                                                        |
+| --------------------------------- | --------------------------------------------------------------------------- |
+| `CLAUDE.md`                       | 每次启动自动读：目标、硬规则、每个单元的标准流程、常用命令                  |
+| `.claude/skills/mcpe-porting/`    | 移植流程 + **PITFALLS.md（26 条 C++→TS 语言差异，全是本项目真实踩过的坑）** |
+| `.claude/skills/golden-sample/`   | 怎么写 C++ harness 生成标准答案、怎么比较                                   |
+| `.claude/skills/browser-verify/`  | 怎么用 Playwright 跑场景、读游戏状态、截图并查看                            |
+| `.claude/commands/`               | 斜杠命令：`/port-unit`、`/verify`、`/golden`、`/review-port`                |
+| `.claude/agents/port-reviewer.md` | 只读的审查子代理：逐函数对照 C++ 找问题                                     |
+| `.claude/settings.json`           | 权限 + 三个**钩子**（见下）                                                 |
+| `tools/porting/`                  | 我用过的全部移植脚本（预处理、草稿生成、整数除法清单、漏加 this. 检查）     |
+| `tools/verify/smoke.mjs`          | 浏览器实测脚本（场景在 `tools/verify/scenarios/`）                          |
+| `docs/ai/TASK-B-存档.md`          | 下一阶段的任务单，拆成 9 步，每步有范围、样本、验收                         |
 
 ### 钩子：不靠模型自觉的硬约束
+
 - **guard（改文件前）**：禁止改 `fixtures/golden/`、禁止改参考 C++、禁止在测试里加 `.skip/.only`。这三条是“让测试假通过”的常见手段。
 - **post-edit（改文件后）**：扫描刚改的 TS 文件，发现 C++ 残留（`->`、`::`、`NULL`、`(int)x`、`1.0f`）、`declare function`、`any`、`@ts-ignore`、`$1` 方法名就立刻打回。
 - **stop-check（想结束时）**：自动跑 `pnpm typecheck` 和 `pnpm test`，不通过就不让它结束（连续 3 次后放行并明确说明“仍未通过”）。

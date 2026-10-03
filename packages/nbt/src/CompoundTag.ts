@@ -1,16 +1,28 @@
-import { Tag, TAG_Compound, TAG_End, TAG_Byte, TAG_Short, TAG_Int, TAG_Long,
-         TAG_Float, TAG_Double, TAG_String, TAG_Byte_Array, TAG_List,
-         TAGERR_OUT_OF_BOUNDS } from "./Tag";
-import type { IDataInput, IDataOutput, PrintStream } from "@mcpe/util";
-import { ByteTag } from "./ByteTag";
-import { ShortTag } from "./ShortTag";
-import { IntTag } from "./IntTag";
-import { LongTag } from "./LongTag";
-import { FloatTag } from "./FloatTag";
-import { DoubleTag } from "./DoubleTag";
-import { StringTag } from "./StringTag";
-import { ByteArrayTag } from "./ByteArrayTag";
-import { ListTag } from "./ListTag";
+import {
+  Tag,
+  TAG_Compound,
+  TAG_End,
+  TAG_Byte,
+  TAG_Short,
+  TAG_Int,
+  TAG_Long,
+  TAG_Float,
+  TAG_Double,
+  TAG_String,
+  TAG_Byte_Array,
+  TAG_List,
+  TAGERR_OUT_OF_BOUNDS,
+} from './Tag';
+import type { IDataInput, IDataOutput, PrintStream } from '@mcpe/util';
+import { ByteTag } from './ByteTag';
+import { ShortTag } from './ShortTag';
+import { IntTag } from './IntTag';
+import { LongTag } from './LongTag';
+import { FloatTag } from './FloatTag';
+import { DoubleTag } from './DoubleTag';
+import { StringTag } from './StringTag';
+import { ByteArrayTag } from './ByteArrayTag';
+import { ListTag } from './ListTag';
 
 // 复刻 std::less<std::string>：按无符号字节的字典序
 const encoder = new TextEncoder();
@@ -29,7 +41,7 @@ export class CompoundTag extends Tag {
   private tags = new Map<string, Tag>();
   private sortedKeysCache: string[] | null = null;
 
-  constructor(name: string = "") {
+  constructor(name: string = '') {
     super(name);
   }
 
@@ -188,7 +200,7 @@ export class CompoundTag extends Tag {
   }
 
   getString(name: string): string {
-    if (!this.contains(name, TAG_String)) return "";
+    if (!this.contains(name, TAG_String)) return '';
     return (this.get(name) as StringTag).data;
   }
 
@@ -247,18 +259,18 @@ export class CompoundTag extends Tag {
   override print(prefix: string, out: PrintStream): void;
   override print(out: PrintStream): void;
   override print(prefixOrOut: string | PrintStream, maybeOut?: PrintStream): void {
-    if (typeof prefixOrOut === "string") {
+    if (typeof prefixOrOut === 'string') {
       const prefix = prefixOrOut;
       const out = maybeOut!;
       super.print(prefix, out);
       out.print(prefix);
-      out.println("{");
-      const inner = prefix + "   ";
+      out.println('{');
+      const inner = prefix + '   ';
       for (const key of this.sortedKeys()) {
         this.tags.get(key)!.print(inner, out);
       }
       out.print(prefix);
-      out.println("}");
+      out.println('}');
     } else {
       super.print(prefixOrOut);
     }

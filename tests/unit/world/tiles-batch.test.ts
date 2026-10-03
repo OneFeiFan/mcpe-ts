@@ -2,28 +2,76 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { Random } from '@mcpe/util';
 import {
   initItems,
-  BedTile, FarmTile, FireTile, FoliageColor, initMaterials, Item, LeafTile, LeafTileItem, LiquidTile, LiquidTileDynamic,
-  LiquidTileStatic, Material, StoneSlabTile, StoneSlabTileItem, Tile, TileItem, type TileClasses, TILE_CLASSES } from '@mcpe/world';
+  BedTile,
+  FarmTile,
+  FireTile,
+  FoliageColor,
+  initMaterials,
+  Item,
+  LeafTile,
+  LeafTileItem,
+  LiquidTile,
+  LiquidTileDynamic,
+  LiquidTileStatic,
+  Material,
+  StoneSlabTile,
+  StoneSlabTileItem,
+  Tile,
+  TileItem,
+  type TileClasses,
+  TILE_CLASSES,
+} from '@mcpe/world';
 import { FakeLevel } from '../../helpers/fakeLevel';
 
 // 这一批 10 个类用真实实现；其余 5 个（StoneTile、DirtTile、GrassTile、InvisibleTile、TopSnowTile）还没移植，用替身
 class Solid extends Tile {}
 const fakes = {
-  StoneTile: class extends Solid { constructor(id: number, tex: number) { super(id, tex, Material.stone); } },
-  GrassTile: class extends Solid { constructor(id: number) { super(id, Material.dirt); this.tex = 3; } },
-  DirtTile: class extends Solid { constructor(id: number, tex: number) { super(id, tex, Material.dirt); } },
-  InvisibleTile: class extends Solid { constructor(id: number, tex: number, m: Material) { super(id, tex, m); } },
+  StoneTile: class extends Solid {
+    constructor(id: number, tex: number) {
+      super(id, tex, Material.stone);
+    }
+  },
+  GrassTile: class extends Solid {
+    constructor(id: number) {
+      super(id, Material.dirt);
+      this.tex = 3;
+    }
+  },
+  DirtTile: class extends Solid {
+    constructor(id: number, tex: number) {
+      super(id, tex, Material.dirt);
+    }
+  },
+  InvisibleTile: class extends Solid {
+    constructor(id: number, tex: number, m: Material) {
+      super(id, tex, m);
+    }
+  },
   TopSnowTile: class extends Tile {
-    constructor(id: number, tex: number) { super(id, tex, Material.topSnow); }
-    override isSolidRender(): boolean { return false; }
+    constructor(id: number, tex: number) {
+      super(id, tex, Material.topSnow);
+    }
+    override isSolidRender(): boolean {
+      return false;
+    }
   },
 };
 
 beforeAll(() => {
   initMaterials();
   const classes: TileClasses = {
-    ...TILE_CLASSES, ...fakes, LiquidTileDynamic, LiquidTileStatic, LeafTile, BedTile, StoneSlabTile, FireTile, FarmTile,
-    TileItem, StoneSlabTileItem, LeafTileItem,
+    ...TILE_CLASSES,
+    ...fakes,
+    LiquidTileDynamic,
+    LiquidTileStatic,
+    LeafTile,
+    BedTile,
+    StoneSlabTile,
+    FireTile,
+    FarmTile,
+    TileItem,
+    StoneSlabTileItem,
+    LeafTileItem,
   };
   Tile.initTiles(classes);
   initItems(); // 床的掉落物要用 Item.bed（C++ 里 initItems 紧跟在 initTiles 之后）
@@ -38,17 +86,31 @@ describe('注册与静态表', () => {
     expect([8, 9, 10, 11].map((i) => Tile.lightBlock[i])).toEqual([3, 3, 255, 255]);
     // 台阶（半块）和耕地的构造函数里有 setLightBlock(255)，但 initTiles 随后调用的 init() 会按 isSolidRender() 重写成 0，
     // C++ 的执行顺序完全一样，所以这两个在分支里都不挡光
-    expect([18, 254, 43, 44, 60, 26, 51].map((i) => Tile.lightBlock[i])).toEqual([1, 1, 255, 0, 0, 0, 0]);
+    expect([18, 254, 43, 44, 60, 26, 51].map((i) => Tile.lightBlock[i])).toEqual([
+      1, 1, 255, 0, 0, 0, 0,
+    ]);
     expect([10, 11, 51].map((i) => Tile.lightEmission[i])).toEqual([15, 15, 15]);
-    expect([Tile.shouldTick[8], Tile.shouldTick[9], Tile.shouldTick[11], Tile.shouldTick[18], Tile.shouldTick[51], Tile.shouldTick[60]])
-      .toEqual([true, false, true, true, true, true]);
+    expect([
+      Tile.shouldTick[8],
+      Tile.shouldTick[9],
+      Tile.shouldTick[11],
+      Tile.shouldTick[18],
+      Tile.shouldTick[51],
+      Tile.shouldTick[60],
+    ]).toEqual([true, false, true, true, true, true]);
     expect(Item.items[18]).toBeInstanceOf(LeafTileItem);
   });
 
   it('FireTile：木头、树叶、原木、书架、TNT、羊毛都可燃', () => {
     const fire = Tile.fire;
-    expect([fire.isFlammable(5), fire.isFlammable(18), fire.isFlammable(17), fire.isFlammable(47), fire.isFlammable(46), fire.isFlammable(35)])
-      .toEqual([true, true, true, true, true, true]);
+    expect([
+      fire.isFlammable(5),
+      fire.isFlammable(18),
+      fire.isFlammable(17),
+      fire.isFlammable(47),
+      fire.isFlammable(46),
+      fire.isFlammable(35),
+    ]).toEqual([true, true, true, true, true, true]);
   });
 });
 
@@ -58,7 +120,11 @@ describe('StoneSlabTile', () => {
     expect(Tile.stoneSlab.isSolidRender()).toBe(true);
     expect(Tile.stoneSlabHalf.isSolidRender()).toBe(false);
     expect([Tile.stoneSlabHalf.getTexture(0), Tile.stoneSlabHalf.getTexture(2)]).toEqual([6, 5]);
-    expect([Tile.stoneSlabHalf.getTexture(0, 1), Tile.stoneSlabHalf.getTexture(1, 1), Tile.stoneSlabHalf.getTexture(3, 1)]).toEqual([208, 176, 192]);
+    expect([
+      Tile.stoneSlabHalf.getTexture(0, 1),
+      Tile.stoneSlabHalf.getTexture(1, 1),
+      Tile.stoneSlabHalf.getTexture(3, 1),
+    ]).toEqual([208, 176, 192]);
     expect(Tile.stoneSlabHalf.getTexture(2, 4)).toBe(Tile.redBrick.tex);
     expect(Tile.stoneSlabHalf.getTexture(2, 5)).toBe(Tile.stoneBrickSmooth.tex); // S11 起 stoneBrickSmooth 已注册
   });
@@ -68,7 +134,9 @@ describe('LeafTile', () => {
   it('纹理、fancy 与颜色', () => {
     const tex = Tile.leaves.tex;
     expect(Tile.leaves.getTexture(0, LeafTile.EVERGREEN_LEAF)).toBe(tex + 80);
-    expect(Tile.leaves_carried.getTexture(0, LeafTile.EVERGREEN_LEAF)).toBe(Tile.leaves_carried.tex - 16);
+    expect(Tile.leaves_carried.getTexture(0, LeafTile.EVERGREEN_LEAF)).toBe(
+      Tile.leaves_carried.tex - 16,
+    );
     Tile.leaves.setFancy(false);
     expect([Tile.leaves.tex, Tile.leaves.isSolidRender()]).toEqual([tex + 1, true]);
     Tile.leaves.setFancy(true);
@@ -107,7 +175,11 @@ describe('BedTile', () => {
 
 describe('液体', () => {
   it('高度、颜色、tick 间隔与渲染层', () => {
-    expect([LiquidTile.getHeight(0), LiquidTile.getHeight(7), LiquidTile.getHeight(8)]).toEqual([1 / 9, 8 / 9, 1 / 9]);
+    expect([LiquidTile.getHeight(0), LiquidTile.getHeight(7), LiquidTile.getHeight(8)]).toEqual([
+      1 / 9,
+      8 / 9,
+      1 / 9,
+    ]);
     expect(Tile.water.getColor(new FakeLevel(), 0, 0, 0)).toBe(-1717986817); // 0x999999ff 按 int 回绕
     expect([Tile.water.getTickDelay(), Tile.lava.getTickDelay()]).toEqual([5, 30]);
     expect([Tile.water.getRenderLayer(), Tile.lava.getRenderLayer()]).toEqual([2, 0]);
@@ -119,7 +191,13 @@ describe('液体', () => {
     lv.put(0, 64, 0, 8, 0);
     Tile.water.tick(lv, 0, 64, 0, new Random(1));
     expect([lv.getTile(0, 64, 0), lv.getData(0, 64, 0)]).toEqual([9, 0]);
-    for (const [x, z] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) expect([lv.getTile(x, 64, z), lv.getData(x, 64, z)]).toEqual([8, 1]);
+    for (const [x, z] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ] as const)
+      expect([lv.getTile(x, 64, z), lv.getData(x, 64, z)]).toEqual([8, 1]);
     expect(lv.getTile(1, 64, 1)).toBe(0);
   });
 

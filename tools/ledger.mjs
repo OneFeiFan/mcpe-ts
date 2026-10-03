@@ -15,12 +15,23 @@ const rows = [];
 function walk(dir) {
   for (const name of readdirSync(dir)) {
     const p = join(dir, name);
-    if (statSync(p).isDirectory()) { if (name !== 'node_modules' && name !== 'dist') walk(p); continue; }
+    if (statSync(p).isDirectory()) {
+      if (name !== 'node_modules' && name !== 'dist') walk(p);
+      continue;
+    }
     if (!p.endsWith('.ts')) continue;
-    readFileSync(p, 'utf8').split(/\r?\n/).forEach((line, i) => {
-      const m = re.exec(line);
-      if (m) rows.push({ kind: m[1], sys: m[2].trim(), text: m[3].trim(), at: `${relative(root, p)}:${i + 1}` });
-    });
+    readFileSync(p, 'utf8')
+      .split(/\r?\n/)
+      .forEach((line, i) => {
+        const m = re.exec(line);
+        if (m)
+          rows.push({
+            kind: m[1],
+            sys: m[2].trim(),
+            text: m[3].trim(),
+            at: `${relative(root, p)}:${i + 1}`,
+          });
+      });
   }
 }
 for (const top of ['packages', 'apps']) walk(join(root, top));

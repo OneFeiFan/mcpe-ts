@@ -9,13 +9,19 @@ export class MouseBuildInput extends IBuildInput {
 
   override tickBuild(_p: Player | null, bai: BuildActionIntention): boolean {
     if (Mouse.getButtonState(MouseAction.ACTION_LEFT) !== 0) {
-      bai.assign(new BuildActionIntention(BuildActionIntention.BAI_REMOVE | BuildActionIntention.BAI_ATTACK));
+      bai.assign(
+        new BuildActionIntention(BuildActionIntention.BAI_REMOVE | BuildActionIntention.BAI_ATTACK),
+      );
       return true;
     }
     if (Mouse.getButtonState(MouseAction.ACTION_RIGHT) !== 0) {
       if (this.buildHoldTicks >= this.buildDelayTicks) this.buildHoldTicks = 0;
       if (++this.buildHoldTicks === 1) {
-        bai.assign(new BuildActionIntention(BuildActionIntention.BAI_BUILD | BuildActionIntention.BAI_INTERACT));
+        bai.assign(
+          new BuildActionIntention(
+            BuildActionIntention.BAI_BUILD | BuildActionIntention.BAI_INTERACT,
+          ),
+        );
         return true;
       }
     } else {

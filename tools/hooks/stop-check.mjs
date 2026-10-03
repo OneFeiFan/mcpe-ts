@@ -14,7 +14,9 @@ function run(cmd) {
     return null;
   } catch (e) {
     const out = (e.stdout || '') + (e.stderr || '');
-    const lines = out.split(/\r?\n/).filter((l) => /error TS|FAIL|AssertionError|Error:|✗|×/.test(l));
+    const lines = out
+      .split(/\r?\n/)
+      .filter((l) => /error TS|FAIL|AssertionError|Error:|✗|×/.test(l));
     return (lines.length ? lines : out.split(/\r?\n/).slice(-40)).slice(0, 40).join('\n');
   }
 }
@@ -23,20 +25,30 @@ function run(cmd) {
 // “unexpected argument '-s' found”，于是钩子每次都误判成“类型检查失败”。
 // pnpm 不在 PATH 上、或这个 pnpm 不认 --silent 时，退回 npx 拉一个 pnpm@10。
 let PNPM = 'pnpm';
-try { execSync('pnpm --silent --version', { stdio: 'ignore' }); } catch { PNPM = 'npx -y pnpm@10'; }
+try {
+  execSync('pnpm --silent --version', { stdio: 'ignore' });
+} catch {
+  PNPM = 'npx -y pnpm@10';
+}
 const tc = run(`${PNPM} --silent typecheck`);
 const tests = tc ? null : run(`${PNPM} --silent test`);
 if (!tc && !tests) {
   if (existsSync(counter)) unlinkSync(counter);
   process.exit(0);
 }
-if (attempts >= 3 || input.stop_hook_active && attempts >= 3) {
+if (attempts >= 3 || (input.stop_hook_active && attempts >= 3)) {
   if (existsSync(counter)) unlinkSync(counter);
-  process.stderr.write('【stop-check】已连续拦截 3 次，放行；但类型检查或测试仍未通过——这一轮的工作不算完成，下一轮先修这些。\n');
+  process.stderr.write(
+    '【stop-check】已连续拦截 3 次，放行；但类型检查或测试仍未通过——这一轮的工作不算完成，下一轮先修这些。\n',
+  );
   process.exit(0);
 }
 writeFileSync(counter, String(attempts + 1));
 process.stderr.write(
-  '【stop-check】还不能结束：' + (tc ? '类型检查失败' : '测试失败') + '。修好之后再结束（不要改测试或夹具来通过）。\n' + (tc ?? tests) + '\n',
+  '【stop-check】还不能结束：' +
+    (tc ? '类型检查失败' : '测试失败') +
+    '。修好之后再结束（不要改测试或夹具来通过）。\n' +
+    (tc ?? tests) +
+    '\n',
 );
 process.exit(2);

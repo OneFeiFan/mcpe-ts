@@ -1,10 +1,10 @@
-import { Bush } from "./Bush";
-import { Tile } from "./Tile";
-import { Level } from "../Level";
-import { Item } from "../../item/Item";
-import { ItemInstance } from "../../item/ItemInstance";
-import type { Random } from "@mcpe/util";
-import type { LevelSource } from "../LevelSource";
+import { Bush } from './Bush';
+import { Tile } from './Tile';
+import { Level } from '../Level';
+import { Item } from '../../item/Item';
+import { ItemInstance } from '../../item/ItemInstance';
+import type { Random } from '@mcpe/util';
+import type { LevelSource } from '../LevelSource';
 
 export class StemTile extends Bush {
   private readonly fruit: Tile;
@@ -45,7 +45,7 @@ export class StemTile extends Bush {
           if (level.getTile(x, y, z + 1) === this.fruit.id) return;
 
           for (let a = 0; a < 4; ++a) {
-            const dir = a;   // C++ 里 random->nextInt(4) 被注释掉了
+            const dir = a; // C++ 里 random->nextInt(4) 被注释掉了
             let xx = x;
             let zz = z;
             if (dir === 0) xx--;
@@ -56,9 +56,7 @@ export class StemTile extends Bush {
             const below = level.getTile(xx, y - 1, zz);
             if (
               level.getTile(xx, y, zz) === 0 &&
-              (below === Tile.farmland.id ||
-               below === Tile.dirt.id ||
-               below === Tile.grass.id)
+              (below === Tile.farmland.id || below === Tile.dirt.id || below === Tile.grass.id)
             ) {
               level.setTile(xx, y, zz, this.fruit.id);
               break;
@@ -164,8 +162,11 @@ export class StemTile extends Bush {
   /** C++ StemTile::spawnResources(Level*, int, int, int, int, float) */
   override spawnResources(
     level: Level,
-    x: number, y: number, z: number,
-    data: number, odds: number,
+    x: number,
+    y: number,
+    z: number,
+    data: number,
+    odds: number,
   ): void {
     super.spawnResources(level, x, y, z, data, odds);
 

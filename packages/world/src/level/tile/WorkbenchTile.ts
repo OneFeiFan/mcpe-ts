@@ -1,8 +1,8 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import type { Level } from "../Level";
-import { Facing } from "../../Facing";
-import type { Player } from "../../entity/player/Player";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import type { Level } from '../Level';
+import { Facing } from '../../Facing';
+import type { Player } from '../../entity/player/Player';
 
 /** Recipe::SIZE_3X3（Recipe.cpp 里定义为 1；合成系统计划外，先用同值常量） */
 const RECIPE_SIZE_3X3 = 1;

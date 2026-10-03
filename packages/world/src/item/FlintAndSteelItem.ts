@@ -1,8 +1,8 @@
-import { Item } from "./Item";
-import { ItemInstance } from "./ItemInstance";
-import { Level } from "../level/Level";
-import { Tile } from "../level/tile/Tile";
-import type { Player } from "../entity/player/Player";
+import { Item } from './Item';
+import { ItemInstance } from './ItemInstance';
+import { Level } from '../level/Level';
+import { Tile } from '../level/tile/Tile';
+import type { Player } from '../entity/player/Player';
 
 export class FlintAndSteelItem extends Item {
   /** C++ FlintAndSteelItem::FlintAndSteelItem(int id) */
@@ -17,9 +17,13 @@ export class FlintAndSteelItem extends Item {
     instance: ItemInstance,
     _player: Player,
     level: Level,
-    x: number, y: number, z: number,
+    x: number,
+    y: number,
+    z: number,
     face: number,
-    _clickX: number, _clickY: number, _clickZ: number,
+    _clickX: number,
+    _clickY: number,
+    _clickZ: number,
   ): boolean {
     // face -> 相邻位置：点击位置 + 面法线方向
     if (face === 0) y--;
@@ -33,8 +37,11 @@ export class FlintAndSteelItem extends Item {
     if (targetType === 0) {
       // playSound 用的是坐标版本，不是 Entity* 版本
       level.playSound(
-        x + 0.5, y + 0.5, z + 0.5,
-        "fire.ignite", 1,
+        x + 0.5,
+        y + 0.5,
+        z + 0.5,
+        'fire.ignite',
+        1,
         FlintAndSteelItem.random.nextFloat() * 0.4 + 0.8,
       );
       level.setTile(x, y, z, Tile.fire.id);

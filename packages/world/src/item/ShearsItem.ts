@@ -1,6 +1,6 @@
-import { Item } from "./Item";
-import { ItemInstance } from "./ItemInstance";
-import { Tile } from "../level/tile/Tile";
+import { Item } from './Item';
+import { ItemInstance } from './ItemInstance';
+import { Tile } from '../level/tile/Tile';
 
 export class ShearsItem extends Item {
   /** C++ ShearsItem::ShearsItem(int itemId) */

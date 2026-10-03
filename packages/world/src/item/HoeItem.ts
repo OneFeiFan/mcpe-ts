@@ -1,10 +1,9 @@
-import { Item, Tier } from "./Item";
-import { ItemInstance } from "./ItemInstance";
-import { Level } from "../level/Level";
-import { Tile } from "../level/tile/Tile";
-import { ItemEntity } from "../entity/item/ItemEntity";
-import type { Player } from "..";
-
+import { Item, Tier } from './Item';
+import { ItemInstance } from './ItemInstance';
+import { Level } from '../level/Level';
+import { Tile } from '../level/tile/Tile';
+import { ItemEntity } from '../entity/item/ItemEntity';
+import type { Player } from '..';
 
 export class HoeItem extends Item {
   protected tier: Tier;
@@ -22,9 +21,13 @@ export class HoeItem extends Item {
     itemInstance: ItemInstance,
     _player: Player,
     level: Level,
-    x: number, y: number, z: number,
+    x: number,
+    y: number,
+    z: number,
     face: number,
-    _clickX: number, _clickY: number, _clickZ: number,
+    _clickX: number,
+    _clickY: number,
+    _clickZ: number,
   ): boolean {
     // C++ 里 player.mayBuild 检查被注释掉了，不要加
 
@@ -44,7 +47,9 @@ export class HoeItem extends Item {
       const tile = Tile.farmland;
 
       level.playSound(
-        x + 0.5, y + 0.5, z + 0.5,
+        x + 0.5,
+        y + 0.5,
+        z + 0.5,
         tile.soundType!.getStepSound(),
         (tile.soundType!.getVolume() + 1) / 2,
         tile.soundType!.getPitch() * 0.8,
@@ -66,7 +71,9 @@ export class HoeItem extends Item {
 
         const item = new ItemEntity(
           level,
-          x + xo, y + yo, z + zo,
+          x + xo,
+          y + yo,
+          z + zo,
           new ItemInstance(Item.seeds_wheat),
         );
         item.throwTime = 10;

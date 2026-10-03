@@ -1,5 +1,5 @@
-import { Tag, TAG_Long } from "./Tag";
-import type { IDataInput, IDataOutput } from "@mcpe/util";
+import { Tag, TAG_Long } from './Tag';
+import type { IDataInput, IDataOutput } from '@mcpe/util';
 
 export class LongTag extends Tag {
   public data: bigint;

@@ -17,9 +17,27 @@
 import { LOGI } from '@mcpe/platform';
 import type { Vec3 } from '@mcpe/world';
 import {
-  GL_ARRAY_BUFFER, GL_COLOR_ARRAY, GL_DYNAMIC_DRAW, GL_FLOAT, GL_NORMAL_ARRAY, GL_QUADS, GL_STATIC_DRAW, GL_TEXTURE_COORD_ARRAY, GL_TRIANGLES,
-  GL_UNSIGNED_BYTE, GL_VERTEX_ARRAY, glBindBuffer2, glBufferData2, glColorPointer2, glDisableClientState2, glDrawArrays2, glEnableClientState2,
-  glGenBuffers2, glNormalPointer, glTexCoordPointer2, glVertexPointer2,
+  GL_ARRAY_BUFFER,
+  GL_COLOR_ARRAY,
+  GL_DYNAMIC_DRAW,
+  GL_FLOAT,
+  GL_NORMAL_ARRAY,
+  GL_QUADS,
+  GL_STATIC_DRAW,
+  GL_TEXTURE_COORD_ARRAY,
+  GL_TRIANGLES,
+  GL_UNSIGNED_BYTE,
+  GL_VERTEX_ARRAY,
+  glBindBuffer2,
+  glBufferData2,
+  glColorPointer2,
+  glDisableClientState2,
+  glDrawArrays2,
+  glEnableClientState2,
+  glGenBuffers2,
+  glNormalPointer,
+  glTexCoordPointer2,
+  glVertexPointer2,
 } from './gles';
 import { RenderChunk } from './RenderChunk';
 import { VertexDeclPTCN } from './VertecDecl';
@@ -162,8 +180,15 @@ export class Tesselator {
       return;
     }
     // 浮点版：(int) (x * 255)
-    if (d === undefined) this.colorInt(Math.trunc(a * 255) | 0, Math.trunc(b! * 255) | 0, Math.trunc(c * 255) | 0);
-    else this.colorInt(Math.trunc(a * 255) | 0, Math.trunc(b! * 255) | 0, Math.trunc(c * 255) | 0, Math.trunc(d * 255) | 0);
+    if (d === undefined)
+      this.colorInt(Math.trunc(a * 255) | 0, Math.trunc(b! * 255) | 0, Math.trunc(c * 255) | 0);
+    else
+      this.colorInt(
+        Math.trunc(a * 255) | 0,
+        Math.trunc(b! * 255) | 0,
+        Math.trunc(c * 255) | 0,
+        Math.trunc(d * 255) | 0,
+      );
   }
 
   // ADAPTED(Cpp): C++ 的 color(int r, int g, int b[, int a]) 与 float 版同参数个数，改名 colorInt（见文件头）
@@ -207,7 +232,8 @@ export class Tesselator {
   }
 
   vertex(x: number, y: number, z: number): void {
-    const f32 = this._f32, u32 = this._u32;
+    const f32 = this._f32,
+      u32 = this._u32;
     this.count++;
     if (this.mode === GL_QUADS && (this.count & 3) === 0) {
       for (let i = 0; i < 2; i++) {
@@ -260,7 +286,8 @@ export class Tesselator {
     ++this.p;
     ++this.vertices;
     if ((this.vertices & 3) === 0 && this.p >= this.maxVertices - 1) {
-      for (let i = 0; i < 3; ++i) LOGI("Overwriting the vertex buffer! This chunk/entity won't show up");
+      for (let i = 0; i < 3; ++i)
+        LOGI("Overwriting the vertex buffer! This chunk/entity won't show up");
       this.clear();
     }
   }
@@ -385,7 +412,17 @@ export class Tesselator {
   /** ADAPTED(Test)：只给测试用，第 i 个顶点的 [x, y, z, u, v, color, nx, ny, nz] */
   _vertexForTest(i: number): number[] {
     const o = i * SLOTS;
-    return [this._f32[o]!, this._f32[o + 1]!, this._f32[o + 2]!, this._f32[o + 3]!, this._f32[o + 4]!, this._u32[o + 5]!, this._f32[o + 6]!, this._f32[o + 7]!, this._f32[o + 8]!];
+    return [
+      this._f32[o]!,
+      this._f32[o + 1]!,
+      this._f32[o + 2]!,
+      this._f32[o + 3]!,
+      this._f32[o + 4]!,
+      this._u32[o + 5]!,
+      this._f32[o + 6]!,
+      this._f32[o + 7]!,
+      this._f32[o + 8]!,
+    ];
   }
 
   /** ADAPTED(Test)：只给测试用 */

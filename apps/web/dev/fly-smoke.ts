@@ -1,11 +1,48 @@
 // S8 的 dev 页（长期保留）：DomInput → Keyboard/Mouse → KeyboardInput、MouseTurnInput → DebugFreeCamera，在 S7 的地形上飞行。
 // 主循环、转向系数与相机变换是 S9 里 Minecraft、GameRenderer 的简化版；S9 完成后这里只作为输入链路的单独检查。
 import {
-  AppPlatform, Chunk, CustomInputHolder, FrustumCuller, GL_ALPHA_TEST, GL_BACK, GL_COLOR_BUFFER_BIT, GL_CULL_FACE,
-  GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_GREATER, GL_LEQUAL, GL_MODELVIEW, GL_PROJECTION, GL_TEXTURE_2D, GLES1, glAlphaFunc, glClear,
-  glClearColor, glCullFace, glDepthFunc, glEnable, glGenBuffers, glLoadIdentity, glMatrixMode, glRotatef, glSetContext, glTranslatef,
-  gluPerspective, glViewport, KeyboardInput, Minecraft, MouseBuildInput, MouseHandler, MouseTurnInput, OptionId, Options, RenderList,
-  Tesselator, TextureData, Textures, Timer,
+  AppPlatform,
+  Chunk,
+  CustomInputHolder,
+  FrustumCuller,
+  GL_ALPHA_TEST,
+  GL_BACK,
+  GL_COLOR_BUFFER_BIT,
+  GL_CULL_FACE,
+  GL_DEPTH_BUFFER_BIT,
+  GL_DEPTH_TEST,
+  GL_GREATER,
+  GL_LEQUAL,
+  GL_MODELVIEW,
+  GL_PROJECTION,
+  GL_TEXTURE_2D,
+  GLES1,
+  glAlphaFunc,
+  glClear,
+  glClearColor,
+  glCullFace,
+  glDepthFunc,
+  glEnable,
+  glGenBuffers,
+  glLoadIdentity,
+  glMatrixMode,
+  glRotatef,
+  glSetContext,
+  glTranslatef,
+  gluPerspective,
+  glViewport,
+  KeyboardInput,
+  Minecraft,
+  MouseBuildInput,
+  MouseHandler,
+  MouseTurnInput,
+  OptionId,
+  Options,
+  RenderList,
+  Tesselator,
+  TextureData,
+  Textures,
+  Timer,
 } from '@mcpe/client';
 import { SharedConstants } from '@mcpe/core';
 import { Keyboard, KeyboardAction, Mouse } from '@mcpe/platform';
@@ -30,7 +67,10 @@ async function main(): Promise<void> {
   const ctx = new GLES1(gl);
   glSetContext(ctx);
   Tesselator.instance.init();
-  const textures = new Textures(null, new DevPlatform(new Map([['terrain.png', await loadImage('/images/terrain.png')]])));
+  const textures = new Textures(
+    null,
+    new DevPlatform(new Map([['terrain.png', await loadImage('/images/terrain.png')]])),
+  );
   const level = createDemoLevel();
   Minecraft.useAmbientOcclusion = true;
   const chunks: Chunk[] = [];
@@ -46,11 +86,17 @@ async function main(): Promise<void> {
 
   // ---- 输入链路（Minecraft::_reloadInput 的桌面分支）
   const options = new Options(null);
-  const input = new CustomInputHolder(new KeyboardInput(options), new MouseTurnInput(MouseTurnInput.MODE_DELTA, canvas.width / 2, canvas.height / 2), new MouseBuildInput());
+  const input = new CustomInputHolder(
+    new KeyboardInput(options),
+    new MouseTurnInput(MouseTurnInput.MODE_DELTA, canvas.width / 2, canvas.height / 2),
+    new MouseBuildInput(),
+  );
   const mouseHandler = new MouseHandler(input.getTurnInput());
   const camera = new DebugFreeCamera(level, 136, 72, 104);
   camera.xRot = camera.xRotO = 30;
-  const dom = new DomInput(canvas, { onPointerUnlock: () => input.getMoveInput().releaseAllKeys() }); // A6：releaseMouse → releaseAllKeys
+  const dom = new DomInput(canvas, {
+    onPointerUnlock: () => input.getMoveInput().releaseAllKeys(),
+  }); // A6：releaseMouse → releaseAllKeys
   dom.attach();
   const timer = new Timer(SharedConstants.TicksPerSecond);
 
@@ -109,7 +155,14 @@ async function main(): Promise<void> {
     }
     list.render();
     status.textContent = `相机 (${camera.x.toFixed(2)}, ${camera.y.toFixed(2)}, ${camera.z.toFixed(2)})  xRot ${camera.xRot.toFixed(1)}  yRot ${camera.yRot.toFixed(1)}  ${dom.isLocked() ? '已锁定' : '点击画面开始'}`;
-    (window as unknown as { __fly: unknown }).__fly = { x: camera.x, y: camera.y, z: camera.z, xRot: camera.xRot, yRot: camera.yRot, locked: dom.isLocked() };
+    (window as unknown as { __fly: unknown }).__fly = {
+      x: camera.x,
+      y: camera.y,
+      z: camera.z,
+      xRot: camera.xRot,
+      yRot: camera.yRot,
+      locked: dom.isLocked(),
+    };
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);

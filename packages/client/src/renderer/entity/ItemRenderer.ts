@@ -9,14 +9,44 @@
 import { type Entity, Item, type ItemEntity, type ItemInstance, Tile } from '@mcpe/world';
 import { Mth, Random } from '@mcpe/util';
 import type { Font } from '../../gui/Font';
-import { GL_RESCALE_NORMAL, glColor4f, glColor4f2, glDisable2, glEnable2, glPopMatrix2, glPushMatrix2, glRotatef2, glScalef2, glTranslatef2 } from '../gles';
+import {
+  GL_RESCALE_NORMAL,
+  glColor4f,
+  glColor4f2,
+  glDisable2,
+  glEnable2,
+  glPopMatrix2,
+  glPushMatrix2,
+  glRotatef2,
+  glScalef2,
+  glTranslatef2,
+} from '../gles';
 import { EntityRenderer } from './EntityRenderer';
 import { Tesselator } from '../Tesselator';
 import type { Textures } from '../Textures';
 import { TileRenderer } from '../TileRenderer';
 
 /** ItemRenderer.cpp 的 _mapper：物品 id → gui_blocks.png 里的图块序号；-1 没有图块，-2 按数据值查下面的表 */
-const _mapper: readonly number[] = [-1, 7, 9, 8, 0, 5, -2, -1, -1, -1, -1, -1, 14, 15, 39, 38, 37, -2, -2, -1, 49, 41, 46, -1, -2, -1, -1, -1, -1, -1, 235, -1, -1, -1, -1, -2, -1, 134, 135, 136, 137, 43, 44, -1, -2, 6, 76, 71, 4, 47, 129, -1, -1, 22, 74, -1, 40, 45, 72, -1, -1, 75, -1, -1, -1, 128, -1, 21, -1, -1, -1, -1, -1, 42, -1, -1, -1, -1, -1, -1, 48, 77, 10, 236, -1, 69, -1, 20, -1, 50, -1, -1, -1, -1, -1, -1, 68, -1, -2, -1, -1, -1, 130, 78, -1, -1, -1, 70, 23, 25, -1, -1, 19, -1, 26, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 24, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -2, 27, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 73, -1, 51, -1, -1, -1, -1, -1, 82, -1, -1, 174, 173, 175, 231, 234, 147, 190, -2, 153, 150, 149, 146, 185, 166, 164, 167, 186, 170, 169, 171, 187, 177, 176, 178, 165, 195, 194, 188, 181, 180, 182, 189, 191, 228, 168, 172, 145, 179, 183, 142, 233, 232, 198, 200, 201, 202, -1, -1, -1, -1, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 192, 156, 157, 133, -1, 148, 131, -1, -1, -1, -1, -1, -1, -1, 226, -1, 199, -1, 159, 158, 138, 224, 225, -1, -1, -1, -1, -1, -1, -1, 227, -1, -1, -2, 223, 229, -1, 132, -1, -1, -1, 184, 196, -1, 143, 160, 161, 162, 163, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 155, 197];
+const _mapper: readonly number[] = [
+  -1, 7, 9, 8, 0, 5, -2, -1, -1, -1, -1, -1, 14, 15, 39, 38, 37, -2, -2, -1, 49, 41, 46, -1, -2, -1,
+  -1, -1, -1, -1, 235, -1, -1, -1, -1, -2, -1, 134, 135, 136, 137, 43, 44, -1, -2, 6, 76, 71, 4, 47,
+  129, -1, -1, 22, 74, -1, 40, 45, 72, -1, -1, 75, -1, -1, -1, 128, -1, 21, -1, -1, -1, -1, -1, 42,
+  -1, -1, -1, -1, -1, -1, 48, 77, 10, 236, -1, 69, -1, 20, -1, 50, -1, -1, -1, -1, -1, -1, 68, -1,
+  -2, -1, -1, -1, 130, 78, -1, -1, -1, 70, 23, 25, -1, -1, 19, -1, 26, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, 24, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -2, 27, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, 73, -1, 51, -1, -1, -1, -1, -1, 82, -1, -1, 174, 173, 175, 231, 234, 147, 190, -2,
+  153, 150, 149, 146, 185, 166, 164, 167, 186, 170, 169, 171, 187, 177, 176, 178, 165, 195, 194,
+  188, 181, 180, 182, 189, 191, 228, 168, 172, 145, 179, 183, 142, 233, 232, 198, 200, 201, 202, -1,
+  -1, -1, -1, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 192, 156, 157, 133, -1,
+  148, 131, -1, -1, -1, -1, -1, -1, -1, 226, -1, 199, -1, 159, 158, 138, 224, 225, -1, -1, -1, -1,
+  -1, -1, -1, 227, -1, -1, -2, 223, 229, -1, 132, -1, -1, -1, 184, 196, -1, 143, 160, 161, 162, 163,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 155, 197,
+];
 
 /** _6、_17 … _351：按 getAuxValue() & 15 查图块序号（IRMAPCASE 宏） */
 const _byAux: Readonly<Record<number, readonly number[]>> = {
@@ -120,11 +150,27 @@ export class ItemRenderer extends EntityRenderer {
   private static tileRenderer: TileRenderer | null = new TileRenderer();
 
   /** C++ 的两个重载（见文件头） */
-  static renderGuiItem(font: Font | null, textures: Textures, item: ItemInstance | null, x: number, y: number, fancy: boolean): void {
+  static renderGuiItem(
+    font: Font | null,
+    textures: Textures,
+    item: ItemInstance | null,
+    x: number,
+    y: number,
+    fancy: boolean,
+  ): void {
     ItemRenderer.renderGuiItemSized(font, textures, item, x, y, 16, 16, fancy);
   }
 
-  static renderGuiItemSized(font: Font | null, textures: Textures, item: ItemInstance | null, x: number, y: number, w: number, h: number, _fancy: boolean): void {
+  static renderGuiItemSized(
+    font: Font | null,
+    textures: Textures,
+    item: ItemInstance | null,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    _fancy: boolean,
+  ): void {
     if (item === null) {
       return;
     }
@@ -133,7 +179,8 @@ export class ItemRenderer extends EntityRenderer {
     let i = ItemRenderer.getAtlasPos(item);
     if (i < 0) {
       const t = Tesselator.instance;
-      if (!t.isOverridden()) ItemRenderer.renderGuiItemCorrect(font, textures, item, Math.trunc(x), Math.trunc(y));
+      if (!t.isOverridden())
+        ItemRenderer.renderGuiItemCorrect(font, textures, item, Math.trunc(x), Math.trunc(y));
       else {
         t.endOverrideAndDraw();
         ItemRenderer.renderGuiItemCorrect(font, textures, item, Math.trunc(x), Math.trunc(y));
@@ -168,7 +215,13 @@ export class ItemRenderer extends EntityRenderer {
     t.draw();
   }
 
-  static renderGuiItemCorrect(_font: Font | null, textures: Textures, item: ItemInstance | null, x: number, y: number): void {
+  static renderGuiItemCorrect(
+    _font: Font | null,
+    textures: Textures,
+    item: ItemInstance | null,
+    x: number,
+    y: number,
+  ): void {
     if (item === null) return;
     if (item.id < 256 && TileRenderer.canRender(Tile.tiles[item.id]!.getRenderShape())) {
       const paint = item.id;
@@ -189,19 +242,41 @@ export class ItemRenderer extends EntityRenderer {
       } else {
         textures.loadAndBindTexture('gui/items.png');
       }
-      ItemRenderer.blit(x, y, (item.getIcon() % 16) * 16, Math.trunc(item.getIcon() / 16) * 16, 16, 16);
+      ItemRenderer.blit(
+        x,
+        y,
+        (item.getIcon() % 16) * 16,
+        Math.trunc(item.getIcon() / 16) * 16,
+        16,
+        16,
+      );
     }
   }
 
-  static renderGuiItemDecorations(font: Font, _textures: Textures, item: ItemInstance | null, x: number, y: number): void {
+  static renderGuiItemDecorations(
+    font: Font,
+    _textures: Textures,
+    item: ItemInstance | null,
+    x: number,
+    y: number,
+  ): void {
     if (item !== null) {
       if (item.count > 1) {
         const countStr = String(item.count);
         font.drawShadow(countStr, x + 19 - 2 - font.width(countStr), y + 6 + 3, 0xffffff);
       }
       if (item.isDamaged()) {
-        const p = Math.floor(Math.fround(13.5 - Math.fround((item.getDamageValue() * 13.0) / item.getMaxDamage())) + 0.5);
-        const cc = Math.trunc(Math.floor(Math.fround(255.5 - Math.fround((item.getDamageValue() * 255.0) / item.getMaxDamage())) + 0.5));
+        const p = Math.floor(
+          Math.fround(13.5 - Math.fround((item.getDamageValue() * 13.0) / item.getMaxDamage())) +
+            0.5,
+        );
+        const cc = Math.trunc(
+          Math.floor(
+            Math.fround(
+              255.5 - Math.fround((item.getDamageValue() * 255.0) / item.getMaxDamage()),
+            ) + 0.5,
+          ),
+        );
         const t = Tesselator.instance;
         const ca = ((255 - cc) << 16) | (cc << 8);
         const cb = (Math.trunc((255 - cc) / 4) << 16) | 16128;
@@ -217,8 +292,14 @@ export class ItemRenderer extends EntityRenderer {
   static renderGuiItemDamage(item: ItemInstance | null, x: number, y: number): void {
     if (!item) return;
     if (item.count > 0 && item.isDamaged()) {
-      const p = Math.floor(Math.fround(13.5 - Math.fround((item.getDamageValue() * 13.0) / item.getMaxDamage())));
-      const cc = Math.trunc(Math.floor(Math.fround(255.5 - Math.fround((item.getDamageValue() * 255.0) / item.getMaxDamage()))));
+      const p = Math.floor(
+        Math.fround(13.5 - Math.fround((item.getDamageValue() * 13.0) / item.getMaxDamage())),
+      );
+      const cc = Math.trunc(
+        Math.floor(
+          Math.fround(255.5 - Math.fround((item.getDamageValue() * 255.0) / item.getMaxDamage())),
+        ),
+      );
       const t = Tesselator.instance;
       const ca = ((255 - cc) << 16) | (cc << 8);
       const cb = (Math.trunc((255 - cc) / 4) << 16) | (Math.trunc(255 / 4) << 8);
@@ -258,7 +339,14 @@ export class ItemRenderer extends EntityRenderer {
     }
   }
 
-  private static fillRect(t: Tesselator, x: number, y: number, w: number, h: number, c: number): void {
+  private static fillRect(
+    t: Tesselator,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    c: number,
+  ): void {
     t.begin();
     t.color(c);
     t.vertex(x + 0, y + 0, 0);
@@ -267,5 +355,4 @@ export class ItemRenderer extends EntityRenderer {
     t.vertex(x + w, y + 0, 0);
     t.draw();
   }
-
 }

@@ -1,7 +1,18 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
-  BuildActionIntention, Config, createConfig, CustomInputHolder, Gui, KeyboardInput, Minecraft, MouseBuildInput, MouseHandler,
-  MouseTurnInput, OptionId, Options, PixelCalc,
+  BuildActionIntention,
+  Config,
+  createConfig,
+  CustomInputHolder,
+  Gui,
+  KeyboardInput,
+  Minecraft,
+  MouseBuildInput,
+  MouseHandler,
+  MouseTurnInput,
+  OptionId,
+  Options,
+  PixelCalc,
 } from '@mcpe/client';
 import { DebugFreeCamera } from '../../../apps/web/dev/camera/DebugFreeCamera'; // S12 起只供 dev 页使用
 import { Mouse, MouseAction } from '@mcpe/platform';
@@ -54,13 +65,18 @@ describe('S8 检查点', () => {
     k.setKey(32, true); // 空格：上升
     c.tick(k);
     expect(c.y).toBeCloseTo(72.5);
-    expect([c.isPlayer(), c.isAlive(), c.hasDied(), c.heightOffset]).toEqual([false, true, false, 1.62]);
+    expect([c.isPlayer(), c.isAlive(), c.hasDied(), c.heightOffset]).toEqual([
+      false,
+      true,
+      false,
+      1.62,
+    ]);
     expect(c.isUnderLiquid(Material.water)).toBe(false);
   });
 
   it('默认灵敏度 0.5：GameRenderer 的系数 (0.5×0.6+0.2)³×8 = 1.0', () => {
     const ss = new Options(null).getProgressValue(OptionId.OPTIONS_SENSITIVITY) * 0.6 + 0.2;
-    expect((ss * ss * ss) * 8).toBeCloseTo(1.0, 6);
+    expect(ss * ss * ss * 8).toBeCloseTo(1.0, 6);
     // S9 移植 GameRenderer 时，把它的 render() 里的同一公式也接到这条测试上
   });
 });
@@ -82,7 +98,10 @@ describe('输入链路', () => {
 
   it('MouseHandler.grab/release 经平台钩子（ADAPTED(Platform)）', () => {
     const calls: string[] = [];
-    MouseHandler.platformHooks = { grab: () => calls.push('grab'), release: () => calls.push('release') };
+    MouseHandler.platformHooks = {
+      grab: () => calls.push('grab'),
+      release: () => calls.push('release'),
+    };
     const h = new MouseHandler();
     h.xd = 5;
     h.grab();
@@ -109,17 +128,47 @@ describe('输入链路', () => {
 
   it('CustomInputHolder 把 Config 转给三个输入；createConfig 用 Gui.GuiScale', () => {
     const turn = new MouseTurnInput(MouseTurnInput.MODE_OFFSET, 0, 0);
-    const holder = new CustomInputHolder(new KeyboardInput(new Options(null)), turn, new MouseBuildInput());
-    const mc = { width: 854, height: 480, options: new Options(null), pixelCalc: new PixelCalc(10), pixelCalcUi: new PixelCalc(2) } as unknown as Minecraft;
+    const holder = new CustomInputHolder(
+      new KeyboardInput(new Options(null)),
+      turn,
+      new MouseBuildInput(),
+    );
+    const mc = {
+      width: 854,
+      height: 480,
+      options: new Options(null),
+      pixelCalc: new PixelCalc(10),
+      pixelCalcUi: new PixelCalc(2),
+    } as unknown as Minecraft;
     const c: Config = createConfig(mc);
-    expect([c.guiScale, c.guiWidth, c.guiHeight]).toEqual([Gui.GuiScale, Math.trunc(854 / Gui.GuiScale), Math.trunc(480 / Gui.GuiScale)]);
+    expect([c.guiScale, c.guiWidth, c.guiHeight]).toEqual([
+      Gui.GuiScale,
+      Math.trunc(854 / Gui.GuiScale),
+      Math.trunc(480 / Gui.GuiScale),
+    ]);
     expect(c.pixelCalc.millimetersToPixels(2)).toBe(20);
     holder.onConfigChanged(c);
     expect(holder.getTurnInput()).toBe(turn);
   });
 
   it('DomInput.mapKey：DOM 键码 → 分支的 Keyboard 常量', () => {
-    expect(['KeyA', 'KeyZ', 'Digit0', 'Digit9', 'Space', 'ShiftLeft', 'Escape', 'Enter', 'Backspace', 'Tab', 'ControlLeft', 'F1', 'F12', 'ArrowUp'].map(DomInput.mapKey))
-      .toEqual([65, 90, 48, 57, 32, 10, 27, 13, 8, 9, 232, 112, 123, -1]);
+    expect(
+      [
+        'KeyA',
+        'KeyZ',
+        'Digit0',
+        'Digit9',
+        'Space',
+        'ShiftLeft',
+        'Escape',
+        'Enter',
+        'Backspace',
+        'Tab',
+        'ControlLeft',
+        'F1',
+        'F12',
+        'ArrowUp',
+      ].map(DomInput.mapKey),
+    ).toEqual([65, 90, 48, 57, 32, 10, 27, 13, 8, 9, 232, 112, 123, -1]);
   });
 });

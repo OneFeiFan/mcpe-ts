@@ -6,7 +6,10 @@ describe('PerfTimer', () => {
   it('ADAPTED(Safety)：开启时对空栈 pop 不崩溃，只警告一次', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     PerfTimer.enabled = true;
-    expect(() => { TIMER_POP(); TIMER_POP(); }).not.toThrow();
+    expect(() => {
+      TIMER_POP();
+      TIMER_POP();
+    }).not.toThrow();
     expect(PerfTimer.stackDepth()).toBe(0);
     expect(warn).toHaveBeenCalledTimes(1);
     PerfTimer.enabled = false;
@@ -36,15 +39,23 @@ describe('PerfTimer', () => {
   });
 
   it('expectTimerBalanced 能抓到少写的 POP', () => {
-    expect(() => expectTimerBalanced(() => { TIMER_PUSH('root'); })).toThrow(/不配对/);
+    expect(() =>
+      expectTimerBalanced(() => {
+        TIMER_PUSH('root');
+      }),
+    ).toThrow(/不配对/);
     PerfTimer.enabled = true;
     TIMER_POP(); // 清理上面留下的一层
     PerfTimer.enabled = false;
   });
 
   it('ResultField 的排序与 C++ operator< 一致；PerfTimer.ResultField 指向同一个类', () => {
-    const a = new ResultField('a', 10, 10), b = new ResultField('b', 10, 10), c = new ResultField('c', 50, 50);
-    expect([a, b, c].sort((x, y) => (x.lessThan(y) ? -1 : y.lessThan(x) ? 1 : 0)).map((r) => r.name)).toEqual(['c', 'b', 'a']);
+    const a = new ResultField('a', 10, 10),
+      b = new ResultField('b', 10, 10),
+      c = new ResultField('c', 50, 50);
+    expect(
+      [a, b, c].sort((x, y) => (x.lessThan(y) ? -1 : y.lessThan(x) ? 1 : 0)).map((r) => r.name),
+    ).toEqual(['c', 'b', 'a']);
     expect(PerfTimer.ResultField).toBe(ResultField);
   });
 });

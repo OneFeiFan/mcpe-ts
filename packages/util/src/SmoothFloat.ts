@@ -10,7 +10,10 @@ export class SmoothFloat {
     this.targetValue = f(this.targetValue + deltaValue);
     deltaValue = f(f(this.targetValue - this.remainingValue) * accelerationAmount);
     this.lastAmount = f(this.lastAmount + f(f(deltaValue - this.lastAmount) * f(0.5)));
-    if ((deltaValue > 0 && deltaValue > this.lastAmount) || (deltaValue < 0 && deltaValue < this.lastAmount)) {
+    if (
+      (deltaValue > 0 && deltaValue > this.lastAmount) ||
+      (deltaValue < 0 && deltaValue < this.lastAmount)
+    ) {
       deltaValue = this.lastAmount;
     }
     this.remainingValue = f(this.remainingValue + deltaValue);

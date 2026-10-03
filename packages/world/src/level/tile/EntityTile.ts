@@ -1,7 +1,7 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { TileEntity } from "./entity/TileEntity";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { TileEntity } from './entity/TileEntity';
 
 export abstract class EntityTile extends Tile {
   /** C++ EntityTile::EntityTile(int id, const Material* material) */
@@ -9,7 +9,7 @@ export abstract class EntityTile extends Tile {
   /** C++ EntityTile::EntityTile(int id, int tex, const Material* material) */
   protected constructor(id: number, tex: number, material: Material);
   protected constructor(id: number, a: Material | number, b?: Material) {
-    if (typeof a === "number") {
+    if (typeof a === 'number') {
       super(id, a, b!);
     } else {
       super(id, a);
@@ -36,8 +36,11 @@ export abstract class EntityTile extends Tile {
   /** C++ EntityTile::triggerEvent(Level*, int, int, int, int, int) */
   override triggerEvent(
     level: Level,
-    x: number, y: number, z: number,
-    b0: number, b1: number,
+    x: number,
+    y: number,
+    z: number,
+    b0: number,
+    b1: number,
   ): void {
     super.triggerEvent(level, x, y, z, b0, b1);
     const te = level.getTileEntity(x, y, z);

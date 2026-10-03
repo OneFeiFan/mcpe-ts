@@ -4,15 +4,29 @@
     <meta charset="utf-8" />
     <title>地形冒烟测试（S7）</title>
     <style>
-      body { margin: 0; background: #1d1f21; color: #ddd; font: 14px/1.5 system-ui, sans-serif; }
-      canvas { display: block; }
-      p { margin: 8px 12px; }
+      body {
+        margin: 0;
+        background: #1d1f21;
+        color: #ddd;
+        font:
+          14px/1.5 system-ui,
+          sans-serif;
+      }
+      canvas {
+        display: block;
+      }
+      p {
+        margin: 8px 12px;
+      }
     </style>
   </head>
   <body>
     <canvas id="c" width="960" height="360"></canvas>
     <p id="status">建世界、网格化中…</p>
-    <p>相机固定在 (136, 72, 104)，朝 +z、俯角 30°，FOV 70°，AO 开。左：只画区块 (8, 8) 这一列；右：画整个 3×3 平台。背面与平台内部的面不生成，平台四周的侧壁可见。</p>
+    <p>
+      相机固定在 (136, 72, 104)，朝 +z、俯角 30°，FOV 70°，AO 开。左：只画区块 (8, 8)
+      这一列；右：画整个 3×3 平台。背面与平台内部的面不生成，平台四周的侧壁可见。
+    </p>
     <script type="module" src="./terrain-smoke.ts"></script>
   </body>
 </html>

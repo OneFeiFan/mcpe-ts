@@ -4,12 +4,21 @@ import { BiomeSource, initBiomes, type Level } from '@mcpe/world';
 import { initTestTiles } from '../helpers/initTestTiles';
 
 // 真值来自 tools/golden/harness_biomesource.cpp（参考源码 BiomeSource.cpp，替身 Level、Biome、ChunkPos，x86-64 上生成）
-type Case = { seed: string } & Record<'blockA_t' | 'blockA_d' | 'blockB_t' | 'blockB_d' | 'rawTemp' | 'tempBlock' | 'downBlock', number[]>;
-const G: Case[] = JSON.parse(readFileSync(new URL('../../fixtures/golden/biomesource.json', import.meta.url), 'utf8'));
+type Case = { seed: string } & Record<
+  'blockA_t' | 'blockA_d' | 'blockB_t' | 'blockB_d' | 'rawTemp' | 'tempBlock' | 'downBlock',
+  number[]
+>;
+const G: Case[] = JSON.parse(
+  readFileSync(new URL('../../fixtures/golden/biomesource.json', import.meta.url), 'utf8'),
+);
 const f32 = new Float32Array(1);
 const u32 = new Uint32Array(f32.buffer);
-const bits = (x: number): number => { f32[0] = x; return u32[0]!; };
-const allBits = (a: Float32Array | null, n: number): number[] => Array.from(a!.subarray(0, n), bits);
+const bits = (x: number): number => {
+  f32[0] = x;
+  return u32[0]!;
+};
+const allBits = (a: Float32Array | null, n: number): number[] =>
+  Array.from(a!.subarray(0, n), bits);
 
 beforeAll(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});

@@ -1,5 +1,13 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { AppPlatform, GLES1, glGetContext, glSetContext, Minecraft, NinecraftApp, TextureData } from '@mcpe/client';
+import {
+  AppPlatform,
+  GLES1,
+  glGetContext,
+  glSetContext,
+  Minecraft,
+  NinecraftApp,
+  TextureData,
+} from '@mcpe/client';
 import { getTimeMs, Mouse, MouseAction } from '@mcpe/platform';
 import { FlatDimension, Level } from '@mcpe/world';
 

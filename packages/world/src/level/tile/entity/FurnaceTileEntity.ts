@@ -6,7 +6,12 @@
  * C++ 的 ItemInstance items[3] 是按值存放的数组：这里用 3 个 ItemInstance 对象，赋值时复制（items[slot] = *item）。
  */
 import { LOGE } from '@mcpe/platform';
-import { type CompoundTag, CompoundTag as CompoundTagClass, ListTag, TAG_Compound } from '@mcpe/nbt';
+import {
+  type CompoundTag,
+  CompoundTag as CompoundTagClass,
+  ListTag,
+  TAG_Compound,
+} from '@mcpe/nbt';
 import { Container, ContainerType, getSlotCopies } from '../../../Container';
 import type { Player } from '../../../entity/player/Player';
 import { Item } from '../../../item/Item';
@@ -28,7 +33,10 @@ export class FurnaceTileEntity extends TileEntity implements Container {
   litTime = 0;
   litDuration = 0;
   tickCount = 0;
-  items: ItemInstance[] = Array.from({ length: FurnaceTileEntity.NumItems }, () => new ItemInstance());
+  items: ItemInstance[] = Array.from(
+    { length: FurnaceTileEntity.NumItems },
+    () => new ItemInstance(),
+  );
   private _canBeFinished = false;
   private finished = false;
 
@@ -59,7 +67,8 @@ export class FurnaceTileEntity extends TileEntity implements Container {
 
   setItem(slot: number, item: ItemInstance | null): void {
     this.items[slot] = new ItemInstance(item!); // items[slot] = *item;（C++ 先解引用、后判空，原样保留）
-    if (item !== null && item.count > this.getMaxStackSize()) this.items[slot]!.count = this.getMaxStackSize();
+    if (item !== null && item.count > this.getMaxStackSize())
+      this.items[slot]!.count = this.getMaxStackSize();
   }
 
   getName(): string {
@@ -142,7 +151,9 @@ export class FurnaceTileEntity extends TileEntity implements Container {
     }
     if (!this.level!.isClientSide) {
       if (this.litTime === 0 && this.canBurn()) {
-        this.litDuration = this.litTime = FurnaceTileEntity.getBurnDuration(this.items[FurnaceTileEntity.SLOT_FUEL]!);
+        this.litDuration = this.litTime = FurnaceTileEntity.getBurnDuration(
+          this.items[FurnaceTileEntity.SLOT_FUEL]!,
+        );
         if (this.litTime > 0) {
           changed = true;
           const fuel = this.items[FurnaceTileEntity.SLOT_FUEL]!;
@@ -217,7 +228,8 @@ export class FurnaceTileEntity extends TileEntity implements Container {
   static getBurnDuration(itemInstance: ItemInstance): number {
     if (itemInstance.isNull()) return 0;
     const id = itemInstance.getItem()!.id;
-    if (id < 256 && Tile.tiles[id]!.material === Material.wood) return (FurnaceTileEntity.BURN_INTERVAL * 3) / 2;
+    if (id < 256 && Tile.tiles[id]!.material === Material.wood)
+      return (FurnaceTileEntity.BURN_INTERVAL * 3) / 2;
     if (id === Item.stick.id) return FurnaceTileEntity.BURN_INTERVAL / 2;
     if (id === Item.coal.id) return FurnaceTileEntity.BURN_INTERVAL * 8;
     return 0;

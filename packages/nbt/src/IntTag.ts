@@ -1,5 +1,5 @@
-import { Tag, TAG_Int } from "./Tag";
-import type { IDataInput, IDataOutput } from "@mcpe/util";
+import { Tag, TAG_Int } from './Tag';
+import type { IDataInput, IDataOutput } from '@mcpe/util';
 
 export class IntTag extends Tag {
   public data: number;

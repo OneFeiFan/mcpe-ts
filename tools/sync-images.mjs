@@ -2,7 +2,14 @@
 // 材质包同步：把参考源码 data/images 下的全部 PNG 按原相对路径复制到 apps/web/public/images/，
 // 并重新生成 apps/web/src/imageManifest.ts（文件名、宽、高）。非网页格式（.pvr、.h、.ico、.rc）跳过。
 // 用法：node tools/sync-images.mjs <参考源码目录>/data/images
-import { copyFileSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import {
+  copyFileSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -48,4 +55,6 @@ export const IMAGE_NAMES: ReadonlySet<string> = new Set(IMAGE_MANIFEST.map(([n])
 `,
 );
 const kb = Math.round(entries.reduce((s, e) => s + e.bytes, 0) / 1024);
-console.log(`已同步 ${entries.length} 张 PNG（${kb} KB）到 ${relative(root, dst)}，并生成 apps/web/src/imageManifest.ts`);
+console.log(
+  `已同步 ${entries.length} 张 PNG（${kb} KB）到 ${relative(root, dst)}，并生成 apps/web/src/imageManifest.ts`,
+);

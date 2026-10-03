@@ -1,6 +1,6 @@
-import { TileItem } from "./TileItem";
-import { Tile } from "../level/tile/Tile";
-import { ItemInstance } from "./ItemInstance";
+import { TileItem } from './TileItem';
+import { Tile } from '../level/tile/Tile';
+import { ItemInstance } from './ItemInstance';
 
 export class TreeTileItem extends TileItem {
   /** C++ TreeTileItem::TreeTileItem(int id) */

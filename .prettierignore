@@ -1,0 +1,19 @@
+# 黄金样本：只能用 REF=$REF bash tools/golden/build.sh 从参考 C++ 重新生成，
+# 任何工具（包括格式化）都不许碰，否则测试比对的就是被改过的"标准答案"。
+# 注意 tools/hooks/guard.mjs 只拦 Edit/Write，拦不住 prettier --write，所以必须在这里排除。
+fixtures/
+
+# 构建产物 / 依赖 / 备份 / 运行输出
+node_modules/
+dist/
+coverage/
+.bootstrap-backup/
+tools/verify/out/
+.codegraph/
+
+# 锁文件（由包管理器生成，不要格式化）
+pnpm-lock.yaml
+
+# 工作手册与清单：本地文档，13 万字符的 HTML，格式化纯属制造无意义的改动
+docs/MCPE-TS最小Demo实施流程-修订版10.html
+docs/MCPE-TS后续清单-S11-S13.html

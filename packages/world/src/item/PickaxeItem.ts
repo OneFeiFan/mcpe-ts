@@ -1,8 +1,8 @@
-import { DiggerItem } from "./DiggerItem";
-import { ItemInstance } from "./ItemInstance";
-import { Tile } from "../level/tile/Tile";
-import { Material } from "../level/material/Material";
-import type { Tier } from "./Item";
+import { DiggerItem } from './DiggerItem';
+import { ItemInstance } from './ItemInstance';
+import { Tile } from '../level/tile/Tile';
+import { Material } from '../level/material/Material';
+import type { Tier } from './Item';
 
 export class PickaxeItem extends DiggerItem {
   /** C++ PickaxeItem::PickaxeItem(int id, const Tier& tier) */
@@ -43,7 +43,8 @@ export class PickaxeItem extends DiggerItem {
     if (tile === Tile.goldBlock || tile === Tile.goldOre) return this.tier.getLevel() >= 2;
     if (tile === Tile.ironBlock || tile === Tile.ironOre) return this.tier.getLevel() >= 1;
     if (tile === Tile.lapisBlock || tile === Tile.lapisOre) return this.tier.getLevel() >= 1;
-    if (tile === Tile.redStoneOre || tile === Tile.redStoneOre_lit) return this.tier.getLevel() >= 2;
+    if (tile === Tile.redStoneOre || tile === Tile.redStoneOre_lit)
+      return this.tier.getLevel() >= 2;
 
     // C++ 里此处未判空，tile == null 是 UB；TS 里抛 TypeError，属不可避免差异
     if (tile!.material === Material.stone) return true;

@@ -41,7 +41,8 @@ export class SurvivalMode extends GameMode {
     if (carried !== null && carried.id === Item.bow.id) return;
     const t = mc.level!.getTile(x, y, z);
     if (t > 0 && this.destroyProgress === 0) Tile.tiles[t]!.attack(mc.level!, x, y, z, mc.player!);
-    if (t > 0 && Tile.tiles[t]!.getDestroyProgress(mc.player!) >= 1) this.destroyBlock(x, y, z, face);
+    if (t > 0 && Tile.tiles[t]!.getDestroyProgress(mc.player!) >= 1)
+      this.destroyBlock(x, y, z, face);
   }
 
   continueDestroyBlock(x: number, y: number, z: number, face: number): void {

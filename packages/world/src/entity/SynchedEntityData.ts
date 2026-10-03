@@ -82,11 +82,16 @@ export class SynchedEntityData {
   /** 按 C++ 的类型截断数值 */
   static wrap(type: number, v: DataValue): DataValue {
     switch (type) {
-      case SynchedEntityData.TYPE_BYTE: return ((v as number) << 24) >> 24;
-      case SynchedEntityData.TYPE_SHORT: return ((v as number) << 16) >> 16;
-      case SynchedEntityData.TYPE_INT: return (v as number) | 0;
-      case SynchedEntityData.TYPE_FLOAT: return Math.fround(v as number);
-      default: return v;
+      case SynchedEntityData.TYPE_BYTE:
+        return ((v as number) << 24) >> 24;
+      case SynchedEntityData.TYPE_SHORT:
+        return ((v as number) << 16) >> 16;
+      case SynchedEntityData.TYPE_INT:
+        return (v as number) | 0;
+      case SynchedEntityData.TYPE_FLOAT:
+        return Math.fround(v as number);
+      default:
+        return v;
     }
   }
 
@@ -102,13 +107,27 @@ export class SynchedEntityData {
     this.itemsById.set(idd, new DataItem(type, idd, SynchedEntityData.wrap(type, value)));
   }
 
-  defineByte(idd: number, value: number): void { this.define(idd, SynchedEntityData.TYPE_BYTE, value); }
-  defineShort(idd: number, value: number): void { this.define(idd, SynchedEntityData.TYPE_SHORT, value); }
-  defineInt(idd: number, value: number): void { this.define(idd, SynchedEntityData.TYPE_INT, value); }
-  defineFloat(idd: number, value: number): void { this.define(idd, SynchedEntityData.TYPE_FLOAT, value); }
-  defineString(idd: number, value: string): void { this.define(idd, SynchedEntityData.TYPE_STRING, value); }
-  defineItemInstance(idd: number, value: ItemInstance): void { this.define(idd, SynchedEntityData.TYPE_ITEMINSTANCE, new ItemInstance(value)); }
-  definePos(idd: number, value: Pos): void { this.define(idd, SynchedEntityData.TYPE_POS, new Pos(value.x, value.y, value.z)); }
+  defineByte(idd: number, value: number): void {
+    this.define(idd, SynchedEntityData.TYPE_BYTE, value);
+  }
+  defineShort(idd: number, value: number): void {
+    this.define(idd, SynchedEntityData.TYPE_SHORT, value);
+  }
+  defineInt(idd: number, value: number): void {
+    this.define(idd, SynchedEntityData.TYPE_INT, value);
+  }
+  defineFloat(idd: number, value: number): void {
+    this.define(idd, SynchedEntityData.TYPE_FLOAT, value);
+  }
+  defineString(idd: number, value: string): void {
+    this.define(idd, SynchedEntityData.TYPE_STRING, value);
+  }
+  defineItemInstance(idd: number, value: ItemInstance): void {
+    this.define(idd, SynchedEntityData.TYPE_ITEMINSTANCE, new ItemInstance(value));
+  }
+  definePos(idd: number, value: Pos): void {
+    this.define(idd, SynchedEntityData.TYPE_POS, new Pos(value.x, value.y, value.z));
+  }
 
   private get(id: number, type: number): DataValue | undefined {
     const it = this.itemsById.get(id);
@@ -116,11 +135,21 @@ export class SynchedEntityData {
     return undefined;
   }
 
-  getByte(id: number): number { return (this.get(id, SynchedEntityData.TYPE_BYTE) as number | undefined) ?? 0; }
-  getShort(id: number): number { return (this.get(id, SynchedEntityData.TYPE_SHORT) as number | undefined) ?? 0; }
-  getInt(id: number): number { return (this.get(id, SynchedEntityData.TYPE_INT) as number | undefined) ?? 0; }
-  getFloat(id: number): number { return (this.get(id, SynchedEntityData.TYPE_FLOAT) as number | undefined) ?? 0; }
-  getString(id: number): string { return (this.get(id, SynchedEntityData.TYPE_STRING) as string | undefined) ?? ''; }
+  getByte(id: number): number {
+    return (this.get(id, SynchedEntityData.TYPE_BYTE) as number | undefined) ?? 0;
+  }
+  getShort(id: number): number {
+    return (this.get(id, SynchedEntityData.TYPE_SHORT) as number | undefined) ?? 0;
+  }
+  getInt(id: number): number {
+    return (this.get(id, SynchedEntityData.TYPE_INT) as number | undefined) ?? 0;
+  }
+  getFloat(id: number): number {
+    return (this.get(id, SynchedEntityData.TYPE_FLOAT) as number | undefined) ?? 0;
+  }
+  getString(id: number): string {
+    return (this.get(id, SynchedEntityData.TYPE_STRING) as string | undefined) ?? '';
+  }
 
   /** C++ 按值返回副本 */
   getItemInstance(id: number): ItemInstance {
@@ -142,7 +171,12 @@ export class SynchedEntityData {
     if (dataItem.getType() === type) {
       const v = SynchedEntityData.wrap(type, value);
       if (!SynchedEntityData.dataEquals(dataItem.data, v)) {
-        dataItem.data = v instanceof ItemInstance ? new ItemInstance(v) : v instanceof Pos ? new Pos(v.x, v.y, v.z) : v;
+        dataItem.data =
+          v instanceof ItemInstance
+            ? new ItemInstance(v)
+            : v instanceof Pos
+              ? new Pos(v.x, v.y, v.z)
+              : v;
         dataItem.setDirty(true);
         this._isDirty = true;
       }
@@ -157,13 +191,27 @@ export class SynchedEntityData {
     return a === b;
   }
 
-  setByte(id: number, value: number): void { this.setItem(this.itemsById.get(id), SynchedEntityData.TYPE_BYTE, value); }
-  setShort(id: number, value: number): void { this.setItem(this.itemsById.get(id), SynchedEntityData.TYPE_SHORT, value); }
-  setInt(id: number, value: number): void { this.setItem(this.itemsById.get(id), SynchedEntityData.TYPE_INT, value); }
-  setFloat(id: number, value: number): void { this.setItem(this.itemsById.get(id), SynchedEntityData.TYPE_FLOAT, value); }
-  setString(id: number, value: string): void { this.setItem(this.itemsById.get(id), SynchedEntityData.TYPE_STRING, value); }
-  setItemInstance(id: number, value: ItemInstance): void { this.setItem(this.itemsById.get(id), SynchedEntityData.TYPE_ITEMINSTANCE, value); }
-  setPos(id: number, value: Pos): void { this.setItem(this.itemsById.get(id), SynchedEntityData.TYPE_POS, value); }
+  setByte(id: number, value: number): void {
+    this.setItem(this.itemsById.get(id), SynchedEntityData.TYPE_BYTE, value);
+  }
+  setShort(id: number, value: number): void {
+    this.setItem(this.itemsById.get(id), SynchedEntityData.TYPE_SHORT, value);
+  }
+  setInt(id: number, value: number): void {
+    this.setItem(this.itemsById.get(id), SynchedEntityData.TYPE_INT, value);
+  }
+  setFloat(id: number, value: number): void {
+    this.setItem(this.itemsById.get(id), SynchedEntityData.TYPE_FLOAT, value);
+  }
+  setString(id: number, value: string): void {
+    this.setItem(this.itemsById.get(id), SynchedEntityData.TYPE_STRING, value);
+  }
+  setItemInstance(id: number, value: ItemInstance): void {
+    this.setItem(this.itemsById.get(id), SynchedEntityData.TYPE_ITEMINSTANCE, value);
+  }
+  setPos(id: number, value: Pos): void {
+    this.setItem(this.itemsById.get(id), SynchedEntityData.TYPE_POS, value);
+  }
 
   setFlag(id: number, flag: number): void {
     const item = this.itemsById.get(id)!;
@@ -230,15 +278,26 @@ export class SynchedEntityData {
     const result: DataItem[] = [];
     let currentHeader = input.readByte();
     while (currentHeader !== SynchedEntityData.EOF_MARKER) {
-      const itemType = (currentHeader & SynchedEntityData.TYPE_MASK) >> SynchedEntityData.TYPE_SHIFT;
+      const itemType =
+        (currentHeader & SynchedEntityData.TYPE_MASK) >> SynchedEntityData.TYPE_SHIFT;
       const itemId = currentHeader & SynchedEntityData.MAX_ID_VALUE;
       let item: DataItem | null = null;
       switch (itemType) {
-        case SynchedEntityData.TYPE_BYTE: item = new DataItem(itemType, itemId, input.readByte()); break;
-        case SynchedEntityData.TYPE_SHORT: item = new DataItem(itemType, itemId, input.readShort()); break;
-        case SynchedEntityData.TYPE_INT: item = new DataItem(itemType, itemId, input.readInt()); break;
-        case SynchedEntityData.TYPE_FLOAT: item = new DataItem(itemType, itemId, input.readFloat()); break;
-        case SynchedEntityData.TYPE_STRING: item = new DataItem(itemType, itemId, input.readString()); break;
+        case SynchedEntityData.TYPE_BYTE:
+          item = new DataItem(itemType, itemId, input.readByte());
+          break;
+        case SynchedEntityData.TYPE_SHORT:
+          item = new DataItem(itemType, itemId, input.readShort());
+          break;
+        case SynchedEntityData.TYPE_INT:
+          item = new DataItem(itemType, itemId, input.readInt());
+          break;
+        case SynchedEntityData.TYPE_FLOAT:
+          item = new DataItem(itemType, itemId, input.readFloat());
+          break;
+        case SynchedEntityData.TYPE_STRING:
+          item = new DataItem(itemType, itemId, input.readString());
+          break;
         case SynchedEntityData.TYPE_ITEMINSTANCE: {
           const id = input.readShort();
           const count = input.readByte();
@@ -283,14 +342,27 @@ export class SynchedEntityData {
   }
 
   private static writeDataItem(output: IDataOutput, dataItem: DataItem): void {
-    const header = ((dataItem.getType() << SynchedEntityData.TYPE_SHIFT) | (dataItem.getId() & SynchedEntityData.MAX_ID_VALUE)) & 0xff;
+    const header =
+      ((dataItem.getType() << SynchedEntityData.TYPE_SHIFT) |
+        (dataItem.getId() & SynchedEntityData.MAX_ID_VALUE)) &
+      0xff;
     output.writeByte(header);
     switch (dataItem.getType()) {
-      case SynchedEntityData.TYPE_BYTE: output.writeByte(dataItem.data as number); break;
-      case SynchedEntityData.TYPE_SHORT: output.writeShort(dataItem.data as number); break;
-      case SynchedEntityData.TYPE_INT: output.writeInt(dataItem.data as number); break;
-      case SynchedEntityData.TYPE_FLOAT: output.writeFloat(dataItem.data as number); break;
-      case SynchedEntityData.TYPE_STRING: output.writeString(dataItem.data as string); break;
+      case SynchedEntityData.TYPE_BYTE:
+        output.writeByte(dataItem.data as number);
+        break;
+      case SynchedEntityData.TYPE_SHORT:
+        output.writeShort(dataItem.data as number);
+        break;
+      case SynchedEntityData.TYPE_INT:
+        output.writeInt(dataItem.data as number);
+        break;
+      case SynchedEntityData.TYPE_FLOAT:
+        output.writeFloat(dataItem.data as number);
+        break;
+      case SynchedEntityData.TYPE_STRING:
+        output.writeString(dataItem.data as string);
+        break;
       case SynchedEntityData.TYPE_ITEMINSTANCE: {
         const instance = dataItem.data as ItemInstance;
         output.writeShort(instance.getItem()!.id);

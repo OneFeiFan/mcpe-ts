@@ -64,12 +64,10 @@ interface PRInfo {
 
 /** Level::tickTiles 里的 static const int pollChunkOffsets[] */
 const pollChunkOffsets: readonly number[] = [
-  -1, -4, 0, -4, 1, -4, -2, -3, -1, -3, 0, -3, 1, -3, 2, -3, -3, -2,
-  -2, -2, -1, -2, 0, -2, 1, -2, 2, -2, 3, -2, -4, -1, -3, -1, -2, -1,
-  -1, -1, 0, -1, 1, -1, 2, -1, 3, -1, 4, -1, -4, 0, -3, 0, -2, 0, -1, 0,
-  0, 0, 1, 0, 2, 0, 3, 0, 4, 0, -4, 1, -3, 1, -2, 1, -1, 1, 0, 1, 1, 1,
-  2, 1, 3, 1, 4, 1, -3, 2, -2, 2, -1, 2, 0, 2, 1, 2, 2, 2, 3, 2, -2, 3,
-  -1, 3, 0, 3, 1, 3, 2, 3, -1, 4, 0, 4, 1, 4,
+  -1, -4, 0, -4, 1, -4, -2, -3, -1, -3, 0, -3, 1, -3, 2, -3, -3, -2, -2, -2, -1, -2, 0, -2, 1, -2,
+  2, -2, 3, -2, -4, -1, -3, -1, -2, -1, -1, -1, 0, -1, 1, -1, 2, -1, 3, -1, 4, -1, -4, 0, -3, 0, -2,
+  0, -1, 0, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, -4, 1, -3, 1, -2, 1, -1, 1, 0, 1, 1, 1, 2, 1, 3, 1, 4, 1,
+  -3, 2, -2, 2, -1, 2, 0, 2, 1, 2, 2, 2, 3, 2, -2, 3, -1, 3, 0, 3, 1, 3, 2, 3, -1, 4, 0, 4, 1, 4,
 ];
 
 /** Level.cpp 的文件内静态变量 static int maxLoop（所有 Level 共用） */
@@ -137,14 +135,25 @@ export class Level implements LevelSource {
   private _lastSavedPlayerTime = 0; // @attn: @time: clock starts on 0 now, change if not
   private _pendingPlayerRemovals: PRInfo[] = [];
 
-  constructor(levelStorage: LevelStorage | null, levelName: string, settings: LevelSettings, generatorVersion: number, fixedDimension: Dimension | null = null) {
+  constructor(
+    levelStorage: LevelStorage | null,
+    levelName: string,
+    settings: LevelSettings,
+    generatorVersion: number,
+    fixedDimension: Dimension | null = null,
+  ) {
     this.levelStorage = levelStorage;
     this._init(levelName, settings, generatorVersion, fixedDimension);
   }
 
   // 析构函数 ~Level 不移植（R3）
 
-  _init(levelName: string, settings: LevelSettings, generatorVersion: number, fixedDimension: Dimension | null): void {
+  _init(
+    levelName: string,
+    settings: LevelSettings,
+    generatorVersion: number,
+    fixedDimension: Dimension | null,
+  ): void {
     this.isGeneratingTerrain = false;
     const preparedData = this.levelStorage!.prepareLevel(this); // C++ 在 levelStorage 为 NULL 时这里就会崩溃
     this._isNew = preparedData === null;
@@ -215,7 +224,10 @@ export class Level implements LevelSource {
   getNearestPlayer(x: number, y: number, z: number, maxDist: number): Player | null;
   getNearestPlayer(a: Entity | number, b: number, c?: number, d?: number): Player | null {
     if (typeof a !== 'number') return this.getNearestPlayer(a.x, a.y, a.z, b);
-    const x = a, y = b, z = c!, maxDist = d!;
+    const x = a,
+      y = b,
+      z = c!,
+      maxDist = d!;
     const maxDistSqr = maxDist * maxDist;
     let best = -1;
     let result: Player | null = null;
@@ -240,7 +252,10 @@ export class Level implements LevelSource {
     if (this._nightMode) {
       let curTime = this.levelData.getTime();
       if (curTime % Level.TICKS_PER_DAY !== Level.MIDDLE_OF_NIGHT_TIME) {
-        if (curTime % Level.TICKS_PER_DAY < Level.MIDDLE_OF_NIGHT_TIME && (curTime + 20) % Level.TICKS_PER_DAY > Level.MIDDLE_OF_NIGHT_TIME) {
+        if (
+          curTime % Level.TICKS_PER_DAY < Level.MIDDLE_OF_NIGHT_TIME &&
+          (curTime + 20) % Level.TICKS_PER_DAY > Level.MIDDLE_OF_NIGHT_TIME
+        ) {
           curTime = Level.MIDDLE_OF_NIGHT_TIME;
           // DEFERRED(Network): SetTimePacket packet(curTime); raknetInstance->send(packet);
         } else {
@@ -282,7 +297,12 @@ export class Level implements LevelSource {
       for (let j = 0; j < pollChunkOffsetsSize; j += 2) {
         const xp = xx + pollChunkOffsets[j]!;
         const zp = zz + pollChunkOffsets[j + 1]!;
-        if (xp >= 0 && xp < LevelConstants.CHUNK_CACHE_WIDTH && zp >= 0 && zp < LevelConstants.CHUNK_CACHE_WIDTH) {
+        if (
+          xp >= 0 &&
+          xp < LevelConstants.CHUNK_CACHE_WIDTH &&
+          zp >= 0 &&
+          zp < LevelConstants.CHUNK_CACHE_WIDTH
+        ) {
           const cp = new ChunkPos(xp, zp);
           this._chunksToPoll.set(cp.hashCode(), cp);
         }
@@ -303,7 +323,8 @@ export class Level implements LevelSource {
       // C++ 里 lc->tick() 与情境音效的一段都被注释掉了
 
       TIMER_POP_PUSH('tickTiles');
-      for (let i = 0; i < 20; i++) { //@todo: CHUNK_TILE_TICK_COUNT
+      for (let i = 0; i < 20; i++) {
+        //@todo: CHUNK_TILE_TICK_COUNT
         this._randValue = (Math.imul(this._randValue, 3) + this._addend) | 0;
         const val = this._randValue >> 2;
         const x = val & 15;
@@ -379,7 +400,10 @@ export class Level implements LevelSource {
     }
     let xSpawn = this.levelData.getXSpawn();
     let zSpawn = this.levelData.getZSpawn();
-    while (this.getTopTile(xSpawn, zSpawn) === 0 || this.getTopTile(xSpawn, zSpawn) === Tile.invisible_bedrock.id) {
+    while (
+      this.getTopTile(xSpawn, zSpawn) === 0 ||
+      this.getTopTile(xSpawn, zSpawn) === Tile.invisible_bedrock.id
+    ) {
       xSpawn += this.random.nextInt(8) - this.random.nextInt(8);
       zSpawn += this.random.nextInt(8) - this.random.nextInt(8);
       if (xSpawn < 4) xSpawn += 8;
@@ -430,16 +454,19 @@ export class Level implements LevelSource {
   hasChunksAt(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): boolean;
   hasChunksAt(a: number, b: number, c: number, d: number, e?: number, g?: number): boolean {
     if (e === undefined) return this.hasChunksAt(a - d, b - d, c - d, a + d, b + d, c + d);
-    let x0 = a, z0 = c, x1 = d, z1 = g!;
-    const y0 = b, y1 = e;
+    let x0 = a,
+      z0 = c,
+      x1 = d,
+      z1 = g!;
+    const y0 = b,
+      y1 = e;
     if (y1 < 0 || y0 >= Level.DEPTH) return false;
     x0 >>= 4;
     z0 >>= 4;
     x1 >>= 4;
     z1 >>= 4;
     for (let x = x0; x <= x1; x++)
-      for (let z = z0; z <= z1; z++)
-        if (!this.hasChunk(x, z)) return false;
+      for (let z = z0; z <= z1; z++) if (!this.hasChunk(x, z)) return false;
     return true;
   }
 
@@ -635,7 +662,13 @@ export class Level implements LevelSource {
     return this.dimension.biomeSource.getBiome(x, z)!;
   }
 
-  updateLightIfOtherThan(layer: LightLayer, x: number, y: number, z: number, expected: number): void {
+  updateLightIfOtherThan(
+    layer: LightLayer,
+    x: number,
+    y: number,
+    z: number,
+    expected: number,
+  ): void {
     if (this.dimension.hasCeiling && layer === LightLayer.Sky) return;
     if (!this.hasChunkAt(x, y, z)) return;
     if (layer === LightLayer.Sky) {
@@ -656,7 +689,10 @@ export class Level implements LevelSource {
     if (typeof a === 'number') {
       return this.dimension.brightnessRamp[this.getRawBrightness(a, b, c)]!;
     }
-    const layer = a, x = b, y = c, z = d!;
+    const layer = a,
+      x = b,
+      y = c,
+      z = d!;
     if (y < 0 || y >= Level.DEPTH) {
       return layer.surrounding;
     }
@@ -772,7 +808,12 @@ export class Level implements LevelSource {
       if (solidOnly && tile != null && tile.getAABB(this, xTile0, yTile0, zTile0) == null) {
         // No collision
       } else if (t > 0 && tile!.mayPick(data, liquid)) {
-        if (xTile0 >= 0 && zTile0 >= 0 && xTile0 < LevelConstants.LEVEL_WIDTH && zTile0 < LevelConstants.LEVEL_WIDTH) {
+        if (
+          xTile0 >= 0 &&
+          zTile0 >= 0 &&
+          xTile0 < LevelConstants.LEVEL_WIDTH &&
+          zTile0 < LevelConstants.LEVEL_WIDTH
+        ) {
           const r = tile!.clip(this, xTile0, yTile0, zTile0, a, b);
           if (r.isHit()) return r;
         }
@@ -784,21 +825,50 @@ export class Level implements LevelSource {
   /** C++ 的两个重载：playSound(Entity*, name, volume, pitch) 与 playSound(x, y, z, name, volume, pitch) */
   playSound(entity: Entity, name: string, volume: number, pitch: number): void;
   playSound(x: number, y: number, z: number, name: string, volume: number, pitch: number): void;
-  playSound(a: Entity | number, b: string | number, c: number, d: number | string, e?: number, g?: number): void {
+  playSound(
+    a: Entity | number,
+    b: string | number,
+    c: number,
+    d: number | string,
+    e?: number,
+    g?: number,
+  ): void {
     if (typeof a !== 'number') {
-      const entity = a, name = b as string, volume = c, pitch = d as number;
+      const entity = a,
+        name = b as string,
+        volume = c,
+        pitch = d as number;
       for (let i = 0; i < this._listeners.length; i++) {
-        this._listeners[i]!.playSound(name, entity.x, entity.y - entity.heightOffset, entity.z, volume, pitch);
+        this._listeners[i]!.playSound(
+          name,
+          entity.x,
+          entity.y - entity.heightOffset,
+          entity.z,
+          volume,
+          pitch,
+        );
       }
       return;
     }
-    const x = a, y = b as number, z = c, name = d as string, volume = e!, pitch = g!;
+    const x = a,
+      y = b as number,
+      z = c,
+      name = d as string,
+      volume = e!,
+      pitch = g!;
     for (let i = 0; i < this._listeners.length; i++) {
       this._listeners[i]!.playSound(name, x, y, z, volume, pitch);
     }
   }
 
-  levelEvent(source: Player | null, type: number, x: number, y: number, z: number, data: number): void {
+  levelEvent(
+    source: Player | null,
+    type: number,
+    x: number,
+    y: number,
+    z: number,
+    data: number,
+  ): void {
     for (let i = 0; i < this._listeners.length; i++) {
       this._listeners[i]!.levelEvent(source, type, x, y, z, data);
     }
@@ -813,7 +883,16 @@ export class Level implements LevelSource {
   }
 
   /** C++ 的两个重载：id 是 std::string 或 ParticleType::Id，都原样转给监听器 */
-  addParticle(id: string | ParticleType.Id, x: number, y: number, z: number, xd: number, yd: number, zd: number, data = 0): void {
+  addParticle(
+    id: string | ParticleType.Id,
+    x: number,
+    y: number,
+    z: number,
+    xd: number,
+    yd: number,
+    zd: number,
+    data = 0,
+  ): void {
     for (let i = 0; i < this._listeners.length; i++) {
       this._listeners[i]!.addParticle(id, x, y, z, xd, yd, zd, data);
     }
@@ -930,9 +1009,11 @@ export class Level implements LevelSource {
     const zz = Mth.floor(source.z);
     const temp = this.getBiomeSource().getTemperature(xx, zz); // C++ 在判断雾类型之前就无条件读取
     let skyColor: number;
-    if (this.dimension.FogType === 1) { // 1 is java styled fog which should use temperatures!
+    if (this.dimension.FogType === 1) {
+      // 1 is java styled fog which should use temperatures!
       skyColor = this.getBiomeSource().getBiome(xx, zz)!.getSkyColor(temp);
-    } else { // otherwise default to the normal pocket edition skycolor
+    } else {
+      // otherwise default to the normal pocket edition skycolor
       skyColor = 0x3070ff;
     }
     let r = ((skyColor >> 16) & 0xff) / 255.0;
@@ -1002,7 +1083,11 @@ export class Level implements LevelSource {
     z &= 15;
     while (y > 0) {
       const t = levelChunk.getTile(x, y, z);
-      if (t === 0 || !Tile.tiles[t]!.material.blocksMotion() || Tile.tiles[t]!.material === Material.leaves) {
+      if (
+        t === 0 ||
+        !Tile.tiles[t]!.material.blocksMotion() ||
+        Tile.tiles[t]!.material === Material.leaves
+      ) {
         y--;
       } else {
         return y + 1;
@@ -1039,7 +1124,8 @@ export class Level implements LevelSource {
       if (tileId > 0) {
         td.setDelay(tickDelay + this.levelData.getTime());
       }
-      if (!this._tickNextTickSet.has(td)) { // _tickNextTickSet.find(td) == end()：永远成立，见 TickNextTickData.ts
+      if (!this._tickNextTickSet.has(td)) {
+        // _tickNextTickSet.find(td) == end()：永远成立，见 TickNextTickData.ts
         this._tickNextTickSet.insert(td);
       }
     }
@@ -1118,7 +1204,9 @@ export class Level implements LevelSource {
               break;
             }
           }
-          const xx = e.x, yy = e.y, zz = e.z;
+          const xx = e.x,
+            yy = e.y,
+            zz = e.z;
           const lc = this.getChunk(xx >> 4, zz >> 4);
           const has = lc && lc.hasTileEntityAt(e);
           if (!found) {
@@ -1314,12 +1402,24 @@ export class Level implements LevelSource {
 
   extinguishFire(x: number, y: number, z: number, face: number): void {
     switch (face) {
-      case Facing.DOWN: y--; break;
-      case Facing.UP: y++; break;
-      case Facing.NORTH: z--; break;
-      case Facing.SOUTH: z++; break;
-      case Facing.WEST: x--; break;
-      case Facing.EAST: x++; break;
+      case Facing.DOWN:
+        y--;
+        break;
+      case Facing.UP:
+        y++;
+        break;
+      case Facing.NORTH:
+        z--;
+        break;
+      case Facing.SOUTH:
+        z++;
+        break;
+      case Facing.WEST:
+        x--;
+        break;
+      case Facing.EAST:
+        x++;
+        break;
     }
     if (this.getTile(x, y, z) === Tile.fire.id) {
       this.setTile(x, y, z, 0);
@@ -1402,7 +1502,16 @@ export class Level implements LevelSource {
     this._updateLights = doUpdate;
   }
 
-  updateLight(layer: LightLayer, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, join = true): void {
+  updateLight(
+    layer: LightLayer,
+    x0: number,
+    y0: number,
+    z0: number,
+    x1: number,
+    y1: number,
+    z1: number,
+    join = true,
+  ): void {
     if ((this.dimension.hasCeiling && layer === LightLayer.Sky) || !this._updateLights) return;
     maxLoop++;
     if (maxLoop === 50) {
@@ -1495,14 +1604,29 @@ export class Level implements LevelSource {
     return this._isNew;
   }
 
-  mayPlace(tileId: number, x: number, y: number, z: number, ignoreEntities: boolean, face: number): boolean {
+  mayPlace(
+    tileId: number,
+    x: number,
+    y: number,
+    z: number,
+    ignoreEntities: boolean,
+    face: number,
+  ): boolean {
     const targetType = this.getTile(x, y, z);
     let targetTile = Tile.tiles[targetType] ?? null;
     const tile = Tile.tiles[tileId]!;
     let aabb = tile.getAABB(this, x, y, z);
     if (ignoreEntities) aabb = null;
     if (aabb != null && !this.isUnobstructed(aabb)) return false;
-    if (targetTile === Tile.water || targetTile === Tile.calmWater || targetTile === Tile.lava || targetTile === Tile.calmLava || targetTile === Tile.fire || targetTile === Tile.topSnow) targetTile = null;
+    if (
+      targetTile === Tile.water ||
+      targetTile === Tile.calmWater ||
+      targetTile === Tile.lava ||
+      targetTile === Tile.calmLava ||
+      targetTile === Tile.fire ||
+      targetTile === Tile.topSnow
+    )
+      targetTile = null;
     if (tileId > 0 && targetTile === null) {
       if (tile.mayPlace(this, x, y, z, face)) {
         return true;
@@ -1583,17 +1707,21 @@ export class Level implements LevelSource {
 
   countInstanceOfType(typeId: number): number {
     let n = 0;
-    for (let i = 0; i < this.entities.length; ++i) if (typeId === this.entities[i]!.getEntityTypeId()) ++n;
+    for (let i = 0; i < this.entities.length; ++i)
+      if (typeId === this.entities[i]!.getEntityTypeId()) ++n;
     return n;
   }
 
   countInstanceOfBaseType(baseTypeId: number): number {
     if (baseTypeId < MobTypes.BaseEnemy || baseTypeId > MobTypes.BaseWaterCreature) {
-      LOGE('Bad typeId sent to Level::countInstanceOf. Note that only Base types (MobTypes::Base*) are supported for now.');
+      LOGE(
+        'Bad typeId sent to Level::countInstanceOf. Note that only Base types (MobTypes::Base*) are supported for now.',
+      );
       return -1;
     }
     let n = 0;
-    for (let i = 0; i < this.entities.length; ++i) if (baseTypeId === this.entities[i]!.getCreatureBaseType()) ++n;
+    for (let i = 0; i < this.entities.length; ++i)
+      if (baseTypeId === this.entities[i]!.getCreatureBaseType()) ++n;
     return n;
   }
 
@@ -1612,7 +1740,11 @@ export class Level implements LevelSource {
   }
 
   getSharedSpawnPos(): Pos {
-    return new Pos(this.levelData.getXSpawn(), this.levelData.getYSpawn(), this.levelData.getZSpawn());
+    return new Pos(
+      this.levelData.getXSpawn(),
+      this.levelData.getYSpawn(),
+      this.levelData.getZSpawn(),
+    );
   }
 
   setSpawnPos(spawnPos: Pos): void {
@@ -1682,7 +1814,14 @@ export class Level implements LevelSource {
   }
 
   inRange(x: number, y: number, z: number): boolean {
-    return x >= 0 && x < LevelConstants.LEVEL_WIDTH && y >= 0 && y < LevelConstants.LEVEL_HEIGHT && z >= 0 && z < LevelConstants.LEVEL_DEPTH;
+    return (
+      x >= 0 &&
+      x < LevelConstants.LEVEL_WIDTH &&
+      y >= 0 &&
+      y < LevelConstants.LEVEL_HEIGHT &&
+      z >= 0 &&
+      z < LevelConstants.LEVEL_DEPTH
+    );
   }
 
   /** ADAPTED(Test)：只给测试用，计划刻队列的长度 */

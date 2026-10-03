@@ -1,14 +1,14 @@
-import { Entity, registerItemEntityClass } from "../Entity";
-import { Level } from "../../level/Level";
-import type { Player } from "../player/Player";
-import { ItemInstance } from "../../item/ItemInstance";
-import { Material } from "../../level/material/Material";
-import { Tile } from "../../level/tile/Tile";
-import { SharedConstants } from "@mcpe/core";
-import { CompoundTag } from "@mcpe/nbt";
-import { Mth } from "@mcpe/util";
-import { EntityTypes } from "../EntityTypes";
-import { EntityRendererId } from "../EntityRendererId";
+import { Entity, registerItemEntityClass } from '../Entity';
+import { Level } from '../../level/Level';
+import type { Player } from '../player/Player';
+import { ItemInstance } from '../../item/ItemInstance';
+import { Material } from '../../level/material/Material';
+import { Tile } from '../../level/tile/Tile';
+import { SharedConstants } from '@mcpe/core';
+import { CompoundTag } from '@mcpe/nbt';
+import { Mth } from '@mcpe/util';
+import { EntityTypes } from '../EntityTypes';
+import { EntityRendererId } from '../EntityRendererId';
 
 export class ItemEntity extends Entity {
   public static readonly LIFETIME: number = 5 * 60 * SharedConstants.TicksPerSecond;
@@ -76,7 +76,9 @@ export class ItemEntity extends Entity {
       this.xd = (ItemEntity.sharedRandom.nextFloat() - ItemEntity.sharedRandom.nextFloat()) * 0.2;
       this.zd = (ItemEntity.sharedRandom.nextFloat() - ItemEntity.sharedRandom.nextFloat()) * 0.2;
       this.level.playSound(
-        this, "random.fizz", 0.4,
+        this,
+        'random.fizz',
+        0.4,
         2.0 + ItemEntity.sharedRandom.nextFloat() * 0.4,
       );
     }
@@ -87,11 +89,7 @@ export class ItemEntity extends Entity {
     let friction = 0.98;
     if (this.onGround) {
       friction = 0.6 * 0.98;
-      const t = this.level.getTile(
-        Mth.floor(this.x),
-        Mth.floor(this.bb.y0) - 1,
-        Mth.floor(this.z),
-      );
+      const t = this.level.getTile(Mth.floor(this.x), Mth.floor(this.bb.y0) - 1, Mth.floor(this.z));
       if (t > 0) {
         friction = Tile.tiles[t]!.friction * 0.98;
       }
@@ -134,8 +132,11 @@ export class ItemEntity extends Entity {
     const orgCount = this.item.count;
     if (this.throwTime === 0 && player.isAlive() && player.inventory.add(this.item)) {
       this.level.playSound(
-        this, "random.pop", 0.3,
-        ((ItemEntity.sharedRandom.nextFloat() - ItemEntity.sharedRandom.nextFloat()) * 0.7 + 1.0) * 2.0,
+        this,
+        'random.pop',
+        0.3,
+        ((ItemEntity.sharedRandom.nextFloat() - ItemEntity.sharedRandom.nextFloat()) * 0.7 + 1.0) *
+          2.0,
       );
       player.take(this, orgCount);
       this.remove();
@@ -167,11 +168,26 @@ export class ItemEntity extends Entity {
 
       let dir = -1;
       let closest = 9999;
-      if (west && xd < closest) { closest = xd; dir = 0; }
-      if (east && 1 - xd < closest) { closest = 1 - xd; dir = 1; }
-      if (up && yd < closest) { closest = yd; dir = 2; }
-      if (down && 1 - yd < closest) { closest = 1 - yd; dir = 3; }
-      if (north && zd < closest) { closest = zd; dir = 4; }
+      if (west && xd < closest) {
+        closest = xd;
+        dir = 0;
+      }
+      if (east && 1 - xd < closest) {
+        closest = 1 - xd;
+        dir = 1;
+      }
+      if (up && yd < closest) {
+        closest = yd;
+        dir = 2;
+      }
+      if (down && 1 - yd < closest) {
+        closest = 1 - yd;
+        dir = 3;
+      }
+      if (north && zd < closest) {
+        closest = zd;
+        dir = 4;
+      }
       if (south && 1 - zd < closest) {
         // C++ 里 closest = 1 - zd; 被注释掉了（//@note: not read）
         dir = 5;
@@ -192,16 +208,16 @@ export class ItemEntity extends Entity {
   /** C++ ItemEntity::addAdditonalSaveData(CompoundTag*) — protected，注意拼写 */
   protected override addAdditonalSaveData(entityTag: CompoundTag): void {
     // C++: putShort("Health", (char) health)
-    entityTag.putShort("Health", (this.health << 24) >> 24); // (char) 是有符号的：-1 写成 -1，而不是 255
-    entityTag.putShort("Age", this.age);
-    entityTag.putCompound("Item", this.item.save(new CompoundTag()));
+    entityTag.putShort('Health', (this.health << 24) >> 24); // (char) 是有符号的：-1 写成 -1，而不是 255
+    entityTag.putShort('Age', this.age);
+    entityTag.putCompound('Item', this.item.save(new CompoundTag()));
   }
 
   /** C++ ItemEntity::readAdditionalSaveData(CompoundTag*) — protected */
   protected override readAdditionalSaveData(tag: CompoundTag): void {
-    this.health = tag.getShort("Health") & 0xff;
-    this.age = tag.getShort("Age");
-    const itemTag = tag.getCompound("Item");
+    this.health = tag.getShort('Health') & 0xff;
+    this.age = tag.getShort('Age');
+    const itemTag = tag.getCompound('Item');
     this.item.load(itemTag);
   }
 

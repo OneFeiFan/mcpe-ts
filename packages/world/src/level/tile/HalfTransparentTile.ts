@@ -1,6 +1,6 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import type { LevelSource } from "../LevelSource";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import type { LevelSource } from '../LevelSource';
 
 export class HalfTransparentTile extends Tile {
   private readonly allowSame: boolean;
@@ -24,7 +24,9 @@ export class HalfTransparentTile extends Tile {
   /** C++ HalfTransparentTile::shouldRenderFace(LevelSource*, int, int, int, int) */
   override shouldRenderFace(
     level: LevelSource,
-    x: number, y: number, z: number,
+    x: number,
+    y: number,
+    z: number,
     face: number,
   ): boolean {
     // 局部 id 遮蔽 this.id，对应 C++ 的局部变量 id

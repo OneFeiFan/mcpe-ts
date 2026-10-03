@@ -15,7 +15,13 @@ export class TransparentTile extends Tile {
     return false;
   }
 
-  override shouldRenderFace(level: LevelSource, x: number, y: number, z: number, face: number): boolean {
+  override shouldRenderFace(
+    level: LevelSource,
+    x: number,
+    y: number,
+    z: number,
+    face: number,
+  ): boolean {
     const id = level.getTile(x, y, z);
     if (!this.allowSame && id === this.id) return false;
     return super.shouldRenderFace(level, x, y, z, face);

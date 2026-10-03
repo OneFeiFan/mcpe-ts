@@ -1,8 +1,8 @@
-import { DiggerItem } from "./DiggerItem";
-import { ItemInstance } from "./ItemInstance";
-import { Tile } from "../level/tile/Tile";
-import { Material } from "../level/material/Material";
-import type { Tier } from "./Item";
+import { DiggerItem } from './DiggerItem';
+import { ItemInstance } from './ItemInstance';
+import { Tile } from '../level/tile/Tile';
+import { Material } from '../level/material/Material';
+import type { Tier } from './Item';
 
 export class HatchetItem extends DiggerItem {
   /** C++ HatchetItem::HatchetItem(int id, const Tier& tier) */

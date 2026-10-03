@@ -1,8 +1,8 @@
-import { TileItem } from "./TileItem";
-import { Tile } from "../level/tile/Tile";
-import { ClothTile } from "../level/tile/ClothTile";
-import { DyePowderItem } from "./DyePowderItem";
-import { ItemInstance } from "./ItemInstance";
+import { TileItem } from './TileItem';
+import { Tile } from '../level/tile/Tile';
+import { ClothTile } from '../level/tile/ClothTile';
+import { DyePowderItem } from './DyePowderItem';
+import { ItemInstance } from './ItemInstance';
 
 export class ClothTileItem extends TileItem {
   constructor(id: number) {
@@ -16,16 +16,10 @@ export class ClothTileItem extends TileItem {
   // C++ Item::getIcon(const ItemInstance* itemInstance)
   override getIcon(itemInstance: ItemInstance): number;
   override getIcon(a: number | ItemInstance): number {
-    if (typeof a === "number") {
-      return Tile.cloth.getTexture(
-        2,
-        ClothTile.getTileDataForItemAuxValue(a),
-      );
+    if (typeof a === 'number') {
+      return Tile.cloth.getTexture(2, ClothTile.getTileDataForItemAuxValue(a));
     }
-    return Tile.cloth.getTexture(
-      2,
-      ClothTile.getTileDataForItemAuxValue(a.getAuxValue()),
-    );
+    return Tile.cloth.getTexture(2, ClothTile.getTileDataForItemAuxValue(a.getAuxValue()));
   }
 
   /** C++ ClothTileItem::getLevelDataForAuxValue(int auxValue) */
@@ -43,10 +37,8 @@ export class ClothTileItem extends TileItem {
     }
     return (
       super.getDescriptionId() +
-      "." +
-      DyePowderItem.COLOR_DESCS[
-        ClothTile.getTileDataForItemAuxValue(instance.getAuxValue())
-      ]
+      '.' +
+      DyePowderItem.COLOR_DESCS[ClothTile.getTileDataForItemAuxValue(instance.getAuxValue())]
     );
   }
 }

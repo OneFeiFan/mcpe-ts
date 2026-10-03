@@ -1,11 +1,11 @@
-import { Item } from "./Item";
-import { ItemInstance } from "./ItemInstance";
-import { Level } from "../level/Level";
-import { Material } from "../level/material/Material";
-import { Tile } from "../level/tile/Tile";
-import { Facing } from "../Facing";
-import type { Player } from "../entity/player/Player";
-import { Mth } from "@mcpe/util";
+import { Item } from './Item';
+import { ItemInstance } from './ItemInstance';
+import { Level } from '../level/Level';
+import { Material } from '../level/material/Material';
+import { Tile } from '../level/tile/Tile';
+import { Facing } from '../Facing';
+import type { Player } from '../entity/player/Player';
+import { Mth } from '@mcpe/util';
 
 export class DoorItem extends Item {
   private readonly material: Material;
@@ -23,16 +23,18 @@ export class DoorItem extends Item {
     instance: ItemInstance,
     player: Player,
     level: Level,
-    x: number, y: number, z: number,
+    x: number,
+    y: number,
+    z: number,
     face: number,
-    _clickX: number, _clickY: number, _clickZ: number,
+    _clickX: number,
+    _clickY: number,
+    _clickZ: number,
   ): boolean {
     if (face !== Facing.UP) return false;
     y++;
 
-    const tile = this.material === Material.wood
-      ? Tile.door_wood
-      : Tile.door_iron;
+    const tile = this.material === Material.wood ? Tile.door_wood : Tile.door_iron;
 
     // C++ 里 player->mayUseItemAt 检查被注释掉了，不要加
     if (!tile.mayPlace(level, x, y, z)) return false;
@@ -47,12 +49,7 @@ export class DoorItem extends Item {
   }
 
   /** C++ DoorItem::place(Level*, int, int, int, int, Tile*) — static */
-  static place(
-    level: Level,
-    x: number, y: number, z: number,
-    dir: number,
-    tile: Tile,
-  ): void {
+  static place(level: Level, x: number, y: number, z: number, dir: number, tile: Tile): void {
     let xra = 0;
     let zra = 0;
     if (dir === 0) zra = +1;
@@ -61,17 +58,17 @@ export class DoorItem extends Item {
     if (dir === 3) xra = +1;
 
     const solidLeft =
-      (level.isSolidBlockingTile(x - xra, y,     z - zra) ? 1 : 0) +
+      (level.isSolidBlockingTile(x - xra, y, z - zra) ? 1 : 0) +
       (level.isSolidBlockingTile(x - xra, y + 1, z - zra) ? 1 : 0);
     const solidRight =
-      (level.isSolidBlockingTile(x + xra, y,     z + zra) ? 1 : 0) +
+      (level.isSolidBlockingTile(x + xra, y, z + zra) ? 1 : 0) +
       (level.isSolidBlockingTile(x + xra, y + 1, z + zra) ? 1 : 0);
 
     const doorLeft =
-      level.getTile(x - xra, y,     z - zra) === tile.id ||
+      level.getTile(x - xra, y, z - zra) === tile.id ||
       level.getTile(x - xra, y + 1, z - zra) === tile.id;
     const doorRight =
-      level.getTile(x + xra, y,     z + zra) === tile.id ||
+      level.getTile(x + xra, y, z + zra) === tile.id ||
       level.getTile(x + xra, y + 1, z + zra) === tile.id;
 
     let flip = false;
@@ -79,10 +76,10 @@ export class DoorItem extends Item {
     else if (solidRight > solidLeft) flip = true;
 
     level.noNeighborUpdate = true;
-    level.setTileAndData(x, y,     z, tile.id, dir);
+    level.setTileAndData(x, y, z, tile.id, dir);
     level.setTileAndData(x, y + 1, z, tile.id, 8 | (flip ? 1 : 0));
     level.noNeighborUpdate = false;
-    level.updateNeighborsAt(x, y,     z, tile.id);
+    level.updateNeighborsAt(x, y, z, tile.id);
     level.updateNeighborsAt(x, y + 1, z, tile.id);
   }
 }

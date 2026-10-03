@@ -1,4 +1,4 @@
-import "./TagInclude";
+import './TagInclude';
 export * from './Tag';
 export { EndTag } from './EndTag';
 export { ByteTag } from './ByteTag';

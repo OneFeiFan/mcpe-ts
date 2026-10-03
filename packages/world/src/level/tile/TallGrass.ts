@@ -1,14 +1,14 @@
-import { Bush } from "./Bush";
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { Item } from "../../item/Item";
-import { ItemInstance } from "../../item/ItemInstance";
-import { GrassColor } from "../GrassColor";
-import { FoliageColor } from "../FoliageColor";
-import type { LevelSource } from "../LevelSource";
-import type { Random } from "@mcpe/util";
-import type { Player } from "../..";
+import { Bush } from './Bush';
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { Item } from '../../item/Item';
+import { ItemInstance } from '../../item/ItemInstance';
+import { GrassColor } from '../GrassColor';
+import { FoliageColor } from '../FoliageColor';
+import type { LevelSource } from '../LevelSource';
+import type { Random } from '@mcpe/util';
+import type { Player } from '../..';
 
 export class TallGrass extends Bush {
   static readonly DEAD_SHRUB = 0;
@@ -26,7 +26,13 @@ export class TallGrass extends Bush {
   override getTexture(face: number): number;
   override getTexture(face: number, data: number): number;
   override getTexture(level: LevelSource, x: number, y: number, z: number, face: number): number;
-  override getTexture(a: number | LevelSource, b?: number, c?: number, d?: number, e?: number): number {
+  override getTexture(
+    a: number | LevelSource,
+    b?: number,
+    c?: number,
+    d?: number,
+    e?: number,
+  ): number {
     if (b === TallGrass.TALL_GRASS) return this.tex;
     if (b === TallGrass.FERN) return this.tex + 16 + 1;
     if (b === TallGrass.DEAD_SHRUB) return this.tex + 16;
@@ -84,7 +90,9 @@ export class TallGrass extends Bush {
   override playerDestroy(
     level: Level,
     player: Player,
-    x: number, y: number, z: number,
+    x: number,
+    y: number,
+    z: number,
     data: number,
   ): void {
     const selected = player.getSelectedItem();

@@ -1,13 +1,12 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { AABB } from "../../phys/AABB";
-import { Vec3 } from "../../phys/Vec3";
-import { HitResult } from "../../phys/HitResult";
-import { ItemInstance } from "../../item/ItemInstance";
-import type { Player } from "../../entity/player/Player";
-import { LevelEvent } from "./LevelEvent";
-
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { AABB } from '../../phys/AABB';
+import { Vec3 } from '../../phys/Vec3';
+import { HitResult } from '../../phys/HitResult';
+import { ItemInstance } from '../../item/ItemInstance';
+import type { Player } from '../../entity/player/Player';
+import { LevelEvent } from './LevelEvent';
 
 export interface LevelSource {
   getData(x: number, y: number, z: number): number;
@@ -116,11 +115,7 @@ export class TrapDoorTile extends Tile {
   }
 
   /** C++ TrapDoorTile::neighborChanged(Level*, int, int, int, int) */
-  override neighborChanged(
-    level: Level,
-    x: number, y: number, z: number,
-    type: number,
-  ): void {
+  override neighborChanged(level: Level, x: number, y: number, z: number, type: number): void {
     if (level.isClientSide) return;
 
     const data = level.getData(x, y, z);
@@ -138,18 +133,14 @@ export class TrapDoorTile extends Tile {
 
     const signal = level.hasNeighborSignal(x, y, z);
     // C++ 不检查 Tile.tiles[type] 是否非空；null 时 C++ UB、TS 抛 TypeError
-    if (signal || ((type > 0 && Tile.tiles[type]!.isSignalSource()) || type === 0)) {
+    if (signal || (type > 0 && Tile.tiles[type]!.isSignalSource()) || type === 0) {
       this.setOpen(level, x, y, z, signal);
     }
     // 不调 super.neighborChanged
   }
 
   /** C++ TrapDoorTile::clip(Level*, int, int, int, const Vec3&, const Vec3&) */
-  override clip(
-    level: Level,
-    xt: number, yt: number, zt: number,
-    a: Vec3, b: Vec3,
-  ): HitResult {
+  override clip(level: Level, xt: number, yt: number, zt: number, a: Vec3, b: Vec3): HitResult {
     this.updateShape(level, xt, yt, zt);
     return super.clip(level, xt, yt, zt, a, b);
   }
@@ -166,9 +157,13 @@ export class TrapDoorTile extends Tile {
   /** C++ TrapDoorTile::getPlacedOnFaceDataValue(Level*, int, int, int, int, float, float, float, int) */
   override getPlacedOnFaceDataValue(
     _level: Level,
-    _x: number, _y: number, _z: number,
+    _x: number,
+    _y: number,
+    _z: number,
     face: number,
-    _clickX: number, _clickY: number, _clickZ: number,
+    _clickX: number,
+    _clickY: number,
+    _clickZ: number,
     _itemValue: number,
   ): number {
     let dir = 0;

@@ -2,17 +2,17 @@
 
 都是“读 C++、出草稿、做检查”的工具。**草稿永远要人工逐函数核对**，脚本不理解语义。
 
-| 脚本 | 作用 | 用法 |
-|---|---|---|
-| pp.py | 按网页版构建展开 `#ifdef`（PLATFORM_WEB、OPENGL_ES、USE_VBO 已定义，其余未定义） | `python pp.py <in> <out>` |
-| clean.py | pp.py + 去注释、空行、#include，打印出来读 | `python clean.py <文件...>` |
-| fn.py | 打印某个类的指定成员函数完整函数体 | `python fn.py <file.cpp> <类名> <f1,f2>` |
-| cpp2ts.py | 把一段行号范围（一个函数体）逐行转成 TS 草稿 | `python cpp2ts.py <file.cpp> <起> <止>` |
-| members.py | 收集 TS 类的成员名，供 cls2ts.py 加 this. | `python members.py <out.txt> <a.ts> [b.ts…]` |
-| cls2ts.py | 整个 C++ 类 → TS 类草稿（字段带类型、初始化列表、方法体） | 见下 |
-| post.py | cls2ts 草稿的第二轮修正（override、容器、数学函数、(int) 强转） | `python post.py <draft.ts> <基类方法名.txt>` |
-| shadow.py | 找“局部变量与成员同名、声明前就被使用”（漏加 this.） | `python shadow.py <file.ts> <成员.txt>` |
-| divs.py | 列出所有除法，逐条判断是否整数除法 | `python divs.py <file.ts>` |
+| 脚本       | 作用                                                                             | 用法                                         |
+| ---------- | -------------------------------------------------------------------------------- | -------------------------------------------- |
+| pp.py      | 按网页版构建展开 `#ifdef`（PLATFORM_WEB、OPENGL_ES、USE_VBO 已定义，其余未定义） | `python pp.py <in> <out>`                    |
+| clean.py   | pp.py + 去注释、空行、#include，打印出来读                                       | `python clean.py <文件...>`                  |
+| fn.py      | 打印某个类的指定成员函数完整函数体                                               | `python fn.py <file.cpp> <类名> <f1,f2>`     |
+| cpp2ts.py  | 把一段行号范围（一个函数体）逐行转成 TS 草稿                                     | `python cpp2ts.py <file.cpp> <起> <止>`      |
+| members.py | 收集 TS 类的成员名，供 cls2ts.py 加 this.                                        | `python members.py <out.txt> <a.ts> [b.ts…]` |
+| cls2ts.py  | 整个 C++ 类 → TS 类草稿（字段带类型、初始化列表、方法体）                        | 见下                                         |
+| post.py    | cls2ts 草稿的第二轮修正（override、容器、数学函数、(int) 强转）                  | `python post.py <draft.ts> <基类方法名.txt>` |
+| shadow.py  | 找“局部变量与成员同名、声明前就被使用”（漏加 this.）                             | `python shadow.py <file.ts> <成员.txt>`      |
+| divs.py    | 列出所有除法，逐条判断是否整数除法                                               | `python divs.py <file.ts>`                   |
 
 ## 类转写流程（大类，例如 Mob、Player、Gui）
 

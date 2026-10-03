@@ -1,6 +1,13 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { Mth } from '@mcpe/util';
-import { initMaterials, isUnregistered, Item, StoneSlabTileItem, Tile, TileItem } from '@mcpe/world';
+import {
+  initMaterials,
+  isUnregistered,
+  Item,
+  StoneSlabTileItem,
+  Tile,
+  TileItem,
+} from '@mcpe/world';
 import { initTiles } from '../../../packages/world/src/level/tile/TileInclude';
 import { LeafTileItem } from '../../../packages/world/src/item/LeafTileItem';
 import { GrassTile } from '../../../packages/world/src/level/tile/GrassTile';
@@ -9,7 +16,12 @@ import { StoneTile } from '../../../packages/world/src/level/tile/StoneTile';
 // S3 验收：16 个方块类按 1:1 移植完成后运行。初始化顺序照 NinecraftApp::init。
 /** C++ 注册的全部 89 个方块（S12 起全部移植） */
 const S12_IDS: number[] = [];
-const REGISTERED = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  20,  21,  22,  24,  26,  30,  31,  35,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  53,  54,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  67,  68,  71,  73,  74,  78,  79,  80,  81,  82,  83,  85,  87,  89,  95,  96,  98,  102,  103,  105,  107,  108,  109,  112,  114,  128,  155,  156,  245,  246,  247,  248,  249,  253,  254,  255];
+const REGISTERED = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 24, 26, 30, 31, 35, 37,
+  38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 56, 57, 58, 59, 60, 61, 62, 63,
+  64, 65, 67, 68, 71, 73, 74, 78, 79, 80, 81, 82, 83, 85, 87, 89, 95, 96, 98, 102, 103, 105, 107,
+  108, 109, 112, 114, 128, 155, 156, 245, 246, 247, 248, 249, 253, 254, 255,
+];
 
 beforeAll(() => {
   Mth.initMth();

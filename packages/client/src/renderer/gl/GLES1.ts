@@ -53,7 +53,17 @@ const GL_TEXTURE_ENV_MODE = 0x2200;
 const GL_MODULATE = 0x2100;
 
 /** 由 GLES1 自己模拟的开关；其余的 glEnable 直接交给 WebGL */
-const EMULATED_CAPS = new Set([GL_TEXTURE_2D, GL_ALPHA_TEST, GL_FOG, GL_LIGHTING, GL_LIGHT0, GL_LIGHT1, GL_COLOR_MATERIAL, GL_NORMALIZE, GL_RESCALE_NORMAL]);
+const EMULATED_CAPS = new Set([
+  GL_TEXTURE_2D,
+  GL_ALPHA_TEST,
+  GL_FOG,
+  GL_LIGHTING,
+  GL_LIGHT0,
+  GL_LIGHT1,
+  GL_COLOR_MATERIAL,
+  GL_NORMALIZE,
+  GL_RESCALE_NORMAL,
+]);
 
 interface ArrayPointer {
   enabled: boolean;
@@ -79,7 +89,11 @@ function mul(a: Float32Array, b: ArrayLike<number>): Float32Array {
   const out = new Float32Array(16);
   for (let c = 0; c < 4; c++)
     for (let r = 0; r < 4; r++) {
-      out[c * 4 + r] = a[r]! * b[c * 4]! + a[4 + r]! * b[c * 4 + 1]! + a[8 + r]! * b[c * 4 + 2]! + a[12 + r]! * b[c * 4 + 3]!;
+      out[c * 4 + r] =
+        a[r]! * b[c * 4]! +
+        a[4 + r]! * b[c * 4 + 1]! +
+        a[8 + r]! * b[c * 4 + 2]! +
+        a[12 + r]! * b[c * 4 + 3]!;
     }
   return out;
 }
@@ -175,7 +189,10 @@ export class GLES1 {
 
   // ---- 顶点数组
   private readonly arrays = new Map<number, ArrayPointer>(
-    [GL_VERTEX_ARRAY, GL_TEXTURE_COORD_ARRAY, GL_COLOR_ARRAY, GL_NORMAL_ARRAY].map((k) => [k, { enabled: false, size: 4, type: 0x1406, stride: 0, offset: 0, buffer: 0 }]),
+    [GL_VERTEX_ARRAY, GL_TEXTURE_COORD_ARRAY, GL_COLOR_ARRAY, GL_NORMAL_ARRAY].map((k) => [
+      k,
+      { enabled: false, size: 4, type: 0x1406, stride: 0, offset: 0, buffer: 0 },
+    ]),
   );
 
   // ---- 对象表（GL 的整数名 → WebGL 对象）
@@ -208,16 +225,33 @@ export class GLES1 {
       const s = gl.createShader(type)!;
       gl.shaderSource(s, src);
       gl.compileShader(s);
-      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error('GLES1 着色器编译失败：' + gl.getShaderInfoLog(s));
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+        throw new Error('GLES1 着色器编译失败：' + gl.getShaderInfoLog(s));
       return s;
     };
     const program = gl.createProgram()!;
     gl.attachShader(program, compile(gl.VERTEX_SHADER, VS(flat)));
     gl.attachShader(program, compile(gl.FRAGMENT_SHADER, FS(flat)));
     gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error('GLES1 程序链接失败：' + gl.getProgramInfoLog(program));
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS))
+      throw new Error('GLES1 程序链接失败：' + gl.getProgramInfoLog(program));
     const u: Record<string, WebGLUniformLocation | null> = {};
-    for (const n of ['uModelView', 'uProjection', 'uTexMatrix', 'uTex', 'uTexEnabled', 'uAlphaTest', 'uAlphaFunc', 'uAlphaRef', 'uFog', 'uFogMode', 'uFogStart', 'uFogEnd', 'uFogDensity', 'uFogColor'])
+    for (const n of [
+      'uModelView',
+      'uProjection',
+      'uTexMatrix',
+      'uTex',
+      'uTexEnabled',
+      'uAlphaTest',
+      'uAlphaFunc',
+      'uAlphaRef',
+      'uFog',
+      'uFogMode',
+      'uFogStart',
+      'uFogEnd',
+      'uFogDensity',
+      'uFogColor',
+    ])
       u[n] = gl.getUniformLocation(program, n);
     return { program, u };
   }
@@ -299,11 +333,19 @@ export class GLES1 {
     y /= len;
     z /= len;
     const a = (angleDeg * Math.PI) / 180;
-    const c = Math.cos(a), s = Math.sin(a), t = 1 - c;
+    const c = Math.cos(a),
+      s = Math.sin(a),
+      t = 1 - c;
     const m = new Float32Array(16);
-    m[0] = x * x * t + c; m[4] = x * y * t - z * s; m[8] = x * z * t + y * s;
-    m[1] = y * x * t + z * s; m[5] = y * y * t + c; m[9] = y * z * t - x * s;
-    m[2] = x * z * t - y * s; m[6] = y * z * t + x * s; m[10] = z * z * t + c;
+    m[0] = x * x * t + c;
+    m[4] = x * y * t - z * s;
+    m[8] = x * z * t + y * s;
+    m[1] = y * x * t + z * s;
+    m[5] = y * y * t + c;
+    m[9] = y * z * t - x * s;
+    m[2] = x * z * t - y * s;
+    m[6] = y * z * t + x * s;
+    m[10] = z * z * t + c;
     m[15] = 1;
     this.multMatrix(m);
   }
@@ -403,7 +445,14 @@ export class GLES1 {
   bufferData(target: number, size: number, data: ArrayBufferView | null, usage: number): void {
     if (target === GL_ARRAY_BUFFER) this.bufferSizes.set(this.boundArrayBuffer, size);
     if (!this.gl) return;
-    if (data) this.gl.bufferData(target, data, usage, 0, size / ((data as Uint8Array).BYTES_PER_ELEMENT ?? 1));
+    if (data)
+      this.gl.bufferData(
+        target,
+        data,
+        usage,
+        0,
+        size / ((data as Uint8Array).BYTES_PER_ELEMENT ?? 1),
+      );
     else this.gl.bufferData(target, size, usage);
   }
 
@@ -455,7 +504,10 @@ export class GLES1 {
     gl.uniformMatrix4fv(u.uProjection!, false, this.stacks[1]![this.stacks[1]!.length - 1]!);
     gl.uniformMatrix4fv(u.uTexMatrix!, false, this.stacks[2]![this.stacks[2]!.length - 1]!);
     gl.uniform1i(u.uTex!, 0);
-    gl.uniform1i(u.uTexEnabled!, this.emulatedEnabled.has(GL_TEXTURE_2D) && this.boundTexture !== 0 ? 1 : 0);
+    gl.uniform1i(
+      u.uTexEnabled!,
+      this.emulatedEnabled.has(GL_TEXTURE_2D) && this.boundTexture !== 0 ? 1 : 0,
+    );
     gl.uniform1i(u.uAlphaTest!, this.emulatedEnabled.has(GL_ALPHA_TEST) ? 1 : 0);
     gl.uniform1i(u.uAlphaFunc!, this.alphaFunc);
     gl.uniform1f(u.uAlphaRef!, this.alphaRef);
@@ -470,7 +522,14 @@ export class GLES1 {
       const p = this.arrays.get(array)!;
       if (p.enabled) {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.get(p.buffer) ?? null);
-        gl.vertexAttribPointer(loc, p.size, p.type, p.type === GL_UNSIGNED_BYTE, p.stride, p.offset);
+        gl.vertexAttribPointer(
+          loc,
+          p.size,
+          p.type,
+          p.type === GL_UNSIGNED_BYTE,
+          p.stride,
+          p.offset,
+        );
         gl.enableVertexAttribArray(loc);
       } else {
         gl.disableVertexAttribArray(loc);
@@ -479,7 +538,9 @@ export class GLES1 {
     };
     bindAttr(GL_VERTEX_ARRAY, ATTR_POS, () => gl.vertexAttrib3f(ATTR_POS, 0, 0, 0));
     bindAttr(GL_TEXTURE_COORD_ARRAY, ATTR_UV, () => gl.vertexAttrib2f(ATTR_UV, 0, 0));
-    bindAttr(GL_COLOR_ARRAY, ATTR_COLOR, () => gl.vertexAttrib4f(ATTR_COLOR, this.color[0]!, this.color[1]!, this.color[2]!, this.color[3]!));
+    bindAttr(GL_COLOR_ARRAY, ATTR_COLOR, () =>
+      gl.vertexAttrib4f(ATTR_COLOR, this.color[0]!, this.color[1]!, this.color[2]!, this.color[3]!),
+    );
     gl.drawArrays(mode, first, count);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.get(this.boundArrayBuffer) ?? null);
   }

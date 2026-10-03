@@ -23,8 +23,24 @@ export class LightUpdate {
   z1: number;
 
   constructor(t: LightUpdate);
-  constructor(layer: LightLayer, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number);
-  constructor(a: LightUpdate | LightLayer, x0?: number, y0?: number, z0?: number, x1?: number, y1?: number, z1?: number) {
+  constructor(
+    layer: LightLayer,
+    x0: number,
+    y0: number,
+    z0: number,
+    x1: number,
+    y1: number,
+    z1: number,
+  );
+  constructor(
+    a: LightUpdate | LightLayer,
+    x0?: number,
+    y0?: number,
+    z0?: number,
+    x1?: number,
+    y1?: number,
+    z1?: number,
+  ) {
     if (a instanceof LightUpdate) {
       this.layer = a.layer;
       this.x0 = a.x0;
@@ -136,11 +152,25 @@ export class LightUpdate {
       }
   }
 
-  expandToContain(_x0: number, _y0: number, _z0: number, _x1: number, _y1: number, _z1: number): boolean {
+  expandToContain(
+    _x0: number,
+    _y0: number,
+    _z0: number,
+    _x1: number,
+    _y1: number,
+    _z1: number,
+  ): boolean {
     const { x0, y0, z0, x1, y1, z1 } = this;
     if (_x0 >= x0 && _y0 >= y0 && _z0 >= z0 && _x1 <= x1 && _y1 <= y1 && _z1 <= z1) return true;
     const r = 1;
-    if (_x0 >= x0 - r && _y0 >= y0 - r && _z0 >= z0 - r && _x1 <= x1 + r && _y1 <= y1 + r && _z1 <= z1 + r) {
+    if (
+      _x0 >= x0 - r &&
+      _y0 >= y0 - r &&
+      _z0 >= z0 - r &&
+      _x1 <= x1 + r &&
+      _y1 <= y1 + r &&
+      _z1 <= z1 + r
+    ) {
       const xs = x1 - x0;
       const ys = y1 - y0;
       const zs = z1 - z0;

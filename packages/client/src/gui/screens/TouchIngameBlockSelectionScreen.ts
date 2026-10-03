@@ -5,7 +5,16 @@
  *   放入快捷栏时的音效 DEFERRED(Sound)。
  */
 import { Inventory, type ItemInstance } from '@mcpe/world';
-import { GL_BLEND, GL_DEPTH_TEST, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, glBlendFunc2, glColor4f2, glDisable2, glEnable2 } from '../../renderer/gles';
+import {
+  GL_BLEND,
+  GL_DEPTH_TEST,
+  GL_ONE_MINUS_SRC_ALPHA,
+  GL_SRC_ALPHA,
+  glBlendFunc2,
+  glColor4f2,
+  glDisable2,
+  glEnable2,
+} from '../../renderer/gles';
 import { Tesselator } from '../../renderer/Tesselator';
 import type { Button } from '../components/Button';
 import { TButton, THeader } from '../components/Button';
@@ -42,7 +51,16 @@ export class TouchIngameBlockSelectionScreen extends Screen implements IInventor
     const realWidth = this.InventoryColumns * ItemSize;
     const realBx = Math.trunc((this.width - realWidth) / 2);
     const rect = new IntRectangle(realBx, 24 + By, realWidth, this.height - By - By - 20 - 24);
-    this._blockList = new InventoryPane(this, this.minecraft, rect, this.width, BorderPixels, inventory.getContainerSize() - Inventory.MAX_SELECTION_SIZE, ItemSize, Math.trunc(BorderPixels));
+    this._blockList = new InventoryPane(
+      this,
+      this.minecraft,
+      rect,
+      this.width,
+      BorderPixels,
+      inventory.getContainerSize() - Inventory.MAX_SELECTION_SIZE,
+      ItemSize,
+      Math.trunc(BorderPixels),
+    );
     this._blockList.fillMarginX = realBx;
     this.InventorySize = inventory.getContainerSize() - Inventory.MAX_SELECTION_SIZE;
     this.InventoryRows = 1 + Math.trunc((this.InventorySize - 1) / this.InventoryColumns);
@@ -107,7 +125,8 @@ export class TouchIngameBlockSelectionScreen extends Screen implements IInventor
   }
 
   protected override mouseReleased(x: number, y: number, buttonNum: number): void {
-    if (this._pendingClose && this._blockList!._clickArea.isInside(x, y)) this.minecraft.setScreen(null);
+    if (this._pendingClose && this._blockList!._clickArea.isInside(x, y))
+      this.minecraft.setScreen(null);
     else super.mouseReleased(x, y, buttonNum);
   }
 
@@ -172,7 +191,8 @@ export class TouchIngameBlockSelectionScreen extends Screen implements IInventor
   }
 
   isAllowed(slot: number): boolean {
-    const gridCount = this.minecraft.player!.inventory.getContainerSize() - Inventory.MAX_SELECTION_SIZE;
+    const gridCount =
+      this.minecraft.player!.inventory.getContainerSize() - Inventory.MAX_SELECTION_SIZE;
     return !(slot < 0 || slot >= gridCount);
   }
 
@@ -187,7 +207,8 @@ export class TouchIngameBlockSelectionScreen extends Screen implements IInventor
   getItems(_forPane: InventoryPane): (ItemInstance | null)[] {
     const out: (ItemInstance | null)[] = [];
     const inv = this.minecraft.player!.inventory;
-    for (let i = Inventory.MAX_SELECTION_SIZE; i < inv.getContainerSize(); ++i) out.push(inv.getItem(i));
+    for (let i = Inventory.MAX_SELECTION_SIZE; i < inv.getContainerSize(); ++i)
+      out.push(inv.getItem(i));
     return out;
   }
 

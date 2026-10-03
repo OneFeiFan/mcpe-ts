@@ -1,11 +1,10 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { AABB } from "../../phys/AABB";
-import { Level } from "../Level";
-import type { LevelSource } from "../LevelSource";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { AABB } from '../../phys/AABB';
+import { Level } from '../Level';
+import type { LevelSource } from '../LevelSource';
 
 export class FenceTile extends Tile {
-
   /** C++ FenceTile::FenceTile(int id, int tex) */
   constructor(id: number, tex: number);
   /** C++ FenceTile::FenceTile(int id, int tex, const Material* material) */
@@ -37,10 +36,7 @@ export class FenceTile extends Tile {
     if (e) east = 1;
 
     // 复刻 C++ 的共享 tmpBB 语义：每次覆盖同一个对象并返回它
-    this.tmpBB.set(
-      x + west, y, z + north,
-      x + east, y + 1.5, z + south,
-    );
+    this.tmpBB.set(x + west, y, z + north, x + east, y + 1.5, z + south);
     return this.tmpBB;
   }
 

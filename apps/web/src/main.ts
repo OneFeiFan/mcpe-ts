@@ -12,7 +12,11 @@ const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
 const status = document.querySelector<HTMLParagraphElement>('#status');
 
 async function main(): Promise<void> {
-  const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, preserveDrawingBuffer: false });
+  const gl = canvas.getContext('webgl2', {
+    antialias: false,
+    alpha: false,
+    preserveDrawingBuffer: false,
+  });
   if (!gl) throw new Error('浏览器不支持 WebGL2');
   glSetContext(new GLES1(gl));
   const images = await preloadAssets();
@@ -33,7 +37,10 @@ async function main(): Promise<void> {
   resize();
   window.addEventListener('resize', resize);
 
-  const input = new DomInput(canvas, { onPointerUnlock: () => app.releaseMouse(), onPointerLock: () => app.grabMouse() });
+  const input = new DomInput(canvas, {
+    onPointerUnlock: () => app.releaseMouse(),
+    onPointerLock: () => app.grabMouse(),
+  });
   input.lockAllowed = () => app.screen === null; // C++：有界面时点击不 grabMouse
   input.attach();
 

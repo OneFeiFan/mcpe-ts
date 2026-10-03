@@ -37,7 +37,8 @@ export class SignTileEntity extends TileEntity {
     this.messages[2] = tag.getString('Text3');
     this.messages[3] = tag.getString('Text4');
     for (let i = 0; i < SignTileEntity.NUM_LINES; i++)
-      if (this.messages[i]!.length > SignTileEntity.MAX_LINE_LENGTH) this.messages[i] = this.messages[i]!.slice(0, SignTileEntity.MAX_LINE_LENGTH);
+      if (this.messages[i]!.length > SignTileEntity.MAX_LINE_LENGTH)
+        this.messages[i] = this.messages[i]!.slice(0, SignTileEntity.MAX_LINE_LENGTH);
   }
 
   shouldSave(): boolean {

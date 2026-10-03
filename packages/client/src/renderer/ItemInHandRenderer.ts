@@ -4,13 +4,45 @@
  * 部分：空手时画玩家手臂要用玩家模型（HumanoidMobRenderer::renderHand、模型系统计划外）DEFERRED(Model)。
  */
 import { Mth } from '@mcpe/util';
-import { BowItem, Item, type ItemInstance, ItemInstance as ItemInstanceClass, LeafTile, Material, type Mob, Tile, UseAnim } from '@mcpe/world';
+import {
+  BowItem,
+  Item,
+  type ItemInstance,
+  ItemInstance as ItemInstanceClass,
+  LeafTile,
+  Material,
+  type Mob,
+  Tile,
+  UseAnim,
+} from '@mcpe/world';
 import type { Minecraft } from '../Minecraft';
 import { OptionId } from '../Options';
 import {
-  drawArrayVTN_NoState, GL_ALPHA_TEST, GL_BLEND, GL_NORMAL_ARRAY, GL_ONE_MINUS_SRC_ALPHA, GL_RESCALE_NORMAL, GL_SRC_ALPHA,
-  GL_TEXTURE_COORD_ARRAY, GL_VERTEX_ARRAY, glBlendFunc2, glColor4f2, glDisable2, glDisableClientState2, glEnable, glEnable2,
-  glEnableClientState2, glGenBuffers2, glPopMatrix2, glPushMatrix2, glRotatef, glRotatef2, glScalef, glScalef2, glTranslatef, glTranslatef2,
+  drawArrayVTN_NoState,
+  GL_ALPHA_TEST,
+  GL_BLEND,
+  GL_NORMAL_ARRAY,
+  GL_ONE_MINUS_SRC_ALPHA,
+  GL_RESCALE_NORMAL,
+  GL_SRC_ALPHA,
+  GL_TEXTURE_COORD_ARRAY,
+  GL_VERTEX_ARRAY,
+  glBlendFunc2,
+  glColor4f2,
+  glDisable2,
+  glDisableClientState2,
+  glEnable,
+  glEnable2,
+  glEnableClientState2,
+  glGenBuffers2,
+  glPopMatrix2,
+  glPushMatrix2,
+  glRotatef,
+  glRotatef2,
+  glScalef,
+  glScalef2,
+  glTranslatef,
+  glTranslatef2,
 } from './gles';
 import { Lighting } from './Lighting';
 import { RenderChunk } from './RenderChunk';
@@ -38,7 +70,10 @@ export class ItemInHandRenderer {
   private height = 0;
   private oHeight = 0;
   private tileRenderer = new TileRenderer();
-  private renderObjects: RenderCall[] = Array.from({ length: ItemInHandRenderer.MaxNumRenderObjects }, () => new RenderCall());
+  private renderObjects: RenderCall[] = Array.from(
+    { length: ItemInHandRenderer.MaxNumRenderObjects },
+    () => new RenderCall(),
+  );
 
   constructor(mc: Minecraft) {
     this.mc = mc;
@@ -57,7 +92,10 @@ export class ItemInHandRenderer {
   tick(): void {
     this.oHeight = this.height;
     const itemInHand = this.mc.player!.inventory.getSelected();
-    let sameItem = itemInHand !== null && this.item.id === itemInHand.id && this.item.getAuxValue() === itemInHand.getAuxValue();
+    let sameItem =
+      itemInHand !== null &&
+      this.item.id === itemInHand.id &&
+      this.item.getAuxValue() === itemInHand.getAuxValue();
     if (this.mc.options.getBooleanValue(OptionId.OPTIONS_RESTORED_ANIMS)) {
       if (!itemInHand && this.item.id === 0) sameItem = true;
       const max = f(0.4);
@@ -234,7 +272,11 @@ export class ItemInHandRenderer {
       glRotatef((xr - xrr) * 0.1, 1, 0, 0);
       glRotatef((yr - yrr) * 0.1, 0, 1, 0);
     }
-    const br = mc.level!.getBrightness(Mth.floor(player.x), Mth.floor(player.y), Mth.floor(player.z));
+    const br = mc.level!.getBrightness(
+      Mth.floor(player.x),
+      Mth.floor(player.y),
+      Mth.floor(player.z),
+    );
     const item: ItemInstance | null = this.item.id > 0 ? this.item : null;
     if (item !== null) {
       glColor4f2(br, br, br, 1);
@@ -361,10 +403,14 @@ export class ItemInHandRenderer {
     const br = 0.1;
     glColor4f2(br, br, br, 0.5);
     glPushMatrix2();
-    const x0 = -1, x1 = +1, y0 = -1, y1 = +1, z0 = -0.5;
+    const x0 = -1,
+      x1 = +1,
+      y0 = -1,
+      y1 = +1,
+      z0 = -0.5;
     const r = 2 / 256.0;
     const u0 = (tex % 16) / 256.0 - r;
-    const u1 = (tex % 16 + 15.99) / 256.0 + r;
+    const u1 = ((tex % 16) + 15.99) / 256.0 + r;
     const v0 = Math.trunc(tex / 16) / 256.0 - r;
     const v1 = (Math.trunc(tex / 16) + 15.99) / 256.0 + r;
     t.begin();
@@ -386,7 +432,11 @@ export class ItemInHandRenderer {
     glBlendFunc2(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glPushMatrix2();
     const size = 4;
-    const x0 = -1, x1 = +1, y0 = -1, y1 = +1, z0 = -0.5;
+    const x0 = -1,
+      x1 = +1,
+      y0 = -1,
+      y1 = +1,
+      z0 = -0.5;
     const uo = -player.yRot / 64.0;
     const vo = +player.xRot / 64.0;
     t.begin();
@@ -434,4 +484,3 @@ export class ItemInHandRenderer {
     glDisable2(GL_BLEND);
   }
 }
-

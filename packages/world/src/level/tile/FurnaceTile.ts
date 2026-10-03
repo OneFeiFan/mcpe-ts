@@ -1,17 +1,17 @@
 import { getEpochTimeS } from '@mcpe/platform';
-import { EntityTile } from "./EntityTile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { TileEntity, TileEntityFactory, TileEntityType } from "./entity/TileEntity";
-import { FurnaceTileEntity } from "./entity/FurnaceTileEntity";
-import { ItemEntity } from "../../entity/item/ItemEntity";
-import { ItemInstance } from "../../item/ItemInstance";
-import { Facing } from "../../Facing";
-import { Tile } from "./Tile";
-import { ParticleType } from "../../entity/EntityTypes";
-import { Random, Mth } from "@mcpe/util";
-import type { Player } from "../..";
-import type { Mob } from "../../entity/Mob";
+import { EntityTile } from './EntityTile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { TileEntity, TileEntityFactory, TileEntityType } from './entity/TileEntity';
+import { FurnaceTileEntity } from './entity/FurnaceTileEntity';
+import { ItemEntity } from '../../entity/item/ItemEntity';
+import { ItemInstance } from '../../item/ItemInstance';
+import { Facing } from '../../Facing';
+import { Tile } from './Tile';
+import { ParticleType } from '../../entity/EntityTypes';
+import { Random, Mth } from '@mcpe/util';
+import type { Player } from '../..';
+import type { Mob } from '../../entity/Mob';
 
 export interface LevelSource {
   getData(x: number, y: number, z: number): number;
@@ -71,7 +71,7 @@ export class FurnaceTile extends EntityTile {
 
     const x = xt + 0.5;
     // 注意：恰好一次 nextFloat 用于 y 偏移
-    const y = yt + 0.0 + random.nextFloat() * 6 / 16.0;
+    const y = yt + 0.0 + (random.nextFloat() * 6) / 16.0;
     const z = zt + 0.5;
     const r = 0.52;
     // 第二次 nextFloat
@@ -128,7 +128,7 @@ export class FurnaceTile extends EntityTile {
 
   /** C++ FurnaceTile::setPlacedBy(Level*, int, int, int, Mob*) */
   override setPlacedBy(level: Level, x: number, y: number, z: number, by: Mob): void {
-    const dir = Mth.floor(by.yRot * 4 / 360 + 0.5) & 3;
+    const dir = Mth.floor((by.yRot * 4) / 360 + 0.5) & 3;
 
     if (dir === 0) level.setData(x, y, z, Facing.NORTH);
     if (dir === 1) level.setData(x, y, z, Facing.EAST);
@@ -154,7 +154,10 @@ export class FurnaceTile extends EntityTile {
               item.count -= count;
 
               const itemEntity = new ItemEntity(
-                level, x + xo, y + yo, z + zo,
+                level,
+                x + xo,
+                y + yo,
+                z + zo,
                 new ItemInstance(item.id, count, item.getAuxValue()),
               );
               const pow = 0.05;
@@ -188,4 +191,3 @@ export class FurnaceTile extends EntityTile {
     level.setData(x, y, z, lockDir);
   }
 }
-

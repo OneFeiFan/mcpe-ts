@@ -33,7 +33,12 @@ describe('C++ 嵌套类型的写法', () => {
     const t: Item.Tier = Item.Tier.IRON;
     const r: PerfTimer.ResultField = new PerfTimer.ResultField('root', 100, 100);
     const w: WeighedRandom.WeighedRandomItem = new WeighedRandom.WeighedRandomItem(5);
-    expect([s.getStepSound(), t.getUses(), r.name, w.randomWeight]).toEqual(['step.stone', 250, 'root', 5]);
+    expect([s.getStepSound(), t.getUses(), r.name, w.randomWeight]).toEqual([
+      'step.stone',
+      250,
+      'root',
+      5,
+    ]);
     expect(s).toBeInstanceOf(Tile.SoundType);
   });
 });

@@ -1,12 +1,12 @@
-import { EntityTile } from "./EntityTile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { AABB } from "../../phys/AABB";
-import { Item } from "../../item/Item";
-import { TileEntity, TileEntityFactory } from "./entity/TileEntity";
-import type { Random } from "@mcpe/util";
-import { Tile } from "./Tile";
-import type { LevelSource } from "../LevelSource";
+import { EntityTile } from './EntityTile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { AABB } from '../../phys/AABB';
+import { Item } from '../../item/Item';
+import { TileEntity, TileEntityFactory } from './entity/TileEntity';
+import type { Random } from '@mcpe/util';
+import { Tile } from './Tile';
+import type { LevelSource } from '../LevelSource';
 
 export class SignTile extends EntityTile {
   private readonly tileEntityClassId: number;
@@ -85,11 +85,7 @@ export class SignTile extends EntityTile {
   }
 
   /** C++ SignTile::neighborChanged(Level*, int, int, int, int) */
-  override neighborChanged(
-    level: Level,
-    x: number, y: number, z: number,
-    type: number,
-  ): void {
+  override neighborChanged(level: Level, x: number, y: number, z: number, type: number): void {
     let remove = false;
 
     if (this.onGround) {

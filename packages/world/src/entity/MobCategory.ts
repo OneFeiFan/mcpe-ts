@@ -6,7 +6,11 @@ export class MobCategory {
   static readonly monster = new MobCategory(MobTypes.BaseEnemy, 10, 20, false);
   static readonly creature = new MobCategory(MobTypes.BaseCreature, 10, 15, true);
   static readonly waterCreature = new MobCategory(MobTypes.BaseWaterCreature, 5, 10, true);
-  static readonly values: readonly MobCategory[] = [MobCategory.monster, MobCategory.creature, MobCategory.waterCreature];
+  static readonly values: readonly MobCategory[] = [
+    MobCategory.monster,
+    MobCategory.creature,
+    MobCategory.waterCreature,
+  ];
   static readonly numValues = MobCategory.values.length;
 
   private _spawnPositionMaterial: Material | null = null;

@@ -37,7 +37,13 @@ export class LiquidTile extends Tile {
     return liquid && data === 0;
   }
 
-  override shouldRenderFace(level: LevelSource, x: number, y: number, z: number, face: number): boolean {
+  override shouldRenderFace(
+    level: LevelSource,
+    x: number,
+    y: number,
+    z: number,
+    face: number,
+  ): boolean {
     const m = level.getMaterial(x, y, z);
     if (m === this.material) return false;
     if (m === Material.ice) return false;
@@ -65,7 +71,14 @@ export class LiquidTile extends Tile {
     return 0x999999ff | 0; // C++ 的 int：超过 INT_MAX，回绕成负数
   }
 
-  override handleEntityInside(level: Level, x: number, y: number, z: number, _e: Entity, current: Vec3): void {
+  override handleEntityInside(
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    _e: Entity,
+    current: Vec3,
+  ): void {
     const flow = this.getFlow(level, x, y, z);
     current.x += flow.x * 0.5;
     current.y += flow.y * 0.5;
@@ -100,7 +113,10 @@ export class LiquidTile extends Tile {
       }
     }
     if (this.material === Material.lava) {
-      if (level.getMaterial(x, y + 1, z) === Material.air && !level.isSolidRenderTile(x, y + 1, z)) {
+      if (
+        level.getMaterial(x, y + 1, z) === Material.air &&
+        !level.isSolidRenderTile(x, y + 1, z)
+      ) {
         if (random.nextInt(100) === 0) {
           const xx = x + random.nextFloat();
           const yy = y + this.yy1;

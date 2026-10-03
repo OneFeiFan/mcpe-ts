@@ -53,7 +53,9 @@ export class Dimension {
 
   createRandomLevelSource(): ChunkSource {
     // DEFERRED(Levelgen): return new RandomLevelSource(level, level->getSeed(), level->getLevelData()->getGeneratorVersion(), !level->isClientSide && level->getLevelData()->getSpawnMobs());
-    throw new Error('RandomLevelSource 尚未移植（世界生成）。demo 用 FlatDimension，它重写了 createRandomLevelSource');
+    throw new Error(
+      'RandomLevelSource 尚未移植（世界生成）。demo 用 FlatDimension，它重写了 createRandomLevelSource',
+    );
   }
 
   isValidSpawn(x: number, z: number): boolean {
@@ -76,7 +78,9 @@ export class Dimension {
     for (let i = 0; i <= 15; /*Level::MAX_BRIGHTNESS;*/ i++) {
       const v = f(1 - f(i / 16));
       // brightnessRamp[i] = ((1 - v) / (v * 3 + 1)) * (1 - ambientLight) + ambientLight * 3;
-      this.brightnessRamp[i] = f(f(f(f(1 - v) / f(f(v * 3) + 1)) * f(1 - ambientLight)) + f(ambientLight * 3));
+      this.brightnessRamp[i] = f(
+        f(f(f(1 - v) / f(f(v * 3) + 1)) * f(1 - ambientLight)) + f(ambientLight * 3),
+      );
     }
   }
 
@@ -149,7 +153,7 @@ export class Dimension {
 /** 1:1 移植自 src/world/level/dimension/NormalDayCycleDimension.h（生存模式用的有昼夜的主世界） */
 export class NormalDayCycleDimension extends Dimension {
   override getTimeOfDay(time: number, a: number): number {
-    const dayStep = time % Level.TICKS_PER_DAY | 0; // (int) (time % Level::TICKS_PER_DAY)
+    const dayStep = (time % Level.TICKS_PER_DAY) | 0; // (int) (time % Level::TICKS_PER_DAY)
     let td = f(f(f(dayStep + a) / Level.TICKS_PER_DAY) - f(0.25));
     if (td < 0) td = f(td + 1);
     if (td > 1) td = f(td - 1);

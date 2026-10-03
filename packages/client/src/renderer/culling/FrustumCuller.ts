@@ -21,12 +21,33 @@ export class FrustumCuller extends Culler {
     this.zOff = zOff;
   }
 
-  cubeFullyInFrustum(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): boolean {
-    return this.frustum.cubeFullyInFrustum(x0 - this.xOff, y0 - this.yOff, z0 - this.zOff, x1 - this.xOff, y1 - this.yOff, z1 - this.zOff);
+  cubeFullyInFrustum(
+    x0: number,
+    y0: number,
+    z0: number,
+    x1: number,
+    y1: number,
+    z1: number,
+  ): boolean {
+    return this.frustum.cubeFullyInFrustum(
+      x0 - this.xOff,
+      y0 - this.yOff,
+      z0 - this.zOff,
+      x1 - this.xOff,
+      y1 - this.yOff,
+      z1 - this.zOff,
+    );
   }
 
   cubeInFrustum(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): boolean {
-    return this.frustum.cubeInFrustum(x0 - this.xOff, y0 - this.yOff, z0 - this.zOff, x1 - this.xOff, y1 - this.yOff, z1 - this.zOff);
+    return this.frustum.cubeInFrustum(
+      x0 - this.xOff,
+      y0 - this.yOff,
+      z0 - this.zOff,
+      x1 - this.xOff,
+      y1 - this.yOff,
+      z1 - this.zOff,
+    );
   }
 
   isVisible(bb: AABB): boolean {

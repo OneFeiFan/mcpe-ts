@@ -61,7 +61,7 @@ export class DataLayer {
 
   setAll(br: number): void {
     // 照原样保留 C++ 的写法：这里是 &，所以 setAll(15) 实际写入 0（15 & 240 = 0）。只有 setAll(0) 被调用过。
-    const val = (br & (br << 4)) & 0xff;
+    const val = br & (br << 4) & 0xff;
     this.data!.fill(val, 0, this.length);
   }
 }

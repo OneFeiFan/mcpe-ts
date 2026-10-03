@@ -180,7 +180,7 @@ export class PrintStream {
   }
   println(s: string): void {
     this.print(s);
-    this.print("\n");
+    this.print('\n');
   }
 }
 

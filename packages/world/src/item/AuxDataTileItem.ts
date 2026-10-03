@@ -1,6 +1,6 @@
-import type { Tile } from "../level/tile/Tile";
-import type { ItemInstance } from "./ItemInstance";
-import { TileItem } from "./TileItem";
+import type { Tile } from '../level/tile/Tile';
+import type { ItemInstance } from './ItemInstance';
+import { TileItem } from './TileItem';
 
 export class AuxDataTileItem extends TileItem {
   private readonly parentTile: Tile;
@@ -13,13 +13,13 @@ export class AuxDataTileItem extends TileItem {
     this.setStackedByData(true);
   }
 
-    override getIcon(itemAuxValue: number): number;
-    // C++ Item::getIcon(const ItemInstance* itemInstance)
-    override getIcon(itemInstance: ItemInstance): number;
-    override getIcon(a: number | ItemInstance): number {
-      if (typeof a === "number") {
-        return this.parentTile.getTexture(2, a);
-      }
+  override getIcon(itemAuxValue: number): number;
+  // C++ Item::getIcon(const ItemInstance* itemInstance)
+  override getIcon(itemInstance: ItemInstance): number;
+  override getIcon(a: number | ItemInstance): number {
+    if (typeof a === 'number') {
+      return this.parentTile.getTexture(2, a);
+    }
     return this.parentTile.getTexture(2, a.getAuxValue());
   }
 

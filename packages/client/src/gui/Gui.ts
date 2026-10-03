@@ -10,16 +10,50 @@
 import { SharedConstants } from '@mcpe/core';
 import { getTimeS, Keyboard, Mouse, MouseAction } from '@mcpe/platform';
 import { Mth, Random } from '@mcpe/util';
-import { HitResultType, Inventory, Item, type ItemInstance, Level, Material, Player, Tile } from '@mcpe/world';
+import {
+  HitResultType,
+  Inventory,
+  Item,
+  type ItemInstance,
+  Level,
+  Material,
+  Player,
+  Tile,
+} from '@mcpe/world';
 import type { Config, IConfigListener } from '../IConfigListener';
 import type { Minecraft } from '../Minecraft';
 import { OptionId } from '../Options';
 import { Chunk } from '../renderer/Chunk';
 import { ItemRenderer } from '../renderer/entity/ItemRenderer';
 import {
-  GL_ALPHA_TEST, GL_BLEND, GL_DEPTH_TEST, GL_LINEAR, GL_ONE_MINUS_SRC_ALPHA, GL_ONE_MINUS_SRC_COLOR, GL_SRC_ALPHA, GL_TEXTURE_2D,
-  GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_TRIANGLE_FAN, GL_ONE_MINUS_DST_COLOR, GL_ZERO, drawArrayVT, glTranslatef2, glBlendFunc, glBlendFunc2, glColor4f2, glDepthMask, glDisable, glDisable2,
-  glEnable, glEnable2, glGenBuffers2, glPopMatrix2, glPushMatrix2, glScalef2, glTexParameteri2,
+  GL_ALPHA_TEST,
+  GL_BLEND,
+  GL_DEPTH_TEST,
+  GL_LINEAR,
+  GL_ONE_MINUS_SRC_ALPHA,
+  GL_ONE_MINUS_SRC_COLOR,
+  GL_SRC_ALPHA,
+  GL_TEXTURE_2D,
+  GL_TEXTURE_MAG_FILTER,
+  GL_TEXTURE_MIN_FILTER,
+  GL_TRIANGLE_FAN,
+  GL_ONE_MINUS_DST_COLOR,
+  GL_ZERO,
+  drawArrayVT,
+  glTranslatef2,
+  glBlendFunc,
+  glBlendFunc2,
+  glColor4f2,
+  glDepthMask,
+  glDisable,
+  glDisable2,
+  glEnable,
+  glEnable2,
+  glGenBuffers2,
+  glPopMatrix2,
+  glPushMatrix2,
+  glScalef2,
+  glTexParameteri2,
 } from '../renderer/gles';
 import { RenderChunk } from '../renderer/RenderChunk';
 import { Tesselator } from '../renderer/Tesselator';
@@ -110,7 +144,10 @@ export class Gui extends GuiComponent implements IConfigListener {
         t.endOverrideAndDraw();
       }
     }
-    if (mc.options.getBooleanValue(OptionId.OPTIONS_FANCY_GRAPHICS) && mc.options.getBooleanValue(OptionId.OPTIONS_VIGNETTE)) {
+    if (
+      mc.options.getBooleanValue(OptionId.OPTIONS_FANCY_GRAPHICS) &&
+      mc.options.getBooleanValue(OptionId.OPTIONS_VIGNETTE)
+    ) {
       this.renderVignette(mc.player.getBrightness(a), screenWidth, screenHeight);
     }
     if (mc.player.getSleepTimer() > 0) {
@@ -190,9 +227,16 @@ export class Gui extends GuiComponent implements IConfigListener {
     const pCenterX = f(2.0 + Math.trunc(mc.width / 2));
     const pHalfWidth = f(f(1.0 + (this.getNumSlots() * 10 + Spacing)) * Gui.GuiScale);
     const pHeight = f((22 + Spacing) * Gui.GuiScale);
-    if (extendSide < 0) return new RectangleArea(0, mc.height - pHeight, pCenterX + pHalfWidth + 2, mc.height);
-    if (extendSide > 0) return new RectangleArea(pCenterX - pHalfWidth, mc.height - pHeight, mc.width, mc.height);
-    return new RectangleArea(pCenterX - pHalfWidth, mc.height - pHeight, pCenterX + pHalfWidth + 2, mc.height);
+    if (extendSide < 0)
+      return new RectangleArea(0, mc.height - pHeight, pCenterX + pHalfWidth + 2, mc.height);
+    if (extendSide > 0)
+      return new RectangleArea(pCenterX - pHalfWidth, mc.height - pHeight, mc.width, mc.height);
+    return new RectangleArea(
+      pCenterX - pHalfWidth,
+      mc.height - pHeight,
+      pCenterX + pHalfWidth + 2,
+      mc.height,
+    );
   }
 
   handleClick(button: number, x: number, y: number): void {
@@ -265,7 +309,10 @@ export class Gui extends GuiComponent implements IConfigListener {
   tick(): void {
     if (this.overlayMessageTime > 0) this.overlayMessageTime--;
     this.tickCount++;
-    if (this.itemNameOverlayTime < 2) this.itemNameOverlayTime = f(this.itemNameOverlayTime + f(1.0 / SharedConstants.TicksPerSecond));
+    if (this.itemNameOverlayTime < 2)
+      this.itemNameOverlayTime = f(
+        this.itemNameOverlayTime + f(1.0 / SharedConstants.TicksPerSecond),
+      );
     for (let i = 0; i < this.guiMessages.length; i++) {
       this.guiMessages[i]!.ticks++;
     }
@@ -278,7 +325,10 @@ export class Gui extends GuiComponent implements IConfigListener {
     let string = _string;
     while (font.width(string) > this.MAX_MESSAGE_WIDTH) {
       let i = 1;
-      while (i < string.length && font.width(string.substring(0, i + 1)) <= this.MAX_MESSAGE_WIDTH) {
+      while (
+        i < string.length &&
+        font.width(string.substring(0, i + 1)) <= this.MAX_MESSAGE_WIDTH
+      ) {
         i++;
       }
       this.addMessage(string.substring(0, i));
@@ -348,7 +398,13 @@ export class Gui extends GuiComponent implements IConfigListener {
     ItemRenderer.renderGuiItem(this.minecraft.font, this.minecraft.textures!, item, x, y, fancy);
   }
 
-  renderSlotText(item: ItemInstance, x: number, y: number, hasFinite: boolean, shadow: boolean): void {
+  renderSlotText(
+    item: ItemInstance,
+    x: number,
+    y: number,
+    hasFinite: boolean,
+    shadow: boolean,
+  ): void {
     if (item.count <= 1) {
       return;
     }
@@ -413,7 +469,10 @@ export class Gui extends GuiComponent implements IConfigListener {
     this.rcFeedbackInner = t.end(true, this.rcFeedbackInner.vboId);
     if (c.minecraft!.useTouchscreen()) {
       let num = 6;
-      if (!c.minecraft!.options.getBooleanValue(OptionId.OPTIONS_IS_JOY_TOUCH_AREA) && c.width > 480) {
+      if (
+        !c.minecraft!.options.getBooleanValue(OptionId.OPTIONS_IS_JOY_TOUCH_AREA) &&
+        c.width > 480
+      ) {
         while (num < Inventory_MAX_SELECTION_SIZE - 1) {
           const [x0] = this.getSlotPos(0);
           const [x1] = this.getSlotPos(num);
@@ -483,13 +542,24 @@ export class Gui extends GuiComponent implements IConfigListener {
     return percentage * percentage * (3 - 2 * percentage);
   }
 
-  renderProgressIndicator(isTouchInterface: boolean, screenWidth: number, screenHeight: number, a: number): void {
+  renderProgressIndicator(
+    isTouchInterface: boolean,
+    screenWidth: number,
+    screenHeight: number,
+    a: number,
+  ): void {
     const mc = this.minecraft;
     const player = mc.player!;
     const currentItem = player.inventory.getSelected();
     const bowEquipped = currentItem !== null ? currentItem.getItem() === Item.bow : false;
-    const itemInUse = currentItem !== null ? currentItem.getItem() === player.getUseItem()!.getItem() : false;
-    if ((!isTouchInterface || mc.options.getBooleanValue(OptionId.OPTIONS_IS_JOY_TOUCH_AREA) || (bowEquipped && itemInUse)) && !mc.options.getBooleanValue(OptionId.OPTIONS_HIDEGUI)) {
+    const itemInUse =
+      currentItem !== null ? currentItem.getItem() === player.getUseItem()!.getItem() : false;
+    if (
+      (!isTouchInterface ||
+        mc.options.getBooleanValue(OptionId.OPTIONS_IS_JOY_TOUCH_AREA) ||
+        (bowEquipped && itemInUse)) &&
+      !mc.options.getBooleanValue(OptionId.OPTIONS_HIDEGUI)
+    ) {
       mc.textures!.loadAndBindTexture('gui/icons.png');
       glEnable(GL_BLEND);
       glBlendFunc2(GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_COLOR);
@@ -527,7 +597,12 @@ export class Gui extends GuiComponent implements IConfigListener {
         glScalef2(0.5 + progress, 0.5 + progress, 1);
         glColor4f2(1, 1, 1, 1);
         glBlendFunc2(GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_COLOR);
-        drawArrayVT(this.rcFeedbackInner.vboId, this.rcFeedbackInner.vertexCount, 36, GL_TRIANGLE_FAN);
+        drawArrayVT(
+          this.rcFeedbackInner.vboId,
+          this.rcFeedbackInner.vertexCount,
+          36,
+          GL_TRIANGLE_FAN,
+        );
         glPopMatrix2();
         glDisable(GL_BLEND);
         glEnable2(GL_TEXTURE_2D);
@@ -545,7 +620,9 @@ export class Gui extends GuiComponent implements IConfigListener {
     this.random.setSeed(Math.imul(this.tickCount, 312871));
     const screenWidth = Math.trunc(mc.width * Gui.InvGuiScale);
     const screenHeight = Math.trunc(mc.height * Gui.InvGuiScale);
-    const xx = mc.options.getBooleanValue(OptionId.OPTIONS_BAR_ON_TOP) ? Math.trunc(screenWidth / 2) - this.getNumSlots() * 10 - 1 : 2;
+    const xx = mc.options.getBooleanValue(OptionId.OPTIONS_BAR_ON_TOP)
+      ? Math.trunc(screenWidth / 2) - this.getNumSlots() * 10 - 1
+      : 2;
     const armor = player.getArmorValue();
     for (let i = 0; i < Math.trunc(Player.MAX_HEALTH / 2); i++) {
       let yo = mc.options.getBooleanValue(OptionId.OPTIONS_BAR_ON_TOP) ? screenHeight - 32 : 2;
@@ -578,10 +655,15 @@ export class Gui extends GuiComponent implements IConfigListener {
     if (player.isUnderLiquid(Material.water)) {
       const screenWidth = Math.trunc(mc.width * Gui.InvGuiScale);
       const screenHeight = Math.trunc(mc.height * Gui.InvGuiScale);
-      const xx = mc.options.getBooleanValue(OptionId.OPTIONS_BAR_ON_TOP) ? Math.trunc(screenWidth / 2) - this.getNumSlots() * 10 - 1 : 2;
+      const xx = mc.options.getBooleanValue(OptionId.OPTIONS_BAR_ON_TOP)
+        ? Math.trunc(screenWidth / 2) - this.getNumSlots() * 10 - 1
+        : 2;
       const yo = mc.options.getBooleanValue(OptionId.OPTIONS_BAR_ON_TOP) ? screenHeight - 42 : 12;
-      const count = Math.trunc(Math.ceil(f(f((player.airSupply - 2) * 10.0) / Player.TOTAL_AIR_SUPPLY)));
-      const extra = Math.trunc(Math.ceil(f(f(player.airSupply * 10.0) / Player.TOTAL_AIR_SUPPLY))) - count;
+      const count = Math.trunc(
+        Math.ceil(f(f((player.airSupply - 2) * 10.0) / Player.TOTAL_AIR_SUPPLY)),
+      );
+      const extra =
+        Math.trunc(Math.ceil(f(f(player.airSupply * 10.0) / Player.TOTAL_AIR_SUPPLY))) - count;
       for (let i = 0; i < count + extra; i++) {
         const xo = i * 8 + xx;
         if (i < count) this.blit(xo, yo, 16, 9 * 2, 9, 9);
@@ -624,10 +706,19 @@ export class Gui extends GuiComponent implements IConfigListener {
     if (yMod < 0) yMod = f(yMod + 360.0);
     let facing: string;
     let axis: string;
-    if (yMod < 45 || yMod >= 315) { facing = 'South'; axis = '+Z'; }
-    else if (yMod < 135) { facing = 'West'; axis = '-X'; }
-    else if (yMod < 225) { facing = 'North'; axis = '-Z'; }
-    else { facing = 'East'; axis = '+X'; }
+    if (yMod < 45 || yMod >= 315) {
+      facing = 'South';
+      axis = '+Z';
+    } else if (yMod < 135) {
+      facing = 'West';
+      axis = '-X';
+    } else if (yMod < 225) {
+      facing = 'North';
+      axis = '-Z';
+    } else {
+      facing = 'East';
+      axis = '+X';
+    }
     let biomeName = 'unknown';
     if (lvl) {
       const biome = lvl.getBiome(bx, bz);
@@ -649,7 +740,12 @@ export class Gui extends GuiComponent implements IConfigListener {
     }
     const font = mc.font!;
     if (mc.options.getIntValue(OptionId.OPTIONS_DEBUG_STYLE) === 0) {
-      font.drawShadow(`Minecraft - Pocket Edition (${s.fps} fps, ${s.displayChunkUpdates} chunk updates)`, 2, 2, 0xffffff);
+      font.drawShadow(
+        `Minecraft - Pocket Edition (${s.fps} fps, ${s.displayChunkUpdates} chunk updates)`,
+        2,
+        2,
+        0xffffff,
+      );
       font.drawShadow(mc.gatherStats1(), 2, 12, 0xffffff);
       font.drawShadow(mc.gatherStats2(), 2, 22, 0xffffff);
       font.drawShadow(mc.gatherStats3(), 2, 32, 0xffffff);
@@ -657,9 +753,21 @@ export class Gui extends GuiComponent implements IConfigListener {
       this.drawString(font, `x: ${p.x.toFixed(8)}`, 2, 64, 0xe0e0e0);
       this.drawString(font, `y: ${p.y.toFixed(8)}`, 2, 72, 0xe0e0e0);
       this.drawString(font, `z: ${p.z.toFixed(8)}`, 2, 80, 0xe0e0e0);
-      this.drawString(font, `f: ${Mth.floor(p.yRot * 4.0 / 360.0 + 0.5) & 0x3}`, 2, 88, 0xe0e0e0);
-      this.drawString(font, `Seed: ${lvl!.getSeed() === 0 ? '' : lvl!.getSeed()}`, 2, 104, 0xe0e0e0); // "%.ld"：精度 0，值为 0 时不输出数字
-      this.drawString(font, `Dimension: ${lvl!.dimension.id} (${lvl!.dimension.getDimension()})`, 2, 114, 0xe0e0e0);
+      this.drawString(font, `f: ${Mth.floor((p.yRot * 4.0) / 360.0 + 0.5) & 0x3}`, 2, 88, 0xe0e0e0);
+      this.drawString(
+        font,
+        `Seed: ${lvl!.getSeed() === 0 ? '' : lvl!.getSeed()}`,
+        2,
+        104,
+        0xe0e0e0,
+      ); // "%.ld"：精度 0，值为 0 时不输出数字
+      this.drawString(
+        font,
+        `Dimension: ${lvl!.dimension.id} (${lvl!.dimension.getDimension()})`,
+        2,
+        114,
+        0xe0e0e0,
+      );
       this.drawString(font, `Biome: ${biomeName}`, 2, 124, 0xe0e0e0);
       this.drawString(font, `Looking at: ${CurrentTile}`, 2, 134, 0xe0e0e0);
     } else if (mc.options.getIntValue(OptionId.OPTIONS_DEBUG_STYLE) === 1) {
@@ -680,7 +788,13 @@ export class Gui extends GuiComponent implements IConfigListener {
       for (let i = 0; i < N; i++) {
         if (ln[i] === '') continue;
         const w = font.width(ln[i]!);
-        this.fill(MGN - PAD, MGN + i * LH - 1.0, MGN + w + PAD, MGN + (i + 1) * LH - 1.0, 0x90000000 | 0);
+        this.fill(
+          MGN - PAD,
+          MGN + i * LH - 1.0,
+          MGN + w + PAD,
+          MGN + (i + 1) * LH - 1.0,
+          0x90000000 | 0,
+        );
       }
       const t = Tesselator.instance;
       t.beginOverride();
@@ -832,8 +946,10 @@ export class Gui extends GuiComponent implements IConfigListener {
       const since = f(getTimeS() - this._flashSlotStartTime);
       if (since > 0.2) this._flashSlotId = -1;
       else {
-        const x = Math.trunc(screenWidth / 2) - this.getNumSlots() * 10 + this._flashSlotId * 20 + 2;
-        const color = (0xffffff + (Math.trunc(0x51 - 0x50 * Mth.cos(10 * f(6.28) * since)) << 24)) | 0;
+        const x =
+          Math.trunc(screenWidth / 2) - this.getNumSlots() * 10 + this._flashSlotId * 20 + 2;
+        const color =
+          (0xffffff + (Math.trunc(0x51 - 0x50 * Mth.cos(10 * f(6.28) * since)) << 24)) | 0;
         this.fill(x, ySlot, x + 16, ySlot + 16, color);
       }
     }
@@ -848,7 +964,16 @@ export class Gui extends GuiComponent implements IConfigListener {
     }
     this._inventoryNeedsUpdate = false;
     if (this._openInventorySlot) {
-      this.blit(Math.trunc(screenWidth / 2) + 10 * this.getNumSlots() - 20 + 4, ySlot + 6, 242, 252, 14, 4, 14, 4);
+      this.blit(
+        Math.trunc(screenWidth / 2) + 10 * this.getNumSlots() - 20 + 4,
+        ySlot + 6,
+        242,
+        252,
+        14,
+        4,
+        14,
+        4,
+      );
     }
     mc.textures!.loadAndBindTexture('gui/gui_blocks.png');
     t.endOverrideAndDraw();
@@ -870,7 +995,14 @@ export class Gui extends GuiComponent implements IConfigListener {
         x = baseItemX;
         for (let i = 0; i < slots; i++) {
           const item = inventory.getItem(i);
-          if (item && item.count >= 0) ItemRenderer.renderGuiItemDecorations(mc.font!, mc.textures!, inventory.getItem(i), x, ySlot);
+          if (item && item.count >= 0)
+            ItemRenderer.renderGuiItemDecorations(
+              mc.font!,
+              mc.textures!,
+              inventory.getItem(i),
+              x,
+              ySlot,
+            );
           x += 20;
         }
       }

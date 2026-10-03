@@ -112,7 +112,12 @@ const isLeftHanded = new OptionBool('isLeftHanded', false);
 const isJoyTouchArea = new OptionBool('isJoyTouchArea', false);
 const musicVolume = new OptionFloat('music', 1, MUSIC_MIN_VALUE, MUSIC_MAX_VALUE);
 const soundVolume = new OptionFloat('sound', 1, SOUND_MIN_VALUE, SOUND_MAX_VALUE);
-const sensitivityOpt = new OptionFloat('sensitivity', 0.5, SENSITIVITY_MIN_VALUE, SENSITIVITY_MAX_VALUE);
+const sensitivityOpt = new OptionFloat(
+  'sensitivity',
+  0.5,
+  SENSITIVITY_MIN_VALUE,
+  SENSITIVITY_MAX_VALUE,
+);
 const invertYMouse = new OptionBool('invertMouse', false);
 const viewDistance = new OptionInt('renderDistance', 2, 0, 4);
 const anaglyph3d = new OptionBool('anaglyph3d', false);
@@ -134,7 +139,7 @@ const tintedSide = new OptionBool('tintedSide', false);
 const blockOutline = new OptionBool('blockOutline', false);
 const restoredAnims = new OptionBool('restoredAnims', true);
 const debugStyle = new OptionInt('debugStyle', 0, 0, 1);
-const menuStyle = new OptionInt('menuStyle',0, 0, 2);
+const menuStyle = new OptionInt('menuStyle', 0, 0, 2);
 const windowScale = new OptionBool('windowScale', false);
 const keyForward = new OptionInt('key.forward', Keyboard.KEY_W);
 const keyLeft = new OptionInt('key.left', Keyboard.KEY_A);
@@ -159,7 +164,9 @@ export class Options {
   music = 1.0;
   static debugGl = false;
 
-  private readonly m_options: (Option | null)[] = new Array<Option | null>(OptionId.OPTIONS_COUNT).fill(null);
+  private readonly m_options: (Option | null)[] = new Array<Option | null>(
+    OptionId.OPTIONS_COUNT,
+  ).fill(null);
   // DEFERRED(Storage): OptionsFile optionsFile;
   private readonly minecraft: Minecraft | null;
 
@@ -240,7 +247,10 @@ export class Options {
     m[OptionId.OPTIONS_LAST_IP] = lastIp;
   }
 
-  private opt<T extends Option>(key: OptionId, type: abstract new (...args: never[]) => T): T | null {
+  private opt<T extends Option>(
+    key: OptionId,
+    type: abstract new (...args: never[]) => T,
+  ): T | null {
     const o = this.m_options[key];
     return o instanceof type ? o : null; // dynamic_cast<T*>
   }

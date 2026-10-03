@@ -35,16 +35,21 @@ export class TileEntityFactory {
 
   private static need(name: keyof TileEntityClasses, when: string): new () => TileEntity {
     const c = TileEntityFactory.classes[name];
-    if (!c) throw new Error(`${name}TileEntity 尚未移植（${when}），或没有经 TileEntityInclude 注入`);
+    if (!c)
+      throw new Error(`${name}TileEntity 尚未移植（${when}），或没有经 TileEntityInclude 注入`);
     return c;
   }
 
   static createTileEntity(type: number): TileEntity | null {
     switch (type) {
-      case TileEntityType.Furnace: return new (TileEntityFactory.need('Furnace', 'S12 阶段 A'))();
-      case TileEntityType.Chest: return new (TileEntityFactory.need('Chest', 'S12 阶段 C'))();
-      case TileEntityType.Sign: return new (TileEntityFactory.need('Sign', 'S11 阶段 A'))();
-      case TileEntityType.NetherReactor: return new (TileEntityFactory.need('NetherReactor', 'S12 阶段 C'))();
+      case TileEntityType.Furnace:
+        return new (TileEntityFactory.need('Furnace', 'S12 阶段 A'))();
+      case TileEntityType.Chest:
+        return new (TileEntityFactory.need('Chest', 'S12 阶段 C'))();
+      case TileEntityType.Sign:
+        return new (TileEntityFactory.need('Sign', 'S11 阶段 A'))();
+      case TileEntityType.NetherReactor:
+        return new (TileEntityFactory.need('NetherReactor', 'S12 阶段 C'))();
       default:
         LOGE(`Can't find TileEntity of type: ${type}`);
         return null;
@@ -161,7 +166,8 @@ export abstract class TileEntity {
   }
 
   getTile(): Tile | null {
-    if (this.tile === null) this.tile = Tile.tiles[this.level!.getTile(this.x, this.y, this.z)] ?? null;
+    if (this.tile === null)
+      this.tile = Tile.tiles[this.level!.getTile(this.x, this.y, this.z)] ?? null;
     return this.tile;
   }
 
@@ -208,7 +214,11 @@ export abstract class TileEntity {
   }
 }
 
-export function partitionTileEntities(input: readonly TileEntity[], keep: TileEntity[], dontKeep: TileEntity[]): number {
+export function partitionTileEntities(
+  input: readonly TileEntity[],
+  keep: TileEntity[],
+  dontKeep: TileEntity[],
+): number {
   const m = new Map<number, TileEntity>(); // std::map<TilePos, TileEntity*>，按 hashCode 判等
   for (let i = 0; i < input.length; ++i) {
     const e = input[i]!;

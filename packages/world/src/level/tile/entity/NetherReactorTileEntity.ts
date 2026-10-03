@@ -27,26 +27,25 @@ export class NetherReactorTileEntity extends TileEntity {
   private progress: number = 0;
 
   constructor() {
-      super(TileEntityType.NetherReactor);
-      this.isInitialized = false;
-      this.progress = 0;
-      this.curLevel = 0;
-      this.hasFinished = false; }
+    super(TileEntityType.NetherReactor);
+    this.isInitialized = false;
+    this.progress = 0;
+    this.curLevel = 0;
+    this.hasFinished = false;
+  }
 
   override shouldSave(): boolean {
     return true;
   }
 
   lightItUp(x: number, y: number, z: number): void {
-    
     this.curLevel = 0;
     NetherReactor.setPhase(this.level!, x, y, z, 1);
-      this.isInitialized = true;
-      
-      this.buildDome(x, y, z);
-      
-      this.level!.setNightMode(true);
-    
+    this.isInitialized = true;
+
+    this.buildDome(x, y, z);
+
+    this.level!.setNightMode(true);
   }
 
   buildDome(x: number, y: number, z: number): void {
@@ -59,10 +58,10 @@ export class NetherReactorTileEntity extends TileEntity {
   }
 
   clearDomeSpace(x: number, y: number, z: number): void {
-    for(let curX = -12; curX <= 12; ++curX) {
-      for(let curY = -3; curY < 40; ++curY) {
-        for(let curZ = -12; curZ <= 12; ++curZ) {
-          if(curY > 2 || curX < -1 || curX > 1 || curZ < -1 || curZ > 1)
+    for (let curX = -12; curX <= 12; ++curX) {
+      for (let curY = -3; curY < 40; ++curY) {
+        for (let curZ = -12; curZ <= 12; ++curZ) {
+          if (curY > 2 || curX < -1 || curX > 1 || curZ < -1 || curZ > 1)
             this.level!.setTile(curX + x, curY + y, curZ + z, 0);
         }
       }
@@ -70,35 +69,36 @@ export class NetherReactorTileEntity extends TileEntity {
   }
 
   override tick(): void {
-    if(this.level!.isClientSide)
-      return;
-    if(this.progress < 0) {
+    if (this.level!.isClientSide) return;
+    if (this.progress < 0) {
       this.remove = true;
     }
-    if(this.isInitialized && !this.hasFinished) {
+    if (this.isInitialized && !this.hasFinished) {
       this.progress++;
-      if(this.progress % SharedConstants.TicksPerSecond === 0) {
+      if (this.progress % SharedConstants.TicksPerSecond === 0) {
         let currentTime = this.progress / SharedConstants.TicksPerSecond;
-        if(currentTime < 10) {
+        if (currentTime < 10) {
           this.tickGlowingRedstoneTransformation(currentTime);
         }
-        if(currentTime > 42 && currentTime <= 45) {
-          
+        if (currentTime > 42 && currentTime <= 45) {
           let currentLayer = 45 - currentTime;
           this.turnGlowingObsidianLayerToObsidian(currentLayer);
         }
-        if(this.checkLevelChange(this.progress / SharedConstants.TicksPerSecond)) {
+        if (this.checkLevelChange(this.progress / SharedConstants.TicksPerSecond)) {
           this.curLevel++;
           this.spawnItems(this.getNumItemsPerLevel(this.curLevel));
-          this.trySpawnPigZombies(NetherReactorTileEntity.NUM_PIG_ZOMBIE_SLOTS, this.getNumEnemiesPerLevel(this.curLevel));
+          this.trySpawnPigZombies(
+            NetherReactorTileEntity.NUM_PIG_ZOMBIE_SLOTS,
+            this.getNumEnemiesPerLevel(this.curLevel),
+          );
         }
-      }  
-      if(this.progress > SharedConstants.TicksPerSecond * 46) {
+      }
+      if (this.progress > SharedConstants.TicksPerSecond * 46) {
         this.finishReactorRun();
       }
-    } else if(this.hasFinished) {
-      if(this.progress % SharedConstants.TicksPerSecond * 60 === 0) {
-        if(this.playersAreCloseBy()) {
+    } else if (this.hasFinished) {
+      if ((this.progress % SharedConstants.TicksPerSecond) * 60 === 0) {
+        if (this.playersAreCloseBy()) {
           this.trySpawnPigZombies(2, 3);
         } else {
           this.killPigZombies();
@@ -112,10 +112,10 @@ export class NetherReactorTileEntity extends TileEntity {
     this.level!.setNightMode(false);
     this.hasFinished = true;
     this.deterioateDome(this.x, this.y, this.z);
-    for(let curX = this.x - 1; curX <= this.x + 1; ++curX) {
-      for(let curY = this.y - 1; curY <= this.y + 1; ++curY) {
-        for(let curZ = this.z - 1; curZ <= this.z + 1; ++curZ) {
-          if(curX !== this.x || curY !== this.y || curZ !== this.z)
+    for (let curX = this.x - 1; curX <= this.x + 1; ++curX) {
+      for (let curY = this.y - 1; curY <= this.y + 1; ++curY) {
+        for (let curZ = this.z - 1; curZ <= this.z + 1; ++curZ) {
+          if (curX !== this.x || curY !== this.y || curZ !== this.z)
             this.level!.setTile(curX, curY, curZ, Tile.obsidian.id);
         }
       }
@@ -124,72 +124,78 @@ export class NetherReactorTileEntity extends TileEntity {
 
   override save(tag: CompoundTag): boolean {
     super.save(tag);
-    tag.putBoolean("IsInitialized", this.isInitialized);
-    tag.putShort("Progress", this.progress);
-    tag.putBoolean("HasFinished", this.hasFinished);
-    if(this.isInitialized && !this.hasFinished)
-      this.level!.setNightMode(true);
+    tag.putBoolean('IsInitialized', this.isInitialized);
+    tag.putShort('Progress', this.progress);
+    tag.putBoolean('HasFinished', this.hasFinished);
+    if (this.isInitialized && !this.hasFinished) this.level!.setNightMode(true);
     return true;
   }
 
   override load(tag: CompoundTag): void {
     super.load(tag);
-    this.isInitialized = tag.getBoolean("IsInitialized");
-    if(this.isInitialized) {
-      this.progress = tag.getShort("Progress");
-      this.hasFinished = tag.getBoolean("HasFinished");
+    this.isInitialized = tag.getBoolean('IsInitialized');
+    if (this.isInitialized) {
+      this.progress = tag.getShort('Progress');
+      this.hasFinished = tag.getBoolean('HasFinished');
     }
   }
 
   getNumEnemiesPerLevel(curLevel: number): number {
-    if(curLevel === 0)
-      return 3;
-    else if(curLevel < 4)
-      return 2;
-    else if(curLevel < 6)
-      return Mth.Max(0, this.level!.random.nextInt(2));
-    else
-      return Mth.Max(0, this.level!.random.nextInt(1));
+    if (curLevel === 0) return 3;
+    else if (curLevel < 4) return 2;
+    else if (curLevel < 6) return Mth.Max(0, this.level!.random.nextInt(2));
+    else return Mth.Max(0, this.level!.random.nextInt(1));
   }
 
   getNumItemsPerLevel(curLevel: number): number {
-    if(curLevel === 0)
-      return 3 * 3;
-    else if(curLevel < 4)
-      return 5 * 3;
-    else if(curLevel < 8)
-      return Mth.Max(0, this.level!.random.nextInt(14 * 3) - 4);
-    else
-      return Mth.Max(0, this.level!.random.nextInt(9 * 3) - 2);
+    if (curLevel === 0) return 3 * 3;
+    else if (curLevel < 4) return 5 * 3;
+    else if (curLevel < 8) return Mth.Max(0, this.level!.random.nextInt(14 * 3) - 4);
+    else return Mth.Max(0, this.level!.random.nextInt(9 * 3) - 2);
   }
 
   spawnItems(numItems: number): void {
-    for (let ii = 0; ii < numItems ; ii++) {
+    for (let ii = 0; ii < numItems; ii++) {
       this.spawnItem();
     }
   }
 
   getName(): string {
-      
-    return "NetherReactor";
+    return 'NetherReactor';
   }
 
   spawnEnemy(): void {
     // DEFERRED(Mob): Mob* mob = MobFactory::CreateMob(MobTypes::PigZombie, level);（僵尸猪人，计划外）
     let enemyPosition = this.getSpawnPosition(3, 4, -1);
-    while(enemyPosition.x < 0 || enemyPosition.z < 0 || enemyPosition.x >= LevelConstants.LEVEL_WIDTH || enemyPosition.z >= LevelConstants.LEVEL_DEPTH) {
+    while (
+      enemyPosition.x < 0 ||
+      enemyPosition.z < 0 ||
+      enemyPosition.x >= LevelConstants.LEVEL_WIDTH ||
+      enemyPosition.z >= LevelConstants.LEVEL_DEPTH
+    ) {
       enemyPosition = this.getSpawnPosition(3, 4, -1);
     }
     // DEFERRED(Mob): MobSpawner::addMob(level, mob, enemyPosition.x, enemyPosition.y, enemyPosition.z, 0, 0, true);
   }
 
   spawnItem(): void {
-    let itemPosition= this.getSpawnPosition(3, 4, -1);
-    while(itemPosition.x < 0 || itemPosition.z < 0 || itemPosition.x >= LevelConstants.LEVEL_WIDTH || itemPosition.z >= LevelConstants.LEVEL_DEPTH) {
+    let itemPosition = this.getSpawnPosition(3, 4, -1);
+    while (
+      itemPosition.x < 0 ||
+      itemPosition.z < 0 ||
+      itemPosition.x >= LevelConstants.LEVEL_WIDTH ||
+      itemPosition.z >= LevelConstants.LEVEL_DEPTH
+    ) {
       itemPosition = this.getSpawnPosition(3, 4, -1);
     }
-    let item = createItemEntity(this.level!, itemPosition.x, itemPosition.y, itemPosition.z, this.getSpawnItem());
-  
+    let item = createItemEntity(
+      this.level!,
+      itemPosition.x,
+      itemPosition.y,
+      itemPosition.z,
+      this.getSpawnItem(),
+    );
+
     item.throwTime = 10;
     item.age = item.getLifeTime() - SharedConstants.TicksPerSecond * 30;
     this.level!.addEntity(item);
@@ -197,21 +203,39 @@ export class NetherReactorTileEntity extends TileEntity {
 
   getSpawnItem(): ItemInstance {
     let itemType = this.level!.random.nextInt(8);
-    switch(itemType) {
-        case 0: return new ItemInstance(Item.yellowDust, 3);
-      case 1: return new ItemInstance(Item.seeds_melon);
-      case 2: return new ItemInstance(Tile.mushroom1);
-      case 3: return new ItemInstance(Tile.mushroom2);
-      case 4: return new ItemInstance(Item.reeds);
-      case 5: return new ItemInstance(Tile.cactus);
-      case 6: return new ItemInstance(Item.netherQuartz, 4);
-      default: return this.GetLowOddsSpawnItem();
+    switch (itemType) {
+      case 0:
+        return new ItemInstance(Item.yellowDust, 3);
+      case 1:
+        return new ItemInstance(Item.seeds_melon);
+      case 2:
+        return new ItemInstance(Tile.mushroom1);
+      case 3:
+        return new ItemInstance(Tile.mushroom2);
+      case 4:
+        return new ItemInstance(Item.reeds);
+      case 5:
+        return new ItemInstance(Tile.cactus);
+      case 6:
+        return new ItemInstance(Item.netherQuartz, 4);
+      default:
+        return this.GetLowOddsSpawnItem();
     }
   }
 
   GetLowOddsSpawnItem(): ItemInstance {
-    if(this.level!.random.nextInt(10) <= 9 ) {
-      const items: Item[] = [Item.arrow, Item.bed, Item.bone, Item.book, Item.bow, Item.bowl, Item.feather, Item.painting, Item.door_wood]; // static Item* items[]
+    if (this.level!.random.nextInt(10) <= 9) {
+      const items: Item[] = [
+        Item.arrow,
+        Item.bed,
+        Item.bone,
+        Item.book,
+        Item.bow,
+        Item.bowl,
+        Item.feather,
+        Item.painting,
+        Item.door_wood,
+      ]; // static Item* items[]
       let itemIndex = this.level!.random.nextInt(items.length);
       let itemToSpawn = items[itemIndex];
       return new ItemInstance(itemToSpawn!);
@@ -226,9 +250,8 @@ export class NetherReactorTileEntity extends TileEntity {
   checkLevelChange(progress: number): boolean {
     const levelChangeTime = [10, 13, 20, 22, 25, 30, 34, 36, 38, 40]; // static const int levelChangeTime[]
     let count = levelChangeTime.length;
-    for(let a = 0; a < count; ++a) {
-      if(levelChangeTime[a] === progress)
-        return true;
+    for (let a = 0; a < count; ++a) {
+      if (levelChangeTime[a] === progress) return true;
     }
     return false;
   }
@@ -236,21 +259,21 @@ export class NetherReactorTileEntity extends TileEntity {
   numOfFreeEnemySlots(): number {
     let numPigZombiesFound = 0;
     let bb = new AABB(this.x, this.y, this.z, this.x + 1.0, this.y + 1.0, this.z + 1.0);
-    let nearby =  this.level!.getEntities(null, bb.grow(7, 7, 7));
+    let nearby = this.level!.getEntities(null, bb.grow(7, 7, 7));
     for (const it of nearby) {
-      if(it.getEntityTypeId() === MobTypes.PigZombie && it.isAlive()) {
+      if (it.getEntityTypeId() === MobTypes.PigZombie && it.isAlive()) {
         numPigZombiesFound++;
       }
     }
-    return NetherReactorTileEntity.NUM_PIG_ZOMBIE_SLOTS - numPigZombiesFound; 
+    return NetherReactorTileEntity.NUM_PIG_ZOMBIE_SLOTS - numPigZombiesFound;
   }
 
   trySpawnPigZombies(maxNumOfEnemies: number, maxToSpawn: number): void {
-    if(this.level!.difficulty === Difficulty.PEACEFUL)
-      return;
-    let currentNumOfPigZombies = NetherReactorTileEntity.NUM_PIG_ZOMBIE_SLOTS - this.numOfFreeEnemySlots();
-    if(currentNumOfPigZombies < maxNumOfEnemies) {
-      for(let a = 0;  a < maxToSpawn && currentNumOfPigZombies < maxNumOfEnemies; ++a) {
+    if (this.level!.difficulty === Difficulty.PEACEFUL) return;
+    let currentNumOfPigZombies =
+      NetherReactorTileEntity.NUM_PIG_ZOMBIE_SLOTS - this.numOfFreeEnemySlots();
+    if (currentNumOfPigZombies < maxNumOfEnemies) {
+      for (let a = 0; a < maxToSpawn && currentNumOfPigZombies < maxNumOfEnemies; ++a) {
         this.spawnEnemy();
         currentNumOfPigZombies++;
       }
@@ -258,22 +281,33 @@ export class NetherReactorTileEntity extends TileEntity {
   }
 
   tickGlowingRedstoneTransformation(currentTime: number): void {
-    switch(currentTime) {
-      case 2: return this.turnLayerToGlowingObsidian(0, Tile.stoneBrick.id);
-      case 3: return this.turnLayerToGlowingObsidian(1, Tile.stoneBrick.id);
-      case 4: return this.turnLayerToGlowingObsidian(2, Tile.stoneBrick.id);
-      case 7: return this.turnLayerToGlowingObsidian(0, Tile.goldBlock.id);
-      case 8: return this.turnLayerToGlowingObsidian(1, Tile.goldBlock.id);
-      case 9: return this.turnLayerToGlowingObsidian(2, Tile.goldBlock.id);
+    switch (currentTime) {
+      case 2:
+        return this.turnLayerToGlowingObsidian(0, Tile.stoneBrick.id);
+      case 3:
+        return this.turnLayerToGlowingObsidian(1, Tile.stoneBrick.id);
+      case 4:
+        return this.turnLayerToGlowingObsidian(2, Tile.stoneBrick.id);
+      case 7:
+        return this.turnLayerToGlowingObsidian(0, Tile.goldBlock.id);
+      case 8:
+        return this.turnLayerToGlowingObsidian(1, Tile.goldBlock.id);
+      case 9:
+        return this.turnLayerToGlowingObsidian(2, Tile.goldBlock.id);
     }
   }
 
   turnLayerToGlowingObsidian(layer: number, type: number): void {
     let pattern = new NetherReactorPattern();
-    for(let checkX = -1; checkX <= 1; ++checkX) {
-      for(let checkZ = -1; checkZ <= 1; ++checkZ) {
-        if(pattern.getTileAt(layer, checkX + 1, checkZ + 1) === type) {
-          this.level!.setTile(this.x + checkX, this.y - 1 + layer, this.z + checkZ, Tile.glowingObsidian.id);
+    for (let checkX = -1; checkX <= 1; ++checkX) {
+      for (let checkZ = -1; checkZ <= 1; ++checkZ) {
+        if (pattern.getTileAt(layer, checkX + 1, checkZ + 1) === type) {
+          this.level!.setTile(
+            this.x + checkX,
+            this.y - 1 + layer,
+            this.z + checkZ,
+            Tile.glowingObsidian.id,
+          );
         }
       }
     }
@@ -281,10 +315,18 @@ export class NetherReactorTileEntity extends TileEntity {
 
   turnGlowingObsidianLayerToObsidian(layer: number): void {
     let pattern = new NetherReactorPattern();
-    for(let checkX = -1; checkX <= 1; ++checkX) {
-      for(let checkZ = -1; checkZ <= 1; ++checkZ) {
-        if(this.level!.getTile(this.x + checkX, this.y - 1 + layer, this.z + checkZ) !== Tile.netherReactor.id) {
-          this.level!.setTile(this.x + checkX, this.y - 1 + layer, this.z + checkZ, Tile.obsidian.id);
+    for (let checkX = -1; checkX <= 1; ++checkX) {
+      for (let checkZ = -1; checkZ <= 1; ++checkZ) {
+        if (
+          this.level!.getTile(this.x + checkX, this.y - 1 + layer, this.z + checkZ) !==
+          Tile.netherReactor.id
+        ) {
+          this.level!.setTile(
+            this.x + checkX,
+            this.y - 1 + layer,
+            this.z + checkZ,
+            Tile.obsidian.id,
+          );
         }
       }
     }
@@ -293,17 +335,33 @@ export class NetherReactorTileEntity extends TileEntity {
   getSpawnPosition(minDistance: number, varibleDistance: number, offset: number): Vec3 {
     let distance = minDistance + this.level!.random.nextFloat() * varibleDistance;
     let rad = this.level!.random.nextFloat() * Mth.TWO_PI;
-    return new Vec3(Math.sin(rad) * distance + this.x, offset + this.y, Math.cos(rad) * distance + this.z);
+    return new Vec3(
+      Math.sin(rad) * distance + this.x,
+      offset + this.y,
+      Math.cos(rad) * distance + this.z,
+    );
   }
 
-  buildHollowedVolume(x: number, y: number, z: number, expandWidth: number, height: number, wallTileId: number, clearTileId: number): void {
-    for(let curY = 0; curY < height; ++curY) {
-      for(let curX = -expandWidth; curX <= expandWidth; ++curX) {
-        for(let curZ = -expandWidth; curZ <= expandWidth; ++curZ) {
-          if((curX === -expandWidth || curX === expandWidth)
-          || (curZ === -expandWidth || curZ === expandWidth)) {
+  buildHollowedVolume(
+    x: number,
+    y: number,
+    z: number,
+    expandWidth: number,
+    height: number,
+    wallTileId: number,
+    clearTileId: number,
+  ): void {
+    for (let curY = 0; curY < height; ++curY) {
+      for (let curX = -expandWidth; curX <= expandWidth; ++curX) {
+        for (let curZ = -expandWidth; curZ <= expandWidth; ++curZ) {
+          if (
+            curX === -expandWidth ||
+            curX === expandWidth ||
+            curZ === -expandWidth ||
+            curZ === expandWidth
+          ) {
             this.level!.setTile(curX + x, curY + y, curZ + z, wallTileId);
-          } else if(curY > 2 || curX < -1 || curX > 1 || curZ < -1 || curZ > 1) {
+          } else if (curY > 2 || curX < -1 || curX > 1 || curZ < -1 || curZ > 1) {
             this.level!.setTile(curX + x, curY + y, curZ + z, clearTileId);
           }
         }
@@ -311,27 +369,43 @@ export class NetherReactorTileEntity extends TileEntity {
     }
   }
 
-  buildFloorVolume(x: number, y: number, z: number, expandWidth: number, height: number, tileId: number): void {
-    for(let curY = 0; curY < height; ++curY) {
-      for(let curX = -expandWidth; curX <= expandWidth; ++curX) {
-        for(let curZ = -expandWidth; curZ <= expandWidth; ++curZ) {
+  buildFloorVolume(
+    x: number,
+    y: number,
+    z: number,
+    expandWidth: number,
+    height: number,
+    tileId: number,
+  ): void {
+    for (let curY = 0; curY < height; ++curY) {
+      for (let curX = -expandWidth; curX <= expandWidth; ++curX) {
+        for (let curZ = -expandWidth; curZ <= expandWidth; ++curZ) {
           this.level!.setTile(curX + x, curY + y, curZ + z, tileId);
         }
       }
     }
   }
 
-  buildCrockedRoofVolume(inverted: boolean, x: number, y: number, z: number, expandWidth: number, height: number, tileId: number): void {
+  buildCrockedRoofVolume(
+    inverted: boolean,
+    x: number,
+    y: number,
+    z: number,
+    expandWidth: number,
+    height: number,
+    tileId: number,
+  ): void {
     let fullHeight = height + expandWidth;
-    for(let curX = -expandWidth; curX <= expandWidth; ++curX) {
-      for(let curZ = -expandWidth; curZ <= expandWidth; ++curZ) {
-        let offset = inverted ? ((-curX - curZ) / 2) : ((curX + curZ) / 2);
+    for (let curX = -expandWidth; curX <= expandWidth; ++curX) {
+      for (let curZ = -expandWidth; curZ <= expandWidth; ++curZ) {
+        let offset = inverted ? (-curX - curZ) / 2 : (curX + curZ) / 2;
         let acceptHeight = fullHeight + offset;
-        for(let curY = 0; curY < fullHeight + expandWidth; ++curY) {
-          if(acceptHeight >= curY
-            && (this.isEdge(curX, expandWidth, curZ)
-            || acceptHeight === curY )) {
-              this.level!.setTile(curX + x, curY + y, curZ + z, tileId);
+        for (let curY = 0; curY < fullHeight + expandWidth; ++curY) {
+          if (
+            acceptHeight >= curY &&
+            (this.isEdge(curX, expandWidth, curZ) || acceptHeight === curY)
+          ) {
+            this.level!.setTile(curX + x, curY + y, curZ + z, tileId);
           }
         }
       }
@@ -339,8 +413,9 @@ export class NetherReactorTileEntity extends TileEntity {
   }
 
   isEdge(curX: number, expandWidth: number, curZ: number): boolean {
-    return (curX === -expandWidth || curX === expandWidth)
-      || (curZ === -expandWidth || curZ === expandWidth);
+    return (
+      curX === -expandWidth || curX === expandWidth || curZ === -expandWidth || curZ === expandWidth
+    );
   }
 
   deterioateDome(x: number, y: number, z: number): void {
@@ -350,32 +425,50 @@ export class NetherReactorTileEntity extends TileEntity {
     this.deterioateCrockedRoofVolume(false, x, y + -1 + 12, z, 3, 14, 0);
   }
 
-  deterioateCrockedRoofVolume(inverted: boolean, x: number, y: number, z: number, expandWidth: number, height: number, tileId: number): void {
+  deterioateCrockedRoofVolume(
+    inverted: boolean,
+    x: number,
+    y: number,
+    z: number,
+    expandWidth: number,
+    height: number,
+    tileId: number,
+  ): void {
     let fullHeight = height + expandWidth;
-    for(let curX = -expandWidth; curX <= expandWidth; ++curX) {
-      for(let curZ = -expandWidth; curZ <= expandWidth; ++curZ) {
-        let offset = inverted ? ((-curX - curZ) / 2) : ((curX + curZ) / 2);
+    for (let curX = -expandWidth; curX <= expandWidth; ++curX) {
+      for (let curZ = -expandWidth; curZ <= expandWidth; ++curZ) {
+        let offset = inverted ? (-curX - curZ) / 2 : (curX + curZ) / 2;
         let acceptHeight = fullHeight + offset;
-        for(let curY = 0; curY < fullHeight + expandWidth; ++curY) {
-          if(acceptHeight >= curY
-            && (this.isEdge(curX, expandWidth, curZ))) {
-              if(this.level!.random.nextInt(4) === 0) {
-                this.level!.setTile(curX + x, curY + y, curZ + z, tileId);
-              }
+        for (let curY = 0; curY < fullHeight + expandWidth; ++curY) {
+          if (acceptHeight >= curY && this.isEdge(curX, expandWidth, curZ)) {
+            if (this.level!.random.nextInt(4) === 0) {
+              this.level!.setTile(curX + x, curY + y, curZ + z, tileId);
+            }
           }
         }
       }
     }
   }
 
-  deterioateHollowedVolume(x: number, y: number, z: number, expandWidth: number, height: number, tileId: number): void {
-    for(let curY = 0; curY < height; ++curY) {
-      for(let curX = -expandWidth; curX <= expandWidth; ++curX) {
-        for(let curZ = -expandWidth; curZ <= expandWidth; ++curZ) {
-          if((curX === -expandWidth || curX === expandWidth)
-            || (curZ === -expandWidth || curZ === expandWidth)) {
-              if(this.level!.random.nextInt(3) === 0)
-                this.level!.setTile(curX + x, curY + y, curZ + z, tileId);
+  deterioateHollowedVolume(
+    x: number,
+    y: number,
+    z: number,
+    expandWidth: number,
+    height: number,
+    tileId: number,
+  ): void {
+    for (let curY = 0; curY < height; ++curY) {
+      for (let curX = -expandWidth; curX <= expandWidth; ++curX) {
+        for (let curZ = -expandWidth; curZ <= expandWidth; ++curZ) {
+          if (
+            curX === -expandWidth ||
+            curX === expandWidth ||
+            curZ === -expandWidth ||
+            curZ === expandWidth
+          ) {
+            if (this.level!.random.nextInt(3) === 0)
+              this.level!.setTile(curX + x, curY + y, curZ + z, tileId);
           }
         }
       }
@@ -385,11 +478,10 @@ export class NetherReactorTileEntity extends TileEntity {
   playersAreCloseBy(): boolean {
     let numPlayers = 0;
     let bb = new AABB(this.x, this.y, this.z, this.x + 1.0, this.y + 1.0, this.z + 1.0);
-    let nearby =  this.level!.getEntities(null, bb.grow(40, 40, 40));
+    let nearby = this.level!.getEntities(null, bb.grow(40, 40, 40));
     for (const it of nearby) {
-      if(it.isPlayer() && it.isAlive() ) {
-        if(it.distanceTo(this.x, this.y, this.z) < 40)
-          numPlayers++;
+      if (it.isPlayer() && it.isAlive()) {
+        if (it.distanceTo(this.x, this.y, this.z) < 40) numPlayers++;
       }
     }
     return numPlayers !== 0;
@@ -397,9 +489,9 @@ export class NetherReactorTileEntity extends TileEntity {
 
   killPigZombies(): void {
     let bb = new AABB(this.x, this.y, this.z, this.x + 1.0, this.y + 1.0, this.z + 1.0);
-    let nearby =  this.level!.getEntities(null, bb.grow(40, 40, 40));
+    let nearby = this.level!.getEntities(null, bb.grow(40, 40, 40));
     for (const it of nearby) {
-      if(it.getEntityTypeId() === MobTypes.PigZombie) {
+      if (it.getEntityTypeId() === MobTypes.PigZombie) {
         it.remove();
       }
     }

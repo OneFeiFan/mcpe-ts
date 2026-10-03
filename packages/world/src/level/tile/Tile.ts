@@ -260,7 +260,10 @@ export class Tile {
   static readonly isEntityTile: boolean[] = new Array<boolean>(Tile.NUM_BLOCK_TYPES).fill(false);
   static readonly lightBlock = new Int32Array(Tile.NUM_BLOCK_TYPES);
   /** C++ 初值 {true, false}：只有 0 号（空气）为 true */
-  static readonly translucent: boolean[] = [true, ...new Array<boolean>(Tile.NUM_BLOCK_TYPES - 1).fill(false)];
+  static readonly translucent: boolean[] = [
+    true,
+    ...new Array<boolean>(Tile.NUM_BLOCK_TYPES - 1).fill(false),
+  ];
   static readonly lightEmission = new Int32Array(Tile.NUM_BLOCK_TYPES);
 
   // ---- 118 个静态方块字段。C++ 初值为 NULL：这里用 Unregistered.ts 的哨兵代替（访问即报错，信息写明字段名），
@@ -390,103 +393,584 @@ export class Tile {
 
   /** 由 TileInclude.ts 的 initTiles() 调用；c 是全部已移植的子类构造器 */
   static initTiles(c: TileClasses): void {
-    Tile.rock = new c.StoneTile(1, 1).init().setDestroyTime(1.5).setExplodeable(10).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('stone');
-    Tile.grass = new c.GrassTile(2).init().setDestroyTime(0.6).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Structures).setDescriptionId('grass');
-    Tile.dirt = new c.DirtTile(3, 2).init().setDestroyTime(0.5).setSoundType(Tile.SOUND_GRAVEL).setCategory(ItemCategory.Structures).setDescriptionId('dirt');
-    Tile.stoneBrick = new Tile(4, 16, Material.stone).init().setDestroyTime(2.0).setExplodeable(10).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('stonebrick');
-    Tile.wood = new Tile(5, 4, Material.wood).init().setDestroyTime(2.0).setExplodeable(5).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Structures).setDescriptionId('wood');
-    Tile.sapling = new c.Sapling(6, 15).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Structures).setDescriptionId('sapling');
-    Tile.unbreakable = new Tile(7, 17, Material.stone).init().setDestroyTime(-1).setExplodeable(6000000).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('bedrock');
-    Tile.water = new c.LiquidTileDynamic(8, Material.water).init().setDestroyTime(100.0).setLightBlock(3).setCategory(ItemCategory.Structures).setDescriptionId('water');
-    Tile.calmWater = new c.LiquidTileStatic(9, Material.water).init().setDestroyTime(100.0).setLightBlock(3).setCategory(ItemCategory.Structures).setDescriptionId('water');
-    Tile.lava = new c.LiquidTileDynamic(10, Material.lava).init().setDestroyTime(0.0).setLightEmission(1.0).setLightBlock(255).setCategory(ItemCategory.Structures).setDescriptionId('lava');
-    Tile.calmLava = new c.LiquidTileStatic(11, Material.lava).init().setDestroyTime(100.0).setLightEmission(1.0).setLightBlock(255).setCategory(ItemCategory.Structures).setDescriptionId('lava');
-    Tile.sand = new c.HeavyTile(12, 18).init().setDestroyTime(0.5).setSoundType(Tile.SOUND_SAND).setCategory(ItemCategory.Structures).setDescriptionId('sand');
-    Tile.gravel = new c.GravelTile(13, 19).init().setDestroyTime(0.6).setSoundType(Tile.SOUND_GRAVEL).setCategory(ItemCategory.Structures).setDescriptionId('gravel');
-    Tile.goldOre = new c.OreTile(14, 32).init().setDestroyTime(3.0).setExplodeable(5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Decorations).setDescriptionId('oreGold');
-    Tile.ironOre = new c.OreTile(15, 33).init().setDestroyTime(3.0).setExplodeable(5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Decorations).setDescriptionId('oreIron');
-    Tile.coalOre = new c.OreTile(16, 34).init().setDestroyTime(3.0).setExplodeable(5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('oreCoal');
-    Tile.treeTrunk = new c.TreeTile(17).init().setDestroyTime(2.0).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Structures).setDescriptionId('log');
-    Tile.leaves = new c.LeafTile(18, 4 + 3 * 16).init().setDestroyTime(0.2).setLightBlock(1).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Structures).setDescriptionId('leaves') as LeafTile;
-    Tile.glass = new c.GlassTile(20, 49, Material.glass, false).init().setDestroyTime(0.3).setSoundType(Tile.SOUND_GLASS).setCategory(ItemCategory.Structures).setDescriptionId('glass');
-    Tile.lapisOre = new c.OreTile(21, 10 * 16).init().setDestroyTime(3.0).setExplodeable(5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('oreLapis');
-    Tile.lapisBlock = new Tile(22, 9 * 16, Material.stone).init().setDestroyTime(3.0).setExplodeable(5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Decorations).setDescriptionId('blockLapis');
-    Tile.sandStone = new c.SandStoneTile(24, SANDSTONE_TEXTURES, SANDSTONE_TEXTURE_COUNT).init().setSoundType(Tile.SOUND_STONE).setDestroyTime(0.8).setCategory(ItemCategory.Structures).setDescriptionId('sandStone');
-    Tile.bed = new c.BedTile(26).init().setDestroyTime(0.2).setCategory(ItemCategory.Structures).setDescriptionId('bed');
-    Tile.web = new c.WebTile(30, 11).init().setLightBlock(1).setDestroyTime(4.0).setCategory(ItemCategory.Decorations).setDescriptionId('web');
-    Tile.tallgrass = new c.TallGrass(31, 2 * 16 + 7).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Decorations).setDescriptionId('tallgrass');
-    Tile.cloth = new c.ClothTile(35).init().setDestroyTime(0.8).setSoundType(Tile.SOUND_CLOTH).setCategory(ItemCategory.Structures).setDescriptionId('cloth');
-    Tile.flower = new c.Bush(37, 13).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Decorations).setDescriptionId('flower');
-    Tile.rose = new c.Bush(38, 12).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Decorations).setDescriptionId('rose');
-    Tile.mushroom1 = new c.Mushroom(39, 13 + 16).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_GRASS).setLightEmission(2 / 16.0).setCategory(ItemCategory.Decorations).setDescriptionId('mushroom');
-    Tile.mushroom2 = new c.Mushroom(40, 12 + 16).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Decorations).setDescriptionId('mushroom');
-    Tile.goldBlock = new c.MetalTile(41, 39 - 16).init().setDestroyTime(3.0).setExplodeable(10).setSoundType(Tile.SOUND_METAL).setCategory(ItemCategory.Decorations).setDescriptionId('blockGold');
-    Tile.ironBlock = new c.MetalTile(42, 38 - 16).init().setDestroyTime(5.0).setExplodeable(10).setSoundType(Tile.SOUND_METAL).setCategory(ItemCategory.Decorations).setDescriptionId('blockIron');
-    Tile.stoneSlab = new c.StoneSlabTile(43, true).init().setDestroyTime(2.0).setExplodeable(10).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('stoneSlab');
-    Tile.stoneSlabHalf = new c.StoneSlabTile(44, false).init().setDestroyTime(2.0).setExplodeable(10).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('stoneSlab');
-    Tile.redBrick = new Tile(45, 7, Material.stone).init().setDestroyTime(2.0).setExplodeable(10).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('brick');
-    Tile.tnt = new c.TntTile(46, 8).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Tools).setDescriptionId('tnt');
-    Tile.bookshelf = new c.BookshelfTile(47, 35).init().setDestroyTime(1.5).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Decorations).setDescriptionId('bookshelf');
-    Tile.mossStone = new Tile(48, 36, Material.stone).init().setDestroyTime(2.0).setExplodeable(10).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('stoneMoss');
-    Tile.obsidian = new c.ObsidianTile(49, 37, false).init().setDestroyTime(10.0).setExplodeable(2000).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('obsidian');
-    Tile.torch = new c.TorchTile(50, 5 * 16).init().setDestroyTime(0.0).setLightEmission(15 / 16.0).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Tools).setDescriptionId('torch');
-    Tile.stairs_wood = new c.StairTile(53, Tile.wood).init().setCategory(ItemCategory.Structures).setDescriptionId('stairsWood');
-    Tile.chest = new c.ChestTile(54).init().setCategory(ItemCategory.Structures).setDestroyTime(2.5).setSoundType(Tile.SOUND_WOOD).setDescriptionId('chest');
-    Tile.emeraldOre = new c.OreTile(56, 16 * 3 + 2).init().setDestroyTime(3.0).setExplodeable(5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Decorations).setDescriptionId('oreDiamond');
-    Tile.emeraldBlock = new c.MetalTile(57, 40 - 16).init().setDestroyTime(5.0).setExplodeable(10).setSoundType(Tile.SOUND_METAL).setCategory(ItemCategory.Decorations).setDescriptionId('blockDiamond');
-    Tile.workBench = new c.WorkbenchTile(58).init().setDestroyTime(2.5).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Structures).setDescriptionId('workbench');
-    Tile.crops = new c.CropTile(59, 8 + 5 * 16).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Structures).setDescriptionId('crops');
-    Tile.farmland = new c.FarmTile(60).init().setDestroyTime(0.6).setSoundType(Tile.SOUND_GRAVEL).setCategory(ItemCategory.Structures).setDescriptionId('farmland');
-    Tile.furnace = new c.FurnaceTile(61, false).init().setDestroyTime(3.5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('furnace');
-    Tile.furnace_lit = new c.FurnaceTile(62, true).init().setDestroyTime(3.5).setSoundType(Tile.SOUND_STONE).setLightEmission(14 / 16.0).setCategory(ItemCategory.Structures).setDescriptionId('furnace');
-    Tile.sign = new c.SignTile(63, TileEntityType.Sign, true).init().setDestroyTime(1.0).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Decorations).setDescriptionId('sign');
-    Tile.door_wood = new c.DoorTile(64, Material.wood).init().setDestroyTime(3.0).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Structures).setDescriptionId('doorWood');
-    Tile.ladder = new c.LadderTile(65, 3 + 5 * 16).init().setDestroyTime(0.4).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Structures).setDescriptionId('ladder');
-    Tile.stairs_stone = new c.StairTile(67, Tile.stoneBrick).init().setCategory(ItemCategory.Structures).setDescriptionId('stairsStone');
-    Tile.wallSign = new c.SignTile(68, TileEntityType.Sign, false).init().setDestroyTime(1.0).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Decorations).setDescriptionId('sign');
-    Tile.door_iron = new c.DoorTile(71, Material.metal).init().setDestroyTime(5.0).setSoundType(Tile.SOUND_METAL).setCategory(ItemCategory.Structures).setDescriptionId('doorIron');
-    Tile.redStoneOre = new c.RedStoneOreTile(73, 16 * 3 + 3, false).init().setDestroyTime(3.0).setExplodeable(5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Mechanisms).setDescriptionId('oreRedstone');
-    Tile.redStoneOre_lit = new c.RedStoneOreTile(74, 16 * 3 + 3, true).init().setDestroyTime(3.0).setLightEmission(10 / 16.0).setExplodeable(5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Mechanisms).setDescriptionId('oreRedstone');
-    Tile.topSnow = new c.TopSnowTile(78, 16 * 4 + 2).init().setDestroyTime(0.1).setSoundType(Tile.SOUND_CLOTH).setCategory(ItemCategory.Structures).setDescriptionId('snow');
-    Tile.ice = new c.IceTile(79, 16 * 4 + 3).init().setDestroyTime(0.5).setLightBlock(3).setSoundType(Tile.SOUND_GLASS).setCategory(ItemCategory.Structures).setDescriptionId('ice');
-    Tile.snow = new c.SnowTile(80, 16 * 4 + 2).init().setDestroyTime(0.2).setSoundType(Tile.SOUND_CLOTH).setCategory(ItemCategory.Structures).setDescriptionId('snow');
-    Tile.cactus = new c.CactusTile(81, 16 * 4 + 6).init().setDestroyTime(0.4).setSoundType(Tile.SOUND_CLOTH).setCategory(ItemCategory.Structures).setDescriptionId('cactus');
-    Tile.clay = new c.ClayTile(82, 16 * 4 + 8).init().setDestroyTime(0.6).setSoundType(Tile.SOUND_GRAVEL).setCategory(ItemCategory.Structures).setDescriptionId('clay');
-    Tile.reeds = new c.ReedTile(83, 16 * 4 + 9).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Structures).setDescriptionId('reeds');
-    Tile.fence = new c.FenceTile(85, 4).init().setDestroyTime(2.0).setExplodeable(5).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Structures).setDescriptionId('fence');
-    Tile.netherrack = new Tile(87, 7 + 6 * 16, Material.stone).init().setDestroyTime(0.4).setSoundType(Tile.SOUND_STONE).setDescriptionId('hellrock');
-    Tile.lightGem = new c.LightGemTile(89, 9 + 16 * 6, Material.glass).init().setDestroyTime(0.3).setCategory(ItemCategory.Structures).setSoundType(Tile.SOUND_GLASS).setLightEmission(1.0).setDescriptionId('lightgem');
-    Tile.invisible_bedrock = new c.InvisibleTile(95, 0, Material.stone).init().setDestroyTime(-1).setExplodeable(6000000);
-    Tile.trapdoor = new c.TrapDoorTile(96, Material.wood).init().setDestroyTime(3.0).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Structures).setDescriptionId('trapdoor');
-    Tile.stoneBrickSmooth = new c.MultiTextureTile(98, STONE_BRICK_TEXTURES, STONE_BRICK_TEXTURE_COUNT, Material.stone).init().setDestroyTime(1.5).setExplodeable(10).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('stonebricksmooth');
-    Tile.thinGlass = new c.ThinFenceTile(102, 1 + 3 * 16, 4 + 9 * 16, Material.glass, false).init().setDestroyTime(0.3).setSoundType(Tile.SOUND_GLASS).setCategory(ItemCategory.Structures).setDescriptionId('thinGlass');
-    Tile.melon = new c.MelonTile(103).init().setDestroyTime(1.0).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.FoodArmor).setDescriptionId('melon');
-    Tile.melonStem = new c.StemTile(105, Tile.melon).init().setDestroyTime(0.0).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.FoodArmor).setDescriptionId('pumpkinStem');
-    Tile.fenceGate = new c.FenceGateTile(107, 4).init().setDestroyTime(2.0).setExplodeable(5).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Structures).setDescriptionId('fenceGate');
-    Tile.stairs_brick = new c.StairTile(108, Tile.redBrick).init().setCategory(ItemCategory.Structures).setDescriptionId('stairsBrick');
-    Tile.stairs_stoneBrickSmooth = new c.StairTile(109, Tile.stoneBrickSmooth).init().setCategory(ItemCategory.Structures).setDescriptionId('stairsStoneBrickSmooth');
-    Tile.netherBrick = new Tile(112, 0 + 14 * 16, Material.stone).init().setDestroyTime(2.0).setExplodeable(10).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('netherBrick');
-    Tile.stairs_netherBricks = new c.StairTile(114, Tile.netherBrick).init().setCategory(ItemCategory.Structures).setDescriptionId('stairsNetherBrick');
-    Tile.stairs_sandStone = new c.StairTile(128, Tile.sandStone).init().setCategory(ItemCategory.Structures).setDescriptionId('stairsSandStone');
-    Tile.quartzBlock = new c.QuartzBlockTile(155).init().setSoundType(Tile.SOUND_STONE).setDestroyTime(0.8).setCategory(ItemCategory.Structures).setDescriptionId('quartzBlock');
-    Tile.stairs_quartz = new c.StairTile(156, Tile.quartzBlock).init().setCategory(ItemCategory.Structures).setDescriptionId('stairsQuartz');
-    Tile.stonecutterBench = new c.StonecutterTile(245).init().setDestroyTime(2.5).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('stonecutter');
-    Tile.glowingObsidian = new c.ObsidianTile(246, 10 + 16 * 13, true).init().setDestroyTime(10.0).setLightEmission(14 / 16.0).setExplodeable(2000).setSoundType(Tile.SOUND_STONE).setCategory(ItemCategory.Structures).setDescriptionId('glowingobsidian');
-    Tile.netherReactor = new c.NetherReactor(247, 10 + 14 * 16, Material.metal).init().setDestroyTime(3.0).setSoundType(Tile.SOUND_METAL).setCategory(ItemCategory.Structures).setDescriptionId('netherreactor');
-    Tile.info_updateGame1 = new Tile(248, 252, Material.dirt).init().setDestroyTime(1.0).setSoundType(Tile.SOUND_GRAVEL).setCategory(ItemCategory.Structures).setDescriptionId('info_update');
-    Tile.info_updateGame2 = new Tile(249, 253, Material.dirt).init().setDestroyTime(1.0).setSoundType(Tile.SOUND_GRAVEL).setCategory(ItemCategory.Structures).setDescriptionId('info_update');
-    Tile.grass_carried = new c.CarriedTile(253, 3, 12*16 + 12).init().setDescriptionId('grass');
-    Tile.leaves_carried = new c.LeafTile(254, 11 + 14 * 16).init().setDestroyTime(0.2).setLightBlock(1).setSoundType(Tile.SOUND_GRASS).setCategory(ItemCategory.Structures).setDescriptionId('leaves') as LeafTile;
+    Tile.rock = new c.StoneTile(1, 1)
+      .init()
+      .setDestroyTime(1.5)
+      .setExplodeable(10)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stone');
+    Tile.grass = new c.GrassTile(2)
+      .init()
+      .setDestroyTime(0.6)
+      .setSoundType(Tile.SOUND_GRASS)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('grass');
+    Tile.dirt = new c.DirtTile(3, 2)
+      .init()
+      .setDestroyTime(0.5)
+      .setSoundType(Tile.SOUND_GRAVEL)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('dirt');
+    Tile.stoneBrick = new Tile(4, 16, Material.stone)
+      .init()
+      .setDestroyTime(2.0)
+      .setExplodeable(10)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stonebrick');
+    Tile.wood = new Tile(5, 4, Material.wood)
+      .init()
+      .setDestroyTime(2.0)
+      .setExplodeable(5)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('wood');
+    Tile.sapling = new c.Sapling(6, 15)
+      .init()
+      .setDestroyTime(0.0)
+      .setSoundType(Tile.SOUND_GRASS)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('sapling');
+    Tile.unbreakable = new Tile(7, 17, Material.stone)
+      .init()
+      .setDestroyTime(-1)
+      .setExplodeable(6000000)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('bedrock');
+    Tile.water = new c.LiquidTileDynamic(8, Material.water)
+      .init()
+      .setDestroyTime(100.0)
+      .setLightBlock(3)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('water');
+    Tile.calmWater = new c.LiquidTileStatic(9, Material.water)
+      .init()
+      .setDestroyTime(100.0)
+      .setLightBlock(3)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('water');
+    Tile.lava = new c.LiquidTileDynamic(10, Material.lava)
+      .init()
+      .setDestroyTime(0.0)
+      .setLightEmission(1.0)
+      .setLightBlock(255)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('lava');
+    Tile.calmLava = new c.LiquidTileStatic(11, Material.lava)
+      .init()
+      .setDestroyTime(100.0)
+      .setLightEmission(1.0)
+      .setLightBlock(255)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('lava');
+    Tile.sand = new c.HeavyTile(12, 18)
+      .init()
+      .setDestroyTime(0.5)
+      .setSoundType(Tile.SOUND_SAND)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('sand');
+    Tile.gravel = new c.GravelTile(13, 19)
+      .init()
+      .setDestroyTime(0.6)
+      .setSoundType(Tile.SOUND_GRAVEL)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('gravel');
+    Tile.goldOre = new c.OreTile(14, 32)
+      .init()
+      .setDestroyTime(3.0)
+      .setExplodeable(5)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('oreGold');
+    Tile.ironOre = new c.OreTile(15, 33)
+      .init()
+      .setDestroyTime(3.0)
+      .setExplodeable(5)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('oreIron');
+    Tile.coalOre = new c.OreTile(16, 34)
+      .init()
+      .setDestroyTime(3.0)
+      .setExplodeable(5)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('oreCoal');
+    Tile.treeTrunk = new c.TreeTile(17)
+      .init()
+      .setDestroyTime(2.0)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('log');
+    Tile.leaves = new c.LeafTile(18, 4 + 3 * 16)
+      .init()
+      .setDestroyTime(0.2)
+      .setLightBlock(1)
+      .setSoundType(Tile.SOUND_GRASS)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('leaves') as LeafTile;
+    Tile.glass = new c.GlassTile(20, 49, Material.glass, false)
+      .init()
+      .setDestroyTime(0.3)
+      .setSoundType(Tile.SOUND_GLASS)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('glass');
+    Tile.lapisOre = new c.OreTile(21, 10 * 16)
+      .init()
+      .setDestroyTime(3.0)
+      .setExplodeable(5)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('oreLapis');
+    Tile.lapisBlock = new Tile(22, 9 * 16, Material.stone)
+      .init()
+      .setDestroyTime(3.0)
+      .setExplodeable(5)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('blockLapis');
+    Tile.sandStone = new c.SandStoneTile(24, SANDSTONE_TEXTURES, SANDSTONE_TEXTURE_COUNT)
+      .init()
+      .setSoundType(Tile.SOUND_STONE)
+      .setDestroyTime(0.8)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('sandStone');
+    Tile.bed = new c.BedTile(26)
+      .init()
+      .setDestroyTime(0.2)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('bed');
+    Tile.web = new c.WebTile(30, 11)
+      .init()
+      .setLightBlock(1)
+      .setDestroyTime(4.0)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('web');
+    Tile.tallgrass = new c.TallGrass(31, 2 * 16 + 7)
+      .init()
+      .setDestroyTime(0.0)
+      .setSoundType(Tile.SOUND_GRASS)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('tallgrass');
+    Tile.cloth = new c.ClothTile(35)
+      .init()
+      .setDestroyTime(0.8)
+      .setSoundType(Tile.SOUND_CLOTH)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('cloth');
+    Tile.flower = new c.Bush(37, 13)
+      .init()
+      .setDestroyTime(0.0)
+      .setSoundType(Tile.SOUND_GRASS)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('flower');
+    Tile.rose = new c.Bush(38, 12)
+      .init()
+      .setDestroyTime(0.0)
+      .setSoundType(Tile.SOUND_GRASS)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('rose');
+    Tile.mushroom1 = new c.Mushroom(39, 13 + 16)
+      .init()
+      .setDestroyTime(0.0)
+      .setSoundType(Tile.SOUND_GRASS)
+      .setLightEmission(2 / 16.0)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('mushroom');
+    Tile.mushroom2 = new c.Mushroom(40, 12 + 16)
+      .init()
+      .setDestroyTime(0.0)
+      .setSoundType(Tile.SOUND_GRASS)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('mushroom');
+    Tile.goldBlock = new c.MetalTile(41, 39 - 16)
+      .init()
+      .setDestroyTime(3.0)
+      .setExplodeable(10)
+      .setSoundType(Tile.SOUND_METAL)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('blockGold');
+    Tile.ironBlock = new c.MetalTile(42, 38 - 16)
+      .init()
+      .setDestroyTime(5.0)
+      .setExplodeable(10)
+      .setSoundType(Tile.SOUND_METAL)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('blockIron');
+    Tile.stoneSlab = new c.StoneSlabTile(43, true)
+      .init()
+      .setDestroyTime(2.0)
+      .setExplodeable(10)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stoneSlab');
+    Tile.stoneSlabHalf = new c.StoneSlabTile(44, false)
+      .init()
+      .setDestroyTime(2.0)
+      .setExplodeable(10)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stoneSlab');
+    Tile.redBrick = new Tile(45, 7, Material.stone)
+      .init()
+      .setDestroyTime(2.0)
+      .setExplodeable(10)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('brick');
+    Tile.tnt = new c.TntTile(46, 8)
+      .init()
+      .setDestroyTime(0.0)
+      .setSoundType(Tile.SOUND_GRASS)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('tnt');
+    Tile.bookshelf = new c.BookshelfTile(47, 35)
+      .init()
+      .setDestroyTime(1.5)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('bookshelf');
+    Tile.mossStone = new Tile(48, 36, Material.stone)
+      .init()
+      .setDestroyTime(2.0)
+      .setExplodeable(10)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stoneMoss');
+    Tile.obsidian = new c.ObsidianTile(49, 37, false)
+      .init()
+      .setDestroyTime(10.0)
+      .setExplodeable(2000)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('obsidian');
+    Tile.torch = new c.TorchTile(50, 5 * 16)
+      .init()
+      .setDestroyTime(0.0)
+      .setLightEmission(15 / 16.0)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('torch');
+    Tile.stairs_wood = new c.StairTile(53, Tile.wood)
+      .init()
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stairsWood');
+    Tile.chest = new c.ChestTile(54)
+      .init()
+      .setCategory(ItemCategory.Structures)
+      .setDestroyTime(2.5)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setDescriptionId('chest');
+    Tile.emeraldOre = new c.OreTile(56, 16 * 3 + 2)
+      .init()
+      .setDestroyTime(3.0)
+      .setExplodeable(5)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('oreDiamond');
+    Tile.emeraldBlock = new c.MetalTile(57, 40 - 16)
+      .init()
+      .setDestroyTime(5.0)
+      .setExplodeable(10)
+      .setSoundType(Tile.SOUND_METAL)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('blockDiamond');
+    Tile.workBench = new c.WorkbenchTile(58)
+      .init()
+      .setDestroyTime(2.5)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('workbench');
+    Tile.crops = new c.CropTile(59, 8 + 5 * 16)
+      .init()
+      .setDestroyTime(0.0)
+      .setSoundType(Tile.SOUND_GRASS)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('crops');
+    Tile.farmland = new c.FarmTile(60)
+      .init()
+      .setDestroyTime(0.6)
+      .setSoundType(Tile.SOUND_GRAVEL)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('farmland');
+    Tile.furnace = new c.FurnaceTile(61, false)
+      .init()
+      .setDestroyTime(3.5)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('furnace');
+    Tile.furnace_lit = new c.FurnaceTile(62, true)
+      .init()
+      .setDestroyTime(3.5)
+      .setSoundType(Tile.SOUND_STONE)
+      .setLightEmission(14 / 16.0)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('furnace');
+    Tile.sign = new c.SignTile(63, TileEntityType.Sign, true)
+      .init()
+      .setDestroyTime(1.0)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('sign');
+    Tile.door_wood = new c.DoorTile(64, Material.wood)
+      .init()
+      .setDestroyTime(3.0)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('doorWood');
+    Tile.ladder = new c.LadderTile(65, 3 + 5 * 16)
+      .init()
+      .setDestroyTime(0.4)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('ladder');
+    Tile.stairs_stone = new c.StairTile(67, Tile.stoneBrick)
+      .init()
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stairsStone');
+    Tile.wallSign = new c.SignTile(68, TileEntityType.Sign, false)
+      .init()
+      .setDestroyTime(1.0)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('sign');
+    Tile.door_iron = new c.DoorTile(71, Material.metal)
+      .init()
+      .setDestroyTime(5.0)
+      .setSoundType(Tile.SOUND_METAL)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('doorIron');
+    Tile.redStoneOre = new c.RedStoneOreTile(73, 16 * 3 + 3, false)
+      .init()
+      .setDestroyTime(3.0)
+      .setExplodeable(5)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Mechanisms)
+      .setDescriptionId('oreRedstone');
+    Tile.redStoneOre_lit = new c.RedStoneOreTile(74, 16 * 3 + 3, true)
+      .init()
+      .setDestroyTime(3.0)
+      .setLightEmission(10 / 16.0)
+      .setExplodeable(5)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Mechanisms)
+      .setDescriptionId('oreRedstone');
+    Tile.topSnow = new c.TopSnowTile(78, 16 * 4 + 2)
+      .init()
+      .setDestroyTime(0.1)
+      .setSoundType(Tile.SOUND_CLOTH)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('snow');
+    Tile.ice = new c.IceTile(79, 16 * 4 + 3)
+      .init()
+      .setDestroyTime(0.5)
+      .setLightBlock(3)
+      .setSoundType(Tile.SOUND_GLASS)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('ice');
+    Tile.snow = new c.SnowTile(80, 16 * 4 + 2)
+      .init()
+      .setDestroyTime(0.2)
+      .setSoundType(Tile.SOUND_CLOTH)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('snow');
+    Tile.cactus = new c.CactusTile(81, 16 * 4 + 6)
+      .init()
+      .setDestroyTime(0.4)
+      .setSoundType(Tile.SOUND_CLOTH)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('cactus');
+    Tile.clay = new c.ClayTile(82, 16 * 4 + 8)
+      .init()
+      .setDestroyTime(0.6)
+      .setSoundType(Tile.SOUND_GRAVEL)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('clay');
+    Tile.reeds = new c.ReedTile(83, 16 * 4 + 9)
+      .init()
+      .setDestroyTime(0.0)
+      .setSoundType(Tile.SOUND_GRASS)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('reeds');
+    Tile.fence = new c.FenceTile(85, 4)
+      .init()
+      .setDestroyTime(2.0)
+      .setExplodeable(5)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('fence');
+    Tile.netherrack = new Tile(87, 7 + 6 * 16, Material.stone)
+      .init()
+      .setDestroyTime(0.4)
+      .setSoundType(Tile.SOUND_STONE)
+      .setDescriptionId('hellrock');
+    Tile.lightGem = new c.LightGemTile(89, 9 + 16 * 6, Material.glass)
+      .init()
+      .setDestroyTime(0.3)
+      .setCategory(ItemCategory.Structures)
+      .setSoundType(Tile.SOUND_GLASS)
+      .setLightEmission(1.0)
+      .setDescriptionId('lightgem');
+    Tile.invisible_bedrock = new c.InvisibleTile(95, 0, Material.stone)
+      .init()
+      .setDestroyTime(-1)
+      .setExplodeable(6000000);
+    Tile.trapdoor = new c.TrapDoorTile(96, Material.wood)
+      .init()
+      .setDestroyTime(3.0)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('trapdoor');
+    Tile.stoneBrickSmooth = new c.MultiTextureTile(
+      98,
+      STONE_BRICK_TEXTURES,
+      STONE_BRICK_TEXTURE_COUNT,
+      Material.stone,
+    )
+      .init()
+      .setDestroyTime(1.5)
+      .setExplodeable(10)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stonebricksmooth');
+    Tile.thinGlass = new c.ThinFenceTile(102, 1 + 3 * 16, 4 + 9 * 16, Material.glass, false)
+      .init()
+      .setDestroyTime(0.3)
+      .setSoundType(Tile.SOUND_GLASS)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('thinGlass');
+    Tile.melon = new c.MelonTile(103)
+      .init()
+      .setDestroyTime(1.0)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('melon');
+    Tile.melonStem = new c.StemTile(105, Tile.melon)
+      .init()
+      .setDestroyTime(0.0)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('pumpkinStem');
+    Tile.fenceGate = new c.FenceGateTile(107, 4)
+      .init()
+      .setDestroyTime(2.0)
+      .setExplodeable(5)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('fenceGate');
+    Tile.stairs_brick = new c.StairTile(108, Tile.redBrick)
+      .init()
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stairsBrick');
+    Tile.stairs_stoneBrickSmooth = new c.StairTile(109, Tile.stoneBrickSmooth)
+      .init()
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stairsStoneBrickSmooth');
+    Tile.netherBrick = new Tile(112, 0 + 14 * 16, Material.stone)
+      .init()
+      .setDestroyTime(2.0)
+      .setExplodeable(10)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('netherBrick');
+    Tile.stairs_netherBricks = new c.StairTile(114, Tile.netherBrick)
+      .init()
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stairsNetherBrick');
+    Tile.stairs_sandStone = new c.StairTile(128, Tile.sandStone)
+      .init()
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stairsSandStone');
+    Tile.quartzBlock = new c.QuartzBlockTile(155)
+      .init()
+      .setSoundType(Tile.SOUND_STONE)
+      .setDestroyTime(0.8)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('quartzBlock');
+    Tile.stairs_quartz = new c.StairTile(156, Tile.quartzBlock)
+      .init()
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stairsQuartz');
+    Tile.stonecutterBench = new c.StonecutterTile(245)
+      .init()
+      .setDestroyTime(2.5)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stonecutter');
+    Tile.glowingObsidian = new c.ObsidianTile(246, 10 + 16 * 13, true)
+      .init()
+      .setDestroyTime(10.0)
+      .setLightEmission(14 / 16.0)
+      .setExplodeable(2000)
+      .setSoundType(Tile.SOUND_STONE)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('glowingobsidian');
+    Tile.netherReactor = new c.NetherReactor(247, 10 + 14 * 16, Material.metal)
+      .init()
+      .setDestroyTime(3.0)
+      .setSoundType(Tile.SOUND_METAL)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('netherreactor');
+    Tile.info_updateGame1 = new Tile(248, 252, Material.dirt)
+      .init()
+      .setDestroyTime(1.0)
+      .setSoundType(Tile.SOUND_GRAVEL)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('info_update');
+    Tile.info_updateGame2 = new Tile(249, 253, Material.dirt)
+      .init()
+      .setDestroyTime(1.0)
+      .setSoundType(Tile.SOUND_GRAVEL)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('info_update');
+    Tile.grass_carried = new c.CarriedTile(253, 3, 12 * 16 + 12).init().setDescriptionId('grass');
+    Tile.leaves_carried = new c.LeafTile(254, 11 + 14 * 16)
+      .init()
+      .setDestroyTime(0.2)
+      .setLightBlock(1)
+      .setSoundType(Tile.SOUND_GRASS)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('leaves') as LeafTile;
     Tile.info_reserved6 = new Tile(255, Material.dirt).init();
-    Tile.fire = new c.FireTile(51, 1 * 16 + 15).init().setDestroyTime(0.0).setLightEmission(1.0).setSoundType(Tile.SOUND_WOOD).setCategory(ItemCategory.Structures).setDescriptionId('fire') as FireTile;
-    Item.items[Tile.cloth.id] = new c.ClothTileItem(Tile.cloth.id - 256).setCategory(ItemCategory.Structures).setDescriptionId('cloth');
-    Item.items[Tile.treeTrunk.id] = new c.AuxDataTileItem(Tile.treeTrunk.id - 256, Tile.treeTrunk).setCategory(ItemCategory.Structures).setDescriptionId('log');
-    Item.items[Tile.stoneBrickSmooth.id] = new c.AuxDataTileItem(Tile.stoneBrickSmooth.id - 256, Tile.stoneBrickSmooth).setCategory(ItemCategory.Structures).setDescriptionId('stonebricksmooth');
-    Item.items[Tile.stoneSlabHalf.id] = new c.StoneSlabTileItem(Tile.stoneSlabHalf.id - 256).setCategory(ItemCategory.Structures).setDescriptionId('stoneSlab');
-    Item.items[Tile.sapling.id] = new c.SaplingTileItem(Tile.sapling.id - 256).setCategory(ItemCategory.Structures).setDescriptionId('sapling');
-    Item.items[Tile.leaves.id] = new c.LeafTileItem(Tile.leaves.id - 256).setCategory(ItemCategory.Decorations).setDescriptionId('leaves');
-    Item.items[Tile.sandStone.id] = new c.AuxDataTileItem(Tile.sandStone.id - 256, Tile.sandStone).setCategory(ItemCategory.Structures).setDescriptionId('sandStone');
-    Item.items[Tile.quartzBlock.id] = new c.AuxDataTileItem(Tile.quartzBlock.id - 256, Tile.quartzBlock).setCategory(ItemCategory.Structures).setDescriptionId('quartzBlock');
+    Tile.fire = new c.FireTile(51, 1 * 16 + 15)
+      .init()
+      .setDestroyTime(0.0)
+      .setLightEmission(1.0)
+      .setSoundType(Tile.SOUND_WOOD)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('fire') as FireTile;
+    Item.items[Tile.cloth.id] = new c.ClothTileItem(Tile.cloth.id - 256)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('cloth');
+    Item.items[Tile.treeTrunk.id] = new c.AuxDataTileItem(Tile.treeTrunk.id - 256, Tile.treeTrunk)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('log');
+    Item.items[Tile.stoneBrickSmooth.id] = new c.AuxDataTileItem(
+      Tile.stoneBrickSmooth.id - 256,
+      Tile.stoneBrickSmooth,
+    )
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stonebricksmooth');
+    Item.items[Tile.stoneSlabHalf.id] = new c.StoneSlabTileItem(Tile.stoneSlabHalf.id - 256)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stoneSlab');
+    Item.items[Tile.sapling.id] = new c.SaplingTileItem(Tile.sapling.id - 256)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('sapling');
+    Item.items[Tile.leaves.id] = new c.LeafTileItem(Tile.leaves.id - 256)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('leaves');
+    Item.items[Tile.sandStone.id] = new c.AuxDataTileItem(Tile.sandStone.id - 256, Tile.sandStone)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('sandStone');
+    Item.items[Tile.quartzBlock.id] = new c.AuxDataTileItem(
+      Tile.quartzBlock.id - 256,
+      Tile.quartzBlock,
+    )
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('quartzBlock');
 
     for (let i = 0; i < 256; i++) {
       const tile = Tile.tiles[i];
@@ -496,7 +980,8 @@ export class Tile {
           Item.items[i]!.category = tile.category;
         }
         // Check for missing category
-        if (Item.items[i]!.category === -1) LOGE(`Error: Missing category for tile ${tile.id}: ${tile.getDescriptionId()}`);
+        if (Item.items[i]!.category === -1)
+          LOGE(`Error: Missing category for tile ${tile.id}: ${tile.getDescriptionId()}`);
       }
     }
   }
@@ -574,12 +1059,24 @@ export class Tile {
 
   static isFaceVisible(level: Level, x: number, y: number, z: number, f: number): boolean {
     switch (f) {
-      case Facing.DOWN: y--; break;
-      case Facing.UP: y++; break;
-      case Facing.NORTH: z--; break;
-      case Facing.SOUTH: z++; break;
-      case Facing.WEST: x--; break;
-      case Facing.EAST: x++; break;
+      case Facing.DOWN:
+        y--;
+        break;
+      case Facing.UP:
+        y++;
+        break;
+      case Facing.NORTH:
+        z--;
+        break;
+      case Facing.SOUTH:
+        z++;
+        break;
+      case Facing.WEST:
+        x--;
+        break;
+      case Facing.EAST:
+        x++;
+        break;
     }
     return !level.isSolidRenderTile(x, y, z);
   }
@@ -588,7 +1085,7 @@ export class Tile {
     if (face === 0 && y === -1) return false;
     // For fixed size worlds //@todo: external constants rather than magic numbers
     const W = LevelConstants.CHUNK_CACHE_WIDTH;
-    const xz = W === 16 ? 256 : ((W * W) / ((((W * W) / 256) | 0) / 2 | 0)) | 0; // 与 C++ 一样逐步整数除
+    const xz = W === 16 ? 256 : ((W * W) / (((((W * W) / 256) | 0) / 2) | 0)) | 0; // 与 C++ 一样逐步整数除
     if (face === 2 && z === -1) return false;
     if (face === 3 && z === xz) return false;
     if (face === 4 && x === -1) return false;
@@ -647,7 +1144,14 @@ export class Tile {
   }
 
   getTileAABB(_level: Level, x: number, y: number, z: number): AABB {
-    return new AABB(x + this.xx0, y + this.yy0, z + this.zz0, x + this.xx1, y + this.yy1, z + this.zz1);
+    return new AABB(
+      x + this.xx0,
+      y + this.yy0,
+      z + this.zz0,
+      x + this.xx1,
+      y + this.yy1,
+      z + this.zz1,
+    );
   }
 
   isSolidRender(): boolean {
@@ -675,7 +1179,9 @@ export class Tile {
   mayPlace(level: Level, x: number, y: number, z: number): boolean;
   mayPlace(level: Level, x: number, y: number, z: number, face: number): boolean;
   mayPlace(level: Level, x: number, y: number, z: number, face?: number): boolean {
-    return face === undefined ? this.mayPlaceAt(level, x, y, z) : this.mayPlaceOnFace(level, x, y, z, face);
+    return face === undefined
+      ? this.mayPlaceAt(level, x, y, z)
+      : this.mayPlaceOnFace(level, x, y, z, face);
   }
 
   /** C++ mayPlace(Level* level, int x, int y, int z) */
@@ -734,7 +1240,13 @@ export class Tile {
       const xo = level.random.nextFloat() * s + (1 - s) * 0.5;
       const yo = level.random.nextFloat() * s + (1 - s) * 0.5;
       const zo = level.random.nextFloat() * s + (1 - s) * 0.5;
-      const item = createItemEntity(level, x + xo, y + yo, z + zo, new ItemInstance(type, 1, this.getSpawnResourcesAuxValue(data)));
+      const item = createItemEntity(
+        level,
+        x + xo,
+        y + yo,
+        z + zo,
+        new ItemInstance(type, 1, this.getSpawnResourcesAuxValue(data)),
+      );
       item.throwTime = 10;
       level.addEntity(item);
     }
@@ -765,7 +1277,12 @@ export class Tile {
     const a = A.sub(xt, yt, zt);
     const b = B.sub(xt, yt, zt);
 
-    const xh0 = new Vec3(), xh1 = new Vec3(), yh0 = new Vec3(), yh1 = new Vec3(), zh0 = new Vec3(), zh1 = new Vec3();
+    const xh0 = new Vec3(),
+      xh1 = new Vec3(),
+      yh0 = new Vec3(),
+      yh1 = new Vec3(),
+      zh0 = new Vec3(),
+      zh1 = new Vec3();
 
     let bxh0 = a.clipX(b, this.xx0, xh0);
     let bxh1 = a.clipX(b, this.xx1, xh1);
@@ -817,11 +1334,25 @@ export class Tile {
 
   stepOn(_level: Level, _x: number, _y: number, _z: number, _entity: Entity): void {}
 
-  fallOn(_level: Level, _x: number, _y: number, _z: number, _entity: Entity, _fallDistance: number): void {}
+  fallOn(
+    _level: Level,
+    _x: number,
+    _y: number,
+    _z: number,
+    _entity: Entity,
+    _fallDistance: number,
+  ): void {}
 
   getPlacedOnFaceDataValue(
-    _level: Level, _x: number, _y: number, _z: number, _face: number,
-    _clickX: number, _clickY: number, _clickZ: number, itemValue: number,
+    _level: Level,
+    _x: number,
+    _y: number,
+    _z: number,
+    _face: number,
+    _clickX: number,
+    _clickY: number,
+    _clickZ: number,
+    itemValue: number,
   ): number {
     return itemValue;
   }
@@ -833,7 +1364,14 @@ export class Tile {
   attack(_level: Level, _x: number, _y: number, _z: number, _player: Player): void {}
 
   /** current 是 C++ 的 Vec3& 引用：子类直接改它的分量 */
-  handleEntityInside(_level: Level, _x: number, _y: number, _z: number, _e: Entity, _current: Vec3): void {}
+  handleEntityInside(
+    _level: Level,
+    _x: number,
+    _y: number,
+    _z: number,
+    _e: Entity,
+    _current: Vec3,
+  ): void {}
 
   getColor(_level: LevelSource, _x: number, _y: number, _z: number): number {
     return 0xffffff;
@@ -847,7 +1385,9 @@ export class Tile {
   getSignal(level: LevelSource, x: number, y: number, z: number): boolean;
   getSignal(level: LevelSource, x: number, y: number, z: number, dir: number): boolean;
   getSignal(level: LevelSource, x: number, y: number, z: number, dir?: number): boolean {
-    return dir === undefined ? this.getSignalAt(level, x, y, z) : this.getSignalInDirection(level, x, y, z, dir);
+    return dir === undefined
+      ? this.getSignalAt(level, x, y, z)
+      : this.getSignalInDirection(level, x, y, z, dir);
   }
 
   /** C++ getSignal(LevelSource* level, int x, int y, int z) */
@@ -856,7 +1396,13 @@ export class Tile {
   }
 
   /** C++ getSignal(LevelSource* level, int x, int y, int z, int dir) */
-  getSignalInDirection(_level: LevelSource, _x: number, _y: number, _z: number, _dir: number): boolean {
+  getSignalInDirection(
+    _level: LevelSource,
+    _x: number,
+    _y: number,
+    _z: number,
+    _dir: number,
+  ): boolean {
     return false;
   }
 
@@ -866,7 +1412,14 @@ export class Tile {
 
   entityInside(_level: Level, _x: number, _y: number, _z: number, _entity: Entity): void {}
 
-  playerDestroy(level: Level, _player: Player, x: number, y: number, z: number, data: number): void {
+  playerDestroy(
+    level: Level,
+    _player: Player,
+    x: number,
+    y: number,
+    z: number,
+    data: number,
+  ): void {
     this.spawnResources(level, x, y, z, data);
   }
 

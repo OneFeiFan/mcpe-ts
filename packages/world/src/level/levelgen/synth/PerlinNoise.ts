@@ -54,21 +54,67 @@ export class PerlinNoise extends Synth {
     } else {
       z = f(z);
       for (let i = 0; i < this.levels; i++) {
-        value = f(value + f(this.noiseLevels[i]!.getValue(f(x * pow), f(y * pow), f(z * pow)) / pow));
+        value = f(
+          value + f(this.noiseLevels[i]!.getValue(f(x * pow), f(y * pow), f(z * pow)) / pow),
+        );
         pow = f(pow / 2);
       }
     }
     return value;
   }
 
-  getRegion(buffer: Float32Array | null, x: number, y: number, z: number, xSize: number, ySize: number, zSize: number, xScale: number, yScale: number, zScale: number): Float32Array;
-  getRegion(sr: Float32Array | null, x: number, z: number, xSize: number, zSize: number, xScale: number, zScale: number, pow: number): Float32Array;
-  getRegion(buf: Float32Array | null, a: number, b: number, c: number, d: number, e: number, g: number, h: number, i?: number, j?: number): Float32Array {
-    return j === undefined ? this.getRegion2D(buf, a, b, c, d, e, g, h) : this.getRegion3D(buf, a, b, c, d, e, g, h, i!, j);
+  getRegion(
+    buffer: Float32Array | null,
+    x: number,
+    y: number,
+    z: number,
+    xSize: number,
+    ySize: number,
+    zSize: number,
+    xScale: number,
+    yScale: number,
+    zScale: number,
+  ): Float32Array;
+  getRegion(
+    sr: Float32Array | null,
+    x: number,
+    z: number,
+    xSize: number,
+    zSize: number,
+    xScale: number,
+    zScale: number,
+    pow: number,
+  ): Float32Array;
+  getRegion(
+    buf: Float32Array | null,
+    a: number,
+    b: number,
+    c: number,
+    d: number,
+    e: number,
+    g: number,
+    h: number,
+    i?: number,
+    j?: number,
+  ): Float32Array {
+    return j === undefined
+      ? this.getRegion2D(buf, a, b, c, d, e, g, h)
+      : this.getRegion3D(buf, a, b, c, d, e, g, h, i!, j);
   }
 
   /** C++ getRegion(float* buffer, float x, float y, float z, int xSize, int ySize, int zSize, float xScale, float yScale, float zScale) */
-  getRegion3D(buffer: Float32Array | null, x: number, y: number, z: number, xSize: number, ySize: number, zSize: number, xScale: number, yScale: number, zScale: number): Float32Array {
+  getRegion3D(
+    buffer: Float32Array | null,
+    x: number,
+    y: number,
+    z: number,
+    xSize: number,
+    ySize: number,
+    zSize: number,
+    xScale: number,
+    yScale: number,
+    zScale: number,
+  ): Float32Array {
     xScale = f(xScale);
     yScale = f(yScale);
     zScale = f(zScale);
@@ -79,14 +125,35 @@ export class PerlinNoise extends Synth {
     for (let i = 0; i < size; i++) buffer[i] = 0;
     let pow = 1;
     for (let i = 0; i < this.levels; i++) {
-      this.noiseLevels[i]!.add(buffer, x, y, z, xSize, ySize, zSize, f(xScale * pow), f(yScale * pow), f(zScale * pow), pow);
+      this.noiseLevels[i]!.add(
+        buffer,
+        x,
+        y,
+        z,
+        xSize,
+        ySize,
+        zSize,
+        f(xScale * pow),
+        f(yScale * pow),
+        f(zScale * pow),
+        pow,
+      );
       pow = f(pow / 2);
     }
     return buffer;
   }
 
   /** C++ getRegion(float* sr, int x, int z, int xSize, int zSize, float xScale, float zScale, float pow)：pow 没有用到，照原样 */
-  getRegion2D(sr: Float32Array | null, x: number, z: number, xSize: number, zSize: number, xScale: number, zScale: number, _pow: number): Float32Array {
+  getRegion2D(
+    sr: Float32Array | null,
+    x: number,
+    z: number,
+    xSize: number,
+    zSize: number,
+    xScale: number,
+    zScale: number,
+    _pow: number,
+  ): Float32Array {
     return this.getRegion3D(sr, f(x), 10.0, f(z), xSize, 1, zSize, xScale, 1, zScale);
   }
 

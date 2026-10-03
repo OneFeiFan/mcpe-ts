@@ -8,8 +8,18 @@ import { initItems, initMaterials, initTiles, ItemInstance } from '@mcpe/world';
  * 黄金样本 G11-3、G11-4（tools/golden/harness_nbt.cpp）：NBT 字节级往返与 ItemInstance 的存档格式。
  * 结构与 harness 的 build() 一一对应（CompoundTag 按名字排序写出，所以插入顺序无关）。
  */
-const G = JSON.parse(readFileSync(new URL('../../fixtures/golden/nbt.json', import.meta.url), 'utf8')) as {
-  root: string; reread: string; items: { id: number; count: number; aux: number; hex: string; back: [number, number, number] | null }[];
+const G = JSON.parse(
+  readFileSync(new URL('../../fixtures/golden/nbt.json', import.meta.url), 'utf8'),
+) as {
+  root: string;
+  reread: string;
+  items: {
+    id: number;
+    count: number;
+    aux: number;
+    hex: string;
+    back: [number, number, number] | null;
+  }[];
 };
 const hex = (b: Uint8Array) => Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
 const unhex = (h: string) => new Uint8Array(h.match(/../g)!.map((x) => parseInt(x, 16)));
@@ -86,7 +96,10 @@ describe('G11-4 ItemInstance 存档格式', () => {
       const bytes = write(it.save(new CompoundTag()));
       expect(hex(bytes), `(${c.id}, ${c.count}, ${c.aux})`).toBe(c.hex);
       const l = ItemInstance.fromTag(NbtIo.read(new MemoryDataInput(bytes))!);
-      expect(l ? [l.id, l.count, l.getAuxValue()] : null, `(${c.id}, ${c.count}, ${c.aux}) 读回`).toEqual(c.back);
+      expect(
+        l ? [l.id, l.count, l.getAuxValue()] : null,
+        `(${c.id}, ${c.count}, ${c.aux}) 读回`,
+      ).toEqual(c.back);
     }
   });
 });

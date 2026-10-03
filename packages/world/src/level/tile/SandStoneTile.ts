@@ -1,6 +1,6 @@
-import { MultiTextureTile } from "./MultiTextureTile";
-import { Material } from "../material/Material";
-import { Facing } from "../../Facing";
+import { MultiTextureTile } from './MultiTextureTile';
+import { Material } from '../material/Material';
+import { Facing } from '../../Facing';
 
 export class SandStoneTile extends MultiTextureTile {
   static readonly TYPE_DEFAULT = 0;

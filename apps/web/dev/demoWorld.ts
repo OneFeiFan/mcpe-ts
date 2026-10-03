@@ -4,8 +4,19 @@ import { TextureData, TileRenderer } from '@mcpe/client';
 import { SharedConstants } from '@mcpe/core';
 import { Mth } from '@mcpe/util';
 import {
-  FlatDimension, FoliageColor, GameType, GrassColor, initBiomes, initMaterials, initTiles, Level, LevelChunk, LevelConstants, LevelSettings,
-  MemoryLevelStorage, MobCategory,
+  FlatDimension,
+  FoliageColor,
+  GameType,
+  GrassColor,
+  initBiomes,
+  initMaterials,
+  initTiles,
+  Level,
+  LevelChunk,
+  LevelConstants,
+  LevelSettings,
+  MemoryLevelStorage,
+  MobCategory,
 } from '@mcpe/world';
 
 export function createDemoLevel(): Level {
@@ -19,7 +30,13 @@ export function createDemoLevel(): Level {
   FoliageColor.setUseTint(false);
   GrassColor.setUseTint(false);
   TileRenderer.setUseTint(false);
-  const level = new Level(new MemoryLevelStorage(), 'demo', new LevelSettings(0, GameType.Creative), SharedConstants.GeneratorVersion, new FlatDimension());
+  const level = new Level(
+    new MemoryLevelStorage(),
+    'demo',
+    new LevelSettings(0, GameType.Creative),
+    SharedConstants.GeneratorVersion,
+    new FlatDimension(),
+  );
   prepareLevel(level);
   return level;
 }

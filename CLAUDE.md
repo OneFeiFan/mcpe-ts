@@ -37,16 +37,16 @@ Claude Code 每次启动都会读这个文件。**先读完它，再动手。**
 
 ## 常用命令
 
-| 目的 | 命令 |
-|---|---|
-| 类型检查 / 测试 / 构建 | `pnpm typecheck` / `pnpm test` / `pnpm build` |
-| 只跑一个测试文件 | `npx vitest run tests/<路径>` |
-| 台账（DEFERRED、OMIT 统计） | `pnpm ledger` |
-| 读 C++（展开 #ifdef、去注释） | `python tools/porting/clean.py <文件...>` |
-| 打印某几个成员函数 | `python tools/porting/fn.py <file.cpp> <类名> <函数1,函数2>` |
-| 生成类的 TS 草稿 | 见 `tools/porting/README.md` |
-| 重新生成黄金样本 | `REF=$REF bash tools/golden/build.sh`（需要 Linux 或 WSL 的 g++） |
-| 浏览器实测 | `node tools/verify/smoke.mjs tools/verify/scenarios/<场景>.mjs` |
+| 目的                          | 命令                                                              |
+| ----------------------------- | ----------------------------------------------------------------- |
+| 类型检查 / 测试 / 构建        | `pnpm typecheck` / `pnpm test` / `pnpm build`                     |
+| 只跑一个测试文件              | `npx vitest run tests/<路径>`                                     |
+| 台账（DEFERRED、OMIT 统计）   | `pnpm ledger`                                                     |
+| 读 C++（展开 #ifdef、去注释） | `python tools/porting/clean.py <文件...>`                         |
+| 打印某几个成员函数            | `python tools/porting/fn.py <file.cpp> <类名> <函数1,函数2>`      |
+| 生成类的 TS 草稿              | 见 `tools/porting/README.md`                                      |
+| 重新生成黄金样本              | `REF=$REF bash tools/golden/build.sh`（需要 Linux 或 WSL 的 g++） |
+| 浏览器实测                    | `node tools/verify/smoke.mjs tools/verify/scenarios/<场景>.mjs`   |
 
 ## 用 CodeGraph 找线索（只是线索，不是判据）
 

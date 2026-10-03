@@ -1,5 +1,5 @@
-import { Tag, TAG_Float } from "./Tag";
-import type { IDataInput, IDataOutput } from "@mcpe/util";
+import { Tag, TAG_Float } from './Tag';
+import type { IDataInput, IDataOutput } from '@mcpe/util';
 
 export class FloatTag extends Tag {
   public data: number;

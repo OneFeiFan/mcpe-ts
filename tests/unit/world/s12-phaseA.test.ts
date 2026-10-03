@@ -1,7 +1,20 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { CompoundTag } from '@mcpe/nbt';
 import {
-  AABB, ChestTileEntity, ContainerType, type Entity, FillingContainer, FurnaceTileEntity, initItems, initTileEntities, Item, ItemInstance, type Level, LevelListener, Tile, TileEntity,
+  AABB,
+  ChestTileEntity,
+  ContainerType,
+  type Entity,
+  FillingContainer,
+  FurnaceTileEntity,
+  initItems,
+  initTileEntities,
+  Item,
+  ItemInstance,
+  type Level,
+  LevelListener,
+  Tile,
+  TileEntity,
 } from '@mcpe/world';
 import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
@@ -9,13 +22,45 @@ import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 let nextId = 1;
 function fakeEntity(x: number, y: number, z: number, isPlayer = false): Entity & { ticks: number } {
   const e = {
-    entityId: nextId++, x, y, z, xOld: x, yOld: y, zOld: z, xd: 0, yd: 0, zd: 0, xRot: 0, yRot: 0, xRotO: 0, yRotO: 0,
-    bb: new AABB(x - 0.3, y, z - 0.3, x + 0.3, y + 1.8, z + 0.3), heightOffset: 1.62, removed: false, reallyRemoveIfPlayer: false,
-    blocksBuilding: true, inChunk: false, xChunk: 0, yChunk: 0, zChunk: 0, ticks: 0,
-    isPlayer: () => isPlayer, isAlive: () => !e.removed, remove: () => { e.removed = true; }, tick: () => { e.ticks++; },
-    getEntityTypeId: () => 64, getCreatureBaseType: () => 0,
-    distanceToSqr: (px: number, py: number, pz: number) => (e.x - px) ** 2 + (e.y - py) ** 2 + (e.z - pz) ** 2,
-    hurt: () => false, makeStuckInWeb() {}, push() {},
+    entityId: nextId++,
+    x,
+    y,
+    z,
+    xOld: x,
+    yOld: y,
+    zOld: z,
+    xd: 0,
+    yd: 0,
+    zd: 0,
+    xRot: 0,
+    yRot: 0,
+    xRotO: 0,
+    yRotO: 0,
+    bb: new AABB(x - 0.3, y, z - 0.3, x + 0.3, y + 1.8, z + 0.3),
+    heightOffset: 1.62,
+    removed: false,
+    reallyRemoveIfPlayer: false,
+    blocksBuilding: true,
+    inChunk: false,
+    xChunk: 0,
+    yChunk: 0,
+    zChunk: 0,
+    ticks: 0,
+    isPlayer: () => isPlayer,
+    isAlive: () => !e.removed,
+    remove: () => {
+      e.removed = true;
+    },
+    tick: () => {
+      e.ticks++;
+    },
+    getEntityTypeId: () => 64,
+    getCreatureBaseType: () => 0,
+    distanceToSqr: (px: number, py: number, pz: number) =>
+      (e.x - px) ** 2 + (e.y - py) ** 2 + (e.z - pz) ** 2,
+    hurt: () => false,
+    makeStuckInWeb() {},
+    push() {},
   };
   return e as unknown as Entity & { ticks: number };
 }
@@ -32,10 +77,15 @@ beforeAll(() => {
 
 describe('Level 的实体函数', () => {
   it('addEntity 放进区块与查找表并通知监听器；tickEntities 调用 tick；removeEntity 后下一次 tickEntities 移除', () => {
-    const added: Entity[] = [], removed: Entity[] = [];
+    const added: Entity[] = [],
+      removed: Entity[] = [];
     const l = new (class extends LevelListener {
-      override entityAdded(e: Entity) { added.push(e); }
-      override entityRemoved(e: Entity) { removed.push(e); }
+      override entityAdded(e: Entity) {
+        added.push(e);
+      }
+      override entityRemoved(e: Entity) {
+        removed.push(e);
+      }
     })();
     level.addListener(l);
     const e = fakeEntity(136.5, 64, 120.5);
@@ -82,7 +132,13 @@ describe('Level 的实体函数', () => {
   it('checkAndHandleWater：在水里时把水流推给实体', () => {
     level.setTileAndData(130, 64, 130, Tile.calmWater.id, 0);
     const e = fakeEntity(130.5, 64.1, 130.5);
-    expect(level.checkAndHandleWater(new AABB(130.2, 64.1, 130.2, 130.8, 64.9, 130.8), Tile.calmWater.material, e)).toBe(true);
+    expect(
+      level.checkAndHandleWater(
+        new AABB(130.2, 64.1, 130.2, 130.8, 64.9, 130.8),
+        Tile.calmWater.material,
+        e,
+      ),
+    ).toBe(true);
     level.setTile(130, 64, 130, 0);
   });
 });
@@ -97,7 +153,13 @@ describe('FurnaceTileEntity', () => {
     expect(f.save(tag)).toBe(true);
     const back = TileEntity.loadStatic(tag) as FurnaceTileEntity;
     expect(back).toBeInstanceOf(FurnaceTileEntity);
-    expect([back.litTime, back.items[1]!.id, back.items[1]!.count, back.items[0]!.count, back.items[2]!.isNull()]).toEqual([77, Item.coal.id, 5, 2, true]);
+    expect([
+      back.litTime,
+      back.items[1]!.id,
+      back.items[1]!.count,
+      back.items[0]!.count,
+      back.items[2]!.isNull(),
+    ]).toEqual([77, Item.coal.id, 5, 2, true]);
     expect(back.litDuration).toBe(200 * 8); // 煤
     expect(FurnaceTileEntity.isFuel(new ItemInstance(Tile.wood, 1, 0))).toBe(true);
     expect(f.getSlotCopies().length).toBe(3);
@@ -132,7 +194,12 @@ describe('FillingContainer 与 ChestTileEntity（mixin）', () => {
     expect(c.save(tag)).toBe(true);
     const back = TileEntity.loadStatic(tag) as ChestTileEntity;
     expect(back).toBeInstanceOf(ChestTileEntity);
-    expect([back.getItem(0)!.id, back.getItem(0)!.count, back.getItem(26)!.count, back.getItem(1)]).toEqual([Item.coal.id, 12, 64, null]);
+    expect([
+      back.getItem(0)!.id,
+      back.getItem(0)!.count,
+      back.getItem(26)!.count,
+      back.getItem(1),
+    ]).toEqual([Item.coal.id, 12, 64, null]);
     expect(back.getName()).toBe('container.chest');
   });
 });

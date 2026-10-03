@@ -24,12 +24,19 @@ export class Frustum extends FrustumData {
   }
 
   private calculateFrustum(): void {
-    const proj = this.proj, modl = this.modl, clip = this.clip, F = this.m_Frustum;
+    const proj = this.proj,
+      modl = this.modl,
+      clip = this.clip,
+      F = this.m_Frustum;
     glGetFloatv(GL_PROJECTION_MATRIX, proj);
     glGetFloatv(GL_MODELVIEW_MATRIX, modl);
     for (let r = 0; r < 4; r++)
       for (let c = 0; c < 4; c++)
-        clip[r * 4 + c] = modl[r * 4]! * proj[c]! + modl[r * 4 + 1]! * proj[4 + c]! + modl[r * 4 + 2]! * proj[8 + c]! + modl[r * 4 + 3]! * proj[12 + c]!;
+        clip[r * 4 + c] =
+          modl[r * 4]! * proj[c]! +
+          modl[r * 4 + 1]! * proj[4 + c]! +
+          modl[r * 4 + 2]! * proj[8 + c]! +
+          modl[r * 4 + 3]! * proj[12 + c]!;
     const plane = (side: number, sign: number, k: number) => {
       F[side]![A] = clip[3]! + sign * clip[k]!;
       F[side]![B] = clip[7]! + sign * clip[4 + k]!;

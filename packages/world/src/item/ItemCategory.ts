@@ -9,12 +9,18 @@ export class ItemCategory {
 
   static categoryToString(id: number): string {
     switch (id) {
-      case ItemCategory.Structures: return 'Structures';
-      case ItemCategory.Tools: return 'Tools';
-      case ItemCategory.FoodArmor: return 'Food and\nArmor';
-      case ItemCategory.Decorations: return 'Decorations';
-      case ItemCategory.Mechanisms: return 'Mechanisms';
-      default: return '<Unknown category>';
+      case ItemCategory.Structures:
+        return 'Structures';
+      case ItemCategory.Tools:
+        return 'Tools';
+      case ItemCategory.FoodArmor:
+        return 'Food and\nArmor';
+      case ItemCategory.Decorations:
+        return 'Decorations';
+      case ItemCategory.Mechanisms:
+        return 'Mechanisms';
+      default:
+        return '<Unknown category>';
     }
   }
 }

@@ -22,7 +22,16 @@ export const ScrollingPaneFlags = {
   SF_ShowScrollbar: 1 << 9,
   SF_NoHoldSelect: 1 << 10,
 } as const;
-const { SF_LockX, SF_LockY, SF_WrapX, SF_WrapY, SF_HardLimits, SF_MultiSelect, SF_ShowScrollbar, SF_NoHoldSelect } = ScrollingPaneFlags;
+const {
+  SF_LockX,
+  SF_LockY,
+  SF_WrapX,
+  SF_WrapY,
+  SF_HardLimits,
+  SF_MultiSelect,
+  SF_ShowScrollbar,
+  SF_NoHoldSelect,
+} = ScrollingPaneFlags;
 
 /** C++ 的 struct ScrollBar */
 export class ScrollBar {
@@ -133,12 +142,25 @@ export class ScrollingPane extends GuiComponent {
   private _lx = -9999;
   private _ly = -9999;
 
-  constructor(optionFlags: number, boundingBox: IntRectangle, itemRect: IntRectangle, columns: number, numItems: number, screenScale = 1.0, itemBoundingRect: IntRectangle = new IntRectangle(0, 0, 0, 0)) {
+  constructor(
+    optionFlags: number,
+    boundingBox: IntRectangle,
+    itemRect: IntRectangle,
+    columns: number,
+    numItems: number,
+    screenScale = 1.0,
+    itemBoundingRect: IntRectangle = new IntRectangle(0, 0, 0, 0),
+  ) {
     super();
     this.flags = optionFlags;
     this.bbox = new IntRectangle(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
     this.size = new IntRectangle(boundingBox.x, boundingBox.y, boundingBox.w, boundingBox.h);
-    this.area = new RectangleArea(this.bbox.x, this.bbox.y, this.bbox.x + this.bbox.w, this.bbox.y + this.bbox.h);
+    this.area = new RectangleArea(
+      this.bbox.x,
+      this.bbox.y,
+      this.bbox.x + this.bbox.w,
+      this.bbox.y + this.bbox.h,
+    );
     this.bboxArea = this.area.copy();
     this.itemRect = new IntRectangle(itemRect.x, itemRect.y, itemRect.w, itemRect.h);
     this.numItems = numItems;
@@ -153,7 +175,11 @@ export class ScrollingPane extends GuiComponent {
     }
     this.rows = 1 + Math.trunc((numItems - 1) / this.columns);
     this.adjustContentSize();
-    this.minPoint.set(this.size.w - this.adjustedContentSize.w, this.size.h - this.adjustedContentSize.h, 0);
+    this.minPoint.set(
+      this.size.w - this.adjustedContentSize.w,
+      this.size.h - this.adjustedContentSize.h,
+      0,
+    );
     this.snapContentOffsetToBounds(false);
     this.selected = new Array<boolean>(numItems).fill(false);
     this.vScroll.w = this.vScroll.h = PKScrollIndicatorThickness;
@@ -179,7 +205,13 @@ export class ScrollingPane extends GuiComponent {
       this.updateScrollFade(this.vScroll);
       this.updateScrollFade(this.hScroll);
     }
-    if (this.isNotSet(SF_HardLimits) && !Mouse.isButtonDown(MouseAction.ACTION_LEFT) && !this.dragging && !this.tracking && !this.decelerating) {
+    if (
+      this.isNotSet(SF_HardLimits) &&
+      !Mouse.isButtonDown(MouseAction.ACTION_LEFT) &&
+      !this.dragging &&
+      !this.tracking &&
+      !this.decelerating
+    ) {
       let targetX = this._contentOffset.x;
       let targetY = this._contentOffset.y;
       let corrected = false;
@@ -198,8 +230,10 @@ export class ScrollingPane extends GuiComponent {
         corrected = true;
       }
       if (corrected) {
-        if (Mth.abs(targetX - this._contentOffset.x) < 0.25) targetX = targetX > 0.0 ? 0.0 : targetX < this.minPoint.x ? this.minPoint.x : targetX;
-        if (Mth.abs(targetY - this._contentOffset.y) < 0.25) targetY = targetY > 0.0 ? 0.0 : targetY < this.minPoint.y ? this.minPoint.y : targetY;
+        if (Mth.abs(targetX - this._contentOffset.x) < 0.25)
+          targetX = targetX > 0.0 ? 0.0 : targetX < this.minPoint.x ? this.minPoint.x : targetX;
+        if (Mth.abs(targetY - this._contentOffset.y) < 0.25)
+          targetY = targetY > 0.0 ? 0.0 : targetY < this.minPoint.y ? this.minPoint.y : targetY;
         this.setContentOffset(new Vec3(targetX, targetY, 0));
       }
     }
@@ -278,7 +312,11 @@ export class ScrollingPane extends GuiComponent {
 
   protected addDeltaPos(x: number, y: number, dt: number, _a: number): void {
     if (dt <= 0) return;
-    const delta = new Vec3((this.dragLastPos.x - x) * (1.0 / dt), (this.dragLastPos.y - y) * (1.0 / dt), 0);
+    const delta = new Vec3(
+      (this.dragLastPos.x - x) * (1.0 / dt),
+      (this.dragLastPos.y - y) * (1.0 / dt),
+      0,
+    );
     this.dragDeltas.push(delta.x);
     this.dragDeltas.push(delta.y);
     this.dragLastPos.set(x, y, 0);
@@ -298,7 +336,8 @@ export class ScrollingPane extends GuiComponent {
     else if (isDown && !this._wasDown && isInside) this.touchesBegan(x, y, t);
     else if (this.te_moved > 0 && moved && isDown) this.touchesMoved(x, y, t);
     if (this.highlightTimer >= 0 && this.isNotSet(SF_NoHoldSelect)) {
-      if (getTimeMs() - this.highlightTimer >= PKTableViewMinTouchDurationForCellSelection) this.onHoldItem();
+      if (getTimeMs() - this.highlightTimer >= PKTableViewMinTouchDurationForCellSelection)
+        this.onHoldItem();
     }
     this._wasDown = isDown;
   }
@@ -311,12 +350,24 @@ export class ScrollingPane extends GuiComponent {
     if (this.tracking) return;
     this.stopDecelerationAnimation();
     this.adjustContentSize();
-    this.minPoint.set(this.size.w - this.adjustedContentSize.w, this.size.h - this.adjustedContentSize.h, 0);
+    this.minPoint.set(
+      this.size.w - this.adjustedContentSize.w,
+      this.size.h - this.adjustedContentSize.h,
+      0,
+    );
     this.snapContentOffsetToBounds(false);
-    this.startPosition = new Vec3(this._contentOffset.x, this._contentOffset.y, this._contentOffset.z);
+    this.startPosition = new Vec3(
+      this._contentOffset.x,
+      this._contentOffset.y,
+      this._contentOffset.z,
+    );
     this.startTouchPosition.set(x, y, 0);
     this.startTime = t;
-    this.startTimePosition = new Vec3(this._contentOffset.x, this._contentOffset.y, this._contentOffset.z);
+    this.startTimePosition = new Vec3(
+      this._contentOffset.x,
+      this._contentOffset.y,
+      this._contentOffset.z,
+    );
     this.tracking = true;
     this.dragging = false;
     this.touchesHaveMoved = false;
@@ -343,13 +394,18 @@ export class ScrollingPane extends GuiComponent {
     const b = e.x - this.startTouchPosition.x;
     const c = e.y - this.startTouchPosition.y;
     if (!this.dragging) {
-      if ((Mth.abs(b) >= kMinimumTrackingForDrag && this.isNotSet(SF_LockX)) || (Mth.abs(c) >= kMinimumTrackingForDrag && this.isNotSet(SF_LockY))) {
+      if (
+        (Mth.abs(b) >= kMinimumTrackingForDrag && this.isNotSet(SF_LockX)) ||
+        (Mth.abs(c) >= kMinimumTrackingForDrag && this.isNotSet(SF_LockY))
+      ) {
         this.willBeginDragging();
         this.dragging = true;
         this.firstDrag = true;
         if (this.isSet(SF_ShowScrollbar)) {
-          if (this.isNotSet(SF_LockX) && this.adjustedContentSize.w > this.size.w) this.hScroll.fading = 1;
-          if (this.isNotSet(SF_LockY) && this.adjustedContentSize.h > this.size.h) this.vScroll.fading = 1;
+          if (this.isNotSet(SF_LockX) && this.adjustedContentSize.w > this.size.w)
+            this.hScroll.fading = 1;
+          if (this.isNotSet(SF_LockY) && this.adjustedContentSize.h > this.size.h)
+            this.vScroll.fading = 1;
         }
       }
     }
@@ -380,21 +436,37 @@ export class ScrollingPane extends GuiComponent {
     if (this.dragging) {
       this.dragging = false;
       if (t - this.lastEventTime <= kMaxTrackingTime) {
-        this._contentOffsetBeforeDeceleration = new Vec3(this._contentOffset.x, this._contentOffset.y, this._contentOffset.z);
+        this._contentOffsetBeforeDeceleration = new Vec3(
+          this._contentOffset.x,
+          this._contentOffset.y,
+          this._contentOffset.z,
+        );
         this.startDecelerationAnimation(false);
       }
       this.didEndDragging();
     }
     if (!this.decelerating) {
       if (this.fpy < 0 || this.fpy > this.bbox.h) {
-        this._contentOffsetBeforeDeceleration = new Vec3(this._contentOffset.x, this._contentOffset.y, this._contentOffset.z);
+        this._contentOffsetBeforeDeceleration = new Vec3(
+          this._contentOffset.x,
+          this._contentOffset.y,
+          this._contentOffset.z,
+        );
         this.startDecelerationAnimation(true);
       } else {
         this.snapContentOffsetToBounds(true);
         this.hideScrollIndicators();
       }
     }
-    if (new Vec3(x, y, 0).distanceToSqr(this.startTouchPosition.x, this.startTouchPosition.y, this.startTouchPosition.z) <= 6.0 * 6.0 && this.highlightItem.id >= 0) {
+    if (
+      new Vec3(x, y, 0).distanceToSqr(
+        this.startTouchPosition.x,
+        this.startTouchPosition.y,
+        this.startTouchPosition.z,
+      ) <=
+        6.0 * 6.0 &&
+      this.highlightItem.id >= 0
+    ) {
       this._onSelect(this.highlightItem.id);
     }
     this.te_moved = 0;
@@ -405,7 +477,11 @@ export class ScrollingPane extends GuiComponent {
   }
 
   protected startDecelerationAnimation(force: boolean): void {
-    const a = new Vec3(this._contentOffset.x - this.startTimePosition.x, this._contentOffset.y - this.startTimePosition.y, 0);
+    const a = new Vec3(
+      this._contentOffset.x - this.startTimePosition.x,
+      this._contentOffset.y - this.startTimePosition.y,
+      0,
+    );
     const b = (getTimeMs() - this.startTime) / kAcceleration;
     this.decelerationVelocity = new Vec3(a.x / b, a.y / b, 0);
     this.minDecelerationPoint = new Vec3(this.minPoint.x, this.minPoint.y, this.minPoint.z);
@@ -421,8 +497,14 @@ export class ScrollingPane extends GuiComponent {
     this.penetrationDeceleration = kPenetrationDeceleration;
     this.penetrationAcceleration = kPenetrationAcceleration;
     if (this.pagingEnabled) this.penetrationDeceleration *= 5;
-    const c = this.pagingEnabled ? kMinVelocityForDecelerationWithPaging : kMinVelocityForDeceleration;
-    if (force || Mth.abs(this.decelerationVelocity.x) > c || Mth.abs(this.decelerationVelocity.y) > c) {
+    const c = this.pagingEnabled
+      ? kMinVelocityForDecelerationWithPaging
+      : kMinVelocityForDeceleration;
+    if (
+      force ||
+      Mth.abs(this.decelerationVelocity.x) > c ||
+      Mth.abs(this.decelerationVelocity.y) > c
+    ) {
       this.decelerating = true;
       this._doStepTimer = true;
       this.lastFrame = getTimeMs();
@@ -471,7 +553,11 @@ export class ScrollingPane extends GuiComponent {
     }
     const b = Mth.abs(this.decelerationVelocity.x);
     const i = Mth.abs(this.decelerationVelocity.y);
-    if (!noAnimation && b <= kMinimumVelocityToHideScrollIndicators && i <= kMinimumVelocityToHideScrollIndicators) {
+    if (
+      !noAnimation &&
+      b <= kMinimumVelocityToHideScrollIndicators &&
+      i <= kMinimumVelocityToHideScrollIndicators
+    ) {
       this.hideScrollIndicators();
       if (b <= kMinimumVelocity && i <= kMinimumVelocity) {
         this.decelerating = false;
@@ -486,11 +572,13 @@ export class ScrollingPane extends GuiComponent {
       if (h < this.minDecelerationPoint.y) e.y = this.minDecelerationPoint.y - h;
       else if (h > this.maxDecelerationPoint.y) e.y = this.maxDecelerationPoint.y - h;
       if (e.x !== 0) {
-        if (e.x * this.decelerationVelocity.x <= 0) this.decelerationVelocity.x += e.x * this.penetrationDeceleration;
+        if (e.x * this.decelerationVelocity.x <= 0)
+          this.decelerationVelocity.x += e.x * this.penetrationDeceleration;
         else this.decelerationVelocity.x = e.x * this.penetrationAcceleration;
       }
       if (e.y !== 0) {
-        if (e.y * this.decelerationVelocity.y <= 0) this.decelerationVelocity.y += e.y * this.penetrationDeceleration;
+        if (e.y * this.decelerationVelocity.y <= 0)
+          this.decelerationVelocity.y += e.y * this.penetrationDeceleration;
         else this.decelerationVelocity.y = e.y * this.penetrationAcceleration;
       }
     }
@@ -570,14 +658,25 @@ export class ScrollingPane extends GuiComponent {
   }
 
   protected updateHorizontalScrollIndicator(): void {
-    const c = this.isNotSet(SF_LockX) && this.isSet(SF_ShowScrollbar) ? PKScrollIndicatorEndSize * 2 : 1;
-    let d = Mth.Max(kMinIndicatorLength, Math.floor(0.5 + (this.size.w / this.adjustedContentSize.w) * (this.size.w - c)));
-    let a = (-this._contentOffset.x / (this.adjustedContentSize.w - this.size.w)) * (this.size.w - c - d);
+    const c =
+      this.isNotSet(SF_LockX) && this.isSet(SF_ShowScrollbar) ? PKScrollIndicatorEndSize * 2 : 1;
+    let d = Mth.Max(
+      kMinIndicatorLength,
+      Math.floor(0.5 + (this.size.w / this.adjustedContentSize.w) * (this.size.w - c)),
+    );
+    let a =
+      (-this._contentOffset.x / (this.adjustedContentSize.w - this.size.w)) * (this.size.w - c - d);
     if (this._contentOffset.x > 0) {
       d = Math.floor(0.5 + Mth.Max(d - this._contentOffset.x, PKScrollIndicatorThickness));
       a = 1;
     } else if (this._contentOffset.x < -(this.adjustedContentSize.w - this.size.w)) {
-      d = Math.floor(0.5 + Mth.Max(d + this.adjustedContentSize.w - this.size.w + this.contentOffset().x, PKScrollIndicatorThickness));
+      d = Math.floor(
+        0.5 +
+          Mth.Max(
+            d + this.adjustedContentSize.w - this.size.w + this.contentOffset().x,
+            PKScrollIndicatorThickness,
+          ),
+      );
       a = this.size.w - d - c;
     }
     this.hScroll.x = a + this.bbox.x;
@@ -585,14 +684,25 @@ export class ScrollingPane extends GuiComponent {
   }
 
   protected updateVerticalScrollIndicator(): void {
-    const c = this.isNotSet(SF_LockY) && this.isSet(SF_ShowScrollbar) ? PKScrollIndicatorEndSize * 2 : 1;
-    let d = Mth.Max(kMinIndicatorLength, Math.floor(0.5 + (this.size.h / this.adjustedContentSize.h) * (this.size.h - c)));
-    let b = (-this._contentOffset.y / (this.adjustedContentSize.h - this.size.h)) * (this.size.h - c - d);
+    const c =
+      this.isNotSet(SF_LockY) && this.isSet(SF_ShowScrollbar) ? PKScrollIndicatorEndSize * 2 : 1;
+    let d = Mth.Max(
+      kMinIndicatorLength,
+      Math.floor(0.5 + (this.size.h / this.adjustedContentSize.h) * (this.size.h - c)),
+    );
+    let b =
+      (-this._contentOffset.y / (this.adjustedContentSize.h - this.size.h)) * (this.size.h - c - d);
     if (this._contentOffset.y > 0) {
       d = Math.floor(0.5 + Mth.Max(d - this._contentOffset.y, PKScrollIndicatorThickness));
       b = 1;
     } else if (this._contentOffset.y < -(this.adjustedContentSize.h - this.size.h)) {
-      d = Math.floor(0.5 + Mth.Max(d + this.adjustedContentSize.h - this.size.h + this.contentOffset().y, PKScrollIndicatorThickness));
+      d = Math.floor(
+        0.5 +
+          Mth.Max(
+            d + this.adjustedContentSize.h - this.size.h + this.contentOffset().y,
+            PKScrollIndicatorThickness,
+          ),
+      );
       b = this.size.h - d - c;
     }
     this.vScroll.y = b + this.bbox.y;
@@ -664,4 +774,5 @@ export class ScrollingPane extends GuiComponent {
   protected willBeginDecelerating(): void {}
   protected willBeginDragging(): void {}
 }
-void SF_LockY; void SF_WrapY;
+void SF_LockY;
+void SF_WrapY;

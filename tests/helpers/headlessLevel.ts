@@ -1,7 +1,15 @@
 import { SharedConstants } from '@mcpe/core';
 import { Mth } from '@mcpe/util';
 import {
-  FlatDimension, GameType, initBiomes, Level, LevelChunk, LevelConstants, LevelSettings, MemoryLevelStorage, MobCategory,
+  FlatDimension,
+  GameType,
+  initBiomes,
+  Level,
+  LevelChunk,
+  LevelConstants,
+  LevelSettings,
+  MemoryLevelStorage,
+  MobCategory,
 } from '@mcpe/world';
 import { initTestTiles } from './initTestTiles';
 
@@ -22,7 +30,13 @@ export function initHeadless(): void {
 
 export function createFlatLevel(): Level {
   initHeadless();
-  return new Level(new MemoryLevelStorage(), 'demo', new LevelSettings(0, GameType.Creative), SharedConstants.GeneratorVersion, new FlatDimension());
+  return new Level(
+    new MemoryLevelStorage(),
+    'demo',
+    new LevelSettings(0, GameType.Creative),
+    SharedConstants.GeneratorVersion,
+    new FlatDimension(),
+  );
 }
 
 /** Minecraft::prepareLevel 的世界部分（去掉进度条与计时） */

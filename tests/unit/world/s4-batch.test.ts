@@ -1,8 +1,21 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { Random, WeighedRandom, WeighedRandomItem } from '@mcpe/util';
 import {
-  Biome, DataLayer, Dimension, GameType, initBiomes, LevelChunk, LevelData, LevelSettings, LightLayer, Material,
-  MemoryChunkStorage, MemoryLevelStorage, MobCategory, MobTypes, Tile,
+  Biome,
+  DataLayer,
+  Dimension,
+  GameType,
+  initBiomes,
+  LevelChunk,
+  LevelData,
+  LevelSettings,
+  LightLayer,
+  Material,
+  MemoryChunkStorage,
+  MemoryLevelStorage,
+  MobCategory,
+  MobTypes,
+  Tile,
 } from '@mcpe/world';
 import { FakeLevel } from '../../helpers/fakeLevel';
 import { initTestTiles } from '../../helpers/initTestTiles';
@@ -50,7 +63,11 @@ describe('LevelChunk', () => {
     const c = flatChunk(new FakeLevel());
     c.recalcHeightmap();
     expect([c.getHeightmap(0, 0), c.getHeightmap(15, 15), c.minHeight]).toEqual([64, 64, 64]);
-    expect([c.getBrightness(LightLayer.Sky, 3, 127, 3), c.getBrightness(LightLayer.Sky, 3, 64, 3), c.getBrightness(LightLayer.Sky, 3, 63, 3)]).toEqual([15, 15, 0]);
+    expect([
+      c.getBrightness(LightLayer.Sky, 3, 127, 3),
+      c.getBrightness(LightLayer.Sky, 3, 64, 3),
+      c.getBrightness(LightLayer.Sky, 3, 63, 3),
+    ]).toEqual([15, 15, 0]);
     expect([c.isSkyLit(0, 64, 0), c.isSkyLit(0, 63, 0)]).toEqual([true, false]);
     expect([c.xt, c.zt, c.getTile(0, 63, 0), c.getTile(0, 0, 0)]).toEqual([128, 128, 2, 7]);
   });
@@ -91,12 +108,17 @@ describe('LevelChunk', () => {
     const a = flatChunk(new FakeLevel());
     a.recalcHeightmap();
     a.setData(1, 63, 1, 5);
-    const buf = new Uint8Array(16 * 16 * 128 * 5 / 2);
+    const buf = new Uint8Array((16 * 16 * 128 * 5) / 2);
     const n = a.getBlocksAndData(buf, 0, 0, 0, 16, 128, 16, 0);
     expect(n).toBe(buf.length);
     const b = new LevelChunk(new FakeLevel(), new Uint8Array(32768), 8, 8);
     expect(b.setBlocksAndData(buf, 0, 0, 0, 16, 128, 16, 0)).toBe(n);
-    expect([b.getTile(3, 63, 3), b.getData(1, 63, 1), b.getBrightness(LightLayer.Sky, 3, 100, 3), b.getHeightmap(5, 5)]).toEqual([2, 5, 15, 64]);
+    expect([
+      b.getTile(3, 63, 3),
+      b.getData(1, 63, 1),
+      b.getBrightness(LightLayer.Sky, 3, 100, 3),
+      b.getHeightmap(5, 5),
+    ]).toEqual([2, 5, 15, 64]);
     expect(b.countEntities()).toBe(0);
   });
 });
@@ -104,13 +126,22 @@ describe('LevelChunk', () => {
 describe('Biome', () => {
   it('刷怪表与权重、按类别取表（身份比较）', () => {
     expect([Biome.defaultTotalEnemyWeight, Biome.defaultTotalFriendlyWeight]).toEqual([30, 40]);
-    expect(Biome.forest.getMobs(MobCategory.creature).map((m) => m.mobClassId)).toEqual([MobTypes.Sheep, MobTypes.Pig, MobTypes.Chicken, MobTypes.Cow]);
+    expect(Biome.forest.getMobs(MobCategory.creature).map((m) => m.mobClassId)).toEqual([
+      MobTypes.Sheep,
+      MobTypes.Pig,
+      MobTypes.Chicken,
+      MobTypes.Cow,
+    ]);
     expect(Biome.desert.getMobs(MobCategory.creature)).toEqual([]);
     expect(Biome.desert.getMobs(MobCategory.monster)).toHaveLength(4);
     expect(Biome.forest.getCreatureProbability()).toBe(Math.fround(0.08));
   });
   it('名字、颜色、地表方块（沙漠的地表与填充都是沙子）', () => {
-    expect([Biome.taiga.name, Biome.taiga.color, Biome.taiga.leafColor]).toEqual(['Taiga', 0x2eb153, 0x7bb731]);
+    expect([Biome.taiga.name, Biome.taiga.color, Biome.taiga.leafColor]).toEqual([
+      'Taiga',
+      0x2eb153,
+      0x7bb731,
+    ]);
     expect([Biome.desert.topMaterial, Biome.desert.material]).toEqual([12, 12]);
     expect(Number.isInteger(Biome.plains.getSkyColor(0.5))).toBe(true);
   });
@@ -119,10 +150,23 @@ describe('Biome', () => {
 describe('LevelData / LevelSettings', () => {
   it('默认构造与按设置构造', () => {
     const d = new LevelData();
-    expect([d.getXSpawn(), d.getYSpawn(), d.getZSpawn(), d.getGameType(), d.getSpawnMobs(), d.getDimension(), d.getStorageVersion()])
-      .toEqual([128, 64, 128, GameType.Creative, false, Dimension.NORMAL, 0]);
+    expect([
+      d.getXSpawn(),
+      d.getYSpawn(),
+      d.getZSpawn(),
+      d.getGameType(),
+      d.getSpawnMobs(),
+      d.getDimension(),
+      d.getStorageVersion(),
+    ]).toEqual([128, 64, 128, GameType.Creative, false, Dimension.NORMAL, 0]);
     const s = new LevelData(new LevelSettings(12345, GameType.Survival), 'demo');
-    expect([s.getSeed(), s.getGameType(), s.getSpawnMobs(), s.getLevelName(), s.getGeneratorVersion()]).toEqual([12345, 0, true, 'demo', 0]);
+    expect([
+      s.getSeed(),
+      s.getGameType(),
+      s.getSpawnMobs(),
+      s.getLevelName(),
+      s.getGeneratorVersion(),
+    ]).toEqual([12345, 0, true, 'demo', 0]);
   });
   it('拷贝构造与 assign 复制字段，但不复制 sizeOnDisk（与 C++ 相同）', () => {
     const a = new LevelData(new LevelSettings(7, GameType.Creative), 'a');
@@ -131,13 +175,23 @@ describe('LevelData / LevelSettings', () => {
     a.setSizeOnDisk(4096);
     a.playerData.pos.x = 5;
     const b = new LevelData(a);
-    expect([b.getSeed(), b.getXSpawn(), b.getTime(), b.getSizeOnDisk(), b.playerData.pos.x]).toEqual([7, 1, 999, 0, 5]);
+    expect([
+      b.getSeed(),
+      b.getXSpawn(),
+      b.getTime(),
+      b.getSizeOnDisk(),
+      b.playerData.pos.x,
+    ]).toEqual([7, 1, 999, 0, 5]);
     expect(b.playerData.pos).not.toBe(a.playerData.pos);
     const c = new LevelData().assign(a);
     expect([c.getLevelName(), c.getSizeOnDisk()]).toEqual(['a', 0]);
   });
   it('LevelSettings 的静态函数', () => {
-    expect([LevelSettings.validateGameType(5), LevelSettings.validateGameType(0), LevelSettings.gameTypeToString(1)]).toEqual([1, 0, 'Creative']);
+    expect([
+      LevelSettings.validateGameType(5),
+      LevelSettings.validateGameType(0),
+      LevelSettings.gameTypeToString(1),
+    ]).toEqual([1, 0, 'Creative']);
     expect(LevelSettings.None().getSeed()).toBe(-1);
   });
 });
@@ -162,17 +216,28 @@ describe('MemoryLevelStorage', () => {
 describe('MobCategory / WeighedRandom', () => {
   it('initMobCategories 之后的刷怪材质', () => {
     expect(MobCategory.values).toHaveLength(3);
-    expect([MobCategory.monster.getSpawnPositionMaterial(), MobCategory.waterCreature.getSpawnPositionMaterial()]).toEqual([Material.air, Material.water]);
-    expect([MobCategory.creature.isFriendly(), MobCategory.monster.getMaxInstancesPerChunk()]).toEqual([true, 10]);
+    expect([
+      MobCategory.monster.getSpawnPositionMaterial(),
+      MobCategory.waterCreature.getSpawnPositionMaterial(),
+    ]).toEqual([Material.air, Material.water]);
+    expect([
+      MobCategory.creature.isFriendly(),
+      MobCategory.monster.getMaxInstancesPerChunk(),
+    ]).toEqual([true, 10]);
   });
   it('按权重抽取', () => {
     const items = [new WeighedRandomItem(1), new WeighedRandomItem(3), new WeighedRandomItem(6)];
     expect(WeighedRandom.getTotalWeight(items)).toBe(10);
-    const r1 = new Random(42), r2 = new Random(42);
+    const r1 = new Random(42),
+      r2 = new Random(42);
     for (let i = 0; i < 20; i++) {
       let sel = r2.nextInt(10);
       let want = -1;
-      for (let k = 0; k < items.length; k++) if ((sel -= items[k]!.randomWeight) < 0) { want = k; break; }
+      for (let k = 0; k < items.length; k++)
+        if ((sel -= items[k]!.randomWeight) < 0) {
+          want = k;
+          break;
+        }
       expect(WeighedRandom.getRandomItemIndex(r1, items)).toBe(want);
     }
     expect(new WeighedRandomItem().isValid()).toBe(false);

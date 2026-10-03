@@ -11,5 +11,5 @@ import { LiquidMaterial } from './LiquidMaterial';
 import { WebMaterial } from './WebMaterial';
 
 export function initMaterials(): void {
-    Material.initMaterials({ GasMaterial, LiquidMaterial, DecorationMaterial, WebMaterial });
+  Material.initMaterials({ GasMaterial, LiquidMaterial, DecorationMaterial, WebMaterial });
 }

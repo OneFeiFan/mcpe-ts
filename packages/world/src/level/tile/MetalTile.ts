@@ -1,5 +1,5 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
 
 export class MetalTile extends Tile {
   /** C++ MetalTile::MetalTile(int id, int tex) */

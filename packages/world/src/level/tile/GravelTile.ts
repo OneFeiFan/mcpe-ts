@@ -1,6 +1,6 @@
-import { HeavyTile } from "./HeavyTile";
-import { Item } from "../../item/Item";
-import type { Random } from "@mcpe/util";
+import { HeavyTile } from './HeavyTile';
+import { Item } from '../../item/Item';
+import type { Random } from '@mcpe/util';
 
 export class GravelTile extends HeavyTile {
   /** C++ GravelTile::GravelTile(int type, int tex) */

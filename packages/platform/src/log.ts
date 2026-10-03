@@ -1,6 +1,6 @@
 // log.ts
 
-export type LogLevel = "V" | "I" | "W" | "E";
+export type LogLevel = 'V' | 'I' | 'W' | 'E';
 
 export type LogSink = (level: LogLevel, ...args: unknown[]) => void;
 
@@ -41,11 +41,7 @@ export class Logger {
       opts.sink ??
       ((level, ...args) => {
         const consoleFn =
-          level === "E"
-            ? console.error
-            : level === "W"
-            ? console.warn
-            : console.log;
+          level === 'E' ? console.error : level === 'W' ? console.warn : console.log;
         if (usePrefix) consoleFn(`[${level}]`, ...args);
         else consoleFn(...args);
       });
@@ -79,22 +75,22 @@ export class Logger {
 
   // ---- 各级别日志 ----
   v(...args: unknown[]): void {
-    this.write("V", args);
+    this.write('V', args);
   }
   i(...args: unknown[]): void {
-    this.write("I", args);
+    this.write('I', args);
   }
   w(...args: unknown[]): void {
-    this.write("W", args);
+    this.write('W', args);
   }
   e(...args: unknown[]): void {
-    this.write("E", args);
+    this.write('E', args);
   }
 
   /** 仅 debug 模式下输出，对应原来的 LOGVV */
   vv(...args: unknown[]): void {
     if (this._publish || !this._debug) return;
-    this._sink("V", ...args);
+    this._sink('V', ...args);
   }
 }
 
@@ -102,7 +98,7 @@ export class Logger {
 export const log = new Logger();
 
 /** 一次性配置默认单例，对应原来在编译期定义 PUBLISH / _DEBUG */
-export function configureLog(opts: Omit<LogOptions, "prefix">): void {
+export function configureLog(opts: Omit<LogOptions, 'prefix'>): void {
   if (opts.publish !== undefined) log.setPublish(opts.publish);
   if (opts.debug !== undefined) log.setDebug(opts.debug);
   if (opts.sink !== undefined) log.setSink(opts.sink);

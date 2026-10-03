@@ -43,7 +43,15 @@ export class Chunk {
   private dirty = false;
   private _empty = true;
 
-  constructor(level_: Level, x: number, y: number, z: number, size: number, lists_: number, ptrBuf: ArrayLike<number> | null = null) {
+  constructor(
+    level_: Level,
+    x: number,
+    y: number,
+    z: number,
+    size: number,
+    lists_: number,
+    ptrBuf: ArrayLike<number> | null = null,
+  ) {
     this.level = level_;
     this.xs = this.ys = this.zs = size;
     this.lists = lists_;

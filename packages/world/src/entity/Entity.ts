@@ -1,34 +1,46 @@
 import { getEpochTimeS } from '@mcpe/platform';
-import { Level } from "../level/Level";
-import { ItemInstance } from "../item/ItemInstance";
-import type { ItemEntity } from "./item/ItemEntity";
-import { AABB } from "../phys/AABB";
-import { Vec3 } from "../phys/Vec3";
-import { Material } from "../level/material/Material";
-import { Tile } from "../level/tile/Tile";
-import { EntityRendererId } from "./EntityRendererId";
-import { SharedConstants } from "@mcpe/core";
-import { CompoundTag, ListTagFloatAdder } from "@mcpe/nbt";
-import { Random, Mth } from "@mcpe/util";
-import type { Player } from "./player/Player";
-import { LevelConstants } from "../level/LevelConstants";
-import { LiquidTile } from "../level/tile/LiquidTile";
-import type { EntityPos } from "./EntityPos";
-import { ParticleType } from "./EntityTypes";
-import type { SynchedEntityData } from "./SynchedEntityData";
+import { Level } from '../level/Level';
+import { ItemInstance } from '../item/ItemInstance';
+import type { ItemEntity } from './item/ItemEntity';
+import { AABB } from '../phys/AABB';
+import { Vec3 } from '../phys/Vec3';
+import { Material } from '../level/material/Material';
+import { Tile } from '../level/tile/Tile';
+import { EntityRendererId } from './EntityRendererId';
+import { SharedConstants } from '@mcpe/core';
+import { CompoundTag, ListTagFloatAdder } from '@mcpe/nbt';
+import { Random, Mth } from '@mcpe/util';
+import type { Player } from './player/Player';
+import { LevelConstants } from '../level/LevelConstants';
+import { LiquidTile } from '../level/tile/LiquidTile';
+import type { EntityPos } from './EntityPos';
+import { ParticleType } from './EntityTypes';
+import type { SynchedEntityData } from './SynchedEntityData';
 
 /**
  * ADAPTED(ESM)：spawnAtLocation 要 new ItemEntity，而 ItemEntity extends Entity。基类 import 子类会在模块加载时
  * 触发“Class extends value undefined”，所以 ItemEntity 的构造器由 ItemEntity.ts 在定义后注册进来（与 TileInclude 同一思路）。
  */
-type ItemEntityCtor = new (level: Level, x: number, y: number, z: number, item: ItemInstance) => ItemEntity;
+type ItemEntityCtor = new (
+  level: Level,
+  x: number,
+  y: number,
+  z: number,
+  item: ItemInstance,
+) => ItemEntity;
 let ItemEntityClass: ItemEntityCtor | null = null;
 export function registerItemEntityClass(c: ItemEntityCtor): void {
   ItemEntityClass = c;
 }
 
 /** 供 Tile 等创建掉落物（它们与 Entity 只在函数内部互相使用，不形成加载期循环） */
-export function createItemEntity(level: Level, x: number, y: number, z: number, item: ItemInstance): ItemEntity {
+export function createItemEntity(
+  level: Level,
+  x: number,
+  y: number,
+  z: number,
+  item: ItemInstance,
+): ItemEntity {
   return new ItemEntityClass!(level, x, y, z, item);
 }
 
@@ -40,20 +52,34 @@ export abstract class Entity {
   static readonly TOTAL_AIR_SUPPLY = 15 * SharedConstants.TicksPerSecond;
 
   // 公共字段
-  public x = 0; public y = 0; public z = 0;
-  public xChunk = 0; public yChunk = 0; public zChunk = 0;
+  public x = 0;
+  public y = 0;
+  public z = 0;
+  public xChunk = 0;
+  public yChunk = 0;
+  public zChunk = 0;
   public entityId: number;
   public viewScale = 1.0;
   public level: Level;
-  public xo = 0; public yo = 0; public zo = 0;
-  public xd = 0; public yd = 0; public zd = 0;
-  public yRot = 0; public xRot = 0;
-  public yRotO = 0; public xRotO = 0;
+  public xo = 0;
+  public yo = 0;
+  public zo = 0;
+  public xd = 0;
+  public yd = 0;
+  public zd = 0;
+  public yRot = 0;
+  public xRot = 0;
+  public yRotO = 0;
+  public xRotO = 0;
   public bb: AABB;
   public heightOffset = 0 / 16.0;
-  public bbWidth = 0.6; public bbHeight = 1.8;
-  public walkDistO = 0; public walkDist = 0;
-  public xOld = 0; public yOld = 0; public zOld = 0;
+  public bbWidth = 0.6;
+  public bbHeight = 1.8;
+  public walkDistO = 0;
+  public walkDist = 0;
+  public xOld = 0;
+  public yOld = 0;
+  public zOld = 0;
   public ySlideOffset = 0;
   public footSize = 0;
   public pushthrough = 0;
@@ -125,13 +151,21 @@ export abstract class Entity {
     this._init();
   }
 
-  hashCode(): number { return this.entityId; }
+  hashCode(): number {
+    return this.entityId;
+  }
 
-  equals(rhs: Entity): boolean { return this.entityId === rhs.entityId; }
+  equals(rhs: Entity): boolean {
+    return this.entityId === rhs.entityId;
+  }
 
-  setLevel(level: Level): void { this.level = level; }
+  setLevel(level: Level): void {
+    this.level = level;
+  }
 
-  remove(): void { this.removed = true; }
+  remove(): void {
+    this.removed = true;
+  }
 
   // ---- 位置与形状 ----
 
@@ -143,8 +177,12 @@ export abstract class Entity {
     const w = this.bbWidth / 2;
     const h = this.bbHeight;
     this.bb.set(
-      x - w, y - this.heightOffset + this.ySlideOffset, z - w,
-      x + w, y - this.heightOffset + this.ySlideOffset + h, z + w,
+      x - w,
+      y - this.heightOffset + this.ySlideOffset,
+      z - w,
+      x + w,
+      y - this.heightOffset + this.ySlideOffset + h,
+      z + w,
     );
   }
 
@@ -191,16 +229,12 @@ export abstract class Entity {
 
   /** C++ Entity::isInWater() */
   isInWater(): boolean {
-    return this.level.checkAndHandleWater(
-      this.bb.grow(0, -0.4, 0), Material.water, this,
-    );
+    return this.level.checkAndHandleWater(this.bb.grow(0, -0.4, 0), Material.water, this);
   }
 
   /** C++ Entity::isInLava() */
   isInLava(): boolean {
-    return this.level.containsMaterial(
-      this.bb.grow(-0.1, -0.4, -0.1), Material.lava,
-    );
+    return this.level.containsMaterial(this.bb.grow(-0.1, -0.4, -0.1), Material.lava);
   }
 
   /** C++ Entity::isFree(float, float, float, float) */
@@ -208,9 +242,10 @@ export abstract class Entity {
   /** C++ Entity::isFree(float, float, float) */
   isFree(xa: number, ya: number, za: number): boolean;
   isFree(xa: number, ya: number, za: number, grow?: number): boolean {
-    const box = grow !== undefined
-      ? this.bb.grow(grow, grow, grow).cloneMove(xa, ya, za)
-      : this.bb.cloneMove(xa, ya, za);
+    const box =
+      grow !== undefined
+        ? this.bb.grow(grow, grow, grow).cloneMove(xa, ya, za)
+        : this.bb.cloneMove(xa, ya, za);
     if (this.level.getCubes(this, box).length > 0) return false;
     if (this.level.containsAnyLiquid(box)) return false;
     return true;
@@ -275,7 +310,11 @@ export abstract class Entity {
         else if (za > 0) za -= d;
         else za += d;
       }
-      while (xa !== 0 && za !== 0 && this.level.getCubes(this, this.bb.cloneMove(xa, -1.0, za)).length === 0) {
+      while (
+        xa !== 0 &&
+        za !== 0 &&
+        this.level.getCubes(this, this.bb.cloneMove(xa, -1.0, za)).length === 0
+      ) {
         if (xa < d && xa >= -d) xa = 0;
         else if (xa > 0) xa -= d;
         else xa += d;
@@ -460,7 +499,9 @@ export abstract class Entity {
 
   // ---- tick ----
 
-  tick(): void { this.baseTick(); }
+  tick(): void {
+    this.baseTick();
+  }
 
   baseTick(): void {
     this.tickCount++;
@@ -473,10 +514,13 @@ export abstract class Entity {
 
     if (this.isInWater()) {
       if (!this.wasInWater && !this.firstTick) {
-        let speed = Math.sqrt(this.xd * this.xd * 0.2 + this.yd * this.yd + this.zd * this.zd * 0.2) * 0.2;
+        let speed =
+          Math.sqrt(this.xd * this.xd * 0.2 + this.yd * this.yd + this.zd * this.zd * 0.2) * 0.2;
         if (speed > 1) speed = 1;
         this.level.playSound(
-          this, "random.splash", speed,
+          this,
+          'random.splash',
+          speed,
           1 + (Entity.sharedRandom.nextFloat() - Entity.sharedRandom.nextFloat()) * 0.4,
         );
         const yt = Math.floor(this.bb.y0);
@@ -485,8 +529,12 @@ export abstract class Entity {
           const zo = (Entity.sharedRandom.nextFloat() * 2 - 1) * this.bbWidth;
           this.level.addParticle(
             ParticleType.bubble,
-            this.x + xo, yt + 1, this.z + zo,
-            this.xd, this.yd - Entity.sharedRandom.nextFloat() * 0.2, this.zd,
+            this.x + xo,
+            yt + 1,
+            this.z + zo,
+            this.xd,
+            this.yd - Entity.sharedRandom.nextFloat() * 0.2,
+            this.zd,
           );
         }
       }
@@ -526,9 +574,13 @@ export abstract class Entity {
 
   // ---- 回调 ----
 
-  protected outOfWorld(): void { this.remove(); }
+  protected outOfWorld(): void {
+    this.remove();
+  }
   protected causeFallDamage(_fallDamage2: number): void {}
-  protected markHurt(): void { this.hurtMarked = true; }
+  protected markHurt(): void {
+    this.hurtMarked = true;
+  }
   protected resetPos(_clearMore: boolean): void {
     if (this.level == null) return;
     while (this.y > 0) {
@@ -544,17 +596,27 @@ export abstract class Entity {
     if (this.onFire < newValue) this.onFire = newValue;
   }
 
-  getHeadHeight(): number { return 0; }
-  getShadowHeightOffs(): number { return this.bbHeight / 2; }
+  getHeadHeight(): number {
+    return 0;
+  }
+  getShadowHeightOffs(): number {
+    return this.bbHeight / 2;
+  }
   getBrightness(_a: number): number {
     const xTile = Mth.floor(this.x);
     const hh = (this.bb.y1 - this.bb.y0) * 0.66;
     const yTile = Mth.floor(this.y - this.heightOffset + hh);
     const zTile = Mth.floor(this.z);
-    if (this.level.hasChunksAt(
-      Mth.floor(this.bb.x0), Mth.floor(this.bb.y0), Mth.floor(this.bb.z0),
-      Mth.floor(this.bb.x1), Mth.floor(this.bb.y1), Mth.floor(this.bb.z1),
-    )) {
+    if (
+      this.level.hasChunksAt(
+        Mth.floor(this.bb.x0),
+        Mth.floor(this.bb.y0),
+        Mth.floor(this.bb.z0),
+        Mth.floor(this.bb.x1),
+        Mth.floor(this.bb.y1),
+        Mth.floor(this.bb.z1),
+      )
+    ) {
       return this.level.getBrightness(xTile, yTile, zTile);
     }
     return 0;
@@ -566,7 +628,7 @@ export abstract class Entity {
   distanceTo(x2: number, y2: number, z2: number): number;
   distanceTo(a: Entity | number, b?: number, c?: number): number {
     let xd: number, yd: number, zd: number;
-    if (typeof a === "number") {
+    if (typeof a === 'number') {
       xd = this.x - a;
       yd = this.y - b!;
       zd = this.z - c!;
@@ -582,7 +644,7 @@ export abstract class Entity {
   distanceToSqr(x2: number, y2: number, z2: number): number;
   distanceToSqr(a: Entity | number, b?: number, c?: number): number {
     let xd: number, yd: number, zd: number;
-    if (typeof a === "number") {
+    if (typeof a === 'number') {
       xd = this.x - a;
       yd = this.y - b!;
       zd = this.z - c!;
@@ -599,7 +661,7 @@ export abstract class Entity {
   push(e: Entity): void;
   push(xa: number, ya: number, za: number): void;
   push(a: Entity | number, b?: number, c?: number): void {
-    if (typeof a === "number") {
+    if (typeof a === 'number') {
       this.xd += a;
       this.yd += b!;
       this.zd += c!;
@@ -657,28 +719,28 @@ export abstract class Entity {
   save(entityTag: CompoundTag): boolean {
     const id = this.getEntityTypeId();
     if (this.removed || id === 0) return false;
-    entityTag.putInt("id", id);
+    entityTag.putInt('id', id);
     this.saveWithoutId(entityTag);
     return true;
   }
 
   saveWithoutId(entityTag: CompoundTag): void {
-    entityTag.put("Pos", new ListTagFloatAdder(this.x).call(this.y).call(this.z).tag!);
-    entityTag.put("Motion", new ListTagFloatAdder(this.xd).call(this.yd).call(this.zd).tag!);
-    entityTag.put("Rotation", new ListTagFloatAdder(this.yRot).call(this.xRot).tag!);
+    entityTag.put('Pos', new ListTagFloatAdder(this.x).call(this.y).call(this.z).tag!);
+    entityTag.put('Motion', new ListTagFloatAdder(this.xd).call(this.yd).call(this.zd).tag!);
+    entityTag.put('Rotation', new ListTagFloatAdder(this.yRot).call(this.xRot).tag!);
 
-    entityTag.putFloat("FallDistance", this.fallDistance);
-    entityTag.putShort("Fire", this.onFire);
-    entityTag.putShort("Air", this.airSupply);
-    entityTag.putBoolean("OnGround", this.onGround);
+    entityTag.putFloat('FallDistance', this.fallDistance);
+    entityTag.putShort('Fire', this.onFire);
+    entityTag.putShort('Air', this.airSupply);
+    entityTag.putBoolean('OnGround', this.onGround);
 
     this.addAdditonalSaveData(entityTag);
   }
 
   load(tag: CompoundTag): boolean {
-    const pos = tag.getList("Pos");
-    const motion = tag.getList("Motion");
-    const rotation = tag.getList("Rotation");
+    const pos = tag.getList('Pos');
+    const motion = tag.getList('Motion');
+    const rotation = tag.getList('Rotation');
     this.setPos(0, 0, 0);
 
     this.xd = motion.getFloat(0);
@@ -704,10 +766,10 @@ export abstract class Entity {
     this.yRotO = this.yRot = fmod(rotation.getFloat(0), 360.0);
     this.xRotO = this.xRot = fmod(rotation.getFloat(1), 360.0);
 
-    this.fallDistance = tag.getFloat("FallDistance");
-    this.onFire = tag.getShort("Fire");
-    this.airSupply = tag.getShort("Air");
-    this.onGround = tag.getBoolean("OnGround");
+    this.fallDistance = tag.getFloat('FallDistance');
+    this.onFire = tag.getShort('Fire');
+    this.airSupply = tag.getShort('Air');
+    this.onGround = tag.getBoolean('OnGround');
 
     this.setPos(this.x, this.y, this.z);
     this.readAdditionalSaveData(tag);
@@ -722,7 +784,7 @@ export abstract class Entity {
   spawnAtLocation(a: number | ItemInstance, b: number, c?: number): ItemEntity {
     let itemInstance: ItemInstance;
     let yOffs: number;
-    if (typeof a === "number") {
+    if (typeof a === 'number') {
       if (c === undefined) {
         // (resource, count) -> 委托 (resource, count, 0)
         return this.spawnAtLocation(a, b, 0);
@@ -736,9 +798,7 @@ export abstract class Entity {
       yOffs = b;
     }
 
-    const ie = new ItemEntityClass!(
-      this.level, this.x, this.y + yOffs, this.z, itemInstance,
-    );
+    const ie = new ItemEntityClass!(this.level, this.x, this.y + yOffs, this.z, itemInstance);
     ie.throwTime = 10;
     this.level.addEntity(ie);
     return ie;
@@ -746,21 +806,51 @@ export abstract class Entity {
 
   // ---- 查询 ----
 
-  isOnFire(): boolean { return this.onFire > 0; }
-  isAlive(): boolean { return !this.removed; }
-  isPlayer(): boolean { return false; }
-  isMob(): boolean { return false; }
-  isSneaking(): boolean { return false; }
-  isPickable(): boolean { return false; }
-  isPushable(): boolean { return false; }
-  isShootable(): boolean { return false; }
-  isCreativeModeAllowed(): boolean { return false; }
-  isItemEntity(): boolean { return false; }
-  isHangingEntity(): boolean { return false; }
-  getAuxData(): number { return 0; }
-  getPickRadius(): number { return 0.1; }
-  getCreatureBaseType(): number { return 0; }
-  queryEntityRenderer(): EntityRendererId { return EntityRendererId.ER_DEFAULT_RENDERER; }
+  isOnFire(): boolean {
+    return this.onFire > 0;
+  }
+  isAlive(): boolean {
+    return !this.removed;
+  }
+  isPlayer(): boolean {
+    return false;
+  }
+  isMob(): boolean {
+    return false;
+  }
+  isSneaking(): boolean {
+    return false;
+  }
+  isPickable(): boolean {
+    return false;
+  }
+  isPushable(): boolean {
+    return false;
+  }
+  isShootable(): boolean {
+    return false;
+  }
+  isCreativeModeAllowed(): boolean {
+    return false;
+  }
+  isItemEntity(): boolean {
+    return false;
+  }
+  isHangingEntity(): boolean {
+    return false;
+  }
+  getAuxData(): number {
+    return 0;
+  }
+  getPickRadius(): number {
+    return 0.1;
+  }
+  getCreatureBaseType(): number {
+    return 0;
+  }
+  queryEntityRenderer(): EntityRendererId {
+    return EntityRendererId.ER_DEFAULT_RENDERER;
+  }
 
   shouldRender(c: Vec3): boolean {
     if (this.invisible) return false;
@@ -779,8 +869,12 @@ export abstract class Entity {
   // ---- 空实现 ----
 
   playerTouch(_player: Player): void {}
-  interact(_player: Player): boolean { return false; }
-  interactPreventDefault(): boolean { return false; }
+  interact(_player: Player): boolean {
+    return false;
+  }
+  interactPreventDefault(): boolean {
+    return false;
+  }
   awardKillScore(_victim: Entity, _score: number): void {}
   animateHurt(): void {}
   setEquippedSlot(_slot: number, _item: number, _auxValue: number): void {}
@@ -789,9 +883,19 @@ export abstract class Entity {
     let soundType = Tile.tiles[t]!.soundType;
     if (this.level.getTile(xt, yt + 1, zt) === Tile.topSnow.id) {
       soundType = Tile.topSnow.soundType;
-      this.level.playSound(this, soundType.getStepSound(), soundType.getVolume() * 0.25, soundType.getPitch()); // was * 0.15f
+      this.level.playSound(
+        this,
+        soundType.getStepSound(),
+        soundType.getVolume() * 0.25,
+        soundType.getPitch(),
+      ); // was * 0.15f
     } else if (!Tile.tiles[t]!.material.isLiquid()) {
-      this.level.playSound(this, soundType.getStepSound(), soundType.getVolume() * 0.25, soundType.getPitch());
+      this.level.playSound(
+        this,
+        soundType.getStepSound(),
+        soundType.getVolume() * 0.25,
+        soundType.getPitch(),
+      );
     }
   }
   checkFallDamage(ya: number, onGround: boolean): void {
@@ -841,8 +945,8 @@ export abstract class Entity {
     xa *= dist;
     za *= dist;
 
-    const sin_ = Math.sin(this.yRot * Mth.PI / 180);
-    const cos_ = Math.cos(this.yRot * Mth.PI / 180);
+    const sin_ = Math.sin((this.yRot * Mth.PI) / 180);
+    const cos_ = Math.cos((this.yRot * Mth.PI) / 180);
 
     this.xd += xa * cos_ - za * sin_;
     this.zd += za * cos_ + xa * sin_;
@@ -852,10 +956,16 @@ export abstract class Entity {
     return this.bb.intersects(new AABB(x0, y0, z0, x1, y1, z1));
   }
 
-  getEntityData(): SynchedEntityData | null { return null; }
+  getEntityData(): SynchedEntityData | null {
+    return null;
+  }
 
-  isEntityType(type: number): boolean { return this.getEntityTypeId() === type; }
+  isEntityType(type: number): boolean {
+    return this.getEntityTypeId() === type;
+  }
 }
 
 // 辅助
-function fmod(a: number, b: number): number { return a % b; }
+function fmod(a: number, b: number): number {
+  return a % b;
+}

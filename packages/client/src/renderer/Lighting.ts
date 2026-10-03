@@ -2,8 +2,22 @@
 import type { Minecraft } from '../Minecraft';
 import { OptionId } from '../Options';
 import {
-  GL_AMBIENT, GL_COLOR_MATERIAL, GL_DIFFUSE, GL_FLAT, GL_LIGHT0, GL_LIGHT1, GL_LIGHT_MODEL_AMBIENT, GL_LIGHTING, GL_NORMALIZE, GL_POSITION,
-  GL_SPECULAR, glDisable, glEnable, glLightfv, glLightModelfv, glShadeModel,
+  GL_AMBIENT,
+  GL_COLOR_MATERIAL,
+  GL_DIFFUSE,
+  GL_FLAT,
+  GL_LIGHT0,
+  GL_LIGHT1,
+  GL_LIGHT_MODEL_AMBIENT,
+  GL_LIGHTING,
+  GL_NORMALIZE,
+  GL_POSITION,
+  GL_SPECULAR,
+  glDisable,
+  glEnable,
+  glLightfv,
+  glLightModelfv,
+  glShadeModel,
 } from './gles';
 
 const f = Math.fround;
@@ -17,7 +31,8 @@ export class Lighting {
   }
 
   static turnOn(minecraft: Minecraft): void {
-    if (!minecraft.options.getBooleanValue(OptionId.OPTIONS_NORMAL_LIGHTING)) { // if normal lighting is false, then just dont use the lighting system at all like in vanilla - shred
+    if (!minecraft.options.getBooleanValue(OptionId.OPTIONS_NORMAL_LIGHTING)) {
+      // if normal lighting is false, then just dont use the lighting system at all like in vanilla - shred
       Lighting.turnOff();
       return;
     }

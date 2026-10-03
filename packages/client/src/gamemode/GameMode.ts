@@ -5,7 +5,17 @@
  * Player::interact(Entity*) 按 R10 命名为 interactWith。
  */
 import { LOGI } from '@mcpe/platform';
-import { type Abilities, type Entity, Item, type ItemInstance, type Level, Material, type Player, Tile, type Vec3 } from '@mcpe/world';
+import {
+  type Abilities,
+  type Entity,
+  Item,
+  type ItemInstance,
+  type Level,
+  Material,
+  type Player,
+  Tile,
+  type Vec3,
+} from '@mcpe/world';
 import type { Minecraft } from '../Minecraft';
 import { OptionId } from '../Options';
 import { LocalPlayer } from '../player/LocalPlayer';
@@ -44,7 +54,8 @@ export abstract class GameMode {
     if (changed) {
       // DEFERRED(Sound): minecraft->soundEngine->play(oldTile->soundType->getBreakSound(), x + 0.5f, y + 0.5f, z + 0.5f, (getVolume() + 1) / 2, getPitch() * 0.8f);
       oldTile.destroy(level, x, y, z, data);
-      if (this.minecraft.options.getBooleanValue(OptionId.OPTIONS_DESTROY_VIBRATION)) this.minecraft.platform()!.vibrate(24);
+      if (this.minecraft.options.getBooleanValue(OptionId.OPTIONS_DESTROY_VIBRATION))
+        this.minecraft.platform()!.vibrate(24);
       // DEFERRED(Network): if (minecraft->isOnline()) { RemoveBlockPacket packet(minecraft->player, x, y, z); minecraft->raknetInstance->send(packet); }
     }
     return changed;
@@ -85,7 +96,16 @@ export abstract class GameMode {
     return false;
   }
 
-  useItemOn(player: Player, level: Level, item: ItemInstance | null, x: number, y: number, z: number, face: number, hit: Vec3): boolean {
+  useItemOn(
+    player: Player,
+    level: Level,
+    item: ItemInstance | null,
+    x: number,
+    y: number,
+    z: number,
+    face: number,
+    hit: Vec3,
+  ): boolean {
     const clickX = hit.x - x;
     const clickY = hit.y - y;
     const clickZ = hit.z - z;
@@ -111,7 +131,13 @@ export abstract class GameMode {
   }
 
   createPlayer(level: Level): Player {
-    return new LocalPlayer(this.minecraft, level, this.minecraft.options.getStringValue(OptionId.OPTIONS_USERNAME), level.dimension.id, this.isCreativeType());
+    return new LocalPlayer(
+      this.minecraft,
+      level,
+      this.minecraft.options.getStringValue(OptionId.OPTIONS_USERNAME),
+      level.dimension.id,
+      this.isCreativeType(),
+    );
   }
 
   initPlayer(player: Player): void {
@@ -135,7 +161,12 @@ export abstract class GameMode {
     player.attack(entity);
   }
 
-  handleInventoryMouseClick(_containerId: number, _slotNum: number, _buttonNum: number, _player: Player): ItemInstance | null {
+  handleInventoryMouseClick(
+    _containerId: number,
+    _slotNum: number,
+    _buttonNum: number,
+    _player: Player,
+  ): ItemInstance | null {
     return null;
   }
 

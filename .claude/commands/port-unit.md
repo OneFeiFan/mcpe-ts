@@ -2,9 +2,11 @@
 description: 按标准流程移植一个 C++ 单元（类或若干函数）
 argument-hint: <C++ 相对路径，如 client/gui/screens/OptionsScreen> [说明]
 ---
+
 移植参考源码里的 `$ARGUMENTS`。
 
 严格按 skill `mcpe-porting` 的 0–7 步执行，每一步完成后用一两句话汇报：
+
 1. 用 `python tools/porting/clean.py $REF/src/<路径>.h $REF/src/<路径>.cpp` 读源码，列出：基类、字段（按声明顺序）、所有成员函数（标出虚函数）、静态成员、文件内 static 函数/变量。
 2. 列出依赖，逐个查 TS 里是否存在；决定 import / 前向声明 / DEFERRED。
 3. 写 TS（大类用 cls2ts 流程）。

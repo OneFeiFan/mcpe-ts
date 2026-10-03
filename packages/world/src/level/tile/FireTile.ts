@@ -170,7 +170,14 @@ export class FireTile extends Tile {
 
   override animateTick(level: Level, x: number, y: number, z: number, random: Random): void {
     if (random.nextInt(24) === 0) {
-      level.playSound(x + 0.5, y + 0.5, z + 0.5, 'fire.fire', 1 + random.nextFloat(), random.nextFloat() * 0.7 + 0.3);
+      level.playSound(
+        x + 0.5,
+        y + 0.5,
+        z + 0.5,
+        'fire.fire',
+        1 + random.nextFloat(),
+        random.nextFloat() * 0.7 + 0.3,
+      );
     }
     const fire = Tile.fire;
     // PARTICLETYPE(largesmoke) 是逗号表达式 (ParticleType::largesmoke, "largesmoke")，实际传的是字符串
@@ -230,7 +237,14 @@ export class FireTile extends Tile {
     this.burnOdds[id] = burn;
   }
 
-  private checkBurn(level: Level, x: number, y: number, z: number, chance: number, random: Random): void {
+  private checkBurn(
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    chance: number,
+    random: Random,
+  ): void {
     const odds = this.burnOdds[level.getTile(x, y, z)]!;
     if (random.nextInt(chance) < odds) {
       // ADAPTED(DeferredTile): == Tile::tnt->id —— 火一旦烧到木头或树叶就会走到这里；tnt 未注册时恒为 false

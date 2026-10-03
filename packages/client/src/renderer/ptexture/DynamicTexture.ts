@@ -15,7 +15,7 @@ export abstract class DynamicTexture {
   abstract tick(): void;
 
   bindTexture(tex: Textures): void {
-    tex.loadAndBindTexture("terrain.png");
+    tex.loadAndBindTexture('terrain.png');
   }
 }
 
@@ -158,8 +158,8 @@ export class LavaTexture extends DynamicTexture {
     for (let x = 0; x < 16; x++) {
       for (let y = 0; y < 16; y++) {
         let pow = 0;
-        const xxo = (Mth.sin(y * Mth.PI * 2.0 / 16.0) * 1.2) | 0;
-        const yyo = (Mth.sin(x * Mth.PI * 2.0 / 16.0) * 1.2) | 0;
+        const xxo = (Mth.sin((y * Mth.PI * 2.0) / 16.0) * 1.2) | 0;
+        const yyo = (Mth.sin((x * Mth.PI * 2.0) / 16.0) * 1.2) | 0;
 
         for (let xx = x - 1; xx <= x + 1; xx++) {
           for (let yy = y - 1; yy <= y + 1; yy++) {
@@ -171,10 +171,12 @@ export class LavaTexture extends DynamicTexture {
 
         this.next[x + y * 16] =
           pow / 10.0 +
-          (heat[((x + 0) & 15) + ((y + 0) & 15) * 16]! +
+          ((heat[((x + 0) & 15) + ((y + 0) & 15) * 16]! +
             heat[((x + 1) & 15) + ((y + 0) & 15) * 16]! +
             heat[((x + 1) & 15) + ((y + 1) & 15) * 16]! +
-            heat[((x + 0) & 15) + ((y + 1) & 15) * 16]!) / 4.0 * 0.8;
+            heat[((x + 0) & 15) + ((y + 1) & 15) * 16]!) /
+            4.0) *
+            0.8;
 
         heat[x + y * 16]! = heat[x + y * 16]! + heata[x + y * 16]! * 0.01;
         if (heat[x + y * 16]! < 0.0) {
@@ -229,8 +231,8 @@ export class LavaSideTexture extends DynamicTexture {
     for (let x = 0; x < 16; x++) {
       for (let y = 0; y < 16; y++) {
         let pow = 0;
-        const yl = (Mth.sin(y * Mth.PI * 2.0 / 16.0) * 1.2) | 0;
-        const xl = (Mth.sin(x * Mth.PI * 2.0 / 16.0) * 1.2) | 0;
+        const yl = (Mth.sin((y * Mth.PI * 2.0) / 16.0) * 1.2) | 0;
+        const xl = (Mth.sin((x * Mth.PI * 2.0) / 16.0) * 1.2) | 0;
 
         for (let yy = x - 1; yy <= x + 1; yy++) {
           for (let xx = y - 1; xx <= y + 1; xx++) {
@@ -242,10 +244,12 @@ export class LavaSideTexture extends DynamicTexture {
 
         this.next[x + y * 16] =
           pow / 10.0 +
-          (heat[((x + 0) & 15) + ((y + 0) & 15) * 16]! +
+          ((heat[((x + 0) & 15) + ((y + 0) & 15) * 16]! +
             heat[((x + 1) & 15) + ((y + 0) & 15) * 16]! +
             heat[((x + 1) & 15) + ((y + 1) & 15) * 16]! +
-            heat[((x + 0) & 15) + ((y + 1) & 15) * 16]!) / 4.0 * 0.8;
+            heat[((x + 0) & 15) + ((y + 1) & 15) * 16]!) /
+            4.0) *
+            0.8;
 
         heat[x + y * 16]! = heat[x + y * 16]! + heata[x + y * 16]! * 0.01;
         if (heat[x + y * 16]! < 0.0) {
@@ -264,10 +268,7 @@ export class LavaSideTexture extends DynamicTexture {
     this.current = tmp;
 
     for (let i = 0; i < 256; i++) {
-      let pow =
-        this.current[
-          (i - Math.floor(this._tickCount / 3) * 16) & 255
-        ]! * 2.0;
+      let pow = this.current[(i - Math.floor(this._tickCount / 3) * 16) & 255]! * 2.0;
 
       if (pow > 1) pow = 1;
       if (pow < 0) pow = 0;
@@ -321,9 +322,7 @@ export class FireTexture extends DynamicTexture {
 
         if (y >= 19) {
           this.next[x + y * 16] =
-            Mth.random() * Mth.random() * Mth.random() * 4.0 +
-            Mth.random() * 0.1 +
-            0.2;
+            Mth.random() * Mth.random() * Mth.random() * 4.0 + Mth.random() * 0.1 + 0.2;
         }
       }
     }

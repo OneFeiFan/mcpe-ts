@@ -1,10 +1,10 @@
-import { Item } from "./Item";
-import { ItemInstance } from "./ItemInstance";
-import { Level } from "../level/Level";
-import { Tile } from "../level/tile/Tile";
-import { SignTileEntity } from "../level/tile/entity/SignTileEntity";
-import type { Player } from "../entity/player/Player";
-import { Mth } from "@mcpe/util";
+import { Item } from './Item';
+import { ItemInstance } from './ItemInstance';
+import { Level } from '../level/Level';
+import { Tile } from '../level/tile/Tile';
+import { SignTileEntity } from '../level/tile/entity/SignTileEntity';
+import type { Player } from '../entity/player/Player';
+import { Mth } from '@mcpe/util';
 
 export class SignItem extends Item {
   /** C++ SignItem::SignItem(int id) */
@@ -18,9 +18,13 @@ export class SignItem extends Item {
     instance: ItemInstance,
     player: Player,
     level: Level,
-    x: number, y: number, z: number,
+    x: number,
+    y: number,
+    z: number,
     face: number,
-    _clickX: number, _clickY: number, _clickZ: number,
+    _clickX: number,
+    _clickY: number,
+    _clickZ: number,
   ): boolean {
     if (face === 0) return false;
     if (!level.getMaterial(x, y, z)!.isSolid()) return false;

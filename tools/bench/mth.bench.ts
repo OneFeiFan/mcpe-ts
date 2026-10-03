@@ -20,22 +20,89 @@ for (let i = 0; i <= MASK; i++) {
 Mth.initMth();
 
 const cases: Record<string, () => number> = {
-  'Mth.sin（查表）': () => { let s = 0; for (let i = 0; i < N; i++) s += Mth.sin(A[i & MASK]!); return s; },
-  'Math.sin': () => { let s = 0; for (let i = 0; i < N; i++) s += Math.sin(A[i & MASK]!); return s; },
-  'Mth.cos（查表）': () => { let s = 0; for (let i = 0; i < N; i++) s += Mth.cos(A[i & MASK]!); return s; },
-  'Math.cos': () => { let s = 0; for (let i = 0; i < N; i++) s += Math.cos(A[i & MASK]!); return s; },
-  'Mth.floor': () => { let s = 0; for (let i = 0; i < N; i++) s += Mth.floor(C[i & MASK]!); return s; },
-  'Math.floor(x) | 0': () => { let s = 0; for (let i = 0; i < N; i++) s += Math.floor(C[i & MASK]!) | 0; return s; },
-  'Mth.invSqrt（快速近似）': () => { let s = 0; for (let i = 0; i < N; i++) s += Mth.invSqrt(P[i & MASK]!); return s; },
-  '1 / Math.sqrt': () => { let s = 0; for (let i = 0; i < N; i++) s += 1 / Math.sqrt(P[i & MASK]!); return s; },
-  'Mth.sqrt': () => { let s = 0; for (let i = 0; i < N; i++) s += Mth.sqrt(P[i & MASK]!); return s; },
-  'Math.sqrt': () => { let s = 0; for (let i = 0; i < N; i++) s += Math.sqrt(P[i & MASK]!); return s; },
-  'Mth.atan2': () => { let s = 0; for (let i = 0; i < N; i++) s += Mth.atan2(C[i & MASK]!, C[(i + 7) & MASK]!); return s; },
-  'Math.atan2': () => { let s = 0; for (let i = 0; i < N; i++) s += Math.atan2(C[i & MASK]!, C[(i + 7) & MASK]!); return s; },
-  'Mth.clamp': () => { let s = 0; for (let i = 0; i < N; i++) s += Mth.clamp(C[i & MASK]!, -500, 500); return s; },
-  'Math.min(Math.max())': () => { let s = 0; for (let i = 0; i < N; i++) s += Math.min(Math.max(C[i & MASK]!, -500), 500); return s; },
-  'Mth.lerp': () => { let s = 0; for (let i = 0; i < N; i++) s += Mth.lerp(C[i & MASK]!, C[(i + 3) & MASK]!, 0.25); return s; },
-  'a + (b - a) * t': () => { let s = 0; for (let i = 0; i < N; i++) { const a = C[i & MASK]!; s += a + (C[(i + 3) & MASK]! - a) * 0.25; } return s; },
+  'Mth.sin（查表）': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) s += Mth.sin(A[i & MASK]!);
+    return s;
+  },
+  'Math.sin': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) s += Math.sin(A[i & MASK]!);
+    return s;
+  },
+  'Mth.cos（查表）': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) s += Mth.cos(A[i & MASK]!);
+    return s;
+  },
+  'Math.cos': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) s += Math.cos(A[i & MASK]!);
+    return s;
+  },
+  'Mth.floor': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) s += Mth.floor(C[i & MASK]!);
+    return s;
+  },
+  'Math.floor(x) | 0': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) s += Math.floor(C[i & MASK]!) | 0;
+    return s;
+  },
+  'Mth.invSqrt（快速近似）': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) s += Mth.invSqrt(P[i & MASK]!);
+    return s;
+  },
+  '1 / Math.sqrt': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) s += 1 / Math.sqrt(P[i & MASK]!);
+    return s;
+  },
+  'Mth.sqrt': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) s += Mth.sqrt(P[i & MASK]!);
+    return s;
+  },
+  'Math.sqrt': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) s += Math.sqrt(P[i & MASK]!);
+    return s;
+  },
+  'Mth.atan2': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) s += Mth.atan2(C[i & MASK]!, C[(i + 7) & MASK]!);
+    return s;
+  },
+  'Math.atan2': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) s += Math.atan2(C[i & MASK]!, C[(i + 7) & MASK]!);
+    return s;
+  },
+  'Mth.clamp': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) s += Mth.clamp(C[i & MASK]!, -500, 500);
+    return s;
+  },
+  'Math.min(Math.max())': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) s += Math.min(Math.max(C[i & MASK]!, -500), 500);
+    return s;
+  },
+  'Mth.lerp': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) s += Mth.lerp(C[i & MASK]!, C[(i + 3) & MASK]!, 0.25);
+    return s;
+  },
+  'a + (b - a) * t': () => {
+    let s = 0;
+    for (let i = 0; i < N; i++) {
+      const a = C[i & MASK]!;
+      s += a + (C[(i + 3) & MASK]! - a) * 0.25;
+    }
+    return s;
+  },
 };
 
 const only = process.argv[2];
@@ -44,14 +111,22 @@ if (only) {
   let sink = 0;
   for (let k = 0; k < 4; k++) sink += run();
   const t: number[] = [];
-  for (let k = 0; k < 7; k++) { const t0 = performance.now(); sink += run(); t.push(performance.now() - t0); }
+  for (let k = 0; k < 7; k++) {
+    const t0 = performance.now();
+    sink += run();
+    t.push(performance.now() - t0);
+  }
   t.sort((a, b) => a - b);
   process.stdout.write(`${((t[3]! * 1e6) / N).toFixed(2)}${sink === 42 ? ' ' : ''}\n`);
 } else {
-  console.log(`每项 ${N / 1e6}M 次调用，独立进程，7 轮中位数（Node ${process.versions.node}，V8 ${process.versions.v8}）`);
+  console.log(
+    `每项 ${N / 1e6}M 次调用，独立进程，7 轮中位数（Node ${process.versions.node}，V8 ${process.versions.v8}）`,
+  );
   const self = fileURLToPath(import.meta.url);
   for (const name of Object.keys(cases)) {
     const r = spawnSync(process.execPath, [...process.execArgv, self, name], { encoding: 'utf8' });
-    console.log(`  ${name.padEnd(22)} ${(r.stdout.trim() || r.stderr.trim().split('\n')[0]).padStart(6)} ns/次`);
+    console.log(
+      `  ${name.padEnd(22)} ${(r.stdout.trim() || r.stderr.trim().split('\n')[0]).padStart(6)} ns/次`,
+    );
   }
 }

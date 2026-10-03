@@ -1,6 +1,5 @@
-import type { IDataInput, IDataOutput } from "@mcpe/util";
-import { Tag, TAG_Byte } from "./Tag";
-
+import type { IDataInput, IDataOutput } from '@mcpe/util';
+import { Tag, TAG_Byte } from './Tag';
 
 export class ByteTag extends Tag {
   public data: number;

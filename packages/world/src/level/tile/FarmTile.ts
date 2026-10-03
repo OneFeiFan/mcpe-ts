@@ -56,7 +56,14 @@ export class FarmTile extends Tile {
     }
   }
 
-  override fallOn(level: Level, x: number, y: number, z: number, _entity: Entity, fallDistance: number): void {
+  override fallOn(
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    _entity: Entity,
+    fallDistance: number,
+  ): void {
     if (!level.isClientSide && level.random.nextFloat() < fallDistance - 0.5) {
       level.setTile(x, y, z, Tile.dirt.id);
     }

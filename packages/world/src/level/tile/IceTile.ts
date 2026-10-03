@@ -1,9 +1,9 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import type { Player } from "../../entity/player/Player";
-import { LightLayer } from "../LightLayer";
-import type { Random } from "@mcpe/util";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import type { Player } from '../../entity/player/Player';
+import { LightLayer } from '../LightLayer';
+import type { Random } from '@mcpe/util';
 
 export class IceTile extends Tile {
   /** C++ IceTile::IceTile(int id, int tex) */
@@ -17,7 +17,9 @@ export class IceTile extends Tile {
   override playerDestroy(
     level: Level,
     _player: Player,
-    x: number, y: number, z: number,
+    x: number,
+    y: number,
+    z: number,
     _data: number,
   ): void {
     const below = level.getMaterial(x, y - 1, z);
@@ -33,15 +35,8 @@ export class IceTile extends Tile {
   }
 
   /** C++ IceTile::tick(Level*, int, int, int, Random*) */
-  override tick(
-    level: Level,
-    x: number, y: number, z: number,
-    _random: Random,
-  ): void {
-    if (
-      level.getBrightness(LightLayer.Block, x, y, z) >
-      11 - Tile.lightBlock[this.id]!
-    ) {
+  override tick(level: Level, x: number, y: number, z: number, _random: Random): void {
+    if (level.getBrightness(LightLayer.Block, x, y, z) > 11 - Tile.lightBlock[this.id]!) {
       this.spawnResources(level, x, y, z, level.getData(x, y, z));
       level.setTile(x, y, z, Tile.calmWater.id);
     }

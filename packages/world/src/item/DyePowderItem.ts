@@ -20,10 +20,26 @@ import type { ItemInstance } from './ItemInstance';
 
 export class DyePowderItem extends Item {
   static readonly COLOR_DESCS: readonly string[] = [
-    'black', 'red', 'green', 'brown', 'blue', 'purple', 'cyan', 'silver', 'gray', 'pink', 'lime', 'yellow', 'lightBlue', 'magenta', 'orange', 'white',
+    'black',
+    'red',
+    'green',
+    'brown',
+    'blue',
+    'purple',
+    'cyan',
+    'silver',
+    'gray',
+    'pink',
+    'lime',
+    'yellow',
+    'lightBlue',
+    'magenta',
+    'orange',
+    'white',
   ];
   static readonly COLOR_RGB: readonly number[] = [
-    0x1e1b1b, 0xb3312c, 0x3b511a, 0x51301a, 0x253192, 0x7b2fbe, 0x287697, 0x287697, 0x434343, 0xd88198, 0x41cd34, 0xdecf2a, 0x6689d3, 0xc354cd, 0xeb8844, 0xf0f0f0,
+    0x1e1b1b, 0xb3312c, 0x3b511a, 0x51301a, 0x253192, 0x7b2fbe, 0x287697, 0x287697, 0x434343,
+    0xd88198, 0x41cd34, 0xdecf2a, 0x6689d3, 0xc354cd, 0xeb8844, 0xf0f0f0,
   ];
   static readonly BLACK = 0;
   static readonly RED = 1;
@@ -58,7 +74,18 @@ export class DyePowderItem extends Item {
     return super.getDescriptionIdForItem() + '.' + DyePowderItem.COLOR_DESCS[colorValue]!;
   }
 
-  override useOnByPlayer(itemInstance: ItemInstance, _player: Player, level: Level, x: number, y: number, z: number, _face: number, _clickX: number, _clickY: number, _clickZ: number): boolean {
+  override useOnByPlayer(
+    itemInstance: ItemInstance,
+    _player: Player,
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    _face: number,
+    _clickX: number,
+    _clickY: number,
+    _clickZ: number,
+  ): boolean {
     const random = Item.random;
     if (itemInstance.getAuxValue() === DyePowderItem.WHITE) {
       const tile = level.getTile(x, y, z);
@@ -90,7 +117,10 @@ export class DyePowderItem extends Item {
               xx += random.nextInt(3) - 1;
               yy += (((random.nextInt(3) - 1) * random.nextInt(3)) / 2) | 0;
               zz += random.nextInt(3) - 1;
-              if (level.getTile(xx, yy - 1, zz) !== Tile.grass.id || level.isSolidBlockingTile(xx, yy, zz)) {
+              if (
+                level.getTile(xx, yy - 1, zz) !== Tile.grass.id ||
+                level.isSolidBlockingTile(xx, yy, zz)
+              ) {
                 continueMainLoop = true;
                 break;
               }

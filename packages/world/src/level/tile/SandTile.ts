@@ -19,7 +19,13 @@ export class SandTile extends Tile {
 
   override onPlace(_level: Level, _x: number, _y: number, _z: number): void {}
 
-  override neighborChanged(_level: Level, _x: number, _y: number, _z: number, _type: number): void {}
+  override neighborChanged(
+    _level: Level,
+    _x: number,
+    _y: number,
+    _z: number,
+    _type: number,
+  ): void {}
 
   override tick(level: Level, x: number, y: number, z: number, _random: Random): void {
     this.checkSlide(level, x, y, z);

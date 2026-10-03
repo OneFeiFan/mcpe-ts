@@ -9,9 +9,27 @@ import { Tile as TileClass } from '@mcpe/world';
 import type { Font } from '../../gui/Font';
 import { OptionId } from '../../Options';
 import {
-  GL_BLEND, GL_CLAMP_TO_EDGE, GL_LIGHTING, GL_ONE_MINUS_SRC_ALPHA, GL_REPEAT, GL_SRC_ALPHA, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-  GL_TEXTURE_WRAP_T, glBlendFunc2, glColor4f2, glDepthMask, glDisable, glDisable2, glEnable2, glPopMatrix2, glPushMatrix2,
-  glRotatef2, glScalef2, glTexParameteri, glTranslatef2,
+  GL_BLEND,
+  GL_CLAMP_TO_EDGE,
+  GL_LIGHTING,
+  GL_ONE_MINUS_SRC_ALPHA,
+  GL_REPEAT,
+  GL_SRC_ALPHA,
+  GL_TEXTURE_2D,
+  GL_TEXTURE_WRAP_S,
+  GL_TEXTURE_WRAP_T,
+  glBlendFunc2,
+  glColor4f2,
+  glDepthMask,
+  glDisable,
+  glDisable2,
+  glEnable2,
+  glPopMatrix2,
+  glPushMatrix2,
+  glRotatef2,
+  glScalef2,
+  glTexParameteri,
+  glTranslatef2,
 } from '../gles';
 import { Tesselator } from '../Tesselator';
 import type { EntityRenderDispatcher } from './EntityRenderDispatcher';
@@ -37,17 +55,35 @@ export abstract class EntityRenderer {
     t.begin();
     t.offset(xo, yo, zo);
     t.normal(0, 0, -1);
-    t.vertex(bb.x0, bb.y1, bb.z0); t.vertex(bb.x1, bb.y1, bb.z0); t.vertex(bb.x1, bb.y0, bb.z0); t.vertex(bb.x0, bb.y0, bb.z0);
+    t.vertex(bb.x0, bb.y1, bb.z0);
+    t.vertex(bb.x1, bb.y1, bb.z0);
+    t.vertex(bb.x1, bb.y0, bb.z0);
+    t.vertex(bb.x0, bb.y0, bb.z0);
     t.normal(0, 0, 1);
-    t.vertex(bb.x0, bb.y0, bb.z1); t.vertex(bb.x1, bb.y0, bb.z1); t.vertex(bb.x1, bb.y1, bb.z1); t.vertex(bb.x0, bb.y1, bb.z1);
+    t.vertex(bb.x0, bb.y0, bb.z1);
+    t.vertex(bb.x1, bb.y0, bb.z1);
+    t.vertex(bb.x1, bb.y1, bb.z1);
+    t.vertex(bb.x0, bb.y1, bb.z1);
     t.normal(0, -1, 0);
-    t.vertex(bb.x0, bb.y0, bb.z0); t.vertex(bb.x1, bb.y0, bb.z0); t.vertex(bb.x1, bb.y0, bb.z1); t.vertex(bb.x0, bb.y0, bb.z1);
+    t.vertex(bb.x0, bb.y0, bb.z0);
+    t.vertex(bb.x1, bb.y0, bb.z0);
+    t.vertex(bb.x1, bb.y0, bb.z1);
+    t.vertex(bb.x0, bb.y0, bb.z1);
     t.normal(0, 1, 0);
-    t.vertex(bb.x0, bb.y1, bb.z1); t.vertex(bb.x1, bb.y1, bb.z1); t.vertex(bb.x1, bb.y1, bb.z0); t.vertex(bb.x0, bb.y1, bb.z0);
+    t.vertex(bb.x0, bb.y1, bb.z1);
+    t.vertex(bb.x1, bb.y1, bb.z1);
+    t.vertex(bb.x1, bb.y1, bb.z0);
+    t.vertex(bb.x0, bb.y1, bb.z0);
     t.normal(-1, 0, 0);
-    t.vertex(bb.x0, bb.y0, bb.z1); t.vertex(bb.x0, bb.y1, bb.z1); t.vertex(bb.x0, bb.y1, bb.z0); t.vertex(bb.x0, bb.y0, bb.z0);
+    t.vertex(bb.x0, bb.y0, bb.z1);
+    t.vertex(bb.x0, bb.y1, bb.z1);
+    t.vertex(bb.x0, bb.y1, bb.z0);
+    t.vertex(bb.x0, bb.y0, bb.z0);
     t.normal(1, 0, 0);
-    t.vertex(bb.x1, bb.y0, bb.z0); t.vertex(bb.x1, bb.y1, bb.z0); t.vertex(bb.x1, bb.y1, bb.z1); t.vertex(bb.x1, bb.y0, bb.z1);
+    t.vertex(bb.x1, bb.y0, bb.z0);
+    t.vertex(bb.x1, bb.y1, bb.z0);
+    t.vertex(bb.x1, bb.y1, bb.z1);
+    t.vertex(bb.x1, bb.y0, bb.z1);
     t.offset(0, 0, 0);
     t.draw();
     glEnable2(GL_TEXTURE_2D);
@@ -56,12 +92,30 @@ export abstract class EntityRenderer {
   static renderFlat(bb: AABB): void {
     const t = Tesselator.instance;
     t.begin();
-    t.vertex(bb.x0, bb.y1, bb.z0); t.vertex(bb.x1, bb.y1, bb.z0); t.vertex(bb.x1, bb.y0, bb.z0); t.vertex(bb.x0, bb.y0, bb.z0);
-    t.vertex(bb.x0, bb.y0, bb.z1); t.vertex(bb.x1, bb.y0, bb.z1); t.vertex(bb.x1, bb.y1, bb.z1); t.vertex(bb.x0, bb.y1, bb.z1);
-    t.vertex(bb.x0, bb.y0, bb.z0); t.vertex(bb.x1, bb.y0, bb.z0); t.vertex(bb.x1, bb.y0, bb.z1); t.vertex(bb.x0, bb.y0, bb.z1);
-    t.vertex(bb.x0, bb.y1, bb.z1); t.vertex(bb.x1, bb.y1, bb.z1); t.vertex(bb.x1, bb.y1, bb.z0); t.vertex(bb.x0, bb.y1, bb.z0);
-    t.vertex(bb.x0, bb.y0, bb.z1); t.vertex(bb.x0, bb.y1, bb.z1); t.vertex(bb.x0, bb.y1, bb.z0); t.vertex(bb.x0, bb.y0, bb.z0);
-    t.vertex(bb.x1, bb.y0, bb.z0); t.vertex(bb.x1, bb.y1, bb.z0); t.vertex(bb.x1, bb.y1, bb.z1); t.vertex(bb.x1, bb.y0, bb.z1);
+    t.vertex(bb.x0, bb.y1, bb.z0);
+    t.vertex(bb.x1, bb.y1, bb.z0);
+    t.vertex(bb.x1, bb.y0, bb.z0);
+    t.vertex(bb.x0, bb.y0, bb.z0);
+    t.vertex(bb.x0, bb.y0, bb.z1);
+    t.vertex(bb.x1, bb.y0, bb.z1);
+    t.vertex(bb.x1, bb.y1, bb.z1);
+    t.vertex(bb.x0, bb.y1, bb.z1);
+    t.vertex(bb.x0, bb.y0, bb.z0);
+    t.vertex(bb.x1, bb.y0, bb.z0);
+    t.vertex(bb.x1, bb.y0, bb.z1);
+    t.vertex(bb.x0, bb.y0, bb.z1);
+    t.vertex(bb.x0, bb.y1, bb.z1);
+    t.vertex(bb.x1, bb.y1, bb.z1);
+    t.vertex(bb.x1, bb.y1, bb.z0);
+    t.vertex(bb.x0, bb.y1, bb.z0);
+    t.vertex(bb.x0, bb.y0, bb.z1);
+    t.vertex(bb.x0, bb.y1, bb.z1);
+    t.vertex(bb.x0, bb.y1, bb.z0);
+    t.vertex(bb.x0, bb.y0, bb.z0);
+    t.vertex(bb.x1, bb.y0, bb.z0);
+    t.vertex(bb.x1, bb.y1, bb.z0);
+    t.vertex(bb.x1, bb.y1, bb.z1);
+    t.vertex(bb.x1, bb.y0, bb.z1);
     t.draw();
   }
 
@@ -71,7 +125,10 @@ export abstract class EntityRenderer {
 
   postRender(entity: Entity, x: number, y: number, z: number, _rot: number, a: number): void {
     const erd = EntityRenderer.entityRenderDispatcher!;
-    if (erd.minecraft!.options.getBooleanValue(OptionId.OPTIONS_FANCY_GRAPHICS) && this.shadowRadius > 0) {
+    if (
+      erd.minecraft!.options.getBooleanValue(OptionId.OPTIONS_FANCY_GRAPHICS) &&
+      this.shadowRadius > 0
+    ) {
       const dist = erd.distanceToSqr(entity.x, entity.y, entity.z);
       const pow = f((1 - dist / (16.0 * 16.0)) * this.shadowStrength);
       if (pow > 0) {
@@ -164,7 +221,20 @@ export abstract class EntityRenderer {
         for (let zt = z0; zt <= z1; zt++) {
           const t = level.getTile(xt, yt - 1, zt);
           if (t > 0 && level.getRawBrightness(xt, yt, zt) > 3) {
-            this.renderTileShadow(TileClass.tiles[t]!, x, y + e.getShadowHeightOffs(), z, xt, yt, zt, pow, r, xo, yo + e.getShadowHeightOffs(), zo);
+            this.renderTileShadow(
+              TileClass.tiles[t]!,
+              x,
+              y + e.getShadowHeightOffs(),
+              z,
+              xt,
+              yt,
+              zt,
+              pow,
+              r,
+              xo,
+              yo + e.getShadowHeightOffs(),
+              zo,
+            );
           }
         }
     tt.draw();
@@ -175,10 +245,23 @@ export abstract class EntityRenderer {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   }
 
-  renderTileShadow(tt: Tile, x: number, y: number, z: number, xt: number, yt: number, zt: number, pow: number, r: number, xo: number, yo: number, zo: number): void {
+  renderTileShadow(
+    tt: Tile,
+    x: number,
+    y: number,
+    z: number,
+    xt: number,
+    yt: number,
+    zt: number,
+    pow: number,
+    r: number,
+    xo: number,
+    yo: number,
+    zo: number,
+  ): void {
     const t = Tesselator.instance;
     if (!tt.isCubeShaped()) return;
-    let a = f(((pow - (y - (yt + yo)) / 2) * 0.5) * this.getLevel()!.getBrightness(xt, yt, zt));
+    let a = f((pow - (y - (yt + yo)) / 2) * 0.5 * this.getLevel()!.getBrightness(xt, yt, zt));
     if (a < 0) return;
     if (a > 1) a = 1;
     glColor4f2(1, 1, 1, a);

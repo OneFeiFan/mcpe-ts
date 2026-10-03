@@ -1,10 +1,10 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { AABB } from "../../phys/AABB";
-import { Item } from "../../item/Item";
-import { ItemInstance } from "../../item/ItemInstance";
-import type { Random } from "@mcpe/util";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { AABB } from '../../phys/AABB';
+import { Item } from '../../item/Item';
+import { ItemInstance } from '../../item/ItemInstance';
+import type { Random } from '@mcpe/util';
 
 export class ReedTile extends Tile {
   /** C++ ReedTile::ReedTile(int id, int tex) */

@@ -1,7 +1,7 @@
-import { FoodConstants } from "./FoodConstants";
-import { FoodItem } from "../item/FoodItem";
-import { Mth } from "@mcpe/util";
-import type { Player } from "../entity/player/Player";
+import { FoodConstants } from './FoodConstants';
+import { FoodItem } from '../item/FoodItem';
+import { Mth } from '@mcpe/util';
+import type { Player } from '../entity/player/Player';
 
 export class SimpleFoodData {
   private foodLevel: number;
@@ -16,7 +16,7 @@ export class SimpleFoodData {
   /** C++ SimpleFoodData::eat(FoodItem* item) */
   eat(item: FoodItem): void;
   eat(a: number | FoodItem): void {
-    if (typeof a === "number") {
+    if (typeof a === 'number') {
       this.foodLevel = Mth.Min(a + this.foodLevel, FoodConstants.MAX_FOOD);
     } else {
       this.eat(a.getNutrition());

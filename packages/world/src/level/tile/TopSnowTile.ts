@@ -48,7 +48,14 @@ export class TopSnowTile extends Tile {
     this.checkCanSurvive(level, x, y, z);
   }
 
-  override playerDestroy(level: Level, _player: Player, x: number, y: number, z: number, _data: number): void {
+  override playerDestroy(
+    level: Level,
+    _player: Player,
+    x: number,
+    y: number,
+    z: number,
+    _data: number,
+  ): void {
     if (level.isClientSide) return;
     const type = Item.snowBall.id;
     const s = 0.7;
@@ -76,7 +83,13 @@ export class TopSnowTile extends Tile {
     }
   }
 
-  override shouldRenderFace(level: LevelSource, x: number, y: number, z: number, face: number): boolean {
+  override shouldRenderFace(
+    level: LevelSource,
+    x: number,
+    y: number,
+    z: number,
+    face: number,
+  ): boolean {
     const m = level.getMaterial(x, y, z);
     if (face === 1) return true;
     if (m === this.material) return false;

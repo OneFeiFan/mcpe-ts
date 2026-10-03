@@ -6,19 +6,22 @@ description: 需要证明 TS 移植的计算结果与原版 C++ 一致时使用�
 # 黄金样本
 
 ## 原理
+
 用参考 C++ 源码本身跑出“标准答案”，提交成夹具；TS 用同样的输入算一遍，逐项比较。夹具**只能由 harness 生成**，禁止手改（guard 钩子会拦）。
 
 ## 已有的样本（照着抄）
-| 编号 | harness | 夹具 | 测试 |
-|---|---|---|---|
-| G11-1/2 注册表 | tools/golden/harness_registry.cpp | registry.json | tests/golden/registry.golden.test.ts |
-| G11-3/4 NBT | harness_nbt.cpp | nbt.json | nbt.golden.test.ts |
-| G12-1 实体存档 | harness_entity.cpp | entity.json | entity.golden.test.ts |
-| G12-2 碰撞轨迹（真实 Level） | harness_collision.cpp | collision.json | collision.golden.test.ts |
-| G12-3 物品栏 | harness_inventory.cpp | inventory.json | inventory.golden.test.ts |
-| G13-1 字宽 | harness_font.cpp | font.json | font.golden.test.ts |
+
+| 编号                         | harness                           | 夹具           | 测试                                 |
+| ---------------------------- | --------------------------------- | -------------- | ------------------------------------ |
+| G11-1/2 注册表               | tools/golden/harness_registry.cpp | registry.json  | tests/golden/registry.golden.test.ts |
+| G11-3/4 NBT                  | harness_nbt.cpp                   | nbt.json       | nbt.golden.test.ts                   |
+| G12-1 实体存档               | harness_entity.cpp                | entity.json    | entity.golden.test.ts                |
+| G12-2 碰撞轨迹（真实 Level） | harness_collision.cpp             | collision.json | collision.golden.test.ts             |
+| G12-3 物品栏                 | harness_inventory.cpp             | inventory.json | inventory.golden.test.ts             |
+| G13-1 字宽                   | harness_font.cpp                  | font.json      | font.golden.test.ts                  |
 
 ## 写一个新样本
+
 1. **harness**（`tools/golden/harness_xxx.cpp`）：`#include` 参考源码的头文件；初始化顺序照 NinecraftApp：`Material::initMaterials(); MobCategory::initMobCategories(); Tile::initTiles(); Item::initItems(); Biome::initBiomes(); TileEntity::initTileEntities();`，要用区块时还要 `LevelChunk::ChunkBlockCount = LevelConstants::CHUNK_BLOCK_COUNT;`。
    - 用固定输入调用被测函数，把结果写成 JSON（浮点用 `%.9g`，字节写十六进制字符串）。
    - 访问 private 成员：在 include 之前 `#define private public`（先 include 好标准库头）。
@@ -29,13 +32,15 @@ description: 需要证明 TS 移植的计算结果与原版 C++ 一致时使用�
 4. **测试**（`tests/golden/xxx.golden.test.ts`）：读夹具，用同样输入调用 TS，比较。
 
 ## 三档比较规则
-| 档 | 比较 | 适用 |
-|---|---|---|
-| 一 | 完全相等（整数、字节、布尔） | 随机数、NBT、存档、注册表、字宽、碰撞标志 |
-| 二 | 容差 1e-4 | 物理轨迹、浮点坐标 |
-| 三 | 不比较数值，只做截图核对 | 界面动画、渲染 |
+
+| 档  | 比较                         | 适用                                      |
+| --- | ---------------------------- | ----------------------------------------- |
+| 一  | 完全相等（整数、字节、布尔） | 随机数、NBT、存档、注册表、字宽、碰撞标志 |
+| 二  | 容差 1e-4                    | 物理轨迹、浮点坐标                        |
+| 三  | 不比较数值，只做截图核对     | 界面动画、渲染                            |
 
 ## 常见失败的含义
+
 - 只差最后几位：漏了 `Math.fround`。
 - 差一个整数：整数除法、取整方向、`(char)` 截断。
 - 顺序不同：`std::map` 遍历、`std::sort` 不稳定。

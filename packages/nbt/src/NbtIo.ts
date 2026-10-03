@@ -1,6 +1,6 @@
-import { Tag, TAG_Compound } from "./Tag";
-import { CompoundTag } from "./CompoundTag";
-import type { IDataInput, IDataOutput } from "@mcpe/util";
+import { Tag, TAG_Compound } from './Tag';
+import { CompoundTag } from './CompoundTag';
+import type { IDataInput, IDataOutput } from '@mcpe/util';
 
 export class NbtIo {
   static read(dis: IDataInput): CompoundTag | null {

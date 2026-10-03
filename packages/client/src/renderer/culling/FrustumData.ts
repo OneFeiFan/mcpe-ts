@@ -44,7 +44,14 @@ export class FrustumData {
     return true;
   }
 
-  cubeFullyInFrustum(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number): boolean {
+  cubeFullyInFrustum(
+    x1: number,
+    y1: number,
+    z1: number,
+    x2: number,
+    y2: number,
+    z2: number,
+  ): boolean {
     for (let i = 0; i < 6; i++) {
       const f = this.m_Frustum[i]!;
       const p = (x: number, y: number, z: number) => f[0]! * x + f[1]! * y + f[2]! * z + f[3]! > 0;

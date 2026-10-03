@@ -7,7 +7,11 @@ export default async function (h) {
   h.allowConsole('Missing category for tile');
 
   await h.wait(1500);
-  const s0 = await h.state('进入世界', (a) => ({ creative: a.isCreativeMode(), pos: [a.player.x, a.player.y, a.player.z], slots: a.gui.getNumSlots() }));
+  const s0 = await h.state('进入世界', (a) => ({
+    creative: a.isCreativeMode(),
+    pos: [a.player.x, a.player.y, a.player.z],
+    slots: a.gui.getNumSlots(),
+  }));
   h.expect(s0.creative === true, 'demo 世界是创造模式');
   // #status 只用于“正在初始化…”和启动失败；游戏起来后必须是空的，否则画面左上角会一直压着一行字（原版没有）
   const hint = await h.state('左上角提示', () => document.querySelector('#status')?.textContent);

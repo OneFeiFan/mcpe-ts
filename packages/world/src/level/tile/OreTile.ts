@@ -1,8 +1,8 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Item } from "../../item/Item";
-import { DyePowderItem } from "../../item/DyePowderItem";
-import type { Random } from "@mcpe/util";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Item } from '../../item/Item';
+import { DyePowderItem } from '../../item/DyePowderItem';
+import type { Random } from '@mcpe/util';
 
 export class OreTile extends Tile {
   /** C++ OreTile::OreTile(int id, int tex) */

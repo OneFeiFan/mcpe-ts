@@ -1,7 +1,7 @@
-import { HalfTransparentTile } from "./HalfTransparentTile";
-import { Material } from "../material/Material";
-import type { Random } from "@mcpe/util";
-import { Tile } from "./Tile";
+import { HalfTransparentTile } from './HalfTransparentTile';
+import { Material } from '../material/Material';
+import type { Random } from '@mcpe/util';
+import { Tile } from './Tile';
 
 export class GlassTile extends HalfTransparentTile {
   /** C++ GlassTile::GlassTile(int id, int tex, const Material* material, bool allowSame) */

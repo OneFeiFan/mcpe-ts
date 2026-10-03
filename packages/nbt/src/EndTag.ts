@@ -1,9 +1,9 @@
-import { Tag, TAG_End } from "./Tag";
-import type { IDataInput, IDataOutput } from "@mcpe/util";
+import { Tag, TAG_End } from './Tag';
+import type { IDataInput, IDataOutput } from '@mcpe/util';
 
 export class EndTag extends Tag {
   constructor() {
-    super("");
+    super('');
   }
 
   load(dis: IDataInput): void {
@@ -19,7 +19,7 @@ export class EndTag extends Tag {
   }
 
   toString(): string {
-    return "END";
+    return 'END';
   }
 
   copy(): Tag {

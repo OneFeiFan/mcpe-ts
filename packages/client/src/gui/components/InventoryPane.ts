@@ -8,7 +8,15 @@ import type { Minecraft } from '../../Minecraft';
 import type { IArea } from '../../player/input/touchscreen/TouchAreaModel';
 import { RectangleArea } from '../../player/input/touchscreen/TouchAreaModel';
 import { ItemRenderer } from '../../renderer/entity/ItemRenderer';
-import { GL_ALPHA_TEST, GL_BLEND, GL_SCISSOR_TEST, GL_TEXTURE_2D, glDisable2, glEnable2, glScissor } from '../../renderer/gles';
+import {
+  GL_ALPHA_TEST,
+  GL_BLEND,
+  GL_SCISSOR_TEST,
+  GL_TEXTURE_2D,
+  glDisable2,
+  glEnable2,
+  glScissor,
+} from '../../renderer/gles';
 import { Tesselator } from '../../renderer/Tesselator';
 import { Gui } from '../Gui';
 import { IntRectangle } from './ImageButton';
@@ -40,9 +48,20 @@ export class InventoryPane extends ScrollingPane {
   private renderDecorations = true;
   private bg = new IntRectangle();
 
-  constructor(screen: IInventoryPaneCallback, mc: Minecraft, rect: IntRectangle, paneWidth: number, clickMarginH: number, numItems: number, itemSize: number, itemBorderSize: number) {
+  constructor(
+    screen: IInventoryPaneCallback,
+    mc: Minecraft,
+    rect: IntRectangle,
+    paneWidth: number,
+    clickMarginH: number,
+    numItems: number,
+    itemSize: number,
+    itemBorderSize: number,
+  ) {
     super(
-      ScrollingPaneFlags.SF_LockX | ScrollingPaneFlags.SF_ShowScrollbar | ScrollingPaneFlags.SF_NoHoldSelect,
+      ScrollingPaneFlags.SF_LockX |
+        ScrollingPaneFlags.SF_ShowScrollbar |
+        ScrollingPaneFlags.SF_NoHoldSelect,
       rect,
       new IntRectangle(0, 0, itemSize, itemSize),
       0,
@@ -63,7 +82,13 @@ export class InventoryPane extends ScrollingPane {
 
   override renderBatch(items: GridItem[], _alpha: number): void {
     const bbox = this.bbox;
-    this.fill(bbox.x - this.fillMarginX - 1, bbox.y - this.fillMarginY, bbox.x + bbox.w + this.fillMarginX + 1, bbox.y + bbox.h + this.fillMarginY, 0xff333333 | 0);
+    this.fill(
+      bbox.x - this.fillMarginX - 1,
+      bbox.y - this.fillMarginY,
+      bbox.x + bbox.w + this.fillMarginX + 1,
+      bbox.y + bbox.h + this.fillMarginY,
+      0xff333333 | 0,
+    );
     glEnable2(GL_BLEND);
     glDisable2(GL_ALPHA_TEST);
     const inventoryItems = this.screen.getItems(this);
@@ -116,7 +141,13 @@ export class InventoryPane extends ScrollingPane {
       const yy0 = myy - 5.0;
       const yy1 = yy0 + 2;
       this.fill(mxx, yy0, mxx + 16.0, yy1, 0xff606060 | 0);
-      this.fill(mxx, yy0, mxx + this.markerShare * 16.0, yy1, this.markerType === 1 ? 0xff00ff00 | 0 : 0xff476543 | 0);
+      this.fill(
+        mxx,
+        yy0,
+        mxx + this.markerShare * 16.0,
+        yy1,
+        this.markerType === 1 ? 0xff00ff00 | 0 : 0xff476543 | 0,
+      );
       glEnable2(GL_BLEND);
       glEnable2(GL_TEXTURE_2D);
     }
@@ -150,8 +181,22 @@ export class InventoryPane extends ScrollingPane {
       glEnable2(GL_TEXTURE_2D);
     }
     glDisable2(GL_SCISSOR_TEST);
-    this.fillGradient(this.bg.x - this.fillMarginX, bbox.y, this.bg.w + this.fillMarginX, bbox.y + 20, 0x99000000 | 0, 0x00000000);
-    this.fillGradient(this.bg.x - this.fillMarginX, bbox.y + bbox.h - 20, this.bg.w + this.fillMarginX, bbox.y + bbox.h, 0x00000000, 0x99000000 | 0);
+    this.fillGradient(
+      this.bg.x - this.fillMarginX,
+      bbox.y,
+      this.bg.w + this.fillMarginX,
+      bbox.y + 20,
+      0x99000000 | 0,
+      0x00000000,
+    );
+    this.fillGradient(
+      this.bg.x - this.fillMarginX,
+      bbox.y + bbox.h - 20,
+      this.bg.w + this.fillMarginX,
+      bbox.y + bbox.h,
+      0x00000000,
+      0x99000000 | 0,
+    );
     this.drawScrollBar(this.hScroll);
     this.drawScrollBar(this.vScroll);
   }

@@ -6,4 +6,7 @@ console.log(`MCPE-TS server placeholder ${Common.getGameVersionString()}`);
 const interval = setInterval(() => {
   console.log(`uptime=${getTimeMs()}ms tps=${SharedConstants.TicksPerSecond}`);
 }, 1000);
-process.on('SIGINT', () => { clearInterval(interval); process.exit(0); });
+process.on('SIGINT', () => {
+  clearInterval(interval);
+  process.exit(0);
+});

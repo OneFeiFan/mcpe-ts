@@ -1,10 +1,10 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import type { Player } from "../../entity/player/Player";
-import type { Entity } from "../../entity/Entity";
-import type { Random } from "@mcpe/util";
-import { ParticleType } from "../../entity/EntityTypes";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import type { Player } from '../../entity/player/Player';
+import type { Entity } from '../../entity/Entity';
+import type { Random } from '@mcpe/util';
+import { ParticleType } from '../../entity/EntityTypes';
 
 export class RedStoneOreTile extends Tile {
   private readonly lit: boolean;

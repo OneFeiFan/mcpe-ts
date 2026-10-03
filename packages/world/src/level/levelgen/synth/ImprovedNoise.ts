@@ -95,16 +95,28 @@ export class ImprovedNoise extends Synth {
       v = fade(y), // FOR EACH OF X,Y,Z.
       w = fade(z);
     const p = this.p;
-    const A = p[X]! + Y, AA = p[A]! + Z, AB = p[A + 1]! + Z, // HASH COORDINATES OF
-      B = p[X + 1]! + Y, BA = p[B]! + Z, BB = p[B + 1]! + Z; // THE 8 CUBE CORNERS,
-    const x1 = f(x - 1), y1 = f(y - 1), z1 = f(z - 1);
-    return lerpF(w,
-      lerpF(v,
+    const A = p[X]! + Y,
+      AA = p[A]! + Z,
+      AB = p[A + 1]! + Z, // HASH COORDINATES OF
+      B = p[X + 1]! + Y,
+      BA = p[B]! + Z,
+      BB = p[B + 1]! + Z; // THE 8 CUBE CORNERS,
+    const x1 = f(x - 1),
+      y1 = f(y - 1),
+      z1 = f(z - 1);
+    return lerpF(
+      w,
+      lerpF(
+        v,
         lerpF(u, gradF(p[AA]!, x, y, z), gradF(p[BA]!, x1, y, z)),
-        lerpF(u, gradF(p[AB]!, x, y1, z), gradF(p[BB]!, x1, y1, z))),
-      lerpF(v,
+        lerpF(u, gradF(p[AB]!, x, y1, z), gradF(p[BB]!, x1, y1, z)),
+      ),
+      lerpF(
+        v,
         lerpF(u, gradF(p[AA + 1]!, x, y, z1), gradF(p[BA + 1]!, x1, y, z1)),
-        lerpF(u, gradF(p[AB + 1]!, x, y1, z1), gradF(p[BB + 1]!, x1, y1, z1))));
+        lerpF(u, gradF(p[AB + 1]!, x, y1, z1), gradF(p[BB + 1]!, x1, y1, z1)),
+      ),
+    );
   }
 
   lerp(t: number, a: number, b: number): number {
@@ -126,13 +138,35 @@ export class ImprovedNoise extends Synth {
     return this.noise(x, y, z === undefined ? 0 : z);
   }
 
-  add(buffer: Float32Array, _x: number, _y: number, _z: number, xSize: number, ySize: number, zSize: number, xs: number, ys: number, zs: number, pow: number): void {
-    _x = f(_x); _y = f(_y); _z = f(_z); xs = f(xs); ys = f(ys); zs = f(zs); pow = f(pow);
+  add(
+    buffer: Float32Array,
+    _x: number,
+    _y: number,
+    _z: number,
+    xSize: number,
+    ySize: number,
+    zSize: number,
+    xs: number,
+    ys: number,
+    zs: number,
+    pow: number,
+  ): void {
+    _x = f(_x);
+    _y = f(_y);
+    _z = f(_z);
+    xs = f(xs);
+    ys = f(ys);
+    zs = f(zs);
+    pow = f(pow);
     const p = this.p;
     const { xo, yo, zo } = this;
     if (ySize === 1) {
-      let A = 0, AA = 0, B = 0, BA = 0;
-      let vv0 = 0, vv2 = 0;
+      let A = 0,
+        AA = 0,
+        B = 0,
+        BA = 0;
+      let vv0 = 0,
+        vv2 = 0;
       let pp = 0;
       const scale = f(1.0 / pow);
       for (let xx = 0; xx < xSize; xx++) {
@@ -167,8 +201,16 @@ export class ImprovedNoise extends Synth {
     let pp = 0;
     const scale = f(1 / pow);
     let yOld = -1;
-    let A = 0, AA = 0, AB = 0, B = 0, BA = 0, BB = 0;
-    let vv0 = 0, vv1 = 0, vv2 = 0, vv3 = 0;
+    let A = 0,
+      AA = 0,
+      AB = 0,
+      B = 0,
+      BA = 0,
+      BB = 0;
+    let vv0 = 0,
+      vv1 = 0,
+      vv2 = 0,
+      vv3 = 0;
     for (let xx = 0; xx < xSize; xx++) {
       let x = f(f(f(_x + xx) * xs) + xo);
       let xf = f2i(x);

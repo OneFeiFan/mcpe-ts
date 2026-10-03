@@ -22,7 +22,18 @@ export class TileItem extends Item {
     return this.tileId;
   }
 
-  override useOnByPlayer(instance: ItemInstance, player: Player, level: Level, x: number, y: number, z: number, face: number, clickX: number, clickY: number, clickZ: number): boolean {
+  override useOnByPlayer(
+    instance: ItemInstance,
+    player: Player,
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    face: number,
+    clickX: number,
+    clickY: number,
+    clickZ: number,
+  ): boolean {
     if (level.adventureSettings.immutableWorld) {
       const tile = Tile.tiles[this.tileId]!;
       if (this.tileId !== Tile.leaves.id && tile.material !== Material.plant) {
@@ -33,21 +44,50 @@ export class TileItem extends Item {
       face = 0;
     } else {
       switch (face) {
-        case Facing.DOWN: y--; break;
-        case Facing.UP: y++; break;
-        case Facing.NORTH: z--; break;
-        case Facing.SOUTH: z++; break;
-        case Facing.WEST: x--; break;
-        case Facing.EAST: x++; break;
+        case Facing.DOWN:
+          y--;
+          break;
+        case Facing.UP:
+          y++;
+          break;
+        case Facing.NORTH:
+          z--;
+          break;
+        case Facing.SOUTH:
+          z++;
+          break;
+        case Facing.WEST:
+          x--;
+          break;
+        case Facing.EAST:
+          x++;
+          break;
       }
     }
     if (instance.count === 0) return false;
     if (level.mayPlace(this.tileId, x, y, z, false, face)) {
       const tile = Tile.tiles[this.tileId]!;
-      const data = tile.getPlacedOnFaceDataValue(level, x, y, z, face, clickX, clickY, clickZ, this.getLevelDataForAuxValue(instance.getAuxValue()));
+      const data = tile.getPlacedOnFaceDataValue(
+        level,
+        x,
+        y,
+        z,
+        face,
+        clickX,
+        clickY,
+        clickZ,
+        this.getLevelDataForAuxValue(instance.getAuxValue()),
+      );
       if (level.setTileAndData(x, y, z, this.tileId, data)) {
         Tile.tiles[this.tileId]!.setPlacedBy(level, x, y, z, player);
-        level.playSound(x + 0.5, y + 0.5, z + 0.5, tile.soundType.getStepSound(), (tile.soundType.getVolume() + 1) / 2, tile.soundType.getPitch() * 0.8);
+        level.playSound(
+          x + 0.5,
+          y + 0.5,
+          z + 0.5,
+          tile.soundType.getStepSound(),
+          (tile.soundType.getVolume() + 1) / 2,
+          tile.soundType.getPitch() * 0.8,
+        );
         LOGI(`${player.x} ${player.y} ${player.z}`); // printf("%f %f %f \n", player->x, player->y, player->z);
         instance.count--;
       }

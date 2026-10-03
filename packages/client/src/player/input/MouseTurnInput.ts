@@ -24,7 +24,8 @@ export class MouseTurnInput extends ITurnInput {
   }
 
   getTurnDelta(): TurnDelta {
-    let dx = 0, dy = 0;
+    let dx = 0,
+      dy = 0;
     if (MouseTurnInput.MODE_DELTA === this.mode) {
       dx = Mouse.getDX();
       dy = Mouse.getDY();

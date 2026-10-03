@@ -1,15 +1,15 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { AABB } from "../../phys/AABB";
-import { Vec3 } from "../../phys/Vec3";
-import { HitResult } from "../../phys/HitResult";
-import { Item } from "../../item/Item";
-import { GameType } from "../LevelSettings";
-import type { Random } from "@mcpe/util";
-import type { Player } from "../..";
-import type { LevelSource } from "../LevelSource";
-import { LevelEvent } from "./LevelEvent";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { AABB } from '../../phys/AABB';
+import { Vec3 } from '../../phys/Vec3';
+import { HitResult } from '../../phys/HitResult';
+import { Item } from '../../item/Item';
+import { GameType } from '../LevelSettings';
+import type { Random } from '@mcpe/util';
+import type { Player } from '../..';
+import type { LevelSource } from '../LevelSource';
+import { LevelEvent } from './LevelEvent';
 
 export class DoorTile extends Tile {
   static readonly C_DIR_MASK = 3;
@@ -206,11 +206,9 @@ export class DoorTile extends Tile {
           this.spawnResources(level, x, y, z, data);
         }
       } else {
-        const signal =
-          level.hasNeighborSignal(x, y, z) ||
-          level.hasNeighborSignal(x, y + 1, z);
+        const signal = level.hasNeighborSignal(x, y, z) || level.hasNeighborSignal(x, y + 1, z);
         if (
-          (signal || ((type > 0 && Tile.tiles[type]!.isSignalSource()) || type === 0)) &&
+          (signal || (type > 0 && Tile.tiles[type]!.isSignalSource()) || type === 0) &&
           type !== this.id
         ) {
           this.setOpen(level, x, y, z, signal);
@@ -239,7 +237,9 @@ export class DoorTile extends Tile {
   override playerDestroy(
     level: Level,
     player: Player,
-    x: number, y: number, z: number,
+    x: number,
+    y: number,
+    z: number,
     data: number,
   ): void {
     if ((data & DoorTile.C_IS_UPPER_MASK) === 0) {
@@ -248,11 +248,7 @@ export class DoorTile extends Tile {
   }
 
   /** C++ DoorTile::clip(Level*, int, int, int, const Vec3&, const Vec3&) */
-  override clip(
-    level: Level,
-    xt: number, yt: number, zt: number,
-    a: Vec3, b: Vec3,
-  ): HitResult {
+  override clip(level: Level, xt: number, yt: number, zt: number, a: Vec3, b: Vec3): HitResult {
     this.updateShape(level, xt, yt, zt);
     return super.clip(level, xt, yt, zt, a, b);
   }
@@ -290,10 +286,6 @@ export class DoorTile extends Tile {
     }
 
     const isRightHinge = (upperData & 1) !== 0;
-    return (
-      (lowerData & DoorTile.C_LOWER_DATA_MASK) |
-      (isUpper ? 8 : 0) |
-      (isRightHinge ? 16 : 0)
-    );
+    return (lowerData & DoorTile.C_LOWER_DATA_MASK) | (isUpper ? 8 : 0) | (isRightHinge ? 16 : 0);
   }
 }

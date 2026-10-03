@@ -1,6 +1,6 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import type { Random } from "@mcpe/util";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import type { Random } from '@mcpe/util';
 
 export class CarriedTile extends Tile {
   private readonly texDefault: number;

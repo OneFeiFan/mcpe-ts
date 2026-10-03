@@ -1,7 +1,25 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  AllowAllCuller, Chunk, DistanceChunkSorter, Frustum, FrustumCuller, GL_MODELVIEW, GL_PROJECTION, GLES1, glGetContext, glLoadIdentity,
-  glMatrixMode, glRotatef, glSetContext, glTranslatef, gluPerspective, Minecraft, RenderList, sorterComparator, Tesselator, TileRenderer,
+  AllowAllCuller,
+  Chunk,
+  DistanceChunkSorter,
+  Frustum,
+  FrustumCuller,
+  GL_MODELVIEW,
+  GL_PROJECTION,
+  GLES1,
+  glGetContext,
+  glLoadIdentity,
+  glMatrixMode,
+  glRotatef,
+  glSetContext,
+  glTranslatef,
+  gluPerspective,
+  Minecraft,
+  RenderList,
+  sorterComparator,
+  Tesselator,
+  TileRenderer,
 } from '@mcpe/client';
 import { AABB, FoliageColor, GrassColor, Level, Material, Tile } from '@mcpe/world';
 import type { Entity } from '@mcpe/world';
@@ -20,7 +38,11 @@ function build(x: number, y: number, z: number): { chunk: Chunk; verts: number[]
   const n = c.getRenderChunk(0).vertexCount;
   return { chunk: c, verts: Array.from({ length: n }, (_, i) => t._vertexForTest(i)) };
 }
-const rgb = (c: number): [number, number, number] => [c & 0xff, (c >>> 8) & 0xff, (c >>> 16) & 0xff];
+const rgb = (c: number): [number, number, number] => [
+  c & 0xff,
+  (c >>> 8) & 0xff,
+  (c >>> 16) & 0xff,
+];
 
 beforeAll(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -43,7 +65,11 @@ describe('S7：方块与区块渲染', () => {
     const { chunk, verts } = build(128, 48, 128);
     expect(verts.length).toBe(1536);
     expect(glGetContext().bufferSizes.get(chunk.getRenderChunk(0).vboId)).toBe(1536 * 36);
-    expect(verts.every((v) => v[1] === 16 && v[3]! >= 0 && v[3]! <= 1 / 16 && v[4]! >= 0 && v[4]! <= 1 / 16)).toBe(true); // 顶面 y = 63 + 1，相对区块 +16
+    expect(
+      verts.every(
+        (v) => v[1] === 16 && v[3]! >= 0 && v[3]! <= 1 / 16 && v[4]! >= 0 && v[4]! <= 1 / 16,
+      ),
+    ).toBe(true); // 顶面 y = 63 + 1，相对区块 +16
     expect(new Set(verts.map((v) => v[5])).size).toBe(1);
     expect(chunk.isEmpty()).toBe(false);
     expect(chunk.getRenderChunk(0).pos).toMatchObject({ x: 128, y: 48, z: 128 });
@@ -66,9 +92,19 @@ describe('S7：方块与区块渲染', () => {
     const top = faces.filter((f) => f.every((v) => v[1] === 16)).flat();
     const side = faces.filter((f) => new Set(f.map((v) => v[1])).size > 1).flat();
     expect(top.length).toBe(1536);
-    expect(top.every((v) => { const [r, g, b] = rgb(v[5]!); return g > r && g > b; })).toBe(true); // 0x339933 的绿
+    expect(
+      top.every((v) => {
+        const [r, g, b] = rgb(v[5]!);
+        return g > r && g > b;
+      }),
+    ).toBe(true); // 0x339933 的绿
     expect(side.length).toBe(ao.length - 1536);
-    expect(side.every((v) => { const [r, g, b] = rgb(v[5]!); return r === g && g === b; })).toBe(true);
+    expect(
+      side.every((v) => {
+        const [r, g, b] = rgb(v[5]!);
+        return r === g && g === b;
+      }),
+    ).toBe(true);
     expect(Tile.grass.tex).toBe(3);
   });
 
@@ -76,7 +112,11 @@ describe('S7：方块与区块渲染', () => {
     const { verts } = build(112, 48, 112);
     const top = verts.find((v) => v[1] === 16)!;
     const [r, g, b] = rgb(top[5]!);
-    expect([r, g, b]).toEqual([Math.trunc(0x33 / 255 * 0.9 * 255), Math.trunc(0x99 / 255 * 0.9 * 255), Math.trunc(0x33 / 255 * 0.9 * 255)]);
+    expect([r, g, b]).toEqual([
+      Math.trunc((0x33 / 255) * 0.9 * 255),
+      Math.trunc((0x99 / 255) * 0.9 * 255),
+      Math.trunc((0x33 / 255) * 0.9 * 255),
+    ]);
   });
 
   it('getWaterHeight、canRender', () => {
@@ -107,7 +147,11 @@ describe('剔除、排序、RenderList', () => {
   it('DistanceChunkSorter：近的排前面；RenderList 逐个绘制已加入的区块', () => {
     const near = new Chunk(level, 128, 64, 112, 16, 0, vbo());
     const far = new Chunk(level, 128, 64, 160, 16, 0, vbo());
-    const sorted = [far, near].sort(sorterComparator(new DistanceChunkSorter({ x: 136, y: 72, z: 104, heightOffset: 0 } as unknown as Entity)));
+    const sorted = [far, near].sort(
+      sorterComparator(
+        new DistanceChunkSorter({ x: 136, y: 72, z: 104, heightOffset: 0 } as unknown as Entity),
+      ),
+    );
     expect(sorted[0]).toBe(near);
     const { chunk } = build(128, 48, 128);
     const list = new RenderList();

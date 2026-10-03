@@ -1,10 +1,10 @@
-import { Bush } from "./Bush";
-import { Tile } from "./Tile";
-import { Level } from "../Level";
-import { Item } from "../../item/Item";
-import { ItemInstance } from "../../item/ItemInstance";
-import { ItemEntity } from "../../entity/item/ItemEntity";
-import type { Random } from "@mcpe/util";
+import { Bush } from './Bush';
+import { Tile } from './Tile';
+import { Level } from '../Level';
+import { Item } from '../../item/Item';
+import { ItemInstance } from '../../item/ItemInstance';
+import { ItemEntity } from '../../entity/item/ItemEntity';
+import type { Random } from '@mcpe/util';
 
 export interface LevelSource {
   getData(x: number, y: number, z: number): number;
@@ -85,7 +85,13 @@ export class CropTile extends Bush {
   }
 
   /** C++ CropTile::getTexture(LevelSource*, int, int, int, int) */
-  override getTextureAt(level: LevelSource, x: number, y: number, z: number, _face: number): number {
+  override getTextureAt(
+    level: LevelSource,
+    x: number,
+    y: number,
+    z: number,
+    _face: number,
+  ): number {
     let data = level.getData(x, y, z);
     if (data < 0) data = 7;
     return this.tex + data;
@@ -105,8 +111,11 @@ export class CropTile extends Bush {
   /** C++ CropTile::spawnResources(Level*, int, int, int, int, float) */
   override spawnResources(
     level: Level,
-    x: number, y: number, z: number,
-    data: number, odds: number,
+    x: number,
+    y: number,
+    z: number,
+    data: number,
+    odds: number,
   ): void {
     super.spawnResources(level, x, y, z, data, odds);
 
@@ -125,7 +134,9 @@ export class CropTile extends Bush {
 
       const item = new ItemEntity(
         level,
-        x + xo, y + yo, z + zo,
+        x + xo,
+        y + yo,
+        z + zo,
         new ItemInstance(Item.seeds_wheat),
       );
       item.throwTime = 10;

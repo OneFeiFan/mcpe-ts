@@ -1,11 +1,11 @@
-import { Tag, TAG_String } from "./Tag";
-import type { IDataInput, IDataOutput } from "@mcpe/util";
+import { Tag, TAG_String } from './Tag';
+import type { IDataInput, IDataOutput } from '@mcpe/util';
 
 export class StringTag extends Tag {
   public data: string;
   public len: number;
 
-  constructor(name: string, data: string = "") {
+  constructor(name: string, data: string = '') {
     super(name);
     this.data = data;
     // 复刻 C++ 怪异行为：len 用 name.length，不是 data.length

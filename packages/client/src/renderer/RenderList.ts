@@ -4,9 +4,23 @@
  * addR 按值复制 RenderChunk（R5）。
  */
 import {
-  GL_ARRAY_BUFFER, GL_COLOR_ARRAY, GL_FLOAT, GL_TEXTURE_COORD_ARRAY, GL_TRIANGLES, GL_UNSIGNED_BYTE, GL_VERTEX_ARRAY, glBindBuffer2,
-  glColorPointer2, glDisableClientState2, glDrawArrays2, glEnableClientState2, glPopMatrix2, glPushMatrix2, glTexCoordPointer2,
-  glTranslatef2, glVertexPointer2,
+  GL_ARRAY_BUFFER,
+  GL_COLOR_ARRAY,
+  GL_FLOAT,
+  GL_TEXTURE_COORD_ARRAY,
+  GL_TRIANGLES,
+  GL_UNSIGNED_BYTE,
+  GL_VERTEX_ARRAY,
+  glBindBuffer2,
+  glColorPointer2,
+  glDisableClientState2,
+  glDrawArrays2,
+  glEnableClientState2,
+  glPopMatrix2,
+  glPushMatrix2,
+  glTexCoordPointer2,
+  glTranslatef2,
+  glVertexPointer2,
 } from './gles';
 import { RenderChunk } from './RenderChunk';
 import { VertexSizeBytes } from './Tesselator';

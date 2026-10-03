@@ -1,5 +1,5 @@
-import type { Tile } from "../../level/tile/Tile";
-import type { Player } from "./Player";
+import type { Tile } from '../../level/tile/Tile';
+import type { Player } from './Player';
 
 export class Inventory {
   // C++ static const int
@@ -30,26 +30,26 @@ export class Inventory {
   /** C++ Inventory::selectSlot(int slot) */
   selectSlot(slot: number): void {
     // 需要 Inventory.cpp 的实现
-    throw new Error("Inventory.selectSlot: not yet ported");
+    throw new Error('Inventory.selectSlot: not yet ported');
   }
 
   /** C++ Inventory::getSelectedItemId() */
   getSelectedItemId(): number {
-    throw new Error("Inventory.getSelectedItemId: not yet ported");
+    throw new Error('Inventory.getSelectedItemId: not yet ported');
   }
 
   /** C++ Inventory::getSelectionSlotItemId(int slot) */
   getSelectionSlotItemId(slot: number): number {
-    throw new Error("Inventory.getSelectionSlotItemId: not yet ported");
+    throw new Error('Inventory.getSelectionSlotItemId: not yet ported');
   }
 
   /** C++ Inventory::setSelectionSlotItemId(int slot, int id) */
   setSelectionSlotItemId(slot: number, id: number): void {
-    throw new Error("Inventory.setSelectionSlotItemId: not yet ported");
+    throw new Error('Inventory.setSelectionSlotItemId: not yet ported');
   }
 
   /** C++ Inventory::getDestroySpeed(Tile* tile) */
   getDestroySpeed(tile: Tile): number {
-    throw new Error("Inventory.getDestroySpeed: not yet ported");
+    throw new Error('Inventory.getDestroySpeed: not yet ported');
   }
 }

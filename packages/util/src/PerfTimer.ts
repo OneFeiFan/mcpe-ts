@@ -64,7 +64,9 @@ function compareFields(a: ResultField, b: ResultField): number {
 
 /** 与 getLog 里 C++ 的判断相同：key 是 path 的直接子区段 */
 function isDirectChild(key: string, path: string): boolean {
-  return key.length > path.length && startsWith(key, path) && key.indexOf('.', path.length + 1) === -1;
+  return (
+    key.length > path.length && startsWith(key, path) && key.indexOf('.', path.length + 1) === -1
+  );
 }
 
 type ResultFieldT = ResultField;
@@ -99,7 +101,9 @@ export class PerfTimer {
       // ADAPTED(Safety)：C++ 在这里对空 vector 调 back()，是未定义行为
       if (!PerfTimer.warnedEmptyPop) {
         PerfTimer.warnedEmptyPop = true;
-        LOGW('PerfTimer.pop() 在空栈上被调用：TIMER_PUSH 与 TIMER_POP 不配对，本次调用已忽略（只提示一次）');
+        LOGW(
+          'PerfTimer.pop() 在空栈上被调用：TIMER_PUSH 与 TIMER_POP 不配对，本次调用已忽略（只提示一次）',
+        );
       }
       return;
     }
@@ -138,7 +142,13 @@ export class PerfTimer {
 
     for (const [key, time] of times) {
       if (!isDirectChild(key, path)) continue;
-      result.push(new ResultField(key.substring(path.length), (time * 100) / totalTime, (time * 100) / globalTime));
+      result.push(
+        new ResultField(
+          key.substring(path.length),
+          (time * 100) / totalTime,
+          (time * 100) / globalTime,
+        ),
+      );
     }
 
     for (const [key, time] of times) times.set(key, time * DECAY);

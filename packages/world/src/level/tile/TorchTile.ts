@@ -1,11 +1,11 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { AABB } from "../../phys/AABB";
-import { Vec3 } from "../../phys/Vec3";
-import { HitResult } from "../../phys/HitResult";
-import { ParticleType } from "../../entity/EntityTypes";
-import type { Random } from "@mcpe/util";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { AABB } from '../../phys/AABB';
+import { Vec3 } from '../../phys/Vec3';
+import { HitResult } from '../../phys/HitResult';
+import { ParticleType } from '../../entity/EntityTypes';
+import type { Random } from '@mcpe/util';
 
 export class TorchTile extends Tile {
   /** C++ TorchTile::TorchTile(int id, int tex) */
@@ -52,9 +52,13 @@ export class TorchTile extends Tile {
   /** C++ TorchTile::getPlacedOnFaceDataValue(Level*, int, int, int, int, float, float, float, int) */
   override getPlacedOnFaceDataValue(
     level: Level,
-    x: number, y: number, z: number,
+    x: number,
+    y: number,
+    z: number,
     face: number,
-    _clickX: number, _clickY: number, _clickZ: number,
+    _clickX: number,
+    _clickY: number,
+    _clickZ: number,
     itemValue: number,
   ): number {
     let dir = itemValue;
@@ -92,11 +96,7 @@ export class TorchTile extends Tile {
   }
 
   /** C++ TorchTile::neighborChanged(Level*, int, int, int, int) */
-  override neighborChanged(
-    level: Level,
-    x: number, y: number, z: number,
-    _type: number,
-  ): void {
+  override neighborChanged(level: Level, x: number, y: number, z: number, _type: number): void {
     if (this.checkCanSurvive(level, x, y, z)) {
       const dir = level.getData(x, y, z);
       let replace = false;
@@ -116,11 +116,7 @@ export class TorchTile extends Tile {
   }
 
   /** C++ TorchTile::clip(Level*, int, int, int, const Vec3&, const Vec3&) */
-  override clip(
-    level: Level,
-    x: number, y: number, z: number,
-    a: Vec3, b: Vec3,
-  ): HitResult {
+  override clip(level: Level, x: number, y: number, z: number, a: Vec3, b: Vec3): HitResult {
     const dir = level.getData(x, y, z) & 7;
 
     let r = 0.15;
@@ -141,11 +137,7 @@ export class TorchTile extends Tile {
   }
 
   /** C++ TorchTile::animateTick(Level*, int, int, int, Random*) */
-  override animateTick(
-    level: Level,
-    xt: number, yt: number, zt: number,
-    _random: Random,
-  ): void {
+  override animateTick(level: Level, xt: number, yt: number, zt: number, _random: Random): void {
     const dir = level.getData(xt, yt, zt);
     const x = xt + 0.5;
     const y = yt + 0.7;

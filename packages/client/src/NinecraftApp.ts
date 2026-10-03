@@ -10,12 +10,38 @@ import { I18n } from '@mcpe/locale';
 import { SharedConstants } from '@mcpe/core';
 import { Mouse, Multitouch } from '@mcpe/platform';
 import { Mth } from '@mcpe/util';
-import { FlatDimension, GameType, initBiomes, initItems, initMaterials, initTileEntities, initTiles, Level, LevelSettings, MemoryLevelStorage, MobCategory } from '@mcpe/world';
+import {
+  FlatDimension,
+  GameType,
+  initBiomes,
+  initItems,
+  initMaterials,
+  initTileEntities,
+  initTiles,
+  Level,
+  LevelSettings,
+  MemoryLevelStorage,
+  MobCategory,
+} from '@mcpe/world';
 import { Minecraft } from './Minecraft';
 import { OptionId } from './Options';
 import {
-  GL_ALPHA_TEST, GL_BACK, GL_CULL_FACE, GL_DEPTH_TEST, GL_FASTEST, GL_GREATER, GL_LEQUAL, GL_PERSPECTIVE_CORRECTION_HINT, GL_TEXTURE_2D,
-  glAlphaFunc, glCullFace, glDepthFunc, glDepthRangef, glEnable, glEnable2, glHint,
+  GL_ALPHA_TEST,
+  GL_BACK,
+  GL_CULL_FACE,
+  GL_DEPTH_TEST,
+  GL_FASTEST,
+  GL_GREATER,
+  GL_LEQUAL,
+  GL_PERSPECTIVE_CORRECTION_HINT,
+  GL_TEXTURE_2D,
+  glAlphaFunc,
+  glCullFace,
+  glDepthFunc,
+  glDepthRangef,
+  glEnable,
+  glEnable2,
+  glHint,
 } from './renderer/gles';
 import { Tesselator } from './renderer/Tesselator';
 
@@ -64,7 +90,13 @@ export class NinecraftApp extends Minecraft {
 
   /** ADAPTED(Demo)：新建平坦世界（手册 S9 的 startDemoWorld 规格）；S12 起由真正的玩家进入世界 */
   startDemoWorld(): void {
-    const level = new Level(new MemoryLevelStorage(), 'demo', new LevelSettings(0, GameType.Creative), SharedConstants.GeneratorVersion, new FlatDimension());
+    const level = new Level(
+      new MemoryLevelStorage(),
+      'demo',
+      new LevelSettings(0, GameType.Creative),
+      SharedConstants.GeneratorVersion,
+      new FlatDimension(),
+    );
     this.setIsCreativeMode(level.getLevelData().getGameType() === GameType.Creative); // 与 Minecraft::selectLevel 相同
     this.setLevel(level, 'Generating level');
     this._running = true;

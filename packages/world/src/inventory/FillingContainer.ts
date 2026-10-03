@@ -29,7 +29,8 @@ const RECIPE_ANY_AUX_VALUE = -1;
 function recipeIsAnyAuxValue(id: number): boolean {
   const isTile = id < 256;
   if (!isTile) return false;
-  if (id === Tile.cloth.id || id === Tile.stoneSlabHalf.id || id === Tile.sandStone.id) return false;
+  if (id === Tile.cloth.id || id === Tile.stoneSlabHalf.id || id === Tile.sandStone.id)
+    return false;
   return true;
 }
 
@@ -62,12 +63,18 @@ export function FillingContainerMixin<TBase extends AnyCtor>(Base: TBase) {
     /** C++ protected */ _isCreative = false;
 
     /** C++ 构造函数的初始化部分（见文件头） */
-    /** C++ protected */ initFillingContainer(numTotalSlots: number, numLinkedSlots: number, containerType: number, isCreative: boolean): void {
+    /** C++ protected */ initFillingContainer(
+      numTotalSlots: number,
+      numLinkedSlots: number,
+      containerType: number,
+      isCreative: boolean,
+    ): void {
       this.containerType = containerType;
       this.numTotalSlots = numTotalSlots;
       this.numLinkedSlots = numLinkedSlots;
       this._isCreative = isCreative;
-      if (numLinkedSlots > 0) this.linkedSlots = Array.from({ length: numLinkedSlots }, () => new LinkedSlot());
+      if (numLinkedSlots > 0)
+        this.linkedSlots = Array.from({ length: numLinkedSlots }, () => new LinkedSlot());
       this.items.length = numTotalSlots;
       this.items.fill(null);
     }
@@ -109,7 +116,11 @@ export function FillingContainerMixin<TBase extends AnyCtor>(Base: TBase) {
       let count = item.count;
       while (count > 0) {
         let slot = -1;
-        if (!requireExactAux && (recipeIsAnyAuxValue(item.id) || item.getAuxValue() === RECIPE_ANY_AUX_VALUE)) slot = this.getNonEmptySlotForId(item.id);
+        if (
+          !requireExactAux &&
+          (recipeIsAnyAuxValue(item.id) || item.getAuxValue() === RECIPE_ANY_AUX_VALUE)
+        )
+          slot = this.getNonEmptySlotForId(item.id);
         else slot = this.getNonEmptySlotForIdAndData(item.id, item.getAuxValue());
         if (slot < 0) return count;
         const slotItem = this.items[slot]!;
@@ -244,10 +255,13 @@ export function FillingContainerMixin<TBase extends AnyCtor>(Base: TBase) {
           if (slot < this.numLinkedSlots) {
             if (slot < this.items.length && item.id === MAGIX_VAL && item.count === MAGIX_VAL) {
               const invSlot = item.getAuxValue();
-              if (invSlot >= this.numLinkedSlots && invSlot < this.items.length) this.linkSlot(slot, invSlot, false);
+              if (invSlot >= this.numLinkedSlots && invSlot < this.items.length)
+                this.linkSlot(slot, invSlot, false);
             } else {
               // Something's wrong, shouldnt go here
-              LOGE(`Error: Slot ${slot} is selection slot (inventory size: ${this.items.length}) but id/count is ${item.id}/${item.count}`);
+              LOGE(
+                `Error: Slot ${slot} is selection slot (inventory size: ${this.items.length}) but id/count is ${item.id}/${item.count}`,
+              );
             }
             continue;
           }
@@ -350,7 +364,9 @@ export function FillingContainerMixin<TBase extends AnyCtor>(Base: TBase) {
 
     /** C++ 的两个重载：protected getSlot(tileId) 与 public getSlot(tileId, data) */
     getSlot(tileId: number, data?: number): number {
-      return data === undefined ? this.getSlotForId(tileId) : this.getSlotForIdAndData(tileId, data);
+      return data === undefined
+        ? this.getSlotForId(tileId)
+        : this.getSlotForIdAndData(tileId, data);
     }
 
     getSlotForIdAndData(tileId: number, data: number): number {
@@ -363,7 +379,9 @@ export function FillingContainerMixin<TBase extends AnyCtor>(Base: TBase) {
 
     /** C++ 的两个重载：protected getNonEmptySlot(tileId) 与 public getNonEmptySlot(tileId, data) */
     getNonEmptySlot(tileId: number, data?: number): number {
-      return data === undefined ? this.getNonEmptySlotForId(tileId) : this.getNonEmptySlotForIdAndData(tileId, data);
+      return data === undefined
+        ? this.getNonEmptySlotForId(tileId)
+        : this.getNonEmptySlotForIdAndData(tileId, data);
     }
 
     getNonEmptySlotForIdAndData(tileId: number, data: number): number {
@@ -479,7 +497,9 @@ export function FillingContainerMixin<TBase extends AnyCtor>(Base: TBase) {
         this.items.push(item);
         return newSize - 1;
       }
-      LOGE(`Error@addItem: adding an item to an already full inventory: ${item.getDescriptionId()}!`);
+      LOGE(
+        `Error@addItem: adding an item to an already full inventory: ${item.getDescriptionId()}!`,
+      );
       return 0;
     }
 
@@ -490,7 +510,8 @@ export function FillingContainerMixin<TBase extends AnyCtor>(Base: TBase) {
     }
 
     /** C++ protected */ fixBackwardCompabilityItem(item: ItemInstance): void {
-      if (item.id === Tile.stoneSlabHalf.id) item.setAuxValue(item.getAuxValue() & StoneSlabTile.TYPE_MASK);
+      if (item.id === Tile.stoneSlabHalf.id)
+        item.setAuxValue(item.getAuxValue() & StoneSlabTile.TYPE_MASK);
     }
 
     linkSlot(selectionSlot: number, inventorySlot: number, propagate: boolean): boolean {
@@ -499,7 +520,8 @@ export function FillingContainerMixin<TBase extends AnyCtor>(Base: TBase) {
       if (inventorySlot === this.linkedSlots[selectionSlot]!.inventorySlot) return false;
       if (propagate) {
         let i = 0;
-        for (; i < this.numLinkedSlots - 1; ++i) if (this.linkedSlots[i]!.inventorySlot === inventorySlot) break;
+        for (; i < this.numLinkedSlots - 1; ++i)
+          if (this.linkedSlots[i]!.inventorySlot === inventorySlot) break;
         for (; i > selectionSlot; --i) {
           this.linkedSlots[i]!.inventorySlot = this.linkedSlots[i - 1]!.inventorySlot;
         }
@@ -509,7 +531,8 @@ export function FillingContainerMixin<TBase extends AnyCtor>(Base: TBase) {
     }
 
     linkEmptySlot(inventorySlot: number): boolean {
-      for (let i = 0; i < this.numLinkedSlots; ++i) if (this.linkedSlots[i]!.inventorySlot === inventorySlot) return true;
+      for (let i = 0; i < this.numLinkedSlots; ++i)
+        if (this.linkedSlots[i]!.inventorySlot === inventorySlot) return true;
       for (let i = 0; i < this.numLinkedSlots; ++i) {
         const item = this.getLinked(i);
         if (!item) {
@@ -554,7 +577,12 @@ class FillingContainerRoot {}
 
 /** 单继承用（Inventory : FillingContainer） */
 export class FillingContainer extends FillingContainerMixin(FillingContainerRoot) {
-  constructor(numTotalSlots: number, numLinkedSlots: number, containerType: number, isCreative: boolean) {
+  constructor(
+    numTotalSlots: number,
+    numLinkedSlots: number,
+    containerType: number,
+    isCreative: boolean,
+  ) {
     super();
     this.initFillingContainer(numTotalSlots, numLinkedSlots, containerType, isCreative);
   }

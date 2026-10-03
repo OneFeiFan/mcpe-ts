@@ -1,8 +1,8 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { Facing } from "../../Facing";
-import type { Player } from "../../entity/player/Player";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { Facing } from '../../Facing';
+import type { Player } from '../../entity/player/Player';
 
 export class StonecutterTile extends Tile {
   /** C++ StonecutterTile::StonecutterTile(int id) */

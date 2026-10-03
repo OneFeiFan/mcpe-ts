@@ -35,7 +35,12 @@ export abstract class ITurnInput extends IConfigListener {
     return dt;
   }
 
-  protected static linearTransform(value: number, deadZone: number, scale = 1.0, limit1 = false): number {
+  protected static linearTransform(
+    value: number,
+    deadZone: number,
+    scale = 1.0,
+    limit1 = false,
+  ): number {
     const deadSigned = value >= 0 ? deadZone : -deadZone;
     if (Math.abs(deadSigned) >= Math.abs(value)) return 0;
     let ret = (value - deadSigned) * scale;

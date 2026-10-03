@@ -14,14 +14,24 @@ export class BowItem extends Item {
     this.setMaxDamage(384);
   }
 
-  override releaseUsing(itemInstance: ItemInstance, level: Level, player: Player, durationLeft: number): void {
+  override releaseUsing(
+    itemInstance: ItemInstance,
+    level: Level,
+    player: Player,
+    durationLeft: number,
+  ): void {
     const timeHeld = this.getUseDuration(itemInstance) - durationLeft;
     let pow = timeHeld / BowItem.MAX_DRAW_DURATION;
     pow = (pow * pow + pow * 2) / 3;
     if (pow < 0.1) return;
     if (pow > 1) pow = 1;
     itemInstance.hurt(1);
-    level.playSound(player, 'random.bow', 1.0, 1.0 / (Item.random.nextFloat() * 0.4 + 1.2) + pow * 0.5);
+    level.playSound(
+      player,
+      'random.bow',
+      1.0,
+      1.0 / (Item.random.nextFloat() * 0.4 + 1.2) + pow * 0.5,
+    );
     player.inventory.removeResource(Item.arrow.id);
     if (!level.isClientSide) {
       // DEFERRED(Entity): Arrow* arrow = new Arrow(level, player, pow * 2.0f); if (pow == 1) arrow->critArrow = true; level->addEntity(arrow);

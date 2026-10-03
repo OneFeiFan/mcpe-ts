@@ -1,5 +1,5 @@
-import { Item } from "./Item";
-import { ItemInstance } from "./ItemInstance";
+import { Item } from './Item';
+import { ItemInstance } from './ItemInstance';
 
 export class CoalItem extends Item {
   static readonly STONE_COAL = 0;
@@ -19,8 +19,8 @@ export class CoalItem extends Item {
       return super.getDescriptionId();
     }
     if (instance.getAuxValue() === CoalItem.CHAR_COAL) {
-      return Item.ICON_DESCRIPTION_PREFIX + "charcoal";
+      return Item.ICON_DESCRIPTION_PREFIX + 'charcoal';
     }
-    return Item.ICON_DESCRIPTION_PREFIX + "coal";
+    return Item.ICON_DESCRIPTION_PREFIX + 'coal';
   }
 }

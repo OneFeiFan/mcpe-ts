@@ -1,8 +1,8 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { LeafTile } from "./LeafTile";
-import type { Random } from "@mcpe/util";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { LeafTile } from './LeafTile';
+import type { Random } from '@mcpe/util';
 
 export class TreeTile extends Tile {
   static readonly NORMAL_TRUNK = 0;
@@ -39,7 +39,9 @@ export class TreeTile extends Tile {
               const currentData = level.getData(x + xo, y + yo, z + zo);
               if ((currentData & LeafTile.UPDATE_LEAF_BIT) === 0) {
                 level.setDataNoUpdate(
-                  x + xo, y + yo, z + zo,
+                  x + xo,
+                  y + yo,
+                  z + zo,
                   currentData | LeafTile.UPDATE_LEAF_BIT,
                 );
               }

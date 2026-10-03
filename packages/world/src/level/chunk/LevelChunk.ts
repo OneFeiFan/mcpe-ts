@@ -55,7 +55,10 @@ export class LevelChunk {
   lastSaveHadEntities = false;
   lastSaveTime = 0;
   protected blocks: Uint8Array | null;
-  protected entityBlocks: Entity[][] = Array.from({ length: LevelChunk.EntityBlocksArraySize }, () => []);
+  protected entityBlocks: Entity[][] = Array.from(
+    { length: LevelChunk.EntityBlocksArraySize },
+    () => [],
+  );
   /** TEMap = std::map<TilePos, TileEntity*>：按 TilePos::operator<（比较 hashCode）判等与排序，所以用 hashCode 作键 */
   tileEntities = new Map<number, TileEntity>();
 
@@ -241,7 +244,8 @@ export class LevelChunk {
       let min = Level.DEPTH - 1;
       for (let _x = 0; _x < 16; _x++)
         for (let _z = 0; _z < 16; _z++) {
-          if ((this.heightmap[(_z << 4) | _x]! & 0xff) < min) min = this.heightmap[(_z << 4) | _x]! & 0xff;
+          if ((this.heightmap[(_z << 4) | _x]! & 0xff) < min)
+            min = this.heightmap[(_z << 4) | _x]! & 0xff;
         }
       this.minHeight = min;
     }
@@ -305,13 +309,15 @@ export class LevelChunk {
 
   /** 种子链：与 C++ 的整数回绕逐位一致（Random 只用低 32 位） */
   getRandom(l: number): Random {
-    const x = this.x, z = this.z;
+    const x = this.x,
+      z = this.z;
     const sum =
       (this.level.getSeed() +
         Math.imul(Math.imul(x, x), 4987142) +
         Math.imul(x, 5947611) +
         Math.imul(Math.imul(z, z), 4392871) +
-        Math.imul(z, 389711)) | 0;
+        Math.imul(z, 389711)) |
+      0;
     return new Random(sum ^ l);
   }
 
@@ -538,7 +544,9 @@ export class LevelChunk {
     tileEntity.setLevelAndPos(this.level, this.xt + x, y, this.zt + z);
     const t = this.getTile(x, y, z);
     if (t === 0 || !Tile.isEntityTile[t]) {
-      LOGW(`Attempted to place a tile entity where there was no entity tile! ${tileEntity.x}, ${tileEntity.y}, ${tileEntity.z}`);
+      LOGW(
+        `Attempted to place a tile entity where there was no entity tile! ${tileEntity.x}, ${tileEntity.y}, ${tileEntity.z}`,
+      );
       return;
     }
     tileEntity.clearRemoved();
@@ -562,7 +570,16 @@ export class LevelChunk {
     }
   }
 
-  getBlocksAndData(data: Uint8Array, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, p: number): number {
+  getBlocksAndData(
+    data: Uint8Array,
+    x0: number,
+    y0: number,
+    z0: number,
+    x1: number,
+    y1: number,
+    z1: number,
+    p: number,
+  ): number {
     const blocks = this.blocks!;
     let len = y1 - y0;
     for (let x = x0; x < x1; x++)
@@ -583,7 +600,16 @@ export class LevelChunk {
     return p;
   }
 
-  setBlocksAndData(data: Uint8Array, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, p: number): number {
+  setBlocksAndData(
+    data: Uint8Array,
+    x0: number,
+    y0: number,
+    z0: number,
+    x1: number,
+    y1: number,
+    z1: number,
+    p: number,
+  ): number {
     const blocks = this.blocks!;
     let len = y1 - y0;
     for (let x = x0; x < x1; x++)

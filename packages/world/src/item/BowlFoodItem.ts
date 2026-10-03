@@ -1,8 +1,8 @@
-import { FoodItem } from "./FoodItem";
-import { ItemInstance } from "./ItemInstance";
-import { Item } from "./Item";
-import type { Player } from "../entity/player/Player";
-import type { Level } from "../level/Level";
+import { FoodItem } from './FoodItem';
+import { ItemInstance } from './ItemInstance';
+import { Item } from './Item';
+import type { Player } from '../entity/player/Player';
+import type { Level } from '../level/Level';
 
 export class BowlFoodItem extends FoodItem {
   constructor(id: number, nutrition: number) {

@@ -1,13 +1,12 @@
-import { Tag, TAG_List, TAG_Byte, TAG_Float, TAGERR_OUT_OF_BOUNDS, TAGERR_BAD_TYPE } from "./Tag";
-import { FloatTag } from "./FloatTag";
-import type { IDataInput, IDataOutput, PrintStream } from "@mcpe/util";
-
+import { Tag, TAG_List, TAG_Byte, TAG_Float, TAGERR_OUT_OF_BOUNDS, TAGERR_BAD_TYPE } from './Tag';
+import { FloatTag } from './FloatTag';
+import type { IDataInput, IDataOutput, PrintStream } from '@mcpe/util';
 
 export class ListTag extends Tag {
   private list: Tag[] = [];
   private type: number = TAG_Byte;
 
-  constructor(name: string = "") {
+  constructor(name: string = '') {
     super(name);
   }
 
@@ -51,11 +50,11 @@ export class ListTag extends Tag {
   toString(): string {
     return `${this.list.length} entries of type ${Tag.getTagName(this.type)}`;
   }
-  
+
   override print(out: PrintStream): void;
   override print(prefix: string, out: PrintStream): void;
   override print(prefixOrOut: string | PrintStream, maybeOut?: PrintStream): void {
-    if (typeof prefixOrOut !== "string") {
+    if (typeof prefixOrOut !== 'string') {
       super.print(prefixOrOut);
       return;
     }
@@ -65,13 +64,13 @@ export class ListTag extends Tag {
     super.print(prefix, out);
 
     out.print(prefix);
-    out.println("{");
-    const inner = prefix + "   ";
+    out.println('{');
+    const inner = prefix + '   ';
     for (const t of this.list) {
       t.print(inner, out);
     }
     out.print(prefix);
-    out.println("}");
+    out.println('}');
   }
 
   add(tag: Tag): void {
@@ -144,7 +143,7 @@ export class ListTagFloatAdder {
   public tag: ListTag | null = null;
 
   constructor(arg?: number | ListTag) {
-    if (typeof arg === "number") {
+    if (typeof arg === 'number') {
       this.call(arg);
     } else if (arg instanceof ListTag) {
       this.tag = arg;
@@ -152,10 +151,10 @@ export class ListTagFloatAdder {
   }
 
   call(nameOrValue: string | number, maybeValue?: number): this {
-    if (typeof nameOrValue === "string") {
+    if (typeof nameOrValue === 'string') {
       this.callInternal(nameOrValue, maybeValue!);
     } else {
-      this.callInternal("", nameOrValue);
+      this.callInternal('', nameOrValue);
     }
     return this;
   }

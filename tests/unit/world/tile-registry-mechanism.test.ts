@@ -1,34 +1,96 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
-  initMaterials, isUnregistered, Item, ItemCategory, Material, StoneSlabTileItem, Tile, TileItem,
-  type Level, type LevelSource, type TileClasses, TILE_CLASSES } from '@mcpe/world';
+  initMaterials,
+  isUnregistered,
+  Item,
+  ItemCategory,
+  Material,
+  StoneSlabTileItem,
+  Tile,
+  TileItem,
+  type Level,
+  type LevelSource,
+  type TileClasses,
+  TILE_CLASSES,
+} from '@mcpe/world';
 
 // S3 注册表机制测试：用最小的替身子类代替 16 个方块类（它们由你按 1:1 移植），
 // 只验证本轮新写的非 1:1 部分——注入、逐行 DEFERRED、静态表、物品注册、重载分派、未注册哨兵。
 // 真实方块类就位后，再跑 tile-registry.test.ts（S3 验收）。
 class Solid extends Tile {}
 class NonSolid extends Tile {
-  override isSolidRender(): boolean { return false; }
+  override isSolidRender(): boolean {
+    return false;
+  }
 }
 const fakes: TileClasses = {
   ...TILE_CLASSES,
-  StoneTile: class extends Solid { constructor(id: number, tex: number) { super(id, tex, Material.stone); } },
-  GrassTile: class extends Solid {
-    constructor(id: number) { super(id, Material.dirt); this.tex = 3; }
-    override getTextureForData(face: number, data: number): number { return face === 1 ? 0 : data === 5 ? 77 : 3; }
+  StoneTile: class extends Solid {
+    constructor(id: number, tex: number) {
+      super(id, tex, Material.stone);
+    }
   },
-  DirtTile: class extends Solid { constructor(id: number, tex: number) { super(id, tex, Material.dirt); } },
-  LiquidTileDynamic: class extends NonSolid { constructor(id: number, m: Material) { super(id, 14, m); } },
-  LiquidTileStatic: class extends NonSolid { constructor(id: number, m: Material) { super(id, 14, m); } },
-  LeafTile: class extends NonSolid { constructor(id: number, tex: number) { super(id, tex, Material.leaves); } },
-  BedTile: class extends NonSolid { constructor(id: number) { super(id, 134, Material.cloth); } },
-  StoneSlabTile: class extends NonSolid { constructor(id: number, _full: boolean) { super(id, 6, Material.stone); } },
-  FireTile: class extends NonSolid { constructor(id: number, tex: number) { super(id, tex, Material.fire); } },
-  FarmTile: class extends NonSolid { constructor(id: number) { super(id, 87, Material.dirt); } },
-  InvisibleTile: class extends Solid { constructor(id: number, tex: number, m: Material) { super(id, tex, m); } },
+  GrassTile: class extends Solid {
+    constructor(id: number) {
+      super(id, Material.dirt);
+      this.tex = 3;
+    }
+    override getTextureForData(face: number, data: number): number {
+      return face === 1 ? 0 : data === 5 ? 77 : 3;
+    }
+  },
+  DirtTile: class extends Solid {
+    constructor(id: number, tex: number) {
+      super(id, tex, Material.dirt);
+    }
+  },
+  LiquidTileDynamic: class extends NonSolid {
+    constructor(id: number, m: Material) {
+      super(id, 14, m);
+    }
+  },
+  LiquidTileStatic: class extends NonSolid {
+    constructor(id: number, m: Material) {
+      super(id, 14, m);
+    }
+  },
+  LeafTile: class extends NonSolid {
+    constructor(id: number, tex: number) {
+      super(id, tex, Material.leaves);
+    }
+  },
+  BedTile: class extends NonSolid {
+    constructor(id: number) {
+      super(id, 134, Material.cloth);
+    }
+  },
+  StoneSlabTile: class extends NonSolid {
+    constructor(id: number, _full: boolean) {
+      super(id, 6, Material.stone);
+    }
+  },
+  FireTile: class extends NonSolid {
+    constructor(id: number, tex: number) {
+      super(id, tex, Material.fire);
+    }
+  },
+  FarmTile: class extends NonSolid {
+    constructor(id: number) {
+      super(id, 87, Material.dirt);
+    }
+  },
+  InvisibleTile: class extends Solid {
+    constructor(id: number, tex: number, m: Material) {
+      super(id, tex, m);
+    }
+  },
   TopSnowTile: class extends NonSolid {
-    constructor(id: number, tex: number) { super(id, tex, Material.topSnow); }
-    override mayPlaceAt(): boolean { return false; }
+    constructor(id: number, tex: number) {
+      super(id, tex, Material.topSnow);
+    }
+    override mayPlaceAt(): boolean {
+      return false;
+    }
   },
   TileItem,
   StoneSlabTileItem,
@@ -37,12 +99,19 @@ const fakes: TileClasses = {
 
 /** C++ 注册的全部 89 个方块（S12 起全部移植） */
 const S12_IDS: number[] = [];
-const REGISTERED = [1,  2,  3,  4,  5,  6,  7,  8,  9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  20,  21,  22,  24,  26,  30,  31,  35,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  53,  54,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  67,  68,  71,  73,  74,  78,  79,  80,  81,  82,  83,  85,  87,  89,  95,  96,  98,  102,  103,  105,  107,  108,  109,  112,  114,  128,  155,  156,  245,  246,  247,  248,  249,  253,  254,  255];
+const REGISTERED = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 24, 26, 30, 31, 35, 37,
+  38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 56, 57, 58, 59, 60, 61, 62, 63,
+  64, 65, 67, 68, 71, 73, 74, 78, 79, 80, 81, 82, 83, 85, 87, 89, 95, 96, 98, 102, 103, 105, 107,
+  108, 109, 112, 114, 128, 155, 156, 245, 246, 247, 248, 249, 253, 254, 255,
+];
 let errors: string[] = [];
 
 beforeAll(() => {
   initMaterials();
-  const spy = vi.spyOn(console, 'error').mockImplementation((...a: unknown[]) => { errors.push(a.join(' ')); });
+  const spy = vi.spyOn(console, 'error').mockImplementation((...a: unknown[]) => {
+    errors.push(a.join(' '));
+  });
   errors = [];
   Tile.initTiles(fakes);
   spy.mockRestore();
@@ -61,11 +130,28 @@ describe('Tile.initTiles（注入 + 逐行 DEFERRED）', () => {
   });
 
   it('init() 填的静态表与构造链里的设置', () => {
-    expect([Tile.lightBlock[0], Tile.lightBlock[1], Tile.lightBlock[2], Tile.lightBlock[7]]).toEqual([0, 255, 255, 255]);
-    expect([Tile.lightBlock[8], Tile.lightBlock[9], Tile.lightBlock[10], Tile.lightBlock[11]]).toEqual([3, 3, 255, 255]);
+    expect([
+      Tile.lightBlock[0],
+      Tile.lightBlock[1],
+      Tile.lightBlock[2],
+      Tile.lightBlock[7],
+    ]).toEqual([0, 255, 255, 255]);
+    expect([
+      Tile.lightBlock[8],
+      Tile.lightBlock[9],
+      Tile.lightBlock[10],
+      Tile.lightBlock[11],
+    ]).toEqual([3, 3, 255, 255]);
     expect([Tile.lightBlock[18], Tile.lightBlock[254]]).toEqual([1, 1]);
-    expect([Tile.lightEmission[10], Tile.lightEmission[11], Tile.lightEmission[51]]).toEqual([15, 15, 15]);
-    expect([Tile.solid[1], Tile.solid[8], Tile.translucent[0], Tile.translucent[8]]).toEqual([true, false, true, false]); // C++ 的 LiquidMaterial 没重写 blocksLight，水不算 translucent
+    expect([Tile.lightEmission[10], Tile.lightEmission[11], Tile.lightEmission[51]]).toEqual([
+      15, 15, 15,
+    ]);
+    expect([Tile.solid[1], Tile.solid[8], Tile.translucent[0], Tile.translucent[8]]).toEqual([
+      true,
+      false,
+      true,
+      false,
+    ]); // C++ 的 LiquidMaterial 没重写 blocksLight，水不算 translucent
     expect(Tile.rock.destroySpeed).toBe(1.5);
     expect(Tile.rock.explosionResistance).toBe(30); // setDestroyTime 先设 7.5，setExplodeable(10) 再改成 30
     expect(Tile.rock.soundType).toBe(Tile.SOUND_STONE);
@@ -83,7 +169,9 @@ describe('Tile.initTiles（注入 + 逐行 DEFERRED）', () => {
   });
 
   it('缺 category 的方块照 C++ 打错误日志：netherrack、invisible_bedrock、grass_carried、info_reserved6', () => {
-    const ids = errors.map((e) => Number(/tile (\d+):/.exec(e)?.[1])).filter((n) => !Number.isNaN(n));
+    const ids = errors
+      .map((e) => Number(/tile (\d+):/.exec(e)?.[1]))
+      .filter((n) => !Number.isNaN(n));
     expect(ids).toEqual([87, 95, 253, 255]); // 与 C++ 的输出一致（黄金样本 harness 的日志）
   });
 });
@@ -127,7 +215,7 @@ describe('Tile 基类行为', () => {
     const a = Tile.rock.getAABB(lv, 1, 2, 3)!;
     expect([a.x0, a.y0, a.z0, a.x1, a.y1, a.z1]).toEqual([1, 2, 3, 2, 3, 4]);
     expect(Tile.rock.getAABB(lv, 5, 5, 5)).toBe(a);
-    const boxes: typeof a[] = [];
+    const boxes: (typeof a)[] = [];
     Tile.rock.addAABBs(lv, 5, 5, 5, a.copy(), boxes);
     expect(boxes[0]).not.toBe(a);
   });

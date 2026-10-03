@@ -1,7 +1,7 @@
-import type { Player } from "../entity/player/Player";
-import type { Level } from "../level/Level";
-import { Item } from "./Item";
-import { ItemInstance } from "./ItemInstance";
+import type { Player } from '../entity/player/Player';
+import type { Level } from '../level/Level';
+import { Item } from './Item';
+import { ItemInstance } from './ItemInstance';
 
 export class SeedItem extends Item {
   private readonly resultId: number;
@@ -19,9 +19,13 @@ export class SeedItem extends Item {
     itemInstance: ItemInstance,
     _player: Player,
     level: Level,
-    x: number, y: number, z: number,
+    x: number,
+    y: number,
+    z: number,
     face: number,
-    _clickX: number, _clickY: number, _clickZ: number,
+    _clickX: number,
+    _clickY: number,
+    _clickZ: number,
   ): boolean {
     if (face !== 1) return false;
     // C++ 里 player.mayBuild 检查被注释掉了，不要加

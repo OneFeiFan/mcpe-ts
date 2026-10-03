@@ -1,6 +1,5 @@
-import type { IDataInput, IDataOutput } from "@mcpe/util";
-import { Tag, TAG_Double } from "./Tag";
-
+import type { IDataInput, IDataOutput } from '@mcpe/util';
+import { Tag, TAG_Double } from './Tag';
 
 export class DoubleTag extends Tag {
   public data: number;
@@ -46,10 +45,10 @@ export class DoubleTag extends Tag {
  * 只在需要严格复刻 toString 时使用。
  */
 function formatCppDouble(v: number): string {
-  if (Number.isNaN(v)) return "nan";
-  if (v === Infinity) return "inf";
-  if (v === -Infinity) return "-inf";
-  if (v === 0) return Object.is(v, -0) ? "-0" : "0";
+  if (Number.isNaN(v)) return 'nan';
+  if (v === Infinity) return 'inf';
+  if (v === -Infinity) return '-inf';
+  if (v === 0) return Object.is(v, -0) ? '-0' : '0';
 
   const precision = 6;
   const exp = Math.floor(Math.log10(Math.abs(v)));
@@ -57,9 +56,12 @@ function formatCppDouble(v: number): string {
 
   // 如果指数在 [-4, precision-1] 内，用定点
   if (exp >= -4 && exp < precision) {
-    return v.toPrecision(precision).replace(/\.?0+$/, "").replace(/\.$/, "");
+    return v
+      .toPrecision(precision)
+      .replace(/\.?0+$/, '')
+      .replace(/\.$/, '');
   }
   // 否则用科学计数法，C++ 风格：1.23457e+08
-  s = s.replace(/e([+-])(\d)$/, "e$10$2");
+  s = s.replace(/e([+-])(\d)$/, 'e$10$2');
   return s;
 }

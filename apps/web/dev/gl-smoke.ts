@@ -1,9 +1,45 @@
 // S6 的 dev 页（长期保留）：只用 GLES1 兼容层、Tesselator、Textures 画两样东西，检查固定管线的模拟是否正确。
 import {
-  AppPlatform, GL_ALPHA_TEST, GL_BACK, GL_COLOR_BUFFER_BIT, GL_CULL_FACE, GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_FOG, GL_FOG_COLOR, GL_FOG_END,
-  GL_FOG_MODE, GL_FOG_START, GL_GREATER, GL_LEQUAL, GL_LINEAR, GL_MODELVIEW, GL_PROJECTION, GL_TEXTURE_2D, GLES1, glAlphaFunc, glClear,
-  glClearColor, glCullFace, glDepthFunc, glDisable, glEnable, glFogf, glFogfv, glFogx, glLoadIdentity, glMatrixMode, glOrthof, glRotatef,
-  glSetContext, glTranslatef, gluPerspective, glViewport, Tesselator, TextureData, Textures,
+  AppPlatform,
+  GL_ALPHA_TEST,
+  GL_BACK,
+  GL_COLOR_BUFFER_BIT,
+  GL_CULL_FACE,
+  GL_DEPTH_BUFFER_BIT,
+  GL_DEPTH_TEST,
+  GL_FOG,
+  GL_FOG_COLOR,
+  GL_FOG_END,
+  GL_FOG_MODE,
+  GL_FOG_START,
+  GL_GREATER,
+  GL_LEQUAL,
+  GL_LINEAR,
+  GL_MODELVIEW,
+  GL_PROJECTION,
+  GL_TEXTURE_2D,
+  GLES1,
+  glAlphaFunc,
+  glClear,
+  glClearColor,
+  glCullFace,
+  glDepthFunc,
+  glDisable,
+  glEnable,
+  glFogf,
+  glFogfv,
+  glFogx,
+  glLoadIdentity,
+  glMatrixMode,
+  glOrthof,
+  glRotatef,
+  glSetContext,
+  glTranslatef,
+  gluPerspective,
+  glViewport,
+  Tesselator,
+  TextureData,
+  Textures,
 } from '@mcpe/client';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#c')!;
@@ -39,8 +75,16 @@ async function loadImage(url: string): Promise<TextureData> {
 
 const T = 1 / 16; // terrain.png 每格占 1/16
 
-function quadTile(t: Tesselator, tex: number, x0: number, y0: number, x1: number, y1: number): void {
-  const u = (tex % 16) * T, v = ((tex / 16) | 0) * T;
+function quadTile(
+  t: Tesselator,
+  tex: number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+): void {
+  const u = (tex % 16) * T,
+    v = ((tex / 16) | 0) * T;
   t.vertexUV(x0, y1, 0, u, v + T);
   t.vertexUV(x1, y1, 0, u + T, v + T);
   t.vertexUV(x1, y0, 0, u + T, v);
@@ -51,22 +95,61 @@ function quadTile(t: Tesselator, tex: number, x0: number, y0: number, x1: number
 function grassBlock(t: Tesselator): void {
   const face = (tex: number, tint: number, p: number[][]) => {
     t.color(tint);
-    const u = (tex % 16) * T, v = ((tex / 16) | 0) * T;
-    const uv = [[u, v + T], [u + T, v + T], [u + T, v], [u, v]];
+    const u = (tex % 16) * T,
+      v = ((tex / 16) | 0) * T;
+    const uv = [
+      [u, v + T],
+      [u + T, v + T],
+      [u + T, v],
+      [u, v],
+    ];
     for (let i = 0; i < 4; i++) t.vertexUV(p[i]![0]!, p[i]![1]!, p[i]![2]!, uv[i]![0]!, uv[i]![1]!);
   };
-  face(0, 0x339933, [[-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, 0.5, -0.5], [-0.5, 0.5, -0.5]]); // 顶
-  face(2, 0xffffff, [[-0.5, -0.5, -0.5], [0.5, -0.5, -0.5], [0.5, -0.5, 0.5], [-0.5, -0.5, 0.5]]); // 底
-  face(3, 0xcccccc, [[-0.5, -0.5, 0.5], [0.5, -0.5, 0.5], [0.5, 0.5, 0.5], [-0.5, 0.5, 0.5]]); // 南
-  face(3, 0xcccccc, [[0.5, -0.5, -0.5], [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5]]); // 北
-  face(3, 0x999999, [[0.5, -0.5, 0.5], [0.5, -0.5, -0.5], [0.5, 0.5, -0.5], [0.5, 0.5, 0.5]]); // 东
-  face(3, 0x999999, [[-0.5, -0.5, -0.5], [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [-0.5, 0.5, -0.5]]); // 西
+  face(0, 0x339933, [
+    [-0.5, 0.5, 0.5],
+    [0.5, 0.5, 0.5],
+    [0.5, 0.5, -0.5],
+    [-0.5, 0.5, -0.5],
+  ]); // 顶
+  face(2, 0xffffff, [
+    [-0.5, -0.5, -0.5],
+    [0.5, -0.5, -0.5],
+    [0.5, -0.5, 0.5],
+    [-0.5, -0.5, 0.5],
+  ]); // 底
+  face(3, 0xcccccc, [
+    [-0.5, -0.5, 0.5],
+    [0.5, -0.5, 0.5],
+    [0.5, 0.5, 0.5],
+    [-0.5, 0.5, 0.5],
+  ]); // 南
+  face(3, 0xcccccc, [
+    [0.5, -0.5, -0.5],
+    [-0.5, -0.5, -0.5],
+    [-0.5, 0.5, -0.5],
+    [0.5, 0.5, -0.5],
+  ]); // 北
+  face(3, 0x999999, [
+    [0.5, -0.5, 0.5],
+    [0.5, -0.5, -0.5],
+    [0.5, 0.5, -0.5],
+    [0.5, 0.5, 0.5],
+  ]); // 东
+  face(3, 0x999999, [
+    [-0.5, -0.5, -0.5],
+    [-0.5, -0.5, 0.5],
+    [-0.5, 0.5, 0.5],
+    [-0.5, 0.5, -0.5],
+  ]); // 西
 }
 
 async function main(): Promise<void> {
   const ctx = new GLES1(gl!);
   glSetContext(ctx);
-  const textures = new Textures(null, new SmokePlatform(new Map([['terrain.png', await loadImage('/images/terrain.png')]])));
+  const textures = new Textures(
+    null,
+    new SmokePlatform(new Map([['terrain.png', await loadImage('/images/terrain.png')]])),
+  );
   const t = Tesselator.instance;
   t.init();
 
@@ -119,7 +202,14 @@ async function main(): Promise<void> {
     gl!.readPixels(x, y, 1, 1, gl!.RGBA, gl!.UNSIGNED_BYTE, out);
     return Array.from(out);
   };
-  const result = { left: px(160, 160), leftCorner: px(10, 10), right: px(480, 200), rightCorner: px(330, 10), drawCalls: ctx.drawCalls, glError: gl!.getError() };
+  const result = {
+    left: px(160, 160),
+    leftCorner: px(10, 10),
+    right: px(480, 200),
+    rightCorner: px(330, 10),
+    drawCalls: ctx.drawCalls,
+    glError: gl!.getError(),
+  };
   (window as unknown as { __smoke: unknown }).__smoke = result;
   status.textContent = `完成：drawCalls=${result.drawCalls}，glError=${result.glError}，左中心=${result.left.join(',')}，右=${result.right.join(',')}`;
 }

@@ -1,4 +1,4 @@
-import { getTimeMs } from "@mcpe/platform";
+import { getTimeMs } from '@mcpe/platform';
 
 const N = 624;
 const M = 397;
@@ -8,9 +8,18 @@ const LOWER_MASK = 0x7fffffff;
 const MAG01 = new Uint32Array([0, MATRIX_A]);
 const TWO_32_INV = 1.0 / 4294967296.0;
 
-export interface RRDiff1 { x: number; }
-export interface RRDiff2 { x: number; y: number; }
-export interface RRDiff3 { x: number; y: number; z: number; }
+export interface RRDiff1 {
+  x: number;
+}
+export interface RRDiff2 {
+  x: number;
+  y: number;
+}
+export interface RRDiff3 {
+  x: number;
+  y: number;
+  z: number;
+}
 export type RRDiffOut = RRDiff1 | RRDiff2 | RRDiff3;
 
 export class Random {

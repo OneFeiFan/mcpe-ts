@@ -8,8 +8,21 @@ import { Mth, SmoothFloat } from '@mcpe/util';
 import { SharedConstants } from '@mcpe/core';
 import type { CompoundTag } from '@mcpe/nbt';
 import {
-  BedSleepingResult, BowItem, type ChestTileEntity, type Entity, type FurnaceTileEntity, Item, ItemInstance, type Level, Material, Mob, Player,
-  Tile, type TileEntity, TileEntityType, Vec3,
+  BedSleepingResult,
+  BowItem,
+  type ChestTileEntity,
+  type Entity,
+  type FurnaceTileEntity,
+  Item,
+  ItemInstance,
+  type Level,
+  Material,
+  Mob,
+  Player,
+  Tile,
+  type TileEntity,
+  TileEntityType,
+  Vec3,
 } from '@mcpe/world';
 import type { Minecraft } from '../Minecraft';
 import { OptionId } from '../Options';
@@ -60,51 +73,58 @@ export class LocalPlayer extends Player {
 
   chat(message: string): void {}
 
-  awardStat(_stat: unknown, _count: number): void { // DEFERRED(Stats)：Stat*
-          
-          
-      }
+  awardStat(_stat: unknown, _count: number): void {
+    // DEFERRED(Stats)：Stat*
+  }
 
-  setSprinting(sprint: boolean): void { this.sprinting = sprint; }
+  setSprinting(sprint: boolean): void {
+    this.sprinting = sprint;
+  }
 
-  constructor(minecraft: Minecraft, level: Level, username: string, dimension: number, isCreative: boolean) {
-      super(level, isCreative);
-      this.minecraft = minecraft;
-      this.input = null;
-      this.sentInventoryItemId = -1;
-      this.sentInventoryItemData = -1;
-      this.autoJumpEnabled = true;
-      this.armorTypeHash = 0;
-      this.sprinting = false;
-      this.sprintDoubleTapTimer = 0;
-      this.prevForwardHeld = false;
-      this.xBob = 0.0;
-      this.yBob = 0.0;
-      this.xBobO = 0.0;
-      this.yBobO = 0.0;
+  constructor(
+    minecraft: Minecraft,
+    level: Level,
+    username: string,
+    dimension: number,
+    isCreative: boolean,
+  ) {
+    super(level, isCreative);
+    this.minecraft = minecraft;
+    this.input = null;
+    this.sentInventoryItemId = -1;
+    this.sentInventoryItemData = -1;
+    this.autoJumpEnabled = true;
+    this.armorTypeHash = 0;
+    this.sprinting = false;
+    this.sprintDoubleTapTimer = 0;
+    this.prevForwardHeld = false;
+    this.xBob = 0.0;
+    this.yBob = 0.0;
+    this.xBobO = 0.0;
+    this.yBobO = 0.0;
     this.dimension = dimension;
     this._init();
-  
+
     if (minecraft.options.getStringValue(OptionId.OPTIONS_USERNAME).length !== 0) {
-      this.textureName = "mob/char.png";
-  
+      this.textureName = 'mob/char.png';
+
       this.name = minecraft.options.getStringValue(OptionId.OPTIONS_USERNAME);
-      LOGI("test "); // printf("test \n");
+      LOGI('test '); // printf("test \n");
       // DEFERRED(Network): new CThread(fetchSkinForPlayer, this); new CThread(fetchCapeForPlayer, this);（从网上下载皮肤与披风）
     }
   }
 
   override _init(): void {
-    this.autoJumpTime    = 0;
-    this.jumpTriggerTime    = 0;
-    this.ascendTriggerTime  = 0;
-    this.descendTriggerTime  = 0;
-    this.ascending  = false;
-    this.descending  = false;
-  
+    this.autoJumpTime = 0;
+    this.jumpTriggerTime = 0;
+    this.ascendTriggerTime = 0;
+    this.descendTriggerTime = 0;
+    this.ascending = false;
+    this.descending = false;
+
     let item = this.inventory.getSelected();
-    this.sentInventoryItemId = item? item.id : 0;
-    this.sentInventoryItemData = item? item.getAuxValue() : 0;
+    this.sentInventoryItemId = item ? item.id : 0;
+    this.sentInventoryItemData = item ? item.getAuxValue() : 0;
   }
 
   override reset(): void {
@@ -116,7 +136,8 @@ export class LocalPlayer extends Player {
     super.tick();
     if (!this.useItem.isNull()) {
       const item = this.inventory.getSelected();
-      if (item !== null && item.equals(this.useItem)) { // *item == useItem
+      if (item !== null && item.equals(this.useItem)) {
+        // *item == useItem
         if (this.useItemDuration <= 25 && this.useItemDuration % 4 === 0) {
           this.spawnEatParticles(item, 5);
         }
@@ -139,68 +160,75 @@ export class LocalPlayer extends Player {
   }
 
   override move(xa: number, ya: number, za: number): void {
-      
-      if (this === this.minecraft.player  && this.minecraft.options.getBooleanValue(OptionId.OPTIONS_IS_FLYING)) {
-          this.noPhysics = true;
-          let tmp = this.walkDist; 
-          this.calculateFlight(xa, ya, za);
-          this.fallDistance = 0;
-          this.yd = 0;
-          super.move(this.flyX, this.flyY, this.flyZ);
-          this.onGround = true;
-          this.walkDist = tmp;
-      } else {
+    if (
+      this === this.minecraft.player &&
+      this.minecraft.options.getBooleanValue(OptionId.OPTIONS_IS_FLYING)
+    ) {
+      this.noPhysics = true;
+      let tmp = this.walkDist;
+      this.calculateFlight(xa, ya, za);
+      this.fallDistance = 0;
+      this.yd = 0;
+      super.move(this.flyX, this.flyY, this.flyZ);
+      this.onGround = true;
+      this.walkDist = tmp;
+    } else {
       if (this.autoJumpTime > 0) {
         this.autoJumpTime--;
         this.input!.jumping = true;
       }
-      let prevX = this.x, prevZ = this.z;
-  
-          super.move(xa, ya, za);
-  
-      let newX = this.x, newZ = this.z;
-  
-      if (this.autoJumpTime <= 0 && this.minecraft.options.getBooleanValue(OptionId.OPTIONS_AUTOJUMP))
-      {
-        
+      let prevX = this.x,
+        prevZ = this.z;
+
+      super.move(xa, ya, za);
+
+      let newX = this.x,
+        newZ = this.z;
+
+      if (
+        this.autoJumpTime <= 0 &&
+        this.minecraft.options.getBooleanValue(OptionId.OPTIONS_AUTOJUMP)
+      ) {
         let jump = false;
-        if (Mth.floor(prevX * 2.0) !== Mth.floor(newX * 2.0) || Mth.floor(prevZ * 2.0) !== Mth.floor(newZ * 2.0))
-        {
+        if (
+          Mth.floor(prevX * 2.0) !== Mth.floor(newX * 2.0) ||
+          Mth.floor(prevZ * 2.0) !== Mth.floor(newZ * 2.0)
+        ) {
           let dist = Mth.sqrt(xa * xa + za * za);
           let xx = Mth.floor(this.x + xa / dist);
           let zz = Mth.floor(this.z + za / dist);
-          let tileId = this.level.getTile(xx, Math.trunc(this.y-1), zz);
-          jump = (this.isSolidTile(xx, Math.trunc(this.y-1), zz) 
-            && !this.isSolidTile(xx, Math.trunc(this.y), zz) && !this.isSolidTile(xx, Math.trunc(this.y+1), zz)) 
-            && isJumpable(tileId);
+          let tileId = this.level.getTile(xx, Math.trunc(this.y - 1), zz);
+          jump =
+            this.isSolidTile(xx, Math.trunc(this.y - 1), zz) &&
+            !this.isSolidTile(xx, Math.trunc(this.y), zz) &&
+            !this.isSolidTile(xx, Math.trunc(this.y + 1), zz) &&
+            isJumpable(tileId);
         }
-        if (jump)
-        {
+        if (jump) {
           this.autoJumpTime = 1;
         }
       }
-      }
+    }
   }
 
   override aiStep(): void {
     this.jumpTriggerTime--;
     this.ascendTriggerTime--;
     this.descendTriggerTime--;
-  
+
     let wasJumping = this.input!.jumping;
-      let screenCovering = this.minecraft.screen !== null && !this.minecraft.screen.passEvents;
-    if (!screenCovering)
-      this.input!.tick(this);
-  
-    
+    let screenCovering = this.minecraft.screen !== null && !this.minecraft.screen.passEvents;
+    if (!screenCovering) this.input!.tick(this);
+
     {
-      let forwardHeld = (this.input!.ya > 0);
-      if (forwardHeld && !this.prevForwardHeld && this.minecraft.options.getBooleanValue(OptionId.OPTIONS_ALLOW_SPRINT)) {
-        
-        if (this.sprintDoubleTapTimer > 0)
-          this.sprinting = true;
-        else
-          this.sprintDoubleTapTimer = 7;
+      let forwardHeld = this.input!.ya > 0;
+      if (
+        forwardHeld &&
+        !this.prevForwardHeld &&
+        this.minecraft.options.getBooleanValue(OptionId.OPTIONS_ALLOW_SPRINT)
+      ) {
+        if (this.sprintDoubleTapTimer > 0) this.sprinting = true;
+        else this.sprintDoubleTapTimer = 7;
       }
       if (!forwardHeld) {
         this.sprinting = false;
@@ -208,14 +236,12 @@ export class LocalPlayer extends Player {
       if (this.sprintDoubleTapTimer > 0) this.sprintDoubleTapTimer--;
       this.prevForwardHeld = forwardHeld;
     }
-    if (this.input!.sneaking)
-      this.sprinting = false;
-  
-      if (this.input!.sneaking) {
-          if (this.ySlideOffset < 0.2) this.ySlideOffset = 0.2;
-      }
+    if (this.input!.sneaking) this.sprinting = false;
+
+    if (this.input!.sneaking) {
+      if (this.ySlideOffset < 0.2) this.ySlideOffset = 0.2;
+    }
     if (this.abilities.mayfly) {
-      
       if (!wasJumping && this.input!.jumping) {
         if (this.jumpTriggerTime <= 0) this.jumpTriggerTime = 7;
         else {
@@ -226,39 +252,35 @@ export class LocalPlayer extends Player {
       if (this.abilities.flying) {
         if (this.input!.wantUp) {
           this.yd += 0.15;
-          
         }
         if (this.input!.wantDown) {
           this.yd -= 0.15;
         }
       }
     }
-  
-    if(this.isUsingItem()) {
+
+    if (this.isUsingItem()) {
       let k = 0.35;
       this.input!.xa *= k;
       this.input!.ya *= k;
     }
-  
+
     Mob.prototype.aiStep.call(this); // C++：Mob::aiStep(); 随后 super::aiStep();（原样两次）
     super.aiStep();
-  
-    
-    
+
     this.yBobO = this.yBob;
     this.xBobO = this.xBob;
     this.xBob += (this.xRot - this.xBob) * 0.5;
     this.yBob += (this.yRot - this.yBob) * 0.5;
-  
-    if (this.interpolateOnly())
-      this.updateAi();
+
+    if (this.interpolateOnly()) this.updateAi();
   }
 
   override updateAi(): void {
-      super.updateAi();
-      this.xxa = this.input!.xa;
-      this.yya = this.input!.ya;
-      this.jumping = this.input!.jumping || this.autoJumpTime > 0;
+    super.updateAi();
+    this.xxa = this.input!.xa;
+    this.yya = this.input!.ya;
+    this.jumping = this.input!.jumping || this.autoJumpTime > 0;
   }
 
   setKey(eventKey: number, eventKeyState: boolean): void {
@@ -271,12 +293,12 @@ export class LocalPlayer extends Player {
 
   override addAdditonalSaveData(entityTag: CompoundTag): void {
     super.addAdditonalSaveData(entityTag);
-    entityTag.putInt("Score", this.score);
+    entityTag.putInt('Score', this.score);
   }
 
   override readAdditionalSaveData(entityTag: CompoundTag): void {
     super.readAdditionalSaveData(entityTag);
-    this.score = entityTag.getInt("Score");
+    this.score = entityTag.getInt('Score');
   }
 
   override closeContainer(): void {
@@ -288,9 +310,8 @@ export class LocalPlayer extends Player {
   }
 
   override drop(item: ItemInstance, randomly: boolean): void {
-    if (!item)
-      return;
-  
+    if (!item) return;
+
     if (this.level.isClientSide) {
       // DEFERRED(Network): DropItemPacket packet(entityId, *item); minecraft->raknetInstance->send(packet); delete item;
     } else {
@@ -306,12 +327,12 @@ export class LocalPlayer extends Player {
   }
 
   override startCrafting(x: number, y: number, z: number, tableSize: number): void {
-    void x, y, z, tableSize;
+    (void x, y, z, tableSize);
     // DEFERRED(Gui): if (!minecraft->isCreativeMode()) minecraft->setScreen(new WorkbenchScreen(tableSize));
   }
 
   override startStonecutting(x: number, y: number, z: number): void {
-    void x, y, z;
+    (void x, y, z);
     // DEFERRED(Gui): minecraft->setScreen(new StonecutterScreen());
   }
 
@@ -329,7 +350,7 @@ export class LocalPlayer extends Player {
 
   override actuallyHurt(dmg: number): void {
     // DEFERRED(Gui): if (minecraft->screen && minecraft->screen->closeOnPlayerHurt()) { if (containerMenu) closeContainer(); else minecraft->setScreen(NULL); }
-      super.actuallyHurt(dmg);
+    super.actuallyHurt(dmg);
   }
 
   hurtTo(newHealth: number): void {
@@ -340,30 +361,29 @@ export class LocalPlayer extends Player {
       this.lastHurt = dmg;
       this.lastHealth = this.health;
       this.invulnerableTime = this.invulnerableDuration;
-  
+
       this.minecraft.player!.bypassArmor = true;
       this.actuallyHurt(dmg);
       this.minecraft.player!.bypassArmor = false;
-  
+
       this.hurtTime = this.hurtDuration = 10;
     }
   }
 
   override die(source: Entity | null): void {
-    
-    
     if (this.level.isClientSide) {
       // DEFERRED(Network): SendInventoryPacket packet(this, true); minecraft->raknetInstance->send(packet);
     }
     this.inventory.dropAll(this.level.isClientSide);
-    for (let i = 0; i < 4; ++i) { // Player::NUM_ARMOR（protected static）
+    for (let i = 0; i < 4; ++i) {
+      // Player::NUM_ARMOR（protected static）
       let item = this.getArmor(i);
       if (!ItemInstance.isArmorItem(item)) return;
-  
+
       this.drop(new ItemInstance(item!), true);
       this.setArmor(i, null);
     }
-  
+
     super.die(source);
   }
 
@@ -373,16 +393,16 @@ export class LocalPlayer extends Player {
 
   getFieldOfViewModifier(): number {
     let targetFov = 1.0;
-    if(this.abilities.flying) targetFov *= 1.1;
-    targetFov *= ((this.walkingSpeed * this.getWalkingSpeedModifier()) / Player.DEFAULT_WALK_SPEED + 1) / 2;
-  
-    if(this.isUsingItem() && this.getUseItem()!.id === Item.bow.id) {
+    if (this.abilities.flying) targetFov *= 1.1;
+    targetFov *=
+      ((this.walkingSpeed * this.getWalkingSpeedModifier()) / Player.DEFAULT_WALK_SPEED + 1) / 2;
+
+    if (this.isUsingItem() && this.getUseItem()!.id === Item.bow.id) {
       let ticksHeld = this.getTicksUsingItem();
       let scale = ticksHeld / BowItem.MAX_DRAW_DURATION;
-      if(scale > 1) {
+      if (scale > 1) {
         scale = 1;
-      }
-      else {
+      } else {
         scale *= scale;
       }
       targetFov *= 1.0 - scale * 0.15;
@@ -403,7 +423,6 @@ export class LocalPlayer extends Player {
       }
     }
     super.causeFallDamage(distance);
-  
   }
 
   override startSleepInBed(x: number, y: number, z: number): number {
@@ -414,7 +433,11 @@ export class LocalPlayer extends Player {
     return startSleepInBedReturnValue;
   }
 
-  override stopSleepInBed(forcefulWakeUp: boolean, updateLevelList: boolean, saveRespawnPoint: boolean): void {
+  override stopSleepInBed(
+    forcefulWakeUp: boolean,
+    updateLevelList: boolean,
+    saveRespawnPoint: boolean,
+  ): void {
     if (this.level.isClientSide) {
       // DEFERRED(Network): PlayerActionPacket packet(PlayerActionPacket::STOP_SLEEPING, 0, 0, 0, 0, entityId); send(packet);
     }
@@ -423,11 +446,11 @@ export class LocalPlayer extends Player {
   }
 
   override swing(): void {
-      super.swing();
-  
-      if (this.swingTime === -1) {
-        // DEFERRED(Network): AnimatePacket packet(AnimatePacket::Swing, this); reliability = UNRELIABLE; priority = MEDIUM_PRIORITY; send(packet);
-      }
+    super.swing();
+
+    if (this.swingTime === -1) {
+      // DEFERRED(Network): AnimatePacket packet(AnimatePacket::Swing, this); reliability = UNRELIABLE; priority = MEDIUM_PRIORITY; send(packet);
+    }
   }
 
   override openTextEdit(tileEntity: TileEntity): void {
@@ -443,23 +466,23 @@ export class LocalPlayer extends Player {
   private calculateFlight(xa: number, ya: number, za: number): void {
     let flySpeed = this.minecraft.options.getProgressValue(OptionId.OPTIONS_FLY_SPEED);
     let sensivity = this.minecraft.options.getProgressValue(OptionId.OPTIONS_SENSITIVITY);
-  
-      xa = xa * flySpeed;
-      ya = 0;
-      za = za * flySpeed;
-  
-      if (this.sprinting) {
-          let sprintBoost = this.getWalkingSpeedModifier(); 
-          xa *= sprintBoost;
-          za *= sprintBoost;
-      }
-  
-      if (Keyboard.isKeyDown(Keyboard.KEY_E)) ya = 0.2 * flySpeed;
-      if (Keyboard.isKeyDown(Keyboard.KEY_Q)) ya = -0.2 * flySpeed;
-  
-      this.flyX = 10 * this.smoothFlyX.getNewDeltaValue(xa, 0.35 * sensivity);
-      this.flyY = 10 * this.smoothFlyY.getNewDeltaValue(ya, 0.35 * sensivity);
-      this.flyZ = 10 * this.smoothFlyZ.getNewDeltaValue(za, 0.35 * sensivity);
+
+    xa = xa * flySpeed;
+    ya = 0;
+    za = za * flySpeed;
+
+    if (this.sprinting) {
+      let sprintBoost = this.getWalkingSpeedModifier();
+      xa *= sprintBoost;
+      za *= sprintBoost;
+    }
+
+    if (Keyboard.isKeyDown(Keyboard.KEY_E)) ya = 0.2 * flySpeed;
+    if (Keyboard.isKeyDown(Keyboard.KEY_Q)) ya = -0.2 * flySpeed;
+
+    this.flyX = 10 * this.smoothFlyX.getNewDeltaValue(xa, 0.35 * sensivity);
+    this.flyY = 10 * this.smoothFlyY.getNewDeltaValue(ya, 0.35 * sensivity);
+    this.flyZ = 10 * this.smoothFlyZ.getNewDeltaValue(za, 0.35 * sensivity);
   }
 
   private isSolidTile(x: number, y: number, z: number): boolean {
@@ -468,10 +491,10 @@ export class LocalPlayer extends Player {
   }
 
   private updateArmorTypeHash(): void {
-      let hash = this.getArmorTypeHash();
-      if (hash !== this.armorTypeHash) {
-          // DEFERRED(Network): PlayerArmorEquipmentPacket p(this); minecraft->raknetInstance->send(p);
-          this.armorTypeHash = hash;
-      }
+    let hash = this.getArmorTypeHash();
+    if (hash !== this.armorTypeHash) {
+      // DEFERRED(Network): PlayerArmorEquipmentPacket p(this); minecraft->raknetInstance->send(p);
+      this.armorTypeHash = hash;
+    }
   }
 }

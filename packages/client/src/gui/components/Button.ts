@@ -6,7 +6,14 @@
  * Touch::TButton、Touch::THeader 放在同一文件，命名为 TButton、THeader（C++ 的 namespace Touch）。
  */
 import type { Minecraft } from '../../Minecraft';
-import { GL_BLEND, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, glBlendFunc2, glColor4f2, glEnable2 } from '../../renderer/gles';
+import {
+  GL_BLEND,
+  GL_ONE_MINUS_SRC_ALPHA,
+  GL_SRC_ALPHA,
+  glBlendFunc2,
+  glColor4f2,
+  glEnable2,
+} from '../../renderer/gles';
 import { GuiElement } from './GuiElement';
 
 export class Button extends GuiElement {
@@ -40,7 +47,13 @@ export class Button extends GuiElement {
   }
 
   clicked(_minecraft: Minecraft, mx: number, my: number): boolean {
-    return this.active && mx >= this.x && my >= this.y && mx < this.x + this.width && my < this.y + this.height;
+    return (
+      this.active &&
+      mx >= this.x &&
+      my >= this.y &&
+      mx < this.x + this.width &&
+      my < this.y + this.height
+    );
   }
 
   setPressed(): void {
@@ -81,7 +94,9 @@ export class Button extends GuiElement {
   }
 
   protected hovered(minecraft: Minecraft, xm: number, ym: number): boolean {
-    return minecraft.useTouchscreen() ? this._currentlyDown && this.isInside(xm, ym) : this.isInside(xm, ym);
+    return minecraft.useTouchscreen()
+      ? this._currentlyDown && this.isInside(xm, ym)
+      : this.isInside(xm, ym);
   }
 }
 
@@ -104,9 +119,13 @@ export class TButton extends Button {
   }
 
   protected override renderBg(minecraft: Minecraft, xm: number, ym: number): void {
-    const x = this.x, y = this.y;
+    const x = this.x,
+      y = this.y;
     const hovered =
-      this.active && (minecraft.useTouchscreen() ? this._currentlyDown && xm >= x && ym >= y && xm < x + this.width && ym < y + this.height : this.isInside(xm, ym));
+      this.active &&
+      (minecraft.useTouchscreen()
+        ? this._currentlyDown && xm >= x && ym >= y && xm < x + this.width && ym < y + this.height
+        : this.isInside(xm, ym));
     minecraft.textures!.loadAndBindTexture('gui/touchgui.png');
     if (this.active) glColor4f2(1, 1, 1, 1);
     else glColor4f2(0.5, 0.5, 0.5, 1);
@@ -132,13 +151,22 @@ export class THeader extends Button {
     this.renderBg(minecraft, xm, ym);
     let xx = this.x + Math.trunc(this.width / 2);
     if (this.xText !== -99999) xx = this.xText;
-    this.drawCenteredString(font, this.msg, xx, this.y + Math.trunc((this.height - 8) / 2), 0xe0e0e0);
+    this.drawCenteredString(
+      font,
+      this.msg,
+      xx,
+      this.y + Math.trunc((this.height - 8) / 2),
+      0xe0e0e0,
+    );
   }
 
   protected override renderBg(minecraft: Minecraft, _xm: number, _ym: number): void {
     minecraft.textures!.loadAndBindTexture('gui/touchgui.png');
     glColor4f2(1, 1, 1, 1);
-    const x = this.x, y = this.y, width = this.width, height = this.height;
+    const x = this.x,
+      y = this.y,
+      width = this.width,
+      height = this.height;
     this.blit(x, y, 150, 26, 2, height - 1, 2, 25);
     this.blit(x + 2, y, 153, 26, width - 3, height - 1, 8, 25);
     this.blit(x + width - 2, y, 162, 26, 2, height - 1, 2, 25);

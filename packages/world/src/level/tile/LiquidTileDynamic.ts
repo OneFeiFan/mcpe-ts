@@ -9,7 +9,9 @@ export class LiquidTileDynamic extends LiquidTile {
   private static readonly NumDirections = 4;
 
   private maxCount = 0;
-  private readonly result: boolean[] = new Array<boolean>(LiquidTileDynamic.NumDirections).fill(false);
+  private readonly result: boolean[] = new Array<boolean>(LiquidTileDynamic.NumDirections).fill(
+    false,
+  );
   private readonly dist = new Int32Array(LiquidTileDynamic.NumDirections);
 
   constructor(id: number, material: Material) {
@@ -40,7 +42,10 @@ export class LiquidTileDynamic extends LiquidTile {
       if (this.maxCount >= 2 && this.material === Material.water) {
         if (level.isSolidBlockingTile(x, y - 1, z)) {
           newDepth = 0;
-        } else if (level.getMaterial(x, y - 1, z) === this.material && level.getData(x, y, z) === 0) {
+        } else if (
+          level.getMaterial(x, y - 1, z) === this.material &&
+          level.getData(x, y, z) === 0
+        ) {
           newDepth = 0;
         }
       }
@@ -124,7 +129,12 @@ export class LiquidTileDynamic extends LiquidTile {
     // ADAPTED(DeferredTile): 原句为 t == Tile::door_wood->id /*|| t == Tile::door_iron->id */ || t == Tile::sign->id
     //   || t == Tile::ladder->id || t == Tile::reeds->id。四个方块都未注册：每次液体流动都会走到这里，
     //   直接读 .id 会报错；未注册的方块不会出现在世界里，按“不等于”处理。
-    if (t === Tile.door_wood.id || t === Tile.sign.id || t === Tile.ladder.id || t === Tile.reeds.id) {
+    if (
+      t === Tile.door_wood.id ||
+      t === Tile.sign.id ||
+      t === Tile.ladder.id ||
+      t === Tile.reeds.id
+    ) {
       return true;
     }
     const m = Tile.tiles[t]!.material;
@@ -146,7 +156,10 @@ export class LiquidTileDynamic extends LiquidTile {
       if (d === 3) zz++;
       if (this.isWaterBlocking(level, xx, yy, zz)) {
         continue;
-      } else if (level.getMaterial(xx, yy, zz) === this.material && level.getData(xx, yy, zz) === 0) {
+      } else if (
+        level.getMaterial(xx, yy, zz) === this.material &&
+        level.getData(xx, yy, zz) === 0
+      ) {
         continue;
       } else {
         if (!this.isWaterBlocking(level, xx, yy - 1, zz)) {
@@ -180,7 +193,14 @@ export class LiquidTileDynamic extends LiquidTile {
     }
   }
 
-  private getSlopeDistance(level: Level, x: number, y: number, z: number, pass: number, from: number): number {
+  private getSlopeDistance(
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    pass: number,
+    from: number,
+  ): number {
     let lowest = 1000;
     for (let d = 0; d < 4; d++) {
       if (d === 0 && from === 1) continue;
@@ -196,7 +216,10 @@ export class LiquidTileDynamic extends LiquidTile {
       if (d === 3) zz++;
       if (this.isWaterBlocking(level, xx, yy, zz)) {
         continue;
-      } else if (level.getMaterial(xx, yy, zz) === this.material && level.getData(xx, yy, zz) === 0) {
+      } else if (
+        level.getMaterial(xx, yy, zz) === this.material &&
+        level.getData(xx, yy, zz) === 0
+      ) {
         continue;
       } else {
         if (!this.isWaterBlocking(level, xx, yy - 1, zz)) {

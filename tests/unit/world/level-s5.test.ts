@@ -1,6 +1,14 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
-  FlatChunkSource, FlatDimension, Level, LevelListener, LightLayer, Material, MobCategory, Tile, Vec3,
+  FlatChunkSource,
+  FlatDimension,
+  Level,
+  LevelListener,
+  LightLayer,
+  Material,
+  MobCategory,
+  Tile,
+  Vec3,
 } from '@mcpe/world';
 import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
@@ -8,7 +16,10 @@ import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 let level: Level;
 const f32 = new Float32Array(1);
 const u32 = new Uint32Array(f32.buffer);
-const bits = (x: number): number => { f32[0] = x; return u32[0]!; };
+const bits = (x: number): number => {
+  f32[0] = x;
+  return u32[0]!;
+};
 
 class RecordingListener extends LevelListener {
   readonly changed: string[] = [];
@@ -32,15 +43,22 @@ describe('S5：Level 正身与平坦世界', () => {
   });
 
   it('getTile：平台分层、空气区块、世界之外是隐形基岩', () => {
-    expect([level.getTile(136, 63, 136), level.getTile(136, 62, 136), level.getTile(136, 1, 136), level.getTile(136, 0, 136), level.getTile(136, 64, 136)])
-      .toEqual([2, 3, 1, 7, 0]);
+    expect([
+      level.getTile(136, 63, 136),
+      level.getTile(136, 62, 136),
+      level.getTile(136, 1, 136),
+      level.getTile(136, 0, 136),
+      level.getTile(136, 64, 136),
+    ]).toEqual([2, 3, 1, 7, 0]);
     expect(level.getTile(100, 64, 100)).toBe(0); // 区块 (6, 6)：0–15 内的空气区块
     expect([level.getTile(-1, 64, 0), level.getTile(256, 64, 0)]).toEqual([95, 95]); // EmptyLevelChunk
   });
 
   it('高度图、原始亮度、亮度（第 15 级 = 0.9）', () => {
     expect([level.getHeightmap(136, 136), level.getHeightmap(100, 100)]).toEqual([64, 0]);
-    expect([level.getRawBrightness(136, 64, 136), level.getRawBrightness(136, 63, 136)]).toEqual([15, 0]);
+    expect([level.getRawBrightness(136, 64, 136), level.getRawBrightness(136, 63, 136)]).toEqual([
+      15, 0,
+    ]);
     expect(bits(level.getBrightness(136, 64, 136))).toBe(bits(level.dimension.brightnessRamp[15]!));
     expect(level.getBrightness(136, 64, 136)).toBeCloseTo(0.9);
     expect(level.getBrightness(LightLayer.Sky, 136, 64, 136)).toBe(15); // 第二个重载

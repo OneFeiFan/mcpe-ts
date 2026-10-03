@@ -6,9 +6,29 @@
  *   玩家与实体、存储（options.load/save 在 Options 内部 DEFERRED）。
  * 【OMIT】多人游戏、存档选择、暂停、重生、音频开关、截图、统计、创造模式切换等（见文件末尾的标记）。
  */
-import { getTimeMs, Keyboard, KeyboardAction, LOGI, Mouse, MouseAction, Multitouch, Stopwatch } from '@mcpe/platform';
+import {
+  getTimeMs,
+  Keyboard,
+  KeyboardAction,
+  LOGI,
+  Mouse,
+  MouseAction,
+  Multitouch,
+  Stopwatch,
+} from '@mcpe/platform';
 import { PerfTimer, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH } from '@mcpe/util';
-import { Difficulty, FoliageColor, GrassColor, HitResult, HitResultType, type Level, LevelChunk, LevelConstants, type Mob, Tile } from '@mcpe/world';
+import {
+  Difficulty,
+  FoliageColor,
+  GrassColor,
+  HitResult,
+  HitResultType,
+  type Level,
+  LevelChunk,
+  LevelConstants,
+  type Mob,
+  Tile,
+} from '@mcpe/world';
 import { App } from './App';
 import { PlatformStringVars } from './AppPlatform';
 import { CreativeMode } from './gamemode/CreativeMode';
@@ -32,7 +52,13 @@ import { MouseTurnInput } from './player/input/MouseTurnInput';
 import type { LocalPlayer } from './player/LocalPlayer';
 import { GameRenderer } from './renderer/GameRenderer';
 import { LevelRenderer } from './renderer/LevelRenderer';
-import { FireTexture, LavaSideTexture, LavaTexture, WaterSideTexture, WaterTexture } from './renderer/ptexture/DynamicTexture';
+import {
+  FireTexture,
+  LavaSideTexture,
+  LavaTexture,
+  WaterSideTexture,
+  WaterTexture,
+} from './renderer/ptexture/DynamicTexture';
 import { Textures } from './renderer/Textures';
 import { TileRenderer } from './renderer/TileRenderer';
 import { Timer } from './Timer';
@@ -55,7 +81,12 @@ export class Minecraft extends App {
   static customDebugId = 0; // = Minecraft::CDI_NONE
   static readonly CDI_NONE = 0;
   static readonly CDI_GRAPHICS = 1;
-  private static readonly progressMessages: readonly string[] = ['Locating server', 'Building terrain', 'Preparing', 'Saving chunks'];
+  private static readonly progressMessages: readonly string[] = [
+    'Locating server',
+    'Building terrain',
+    'Preparing',
+    'Saving chunks',
+  ];
 
   // ---------------------------------------------------------------- public
   isLookingForMultiplayer = false;
@@ -136,7 +167,9 @@ export class Minecraft extends App {
     LevelChunk.ChunkBlockCount = LevelConstants.CHUNK_BLOCK_COUNT;
     checkGlError('Init enter');
     this._supportsNonTouchscreen = !this.platform()!.supportsTouchscreen();
-    LOGI(`IS TOUCHSCREEN? ${this.options.getBooleanValue(OptionId.OPTIONS_USE_TOUCHSCREEN) ? 1 : 0}`);
+    LOGI(
+      `IS TOUCHSCREEN? ${this.options.getBooleanValue(OptionId.OPTIONS_USE_TOUCHSCREEN) ? 1 : 0}`,
+    );
     this.textures = new Textures(this.options, this.platform()!);
     this.textures.addDynamicTexture(new WaterTexture());
     this.textures.addDynamicTexture(new WaterSideTexture());
@@ -171,22 +204,38 @@ export class Minecraft extends App {
     this.transformResolution({ w, h });
     this.width = w;
     this.height = h;
-    if (this.options.getBooleanValue(OptionId.OPTIONS_WINDOW_SCALE)) { // scales with resolution using a formula instead of having hardcoded if checks
+    if (this.options.getBooleanValue(OptionId.OPTIONS_WINDOW_SCALE)) {
+      // scales with resolution using a formula instead of having hardcoded if checks
       let guiScale = this.options.getIntValue(OptionId.OPTIONS_GUI_SCALE);
       if (guiScale === 0) {
         guiScale = 1000;
       }
-      Gui.GuiScale = Math.min(guiScale, Math.max(1, Math.min((this.width / 320) | 0, (this.height / 240) | 0)));
+      Gui.GuiScale = Math.min(
+        guiScale,
+        Math.max(1, Math.min((this.width / 320) | 0, (this.height / 240) | 0)),
+      );
     } else {
       const guiScale = this.options.getIntValue(OptionId.OPTIONS_GUI_SCALE);
       if (guiScale !== 0) {
         switch (guiScale) {
-          case 1: Gui.GuiScale = 2.0; break;
-          case 2: Gui.GuiScale = 3.0; break;
-          case 3: Gui.GuiScale = 4.0; break;
-          case 4: Gui.GuiScale = 5.0; break;
-          case 5: Gui.GuiScale = 6.0; break;
-          default: Gui.GuiScale = 1.0; break; // auto
+          case 1:
+            Gui.GuiScale = 2.0;
+            break;
+          case 2:
+            Gui.GuiScale = 3.0;
+            break;
+          case 3:
+            Gui.GuiScale = 4.0;
+            break;
+          case 4:
+            Gui.GuiScale = 5.0;
+            break;
+          case 5:
+            Gui.GuiScale = 6.0;
+            break;
+          default:
+            Gui.GuiScale = 1.0;
+            break; // auto
         }
       } else {
         if (this.width >= 1000) Gui.GuiScale = 4.0;
@@ -219,7 +268,9 @@ export class Minecraft extends App {
     const useTouchHolder = this.useTouchscreen();
     if (useTouchHolder) {
       // DEFERRED(Touch): inputHolder = new TouchInputHolder(this, &options);
-      throw new Error('触屏输入（TouchInputHolder）尚未移植；网页版 supportsTouchscreen() 为 false，不应走到这里');
+      throw new Error(
+        '触屏输入（TouchInputHolder）尚未移植；网页版 supportsTouchscreen() 为 false，不应走到这里',
+      );
     } else {
       this.inputHolder = new CustomInputHolder(
         new KeyboardInput(this.options),
@@ -251,7 +302,10 @@ export class Minecraft extends App {
   }
 
   useTouchscreen(): boolean {
-    return this.options.getBooleanValue(OptionId.OPTIONS_USE_TOUCHSCREEN) && !this._supportsNonTouchscreen;
+    return (
+      this.options.getBooleanValue(OptionId.OPTIONS_USE_TOUCHSCREEN) &&
+      !this._supportsNonTouchscreen
+    );
   }
 
   supportNonTouchScreen(): boolean {
@@ -298,14 +352,25 @@ export class Minecraft extends App {
     const level = this.level!;
     LOGI('status: 1');
     this.progressStageStatusId = 1;
-    const A = new Stopwatch(), B = new Stopwatch(), C = new Stopwatch(), D = new Stopwatch();
+    const A = new Stopwatch(),
+      B = new Stopwatch(),
+      C = new Stopwatch(),
+      D = new Stopwatch();
     A.start();
     const L = new Stopwatch();
     if (!level.isNew()) level.setUpdateLights(false);
     const Max = LevelConstants.CHUNK_CACHE_WIDTH * LevelConstants.CHUNK_CACHE_WIDTH;
     let pp = 0;
-    for (let x = 8; x < LevelConstants.CHUNK_CACHE_WIDTH * LevelConstants.CHUNK_WIDTH; x += LevelConstants.CHUNK_WIDTH) {
-      for (let z = 8; z < LevelConstants.CHUNK_CACHE_WIDTH * LevelConstants.CHUNK_WIDTH; z += LevelConstants.CHUNK_WIDTH) {
+    for (
+      let x = 8;
+      x < LevelConstants.CHUNK_CACHE_WIDTH * LevelConstants.CHUNK_WIDTH;
+      x += LevelConstants.CHUNK_WIDTH
+    ) {
+      for (
+        let z = 8;
+        z < LevelConstants.CHUNK_CACHE_WIDTH * LevelConstants.CHUNK_WIDTH;
+        z += LevelConstants.CHUNK_WIDTH
+      ) {
         this.progressStagePercentage = ((100 * pp++) / Max) | 0;
         B.start();
         level.getTile(x, 64, z);
@@ -429,7 +494,11 @@ export class Minecraft extends App {
         this.level.tick();
         TIMER_POP_PUSH('animateTick');
         if (this.player) {
-          this.level.animateTick(Math.floor(this.player.x), Math.floor(this.player.y), Math.floor(this.player.z));
+          this.level.animateTick(
+            Math.floor(this.player.x),
+            Math.floor(this.player.y),
+            Math.floor(this.player.z),
+          );
         }
       }
     }
@@ -483,7 +552,11 @@ export class Minecraft extends App {
             this.grabMouse();
           }
         }
-        if (allowGuiClicks && e.action === MouseAction.ACTION_LEFT && e.data === MouseAction.DATA_DOWN) {
+        if (
+          allowGuiClicks &&
+          e.action === MouseAction.ACTION_LEFT &&
+          e.data === MouseAction.DATA_DOWN
+        ) {
           this.gui.handleClick(MouseAction.ACTION_LEFT, Mouse.getX(), Mouse.getY());
         }
         if (e.action === MouseAction.ACTION_WHEEL) {
@@ -566,7 +639,11 @@ export class Minecraft extends App {
         if (Mouse.isButtonDown(MouseAction.ACTION_RIGHT)) {
           if (tickInputStatics.buildHoldTicks >= 5) tickInputStatics.buildHoldTicks = 0;
           if (++tickInputStatics.buildHoldTicks === 1) {
-            this.handleBuildAction(new BuildActionIntention(BuildActionIntention.BAI_BUILD | BuildActionIntention.BAI_INTERACT));
+            this.handleBuildAction(
+              new BuildActionIntention(
+                BuildActionIntention.BAI_BUILD | BuildActionIntention.BAI_INTERACT,
+              ),
+            );
           }
         } else {
           tickInputStatics.buildHoldTicks = 0;
@@ -671,7 +748,8 @@ export class Minecraft extends App {
       return;
     }
     if (screen !== null && screen.isErrorScreen()) return;
-    if (screen === null && this.level === null) screen = this.screenChooser.createScreen(ScreenId.SCREEN_STARTMENU);
+    if (screen === null && this.level === null)
+      screen = this.screenChooser.createScreen(ScreenId.SCREEN_STARTMENU);
     if (this.screen !== null) {
       this.screen.removed();
     }
@@ -798,7 +876,9 @@ export class Minecraft extends App {
 
   isKindleFire(kindleVersion: number): boolean {
     if (kindleVersion !== 1) return false;
-    const modelLower = this.platform()!.getPlatformStringVar(PlatformStringVars.DEVICE_BUILD_MODEL).toLowerCase();
+    const modelLower = this.platform()!
+      .getPlatformStringVar(PlatformStringVars.DEVICE_BUILD_MODEL)
+      .toLowerCase();
     return modelLower.includes('kindle') && modelLower.includes('fire');
   }
 

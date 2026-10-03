@@ -1,12 +1,12 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { AABB } from "../../phys/AABB";
-import { Direction } from "../../Direction";
-import { Mth } from "@mcpe/util";
-import type { Player } from "../..";
-import type { Mob } from "../../entity/Mob";
-import { LevelEvent } from "./LevelEvent";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { AABB } from '../../phys/AABB';
+import { Direction } from '../../Direction';
+import { Mth } from '@mcpe/util';
+import type { Player } from '../..';
+import type { Mob } from '../../entity/Mob';
+import { LevelEvent } from './LevelEvent';
 
 export class FenceGateTile extends Tile {
   static readonly DIRECTION_MASK = 3;
@@ -32,16 +32,10 @@ export class FenceGateTile extends Tile {
 
     if (data === Direction.NORTH || data === Direction.SOUTH) {
       // z 方向薄板，高度 y..y+1.5
-      this.tmpBB.set(
-        x, y, z + 6.0 / 16.0,
-        x + 1, y + 1.5, z + 10.0 / 16.0,
-      );
+      this.tmpBB.set(x, y, z + 6.0 / 16.0, x + 1, y + 1.5, z + 10.0 / 16.0);
     } else {
       // x 方向薄板，高度 y..y+1.5
-      this.tmpBB.set(
-        x + 6.0 / 16.0, y, z,
-        x + 10.0 / 16.0, y + 1.5, z + 1,
-      );
+      this.tmpBB.set(x + 6.0 / 16.0, y, z, x + 10.0 / 16.0, y + 1.5, z + 1);
     }
     return this.tmpBB;
   }
@@ -69,7 +63,7 @@ export class FenceGateTile extends Tile {
   /** C++ FenceGateTile::setPlacedBy(Level*, int, int, int, Mob*) */
   override setPlacedBy(level: Level, x: number, y: number, z: number, by: Mob): void {
     // & 3 已经保证 0..3，% 4 冗余但保留以对齐 C++
-    const dir = (Mth.floor(by.yRot * 4 / 360 + 0.5) & 3) % 4;
+    const dir = (Mth.floor((by.yRot * 4) / 360 + 0.5) & 3) % 4;
     level.setData(x, y, z, dir);
   }
 
@@ -82,7 +76,7 @@ export class FenceGateTile extends Tile {
       level.setData(x, y, z, data & ~FenceGateTile.OPEN_BIT);
     } else {
       // 打开：可能根据玩家朝向调整门的朝向
-      const dir = (Mth.floor(player.yRot * 4 / 360 + 0.5) & 3) % 4;
+      const dir = (Mth.floor((player.yRot * 4) / 360 + 0.5) & 3) % 4;
       const current = FenceGateTile.getDirection(data);
       if (current === (dir + 2) % 4) {
         // 门的朝向正好是玩家的对面 -> 改成玩家朝向

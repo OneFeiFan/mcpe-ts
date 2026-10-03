@@ -86,7 +86,9 @@ export class Sapling extends Bush {
   }
 
   isSapling(level: Level, x: number, y: number, z: number, type: number): boolean {
-    return level.getTile(x, y, z) === this.id && (level.getData(x, y, z) & Sapling.TYPE_MASK) === type;
+    return (
+      level.getTile(x, y, z) === this.id && (level.getData(x, y, z) & Sapling.TYPE_MASK) === type
+    );
   }
 
   protected override getSpawnResourcesAuxValue(data: number): number {

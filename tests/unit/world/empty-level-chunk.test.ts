@@ -19,8 +19,14 @@ describe('EmptyLevelChunk', () => {
   it('读到的全是 invisible_bedrock，写入一律忽略但返回 true', () => {
     const c = new EmptyLevelChunk(new FakeLevel(), null, 0, 0);
     expect([c.getTile(3, 64, 3), c.getData(3, 64, 3), c.getHeightmap(3, 3)]).toEqual([95, 0, 0]);
-    expect([c.setTile(3, 64, 3, 1), c.setTileAndData(3, 64, 3, 1, 2), c.getTile(3, 64, 3)]).toEqual([true, true, 95]);
-    expect([c.getBrightness(LightLayer.Sky, 0, 0, 0), c.getRawBrightness(0, 0, 0, 15), c.isSkyLit(0, 100, 0)]).toEqual([7, 7, false]);
+    expect([c.setTile(3, 64, 3, 1), c.setTileAndData(3, 64, 3, 1, 2), c.getTile(3, 64, 3)]).toEqual(
+      [true, true, 95],
+    );
+    expect([
+      c.getBrightness(LightLayer.Sky, 0, 0, 0),
+      c.getRawBrightness(0, 0, 0, 15),
+      c.isSkyLit(0, 100, 0),
+    ]).toEqual([7, 7, false]);
   });
 
   it('getBlocksAndData 全部填 95，返回长度而不是 p + len（与 C++ 相同）', () => {

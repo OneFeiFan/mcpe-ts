@@ -83,7 +83,16 @@ export class BiomeSource {
   }
 
   getTemperature(x: number, z: number): number {
-    this.temperatures = this.temperatureMap!.getRegion(this.temperatures, x, z, 1, 1, BiomeSource.tempScale, BiomeSource.tempScale, 0.5);
+    this.temperatures = this.temperatureMap!.getRegion(
+      this.temperatures,
+      x,
+      z,
+      1,
+      1,
+      BiomeSource.tempScale,
+      BiomeSource.tempScale,
+      0.5,
+    );
     return this.temperatures[0]!;
   }
 
@@ -93,10 +102,43 @@ export class BiomeSource {
   }
 
   /** C++ 的 getBiomeBlock(Biome** biomes__, int x, int z, int w, int h)：参数 biomes__ 没有用到，写的是成员 biomes */
-  private getBiomeBlockImpl(_biomes: (Biome | null)[], x: number, z: number, w: number, h: number): (Biome | null)[] {
-    const temperatures = (this.temperatures = this.temperatureMap!.getRegion(this.temperatures, x, z, w, w, BiomeSource.tempScale, BiomeSource.tempScale, 0.25));
-    const downfalls = (this.downfalls = this.downfallMap!.getRegion(this.downfalls, x, z, w, w, BiomeSource.downfallScale, BiomeSource.downfallScale, 0.3333));
-    const noises = (this.noises = this.noiseMap!.getRegion(this.noises, x, z, w, w, BiomeSource.noiseScale, BiomeSource.noiseScale, 0.588));
+  private getBiomeBlockImpl(
+    _biomes: (Biome | null)[],
+    x: number,
+    z: number,
+    w: number,
+    h: number,
+  ): (Biome | null)[] {
+    const temperatures = (this.temperatures = this.temperatureMap!.getRegion(
+      this.temperatures,
+      x,
+      z,
+      w,
+      w,
+      BiomeSource.tempScale,
+      BiomeSource.tempScale,
+      0.25,
+    ));
+    const downfalls = (this.downfalls = this.downfallMap!.getRegion(
+      this.downfalls,
+      x,
+      z,
+      w,
+      w,
+      BiomeSource.downfallScale,
+      BiomeSource.downfallScale,
+      0.3333,
+    ));
+    const noises = (this.noises = this.noiseMap!.getRegion(
+      this.noises,
+      x,
+      z,
+      w,
+      w,
+      BiomeSource.noiseScale,
+      BiomeSource.noiseScale,
+      0.588,
+    ));
     const biomes = this.biomes;
     let pp = 0;
     for (let yy = 0; yy < w; yy++) {
@@ -104,7 +146,9 @@ export class BiomeSource {
         const noise = f(f(noises[pp]! * f(1.1)) + f(0.5));
         let split2 = f(0.01);
         let split1 = f(1 - split2);
-        let temperature = f(f(f(f(temperatures[pp]! * f(0.15)) + f(0.7)) * split1) + f(noise * split2));
+        let temperature = f(
+          f(f(f(temperatures[pp]! * f(0.15)) + f(0.7)) * split1) + f(noise * split2),
+        );
         split2 = f(0.002);
         split1 = f(1 - split2);
         let downfall = f(f(f(f(downfalls[pp]! * f(0.15)) + f(0.5)) * split1) + f(noise * split2));
@@ -121,10 +165,34 @@ export class BiomeSource {
     return biomes;
   }
 
-  getTemperatureBlock(_temperatures: Float32Array | null, x: number, z: number, w: number, h: number): Float32Array {
+  getTemperatureBlock(
+    _temperatures: Float32Array | null,
+    x: number,
+    z: number,
+    w: number,
+    h: number,
+  ): Float32Array {
     const ot = this.temperatures;
-    const temperatures = (this.temperatures = this.temperatureMap!.getRegion(this.temperatures, x, z, w, h, BiomeSource.tempScale, BiomeSource.tempScale, 0.25));
-    const noises = (this.noises = this.noiseMap!.getRegion(this.noises, x, z, w, h, BiomeSource.noiseScale, BiomeSource.noiseScale, 0.588));
+    const temperatures = (this.temperatures = this.temperatureMap!.getRegion(
+      this.temperatures,
+      x,
+      z,
+      w,
+      h,
+      BiomeSource.tempScale,
+      BiomeSource.tempScale,
+      0.25,
+    ));
+    const noises = (this.noises = this.noiseMap!.getRegion(
+      this.noises,
+      x,
+      z,
+      w,
+      h,
+      BiomeSource.noiseScale,
+      BiomeSource.noiseScale,
+      0.588,
+    ));
     if (ot !== temperatures) {
       // LOGI("tmp ptr changed\n");
     }
@@ -134,7 +202,9 @@ export class BiomeSource {
         const noise = f(f(noises[pp]! * f(1.1)) + f(0.5));
         const split2 = f(0.01);
         const split1 = f(1 - split2);
-        let temperature = f(f(f(f(temperatures[pp]! * f(0.15)) + f(0.7)) * split1) + f(noise * split2));
+        let temperature = f(
+          f(f(f(temperatures[pp]! * f(0.15)) + f(0.7)) * split1) + f(noise * split2),
+        );
         temperature = f(1 - f(f(1 - temperature) * f(1 - temperature)));
         if (temperature < 0) temperature = 0;
         if (temperature > 1) temperature = 1;
@@ -145,8 +215,23 @@ export class BiomeSource {
     return temperatures;
   }
 
-  getDownfallBlock(_downfalls: Float32Array | null, x: number, z: number, w: number, _h: number): Float32Array {
-    this.downfalls = this.downfallMap!.getRegion(this.downfalls, x, z, w, w, BiomeSource.downfallScale, BiomeSource.downfallScale, 0.5);
+  getDownfallBlock(
+    _downfalls: Float32Array | null,
+    x: number,
+    z: number,
+    w: number,
+    _h: number,
+  ): Float32Array {
+    this.downfalls = this.downfallMap!.getRegion(
+      this.downfalls,
+      x,
+      z,
+      w,
+      w,
+      BiomeSource.downfallScale,
+      BiomeSource.downfallScale,
+      0.5,
+    );
     return this.downfalls;
   }
 }

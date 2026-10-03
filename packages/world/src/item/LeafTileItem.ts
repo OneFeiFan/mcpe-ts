@@ -20,7 +20,8 @@ export class LeafTileItem extends TileItem {
   }
 
   getColor(data: number): number {
-    if ((data & LeafTile.EVERGREEN_LEAF) === LeafTile.EVERGREEN_LEAF) return FoliageColor.getEvergreenColor();
+    if ((data & LeafTile.EVERGREEN_LEAF) === LeafTile.EVERGREEN_LEAF)
+      return FoliageColor.getEvergreenColor();
     if ((data & LeafTile.BIRCH_LEAF) === LeafTile.BIRCH_LEAF) return FoliageColor.getBirchColor();
     return FoliageColor.getDefaultColor();
   }

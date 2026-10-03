@@ -1,13 +1,13 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import type { LevelSource } from "../LevelSource";
-import { Item } from "../../item/Item";
-import { Facing } from "../../Facing";
-import type { Random } from "@mcpe/util";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import type { LevelSource } from '../LevelSource';
+import { Item } from '../../item/Item';
+import { Facing } from '../../Facing';
+import type { Random } from '@mcpe/util';
 
 export class MelonTile extends Tile {
-  private static readonly TEX = 8 + 8 * 16;      // 136
-  private static readonly TEX_TOP = 9 + 8 * 16;  // 137
+  private static readonly TEX = 8 + 8 * 16; // 136
+  private static readonly TEX_TOP = 9 + 8 * 16; // 137
 
   /** C++ MelonTile::MelonTile(int id) */
   constructor(id: number) {
@@ -18,7 +18,9 @@ export class MelonTile extends Tile {
   /** C++ MelonTile::getTexture(LevelSource*, int, int, int, int) */
   override getTextureAt(
     _level: LevelSource,
-    _x: number, _y: number, _z: number,
+    _x: number,
+    _y: number,
+    _z: number,
     face: number,
   ): number {
     return this.getTextureForFace(face);

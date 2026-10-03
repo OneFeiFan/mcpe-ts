@@ -1,4 +1,4 @@
-import { Item } from "./Item";
+import { Item } from './Item';
 
 export class ArmorItem extends Item {
   public readonly slot: number;
@@ -6,12 +6,7 @@ export class ArmorItem extends Item {
   public readonly modelIndex: number;
   public readonly armorType: ArmorItem.ArmorMaterial;
 
-  constructor(
-    id: number,
-    armorType: ArmorItem.ArmorMaterial,
-    icon: number,
-    slot: number,
-  ) {
+  constructor(id: number, armorType: ArmorItem.ArmorMaterial, icon: number, slot: number) {
     super(id);
     this.slot = slot;
     this.defense = armorType.getDefenseForSlot(slot);
@@ -28,10 +23,10 @@ export class ArmorItem extends Item {
 }
 
 export namespace ArmorItem {
-  export const SLOT_HEAD  = 0;
+  export const SLOT_HEAD = 0;
   export const SLOT_TORSO = 1;
-  export const SLOT_LEGS  = 2;
-  export const SLOT_FEET  = 3;
+  export const SLOT_LEGS = 2;
+  export const SLOT_FEET = 3;
 
   export const healthPerSlot: readonly number[] = [11, 16, 15, 13];
 
@@ -39,13 +34,7 @@ export namespace ArmorItem {
     private readonly durabilityMultiplier: number;
     private readonly slotProtections: number[];
 
-    constructor(
-      durabilityMultiplier: number,
-      p0: number,
-      p1: number,
-      p2: number,
-      p3: number,
-    ) {
+    constructor(durabilityMultiplier: number, p0: number, p1: number, p2: number, p3: number) {
       this.durabilityMultiplier = durabilityMultiplier;
       this.slotProtections = [p0, p1, p2, p3];
     }
@@ -59,9 +48,9 @@ export namespace ArmorItem {
     }
   }
 
-  export const CLOTH   = new ArmorMaterial(5,  1, 3, 2, 1);
-  export const CHAIN   = new ArmorMaterial(15, 2, 5, 4, 1);
-  export const IRON    = new ArmorMaterial(15, 2, 6, 5, 2);
-  export const GOLD    = new ArmorMaterial(7,  2, 5, 3, 1);
+  export const CLOTH = new ArmorMaterial(5, 1, 3, 2, 1);
+  export const CHAIN = new ArmorMaterial(15, 2, 5, 4, 1);
+  export const IRON = new ArmorMaterial(15, 2, 6, 5, 2);
+  export const GOLD = new ArmorMaterial(7, 2, 5, 3, 1);
   export const DIAMOND = new ArmorMaterial(33, 3, 8, 6, 3);
 }

@@ -1,8 +1,8 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { AABB } from "../../phys/AABB";
-import type { Random } from "@mcpe/util";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { AABB } from '../../phys/AABB';
+import type { Random } from '@mcpe/util';
 
 export class Bush extends Tile {
   /** C++ Bush::Bush(int id, int tex) */
@@ -76,9 +76,7 @@ export class Bush extends Tile {
 
   /** C++ Bush::mayPlaceOn(int tile) — protected virtual */
   protected mayPlaceOn(tile: number): boolean {
-    return tile === Tile.grass.id
-        || tile === Tile.dirt.id
-        || tile === Tile.farmland.id;
+    return tile === Tile.grass.id || tile === Tile.dirt.id || tile === Tile.farmland.id;
   }
 
   /** C++ Bush::checkAlive(Level*, int, int, int) — protected */

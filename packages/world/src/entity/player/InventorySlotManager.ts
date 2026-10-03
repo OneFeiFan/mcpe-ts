@@ -1,2 +1,1 @@
-export class InventorySlotManager {
-};
+export class InventorySlotManager {}

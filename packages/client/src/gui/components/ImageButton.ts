@@ -89,11 +89,19 @@ export class ImageButton extends Button {
     if (!this.visible) return;
     const font = minecraft.font!;
     glColor4f2(1, 1, 1, 1);
-    const x = this.x, y = this.y;
-    const hovered = this.active && (minecraft.useTouchscreen() ? this._currentlyDown && xm >= x && ym >= y && xm < x + this.width && ym < y + this.height : this.isInside(xm, ym));
+    const x = this.x,
+      y = this.y;
+    const hovered =
+      this.active &&
+      (minecraft.useTouchscreen()
+        ? this._currentlyDown && xm >= x && ym >= y && xm < x + this.width && ym < y + this.height
+        : this.isInside(xm, ym));
     const IsSecondImage = this.isSecondImage(hovered);
     this.renderBg(minecraft, xm, ym);
-    const texId = this._imageDef.name.length > 0 ? minecraft.textures!.loadAndBindTexture(this._imageDef.name) : Textures.InvalidId;
+    const texId =
+      this._imageDef.name.length > 0
+        ? minecraft.textures!.loadAndBindTexture(this._imageDef.name)
+        : Textures.InvalidId;
     if (Textures.isTextureIdValid(texId)) {
       const d = this._imageDef;
       const t = Tesselator.instance;

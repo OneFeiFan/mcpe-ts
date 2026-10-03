@@ -1,6 +1,6 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Facing } from "../../Facing";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Facing } from '../../Facing';
 
 export class QuartzBlockTile extends Tile {
   static readonly TYPE_DEFAULT = 0;

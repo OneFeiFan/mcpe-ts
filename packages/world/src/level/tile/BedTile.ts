@@ -102,7 +102,14 @@ export class BedTile extends DirectionalTile {
   }
 
   /** @param position 输出参数（C++ 的 Pos&），找到时写入站立位置 */
-  static findStandUpPosition(level: Level, x: number, y: number, z: number, skipCount: number, position: Pos): boolean {
+  static findStandUpPosition(
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    skipCount: number,
+    position: Pos,
+  ): boolean {
     const data = level.getData(x, y, z);
     const direction = DirectionalTile.getDirection(data);
     const off = BedTile.HEAD_DIRECTION_OFFSETS[direction]!;
@@ -113,7 +120,11 @@ export class BedTile extends DirectionalTile {
       const endZ = startZ + 2;
       for (let standX = startX; standX <= endX; ++standX) {
         for (let standZ = startZ; standZ <= endZ; ++standZ) {
-          if (level.isSolidBlockingTile(standX, y - 1, standZ) && level.isEmptyTile(standX, y, standZ) && level.isEmptyTile(standX, y + 1, standZ)) {
+          if (
+            level.isSolidBlockingTile(standX, y - 1, standZ) &&
+            level.isEmptyTile(standX, y, standZ) &&
+            level.isEmptyTile(standX, y + 1, standZ)
+          ) {
             if (skipCount > 0) {
               skipCount--;
               continue;
@@ -127,7 +138,14 @@ export class BedTile extends DirectionalTile {
     return false;
   }
 
-  override spawnResources(level: Level, x: number, y: number, z: number, data: number, _odds = 1): void {
+  override spawnResources(
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    data: number,
+    _odds = 1,
+  ): void {
     if (!BedTile.isHeadPiece(data)) {
       this.popResource(level, x, y, z, new ItemInstance(Item.bed));
     }
@@ -147,7 +165,14 @@ export class BedTile extends DirectionalTile {
    */
   override setShape(): void;
   override setShape(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): void;
-  override setShape(x0?: number, y0?: number, z0?: number, x1?: number, y1?: number, z1?: number): void {
+  override setShape(
+    x0?: number,
+    y0?: number,
+    z0?: number,
+    x1?: number,
+    y1?: number,
+    z1?: number,
+  ): void {
     if (x0 === undefined) super.setShape(0, 0, 0, 1, 9.0 / 16.0, 1);
     else super.setShape(x0, y0!, z0!, x1!, y1!, z1!);
   }

@@ -28,7 +28,12 @@ export class MobSpawnerData extends WeighedRandomItem {
 
   constructor();
   constructor(mobClassId: number, probabilityWeight: number, minCount: number, maxCount: number);
-  constructor(mobClassId?: number, probabilityWeight?: number, minCount?: number, maxCount?: number) {
+  constructor(
+    mobClassId?: number,
+    probabilityWeight?: number,
+    minCount?: number,
+    maxCount?: number,
+  ) {
     super(probabilityWeight);
     this.mobClassId = mobClassId ?? 0;
     this.minCount = minCount ?? 0;
@@ -139,22 +144,56 @@ export class Biome {
 
   /** 由 BiomeInclude.ts 的 initBiomes() 调用；要在 initTiles 之后（构造函数读 Tile.grass、Tile.dirt） */
   static initBiomes(c: BiomeClasses): void {
-    Biome.rainForest = new c.RainforestBiome().setColor(0x08fa36).setName('Rainforest').setLeafColor(0x1ff458);
-    Biome.swampland = new c.SwampBiome().setColor(0x07f9b2).setName('Swampland').setLeafColor(0x8baf48);
+    Biome.rainForest = new c.RainforestBiome()
+      .setColor(0x08fa36)
+      .setName('Rainforest')
+      .setLeafColor(0x1ff458);
+    Biome.swampland = new c.SwampBiome()
+      .setColor(0x07f9b2)
+      .setName('Swampland')
+      .setLeafColor(0x8baf48);
     Biome.seasonalForest = new Biome().setColor(0x9be023).setName('Seasonal Forest');
     Biome.forest = new c.ForestBiome().setColor(0x056621).setName('Forest').setLeafColor(0x4eba31);
     Biome.savanna = new c.FlatBiome().setColor(0xd9e023).setName('Savanna');
     Biome.shrubland = new Biome().setColor(0xa1ad20).setName('Shrubland');
-    Biome.taiga = new c.TaigaBiome().setColor(0x2eb153).setName('Taiga').setSnowCovered().setLeafColor(0x7bb731);
-    Biome.desert = new c.FlatBiome().setColor(0xfa9418).clearMobs(true, true, false).setName('Desert');
+    Biome.taiga = new c.TaigaBiome()
+      .setColor(0x2eb153)
+      .setName('Taiga')
+      .setSnowCovered()
+      .setLeafColor(0x7bb731);
+    Biome.desert = new c.FlatBiome()
+      .setColor(0xfa9418)
+      .clearMobs(true, true, false)
+      .setName('Desert');
     Biome.plains = new c.FlatBiome().setColor(0xffd910).setName('Plains');
-    Biome.iceDesert = new c.FlatBiome().setColor(0xffed93).clearMobs(true, false, false).setName('Ice Desert').setSnowCovered().setLeafColor(0xc4d339);
-    Biome.tundra = new Biome().setColor(0x57ebf9).setName('Tundra').setSnowCovered().setLeafColor(0xc4d339);
+    Biome.iceDesert = new c.FlatBiome()
+      .setColor(0xffed93)
+      .clearMobs(true, false, false)
+      .setName('Ice Desert')
+      .setSnowCovered()
+      .setLeafColor(0xc4d339);
+    Biome.tundra = new Biome()
+      .setColor(0x57ebf9)
+      .setName('Tundra')
+      .setSnowCovered()
+      .setLeafColor(0xc4d339);
     Biome.recalc();
   }
 
   static teardownBiomes(): void {
-    for (const name of ['rainForest', 'swampland', 'seasonalForest', 'forest', 'savanna', 'shrubland', 'taiga', 'desert', 'plains', 'iceDesert', 'tundra'] as const)
+    for (const name of [
+      'rainForest',
+      'swampland',
+      'seasonalForest',
+      'forest',
+      'savanna',
+      'shrubland',
+      'taiga',
+      'desert',
+      'plains',
+      'iceDesert',
+      'tundra',
+    ] as const)
       Biome[name] = unregistered<Biome>('Biome', name);
   }
 

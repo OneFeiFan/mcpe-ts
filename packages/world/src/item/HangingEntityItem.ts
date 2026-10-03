@@ -22,7 +22,18 @@ export class HangingEntityItem extends Item {
     this.entityType = type;
   }
 
-  override useOnByPlayer(itemInstance: ItemInstance, _player: Player, level: Level, x: number, y: number, z: number, face: number, _clickX: number, _clickY: number, _clickZ: number): boolean {
+  override useOnByPlayer(
+    itemInstance: ItemInstance,
+    _player: Player,
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    face: number,
+    _clickX: number,
+    _clickY: number,
+    _clickZ: number,
+  ): boolean {
     if (face === Facing.DOWN) return false;
     if (face === Facing.UP) return false;
     const dir = Direction.FACING_DIRECTION[face]!;
@@ -38,7 +49,13 @@ export class HangingEntityItem extends Item {
     return true;
   }
 
-  private createEntity(_level: Level, _x: number, _y: number, _z: number, _dir: number): HangingEntity | null {
+  private createEntity(
+    _level: Level,
+    _x: number,
+    _y: number,
+    _z: number,
+    _dir: number,
+  ): HangingEntity | null {
     switch (this.entityType) {
       case EntityTypes.IdPainting:
         // DEFERRED(Entity): return new Painting(level, x, y, z, dir);

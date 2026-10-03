@@ -1,5 +1,14 @@
 import { Random } from '@mcpe/util';
-import { Dimension, Material, Tile, type Biome, type BiomeSource, type Level, type LevelChunk, type LightLayer } from '@mcpe/world';
+import {
+  Dimension,
+  Material,
+  Tile,
+  type Biome,
+  type BiomeSource,
+  type Level,
+  type LevelChunk,
+  type LightLayer,
+} from '@mcpe/world';
 
 /**
  * 测试用的最小世界：实现 Level 前向声明接口，方块与数据存在 Map 里。
@@ -69,7 +78,13 @@ export class FakeLevel extends LevelType {
 
   readonly light = new Map<string, number>();
 
-  override setBrightness(layer: LightLayer, x: number, y: number, z: number, brightness: number): void {
+  override setBrightness(
+    layer: LightLayer,
+    x: number,
+    y: number,
+    z: number,
+    brightness: number,
+  ): void {
     this.light.set(`${layer.surrounding}:${x},${y},${z}`, brightness);
   }
 
@@ -78,9 +93,21 @@ export class FakeLevel extends LevelType {
     return false;
   }
 
-  readonly otherThanCalls: [layer: LightLayer, x: number, y: number, z: number, expected: number][] = [];
+  readonly otherThanCalls: [
+    layer: LightLayer,
+    x: number,
+    y: number,
+    z: number,
+    expected: number,
+  ][] = [];
 
-  override updateLightIfOtherThan(layer: LightLayer, x: number, y: number, z: number, expected: number): void {
+  override updateLightIfOtherThan(
+    layer: LightLayer,
+    x: number,
+    y: number,
+    z: number,
+    expected: number,
+  ): void {
     this.otherThanCalls.push([layer, x, y, z, expected]);
   }
 
@@ -124,7 +151,13 @@ export class FakeLevel extends LevelType {
     return true;
   }
 
-  override setTileAndDataNoUpdate(x: number, y: number, z: number, tile: number, data: number): boolean {
+  override setTileAndDataNoUpdate(
+    x: number,
+    y: number,
+    z: number,
+    tile: number,
+    data: number,
+  ): boolean {
     return this.setTileAndData(x, y, z, tile, data);
   }
 
@@ -154,9 +187,26 @@ export class FakeLevel extends LevelType {
     return this.time;
   }
 
-  readonly lightUpdates: [layer: LightLayer, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number][] = [];
+  readonly lightUpdates: [
+    layer: LightLayer,
+    x0: number,
+    y0: number,
+    z0: number,
+    x1: number,
+    y1: number,
+    z1: number,
+  ][] = [];
 
-  override updateLight(layer: LightLayer, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, _join?: boolean): void {
+  override updateLight(
+    layer: LightLayer,
+    x0: number,
+    y0: number,
+    z0: number,
+    x1: number,
+    y1: number,
+    z1: number,
+    _join?: boolean,
+  ): void {
     this.lightUpdates.push([layer, x0, y0, z0, x1, y1, z1]);
   }
 
@@ -178,7 +228,13 @@ export class FakeLevel extends LevelType {
     return this.getTile(x, y, z);
   }
 
-  override addToTickNextTick(x: number, y: number, z: number, tileId: number, tickDelay: number): void {
+  override addToTickNextTick(
+    x: number,
+    y: number,
+    z: number,
+    tileId: number,
+    tickDelay: number,
+  ): void {
     this.scheduled.push([x, y, z, tileId, tickDelay]);
   }
 

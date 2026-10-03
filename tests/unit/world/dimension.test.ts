@@ -1,7 +1,14 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { Mth } from '@mcpe/util';
 import {
-  BiomeSource, Dimension, DimensionFactory, GameType, isUnregistered, LevelData, LevelSettings, NormalDayCycleDimension,
+  BiomeSource,
+  Dimension,
+  DimensionFactory,
+  GameType,
+  isUnregistered,
+  LevelData,
+  LevelSettings,
+  NormalDayCycleDimension,
 } from '@mcpe/world';
 import { NormalDayCycleDimension as ViaHeaderPath } from '../../../packages/world/src/level/dimension/NormalDayCycleDimension';
 import { FakeLevel } from '../../helpers/fakeLevel';
@@ -18,9 +25,21 @@ describe('Dimension', () => {
     const d = new Dimension();
     const lv = new FakeLevel();
     d.init(lv);
-    expect([d.level, d.foggy, d.ultraWarm, d.hasCeiling, d.id, d.FogType, d.getDimension()]).toEqual([lv, false, false, false, 0, 0, 'Overworld']);
+    expect([
+      d.level,
+      d.foggy,
+      d.ultraWarm,
+      d.hasCeiling,
+      d.id,
+      d.FogType,
+      d.getDimension(),
+    ]).toEqual([lv, false, false, false, 0, 0, 'Overworld']);
     expect(d.brightnessRamp[15]).toBeCloseTo(0.9);
-    expect([d.getTimeOfDay(12345, 0.5), d.mayRespawn(), d.isNaturalDimension()]).toEqual([1, true, false]);
+    expect([d.getTimeOfDay(12345, 0.5), d.mayRespawn(), d.isNaturalDimension()]).toEqual([
+      1,
+      true,
+      false,
+    ]);
   });
 
   it('init 创建 BiomeSource（用 level 的种子）；RandomLevelSource 未移植，调用时报出原因', () => {
@@ -38,8 +57,16 @@ describe('Dimension', () => {
     expect(Dimension.getNew(Dimension.NORMAL)).not.toBeInstanceOf(NormalDayCycleDimension);
     expect(Dimension.getNew(Dimension.NORMAL_DAYCYCLE)).toBeInstanceOf(NormalDayCycleDimension);
     expect(Dimension.getNew(5)).toBeNull();
-    expect(DimensionFactory.createDefaultDimension(new LevelData(new LevelSettings(1, GameType.Survival), 's'))).toBeInstanceOf(NormalDayCycleDimension);
-    expect(DimensionFactory.createDefaultDimension(new LevelData(new LevelSettings(1, GameType.Creative), 'c'))).not.toBeInstanceOf(NormalDayCycleDimension);
+    expect(
+      DimensionFactory.createDefaultDimension(
+        new LevelData(new LevelSettings(1, GameType.Survival), 's'),
+      ),
+    ).toBeInstanceOf(NormalDayCycleDimension);
+    expect(
+      DimensionFactory.createDefaultDimension(
+        new LevelData(new LevelSettings(1, GameType.Creative), 'c'),
+      ),
+    ).not.toBeInstanceOf(NormalDayCycleDimension);
     expect(ViaHeaderPath).toBe(NormalDayCycleDimension); // 按 C++ 头文件路径 import 得到的是同一个类
   });
 
@@ -47,7 +74,11 @@ describe('Dimension', () => {
     const d = new Dimension();
     const lv = new FakeLevel().put(0, 63, 0, 2).put(1, 63, 1, 95).put(2, 63, 2, 8);
     d.init(lv);
-    expect([d.isValidSpawn(0, 0), d.isValidSpawn(1, 1), d.isValidSpawn(2, 2)]).toEqual([true, false, false]); // 水不是实心方块
+    expect([d.isValidSpawn(0, 0), d.isValidSpawn(1, 1), d.isValidSpawn(2, 2)]).toEqual([
+      true,
+      false,
+      false,
+    ]); // 水不是实心方块
   });
 
   it('雾色：FogType 为 0 时是 PE 的 0x80daff；正午最亮，午夜只剩底色', () => {

@@ -23,12 +23,14 @@ export class Inventory extends FillingContainer {
   player!: Player;
 
   constructor(player: Player, creativeMode: boolean) {
-      super(36 + Inventory.MAX_SELECTION_SIZE,
-        Inventory.MAX_SELECTION_SIZE,
-        ContainerType.INVENTORY,
-        creativeMode);
-      this.player = player;
-      this.selected = 0;
+    super(
+      36 + Inventory.MAX_SELECTION_SIZE,
+      Inventory.MAX_SELECTION_SIZE,
+      ContainerType.INVENTORY,
+      creativeMode,
+    );
+    this.player = player;
+    this.selected = 0;
     this.setupDefault();
     this.compressLinkedSlotList(0);
   }
@@ -39,8 +41,7 @@ export class Inventory extends FillingContainer {
   }
 
   selectSlot(slot: number): void {
-    if (slot < Inventory.MAX_SELECTION_SIZE && slot >= 0)
-      this.selected = slot;
+    if (slot < Inventory.MAX_SELECTION_SIZE && slot >= 0) this.selected = slot;
   }
 
   getSelected(): ItemInstance | null {
@@ -85,9 +86,8 @@ export class Inventory extends FillingContainer {
   }
 
   override add(item: ItemInstance): boolean {
-    if (this._isCreative || this.player.hasFakeInventory)
-      return true;
-  
+    if (this._isCreative || this.player.hasFakeInventory) return true;
+
     return super.add(item);
   }
 
@@ -107,7 +107,7 @@ export class Inventory extends FillingContainer {
 
   canDestroy(tile: Tile): boolean {
     if (tile.material.isAlwaysDestroyable()) return true;
-  
+
     let item = this.getSelected();
     if (item !== null) return item.canDestroySpecial(tile);
     return false;
@@ -115,27 +115,33 @@ export class Inventory extends FillingContainer {
 
   print(): void {
     LOGI("%s's Inventory:\n", this.player.name);
-  
+
     for (let i = 0; i < this.numTotalSlots; i++) {
       let item = this.getItem(i);
-      if (item) LOGI("\t %i: %s (%i) %s\n", i, item.getName(), item.count, (this.player.inventory.getLinked(i))? "(Linked)" : "");
+      if (item)
+        LOGI(
+          '\t %i: %s (%i) %s\n',
+          i,
+          item.getName(),
+          item.count,
+          this.player.inventory.getLinked(i) ? '(Linked)' : '',
+        );
     }
   }
 
   private setupDefault(): void {
     this.clearInventory();
     const Sel = new Array<number>(Inventory.MAX_SELECTION_SIZE).fill(0);
-  
+
     if (this._isCreative) {
-      
       Sel[1] = this.addItem(new ItemInstance(Tile.stoneBrick));
       this.addItem(new ItemInstance(Tile.stoneBrickSmooth, 1, 0));
       this.addItem(new ItemInstance(Tile.stoneBrickSmooth, 1, 1));
       this.addItem(new ItemInstance(Tile.stoneBrickSmooth, 1, 2));
       this.addItem(new ItemInstance(Tile.mossStone));
-      Sel[5] =  this.addItem(new ItemInstance(Tile.wood));
+      Sel[5] = this.addItem(new ItemInstance(Tile.wood));
       Sel[2] = this.addItem(new ItemInstance(Tile.redBrick));
-  
+
       Sel[0] = this.addItem(new ItemInstance(Tile.rock));
       Sel[4] = this.addItem(new ItemInstance(Tile.dirt));
       this.addItem(new ItemInstance(Tile.grass));
@@ -145,7 +151,7 @@ export class Inventory extends FillingContainer {
       this.addItem(new ItemInstance(Tile.sandStone, 1, 2));
       this.addItem(new ItemInstance(Tile.sand));
       this.addItem(new ItemInstance(Tile.gravel));
-      
+
       Sel[7] = this.addItem(new ItemInstance(Tile.treeTrunk, 1, 0));
       this.addItem(new ItemInstance(Tile.treeTrunk, 1, 1));
       this.addItem(new ItemInstance(Tile.treeTrunk, 1, 2));
@@ -164,21 +170,18 @@ export class Inventory extends FillingContainer {
       this.addItem(new ItemInstance(Tile.stoneSlabHalf, 1, StoneSlabTile.BRICK_SLAB));
       this.addItem(new ItemInstance(Tile.stoneSlabHalf, 1, StoneSlabTile.SAND_SLAB));
       this.addItem(new ItemInstance(Tile.stoneSlabHalf, 1, StoneSlabTile.SMOOTHBRICK_SLAB));
-  
+
       this.addItem(new ItemInstance(Tile.quartzBlock, 1, QuartzBlockTile.TYPE_DEFAULT));
       this.addItem(new ItemInstance(Tile.quartzBlock, 1, QuartzBlockTile.TYPE_LINES));
       this.addItem(new ItemInstance(Tile.quartzBlock, 1, QuartzBlockTile.TYPE_CHISELED));
-  
-      
-      
-      
+
       this.addItem(new ItemInstance(Tile.coalOre));
       this.addItem(new ItemInstance(Tile.ironOre));
       this.addItem(new ItemInstance(Tile.goldOre));
       this.addItem(new ItemInstance(Tile.emeraldOre));
       this.addItem(new ItemInstance(Tile.lapisOre));
       this.addItem(new ItemInstance(Tile.redStoneOre));
-  
+
       this.addItem(new ItemInstance(Tile.goldBlock));
       this.addItem(new ItemInstance(Tile.ironBlock));
       this.addItem(new ItemInstance(Tile.emeraldBlock));
@@ -186,10 +189,10 @@ export class Inventory extends FillingContainer {
       this.addItem(new ItemInstance(Tile.obsidian));
       this.addItem(new ItemInstance(Tile.snow));
       this.addItem(new ItemInstance(Tile.glass));
-          this.addItem(new ItemInstance(Tile.lightGem));
-  
+      this.addItem(new ItemInstance(Tile.lightGem));
+
       this.addItem(new ItemInstance(Tile.netherReactor));
-      
+
       this.addItem(new ItemInstance(Tile.cloth, 1, 0));
       this.addItem(new ItemInstance(Tile.cloth, 1, 7));
       this.addItem(new ItemInstance(Tile.cloth, 1, 6));
@@ -198,7 +201,7 @@ export class Inventory extends FillingContainer {
       this.addItem(new ItemInstance(Tile.cloth, 1, 3));
       this.addItem(new ItemInstance(Tile.cloth, 1, 2));
       this.addItem(new ItemInstance(Tile.cloth, 1, 1));
-  
+
       this.addItem(new ItemInstance(Tile.cloth, 1, 15));
       this.addItem(new ItemInstance(Tile.cloth, 1, 14));
       this.addItem(new ItemInstance(Tile.cloth, 1, 13));
@@ -210,12 +213,12 @@ export class Inventory extends FillingContainer {
       this.addItem(new ItemInstance(Tile.ladder));
       Sel[3] = this.addItem(new ItemInstance(Tile.torch));
       this.addItem(new ItemInstance(Tile.thinGlass));
-  
+
       this.addItem(new ItemInstance(Item.door_wood));
       this.addItem(new ItemInstance(Tile.trapdoor));
       this.addItem(new ItemInstance(Tile.fence));
       this.addItem(new ItemInstance(Tile.fenceGate));
-  
+
       this.addItem(new ItemInstance(Item.bed));
       this.addItem(new ItemInstance(Tile.bookshelf));
       this.addItem(new ItemInstance(Item.painting));
@@ -224,11 +227,11 @@ export class Inventory extends FillingContainer {
       this.addItem(new ItemInstance(Tile.chest));
       this.addItem(new ItemInstance(Tile.furnace));
       this.addItem(new ItemInstance(Tile.tnt));
-  
-      this.addItem(new ItemInstance((Tile.flower)));
-      this.addItem(new ItemInstance((Tile.rose)));
-      this.addItem(new ItemInstance((Tile.mushroom1)));
-      this.addItem(new ItemInstance((Tile.mushroom2)));
+
+      this.addItem(new ItemInstance(Tile.flower));
+      this.addItem(new ItemInstance(Tile.rose));
+      this.addItem(new ItemInstance(Tile.mushroom1));
+      this.addItem(new ItemInstance(Tile.mushroom2));
       this.addItem(new ItemInstance(Tile.cactus));
       this.addItem(new ItemInstance(Tile.melon));
       this.addItem(new ItemInstance(Item.reeds));
@@ -238,7 +241,7 @@ export class Inventory extends FillingContainer {
       this.addItem(new ItemInstance(Tile.leaves, 1, 0));
       this.addItem(new ItemInstance(Tile.leaves, 1, 1));
       this.addItem(new ItemInstance(Tile.leaves, 1, 2));
-  
+
       this.addItem(new ItemInstance(Item.seeds_wheat));
       this.addItem(new ItemInstance(Item.seeds_melon));
       this.addItem(new ItemInstance(Item.dye_powder, 1, DyePowderItem.WHITE));
@@ -249,26 +252,22 @@ export class Inventory extends FillingContainer {
       this.addItem(new ItemInstance(Item.sign));
     } else {
     }
-  
+
     for (let i = 0; i < this.items.length; ++i) {
       let item = this.items[i];
-  
+
       if (i < Inventory.MAX_SELECTION_SIZE) {
-        if (item)
-          LOGE("Error: Should not have this.items on slot %i\n", i);
-  
+        if (item) LOGE('Error: Should not have this.items on slot %i\n', i);
+
         this.items[i] = null;
         continue;
       }
-  
-      if (item && this._isCreative)
-        item.count = 5;
+
+      if (item && this._isCreative) item.count = 5;
     }
-  
+
     for (let i = 0; i < Inventory.MAX_SELECTION_SIZE; ++i) {
       this.linkedSlots[i] = new LinkedSlot(Sel[i]!); // 结构体按值赋值
     }
-  
-    
   }
 }

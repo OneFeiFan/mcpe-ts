@@ -1,14 +1,14 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { AABB } from "../../phys/AABB";
-import { Vec3 } from "../../phys/Vec3";
-import { HitResult } from "../../phys/HitResult";
-import { Entity } from "../../entity/Entity";
-import { Facing } from "../../Facing";
-import { Mth, Random } from "@mcpe/util";
-import type { LevelSource, Player } from "../..";
-import type { Mob } from "../../entity/Mob";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { AABB } from '../../phys/AABB';
+import { Vec3 } from '../../phys/Vec3';
+import { HitResult } from '../../phys/HitResult';
+import { Entity } from '../../entity/Entity';
+import { Facing } from '../../Facing';
+import { Mth, Random } from '@mcpe/util';
+import type { LevelSource, Player } from '../..';
+import type { Mob } from '../../entity/Mob';
 
 export class StairTile extends Tile {
   static readonly UPSIDEDOWN_BIT = 4;
@@ -18,8 +18,14 @@ export class StairTile extends Tile {
   static readonly DIR_NORTH = 3;
 
   static readonly DEAD_SPACES: readonly (readonly [number, number])[] = [
-    [2, 6], [3, 7], [2, 3], [6, 7],
-    [0, 4], [1, 5], [0, 1], [4, 5],
+    [2, 6],
+    [3, 7],
+    [2, 3],
+    [6, 7],
+    [0, 4],
+    [1, 5],
+    [0, 1],
+    [4, 5],
   ];
 
   private readonly base: Tile;
@@ -140,13 +146,18 @@ export class StairTile extends Tile {
 
       const backTile = level.getTile(x + 1, y, z);
       const backData = level.getData(x + 1, y, z);
-      if (StairTile.isStairs(backTile) &&
-          (data & StairTile.UPSIDEDOWN_BIT) === (backData & StairTile.UPSIDEDOWN_BIT)) {
+      if (
+        StairTile.isStairs(backTile) &&
+        (data & StairTile.UPSIDEDOWN_BIT) === (backData & StairTile.UPSIDEDOWN_BIT)
+      ) {
         const backDir = backData & 0x3;
         if (backDir === StairTile.DIR_NORTH && !this.isLockAttached(level, x, y, z + 1, data)) {
           south = 0.5;
           checkInnerPiece = false;
-        } else if (backDir === StairTile.DIR_SOUTH && !this.isLockAttached(level, x, y, z - 1, data)) {
+        } else if (
+          backDir === StairTile.DIR_SOUTH &&
+          !this.isLockAttached(level, x, y, z - 1, data)
+        ) {
           north = 0.5;
           checkInnerPiece = false;
         }
@@ -157,13 +168,18 @@ export class StairTile extends Tile {
 
       const backTile = level.getTile(x - 1, y, z);
       const backData = level.getData(x - 1, y, z);
-      if (StairTile.isStairs(backTile) &&
-          (data & StairTile.UPSIDEDOWN_BIT) === (backData & StairTile.UPSIDEDOWN_BIT)) {
+      if (
+        StairTile.isStairs(backTile) &&
+        (data & StairTile.UPSIDEDOWN_BIT) === (backData & StairTile.UPSIDEDOWN_BIT)
+      ) {
         const backDir = backData & 0x3;
         if (backDir === StairTile.DIR_NORTH && !this.isLockAttached(level, x, y, z + 1, data)) {
           south = 0.5;
           checkInnerPiece = false;
-        } else if (backDir === StairTile.DIR_SOUTH && !this.isLockAttached(level, x, y, z - 1, data)) {
+        } else if (
+          backDir === StairTile.DIR_SOUTH &&
+          !this.isLockAttached(level, x, y, z - 1, data)
+        ) {
           north = 0.5;
           checkInnerPiece = false;
         }
@@ -174,13 +190,18 @@ export class StairTile extends Tile {
 
       const backTile = level.getTile(x, y, z + 1);
       const backData = level.getData(x, y, z + 1);
-      if (StairTile.isStairs(backTile) &&
-          (data & StairTile.UPSIDEDOWN_BIT) === (backData & StairTile.UPSIDEDOWN_BIT)) {
+      if (
+        StairTile.isStairs(backTile) &&
+        (data & StairTile.UPSIDEDOWN_BIT) === (backData & StairTile.UPSIDEDOWN_BIT)
+      ) {
         const backDir = backData & 0x3;
         if (backDir === StairTile.DIR_WEST && !this.isLockAttached(level, x + 1, y, z, data)) {
           east = 0.5;
           checkInnerPiece = false;
-        } else if (backDir === StairTile.DIR_EAST && !this.isLockAttached(level, x - 1, y, z, data)) {
+        } else if (
+          backDir === StairTile.DIR_EAST &&
+          !this.isLockAttached(level, x - 1, y, z, data)
+        ) {
           west = 0.5;
           checkInnerPiece = false;
         }
@@ -188,13 +209,18 @@ export class StairTile extends Tile {
     } else if (dir === StairTile.DIR_NORTH) {
       const backTile = level.getTile(x, y, z - 1);
       const backData = level.getData(x, y, z - 1);
-      if (StairTile.isStairs(backTile) &&
-          (data & StairTile.UPSIDEDOWN_BIT) === (backData & StairTile.UPSIDEDOWN_BIT)) {
+      if (
+        StairTile.isStairs(backTile) &&
+        (data & StairTile.UPSIDEDOWN_BIT) === (backData & StairTile.UPSIDEDOWN_BIT)
+      ) {
         const backDir = backData & 0x3;
         if (backDir === StairTile.DIR_WEST && !this.isLockAttached(level, x + 1, y, z, data)) {
           east = 0.5;
           checkInnerPiece = false;
-        } else if (backDir === StairTile.DIR_EAST && !this.isLockAttached(level, x - 1, y, z, data)) {
+        } else if (
+          backDir === StairTile.DIR_EAST &&
+          !this.isLockAttached(level, x - 1, y, z, data)
+        ) {
           west = 0.5;
           checkInnerPiece = false;
         }
@@ -227,14 +253,19 @@ export class StairTile extends Tile {
     if (dir === StairTile.DIR_EAST) {
       const frontTile = level.getTile(x - 1, y, z);
       const frontData = level.getData(x - 1, y, z);
-      if (StairTile.isStairs(frontTile) &&
-          (data & StairTile.UPSIDEDOWN_BIT) === (frontData & StairTile.UPSIDEDOWN_BIT)) {
+      if (
+        StairTile.isStairs(frontTile) &&
+        (data & StairTile.UPSIDEDOWN_BIT) === (frontData & StairTile.UPSIDEDOWN_BIT)
+      ) {
         const frontDir = frontData & 0x3;
         if (frontDir === StairTile.DIR_NORTH && !this.isLockAttached(level, x, y, z - 1, data)) {
           north = 0;
           south = 0.5;
           hasInnerPiece = true;
-        } else if (frontDir === StairTile.DIR_SOUTH && !this.isLockAttached(level, x, y, z + 1, data)) {
+        } else if (
+          frontDir === StairTile.DIR_SOUTH &&
+          !this.isLockAttached(level, x, y, z + 1, data)
+        ) {
           north = 0.5;
           south = 1;
           hasInnerPiece = true;
@@ -243,8 +274,10 @@ export class StairTile extends Tile {
     } else if (dir === StairTile.DIR_WEST) {
       const frontTile = level.getTile(x + 1, y, z);
       const frontData = level.getData(x + 1, y, z);
-      if (StairTile.isStairs(frontTile) &&
-          (data & StairTile.UPSIDEDOWN_BIT) === (frontData & StairTile.UPSIDEDOWN_BIT)) {
+      if (
+        StairTile.isStairs(frontTile) &&
+        (data & StairTile.UPSIDEDOWN_BIT) === (frontData & StairTile.UPSIDEDOWN_BIT)
+      ) {
         west = 0.5;
         east = 1.0;
         const frontDir = frontData & 0x3;
@@ -252,7 +285,10 @@ export class StairTile extends Tile {
           north = 0;
           south = 0.5;
           hasInnerPiece = true;
-        } else if (frontDir === StairTile.DIR_SOUTH && !this.isLockAttached(level, x, y, z + 1, data)) {
+        } else if (
+          frontDir === StairTile.DIR_SOUTH &&
+          !this.isLockAttached(level, x, y, z + 1, data)
+        ) {
           north = 0.5;
           south = 1;
           hasInnerPiece = true;
@@ -261,15 +297,20 @@ export class StairTile extends Tile {
     } else if (dir === StairTile.DIR_SOUTH) {
       const frontTile = level.getTile(x, y, z - 1);
       const frontData = level.getData(x, y, z - 1);
-      if (StairTile.isStairs(frontTile) &&
-          (data & StairTile.UPSIDEDOWN_BIT) === (frontData & StairTile.UPSIDEDOWN_BIT)) {
+      if (
+        StairTile.isStairs(frontTile) &&
+        (data & StairTile.UPSIDEDOWN_BIT) === (frontData & StairTile.UPSIDEDOWN_BIT)
+      ) {
         north = 0;
         south = 0.5;
 
         const frontDir = frontData & 0x3;
         if (frontDir === StairTile.DIR_WEST && !this.isLockAttached(level, x - 1, y, z, data)) {
           hasInnerPiece = true;
-        } else if (frontDir === StairTile.DIR_EAST && !this.isLockAttached(level, x + 1, y, z, data)) {
+        } else if (
+          frontDir === StairTile.DIR_EAST &&
+          !this.isLockAttached(level, x + 1, y, z, data)
+        ) {
           west = 0.5;
           east = 1.0;
           hasInnerPiece = true;
@@ -278,12 +319,17 @@ export class StairTile extends Tile {
     } else if (dir === StairTile.DIR_NORTH) {
       const frontTile = level.getTile(x, y, z + 1);
       const frontData = level.getData(x, y, z + 1);
-      if (StairTile.isStairs(frontTile) &&
-          (data & StairTile.UPSIDEDOWN_BIT) === (frontData & StairTile.UPSIDEDOWN_BIT)) {
+      if (
+        StairTile.isStairs(frontTile) &&
+        (data & StairTile.UPSIDEDOWN_BIT) === (frontData & StairTile.UPSIDEDOWN_BIT)
+      ) {
         const frontDir = frontData & 0x3;
         if (frontDir === StairTile.DIR_WEST && !this.isLockAttached(level, x - 1, y, z, data)) {
           hasInnerPiece = true;
-        } else if (frontDir === StairTile.DIR_EAST && !this.isLockAttached(level, x + 1, y, z, data)) {
+        } else if (
+          frontDir === StairTile.DIR_EAST &&
+          !this.isLockAttached(level, x + 1, y, z, data)
+        ) {
           west = 0.5;
           east = 1.0;
           hasInnerPiece = true;
@@ -314,17 +360,23 @@ export class StairTile extends Tile {
   }
 
   /** C++ StairTile::isSolidRender() */
-  override isSolidRender(): boolean { return false; }
+  override isSolidRender(): boolean {
+    return false;
+  }
 
   /** C++ StairTile::isCubeShaped() */
-  override isCubeShaped(): boolean { return false; }
+  override isCubeShaped(): boolean {
+    return false;
+  }
 
   /** C++ StairTile::getRenderShape() */
-  override getRenderShape(): number { return Tile.SHAPE_STAIRS; }
+  override getRenderShape(): number {
+    return Tile.SHAPE_STAIRS;
+  }
 
   /** C++ StairTile::setPlacedBy(Level*, int, int, int, Mob*) */
   override setPlacedBy(level: Level, x: number, y: number, z: number, by: Mob): void {
-    const dir = Mth.floor(by.yRot * 4 / 360 + 0.5) & 3;
+    const dir = Mth.floor((by.yRot * 4) / 360 + 0.5) & 3;
     const usd = level.getData(x, y, z) & StairTile.UPSIDEDOWN_BIT;
 
     if (dir === 0) level.setData(x, y, z, 2 | usd);
@@ -336,9 +388,13 @@ export class StairTile extends Tile {
   /** C++ StairTile::getPlacedOnFaceDataValue(Level*, int, int, int, int, float, float, float, int) */
   override getPlacedOnFaceDataValue(
     _level: Level,
-    _x: number, _y: number, _z: number,
+    _x: number,
+    _y: number,
+    _z: number,
     face: number,
-    _clickX: number, clickY: number, _clickZ: number,
+    _clickX: number,
+    clickY: number,
+    _clickZ: number,
     itemValue: number,
   ): number {
     if (face === Facing.DOWN || (face !== Facing.UP && clickY > 0.5)) {
@@ -392,7 +448,13 @@ export class StairTile extends Tile {
   }
 
   /** C++ StairTile::getTexture(LevelSource*, int, int, int, int) */
-  override getTextureAt(_level: LevelSource, _x: number, _y: number, _z: number, face: number): number {
+  override getTextureAt(
+    _level: LevelSource,
+    _x: number,
+    _y: number,
+    _z: number,
+    face: number,
+  ): number {
     return this.base.getTexture(face, this.baseData);
   }
 
@@ -404,7 +466,14 @@ export class StairTile extends Tile {
     return this.base.getTileAABB(level, x, y, z);
   }
 
-  override handleEntityInside(level: Level, x: number, y: number, z: number, e: Entity, current: Vec3): void {
+  override handleEntityInside(
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    e: Entity,
+    current: Vec3,
+  ): void {
     this.base.handleEntityInside(level, x, y, z, e, current);
   }
 

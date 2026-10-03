@@ -1,10 +1,10 @@
-import { Item, Tier } from "./Item";
-import { ItemInstance } from "./ItemInstance";
-import { Entity } from "../entity/Entity";
-import { Level } from "../level/Level";
-import { Tile } from "../level/tile/Tile";
-import type { Player } from "..";
-import type { Mob } from "../entity/Mob";
+import { Item, Tier } from './Item';
+import { ItemInstance } from './ItemInstance';
+import { Entity } from '../entity/Entity';
+import { Level } from '../level/Level';
+import { Tile } from '../level/tile/Tile';
+import type { Player } from '..';
+import type { Mob } from '../entity/Mob';
 
 export class WeaponItem extends Item {
   private readonly damage: number;

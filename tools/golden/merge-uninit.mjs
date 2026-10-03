@@ -12,7 +12,10 @@ for (const key of Object.keys(A)) {
     const y = B[key][i];
     if (!x || !y) return;
     const diff = Object.keys(x).filter((k) => JSON.stringify(x[k]) !== JSON.stringify(y[k]));
-    if (diff.length) { x.uninit = diff; n++; }
+    if (diff.length) {
+      x.uninit = diff;
+      n++;
+    }
   });
 }
 writeFileSync(out, JSON.stringify(A) + '\n');

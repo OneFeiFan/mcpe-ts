@@ -24,7 +24,10 @@ export class DomInput {
   private readonly down = new Set<number>();
   private readonly listeners: [EventTarget, string, EventListener][] = [];
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly opts: DomInputOptions = {}) {}
+  constructor(
+    private readonly canvas: HTMLCanvasElement,
+    private readonly opts: DomInputOptions = {},
+  ) {}
 
   /** KeyboardEvent.code → 分支的键值；不认识的键返回 -1 */
   static mapKey(code: string): number {
@@ -33,14 +36,22 @@ export class DomInput {
     const f = /^F([1-9]|1[0-2])$/.exec(code);
     if (f) return 111 + Number(f[1]); // F1–F12 → 112–123（GLFW 键值 − 178）
     switch (code) {
-      case 'Space': return Keyboard.KEY_SPACE; // 32
-      case 'ShiftLeft': return Keyboard.KEY_LSHIFT; // 10
-      case 'Escape': return Keyboard.KEY_ESCAPE; // 27
-      case 'Enter': return Keyboard.KEY_RETURN; // 13
-      case 'Backspace': return Keyboard.KEY_BACKSPACE; // 8
-      case 'Tab': return Keyboard.KEY_TAB; // 9
-      case 'ControlLeft': return Keyboard.KEY_LEFT_CTRL; // 232
-      default: return -1;
+      case 'Space':
+        return Keyboard.KEY_SPACE; // 32
+      case 'ShiftLeft':
+        return Keyboard.KEY_LSHIFT; // 10
+      case 'Escape':
+        return Keyboard.KEY_ESCAPE; // 27
+      case 'Enter':
+        return Keyboard.KEY_RETURN; // 13
+      case 'Backspace':
+        return Keyboard.KEY_BACKSPACE; // 8
+      case 'Tab':
+        return Keyboard.KEY_TAB; // 9
+      case 'ControlLeft':
+        return Keyboard.KEY_LEFT_CTRL; // 232
+      default:
+        return -1;
     }
   }
 
@@ -49,7 +60,12 @@ export class DomInput {
   }
 
   attach(): void {
-    const on = (t: EventTarget, type: string, fn: EventListener, opts?: AddEventListenerOptions) => {
+    const on = (
+      t: EventTarget,
+      type: string,
+      fn: EventListener,
+      opts?: AddEventListenerOptions,
+    ) => {
       t.addEventListener(type, fn, opts);
       this.listeners.push([t, type, fn]);
     };
@@ -94,7 +110,8 @@ export class DomInput {
 
   private onKey(e: KeyboardEvent, isDown: boolean): void {
     const key = DomInput.mapKey(e.code);
-    if (key >= 0 && (key === Keyboard.KEY_SPACE || key === Keyboard.KEY_TAB || this.locked)) e.preventDefault();
+    if (key >= 0 && (key === Keyboard.KEY_SPACE || key === Keyboard.KEY_TAB || this.locked))
+      e.preventDefault();
     if (isDown && e.key.length === 1) Keyboard.feedText(e.key); // character_callback（重复也会触发）
     if (e.repeat) return; // if(action == GLFW_REPEAT) return;
     if (key < 0) return;

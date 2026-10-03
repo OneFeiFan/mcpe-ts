@@ -1,6 +1,6 @@
-import { TileItem } from "./TileItem";
-import { Tile } from "../level/tile/Tile";
-import type { ItemInstance } from "./ItemInstance";
+import { TileItem } from './TileItem';
+import { Tile } from '../level/tile/Tile';
+import type { ItemInstance } from './ItemInstance';
 
 export class SaplingTileItem extends TileItem {
   /** C++ SaplingTileItem::SaplingTileItem(int id) */
@@ -20,7 +20,7 @@ export class SaplingTileItem extends TileItem {
   // C++ Item::getIcon(const ItemInstance* itemInstance)
   override getIcon(itemInstance: ItemInstance): number;
   override getIcon(a: number | ItemInstance): number {
-    if (typeof a === "number") {
+    if (typeof a === 'number') {
       return Tile.sapling.getTexture(0, a);
     }
     return Tile.sapling.getTexture(0, a.getAuxValue());

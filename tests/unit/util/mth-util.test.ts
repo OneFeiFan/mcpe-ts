@@ -20,7 +20,9 @@ describe('Mth 对象', () => {
 });
 
 describe('Util.remove / Util.removeAll（按引用比较，与 C++ 指针的 operator== 一致）', () => {
-  const a = { id: 1 }, b = { id: 2 }, c = { id: 3 };
+  const a = { id: 1 },
+    b = { id: 2 },
+    c = { id: 3 };
   it('remove：数组删除第一个匹配项', () => {
     const list = [a, b, a, c];
     expect(Util.remove(list, a)).toBe(true);
@@ -42,8 +44,15 @@ describe('Util.remove / Util.removeAll（按引用比较，与 C++ 指针的 ope
 
 describe('cpp.ts 数值辅助', () => {
   it('f2i：范围内截断，越界与 NaN 得 INT_MIN', () => {
-    expect([f2i(2.9), f2i(-2.9), f2i(-0.5), f2i(2147483647.5), f2i(2147483648), f2i(-2147483649), f2i(NaN)])
-      .toEqual([2, -2, 0, 2147483647, -2147483648, -2147483648, -2147483648]);
+    expect([
+      f2i(2.9),
+      f2i(-2.9),
+      f2i(-0.5),
+      f2i(2147483647.5),
+      f2i(2147483648),
+      f2i(-2147483649),
+      f2i(NaN),
+    ]).toEqual([2, -2, 0, 2147483647, -2147483648, -2147483648, -2147483648]);
   });
   it('i16、u8', () => {
     expect([i16(32768), i16(-32769), u8(300), u8(-1)]).toEqual([-32768, 32767, 44, 255]);

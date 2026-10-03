@@ -1,10 +1,22 @@
-import { Tile } from "./Tile";
+import { Tile } from './Tile';
 
 export class NetherReactorPattern {
   private readonly pattern: number[][][] = [
-    [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
-    [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
-    [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
+    [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+    ],
+    [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+    ],
+    [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+    ],
   ];
 
   /** C++ NetherReactorPattern::NetherReactorPattern() */

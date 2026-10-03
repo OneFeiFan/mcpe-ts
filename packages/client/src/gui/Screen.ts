@@ -161,7 +161,10 @@ export class Screen extends GuiComponent {
   }
 
   toGUICoordinate(x: number, y: number): [number, number] {
-    return [Math.trunc((x * this.width) / this.minecraft.width), Math.trunc((y * this.height) / this.minecraft.height) - 1];
+    return [
+      Math.trunc((x * this.width) / this.minecraft.width),
+      Math.trunc((y * this.height) / this.minecraft.height) - 1,
+    ];
   }
 
   protected updateTabButtonSelection(): void {}

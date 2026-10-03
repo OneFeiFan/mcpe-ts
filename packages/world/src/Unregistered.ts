@@ -14,13 +14,16 @@ const sentinels = new WeakSet<object>();
 const ID_PROBE = Symbol('idOf');
 
 export function unregistered<T extends object>(kind: 'Tile' | 'Item' | 'Biome', name: string): T {
-  const where = kind === 'Tile' ? 'Tile.initTiles' : kind === 'Item' ? 'Item.initItems' : 'Biome.initBiomes';
+  const where =
+    kind === 'Tile' ? 'Tile.initTiles' : kind === 'Item' ? 'Item.initItems' : 'Biome.initBiomes';
   const proxy = new Proxy(Object.create(null) as object, {
     get(_target, prop) {
       if (prop === ID_PROBE) return -1;
       // 让 await、JSON、控制台打印等工具性访问不抛错
       if (typeof prop === 'symbol' || prop === 'then' || prop === 'toJSON') return undefined;
-      throw new Error(`${kind}.${name} 尚未注册（访问了 .${String(prop)}）：${where} 里对应的一行是 DEFERRED，C++ 此处为 NULL`);
+      throw new Error(
+        `${kind}.${name} 尚未注册（访问了 .${String(prop)}）：${where} 里对应的一行是 DEFERRED，C++ 此处为 NULL`,
+      );
     },
   });
   sentinels.add(proxy);

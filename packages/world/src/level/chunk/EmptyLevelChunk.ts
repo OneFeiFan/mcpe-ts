@@ -44,7 +44,13 @@ export class EmptyLevelChunk extends LevelChunk {
     return Tile.invisible_bedrock.id;
   }
 
-  override setTileAndData(_x: number, _y: number, _z: number, _tile: number, _data: number): boolean {
+  override setTileAndData(
+    _x: number,
+    _y: number,
+    _z: number,
+    _tile: number,
+    _data: number,
+  ): boolean {
     return true;
   }
 
@@ -62,7 +68,13 @@ export class EmptyLevelChunk extends LevelChunk {
     return 7;
   }
 
-  override setBrightness(_layer: LightLayer, _x: number, _y: number, _z: number, _brightness: number): void {}
+  override setBrightness(
+    _layer: LightLayer,
+    _x: number,
+    _y: number,
+    _z: number,
+    _brightness: number,
+  ): void {}
 
   override getRawBrightness(_x: number, _y: number, _z: number, _skyDampen: number): number {
     return 7;
@@ -89,7 +101,16 @@ export class EmptyLevelChunk extends LevelChunk {
   override setBlocks(_newBlocks: Uint8Array, _sub: number): void {}
 
   /** 与 LevelChunk 不同：C++ 在这里返回 len，而不是 p + len；照原样保留 */
-  override getBlocksAndData(data: Uint8Array, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, p: number): number {
+  override getBlocksAndData(
+    data: Uint8Array,
+    x0: number,
+    y0: number,
+    z0: number,
+    x1: number,
+    y1: number,
+    z1: number,
+    p: number,
+  ): number {
     const xs = x1 - x0;
     const ys = y1 - y0;
     const zs = z1 - z0;
@@ -100,7 +121,16 @@ export class EmptyLevelChunk extends LevelChunk {
   }
 
   /** 与 LevelChunk 不同：什么都不写，返回的也是长度而不是 p + len */
-  override setBlocksAndData(_data: Uint8Array, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, _p: number): number {
+  override setBlocksAndData(
+    _data: Uint8Array,
+    x0: number,
+    y0: number,
+    z0: number,
+    x1: number,
+    y1: number,
+    z1: number,
+    _p: number,
+  ): number {
     const xs = x1 - x0;
     const ys = y1 - y0;
     const zs = z1 - z0;
@@ -110,13 +140,15 @@ export class EmptyLevelChunk extends LevelChunk {
 
   /** C++ 在子类里把 LevelChunk::getRandom 原样又写了一遍，这里同样照写 */
   override getRandom(l: number): Random {
-    const x = this.x, z = this.z;
+    const x = this.x,
+      z = this.z;
     const sum =
       (this.level.getSeed() +
         Math.imul(Math.imul(x, x), 4987142) +
         Math.imul(x, 5947611) +
         Math.imul(Math.imul(z, z), 4392871) +
-        Math.imul(z, 389711)) | 0;
+        Math.imul(z, 389711)) |
+      0;
     return new Random(sum ^ l);
   }
 

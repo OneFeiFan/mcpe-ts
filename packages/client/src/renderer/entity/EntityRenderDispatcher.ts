@@ -43,7 +43,8 @@ export class EntityRenderDispatcher {
   }
 
   static getInstance(): EntityRenderDispatcher {
-    if (!EntityRenderDispatcher.instance) EntityRenderDispatcher.instance = new EntityRenderDispatcher();
+    if (!EntityRenderDispatcher.instance)
+      EntityRenderDispatcher.instance = new EntityRenderDispatcher();
     return EntityRenderDispatcher.instance;
   }
 
@@ -80,7 +81,14 @@ export class EntityRenderDispatcher {
     const r = entity.yRotO + (entity.yRot - entity.yRotO) * a;
     const br = entity.getBrightness(a);
     glColor4f2(br, br, br, 1);
-    this.renderAt(entity, x - EntityRenderDispatcher.xOff, y - EntityRenderDispatcher.yOff, z - EntityRenderDispatcher.zOff, r, a);
+    this.renderAt(
+      entity,
+      x - EntityRenderDispatcher.xOff,
+      y - EntityRenderDispatcher.yOff,
+      z - EntityRenderDispatcher.zOff,
+      r,
+      a,
+    );
   }
 
   renderAt(entity: Entity, x: number, y: number, z: number, rot: number, a: number): void {
@@ -93,7 +101,8 @@ export class EntityRenderDispatcher {
 
   getRenderer(entity: Entity): EntityRenderer | null {
     let rendererId = entity.entityRendererId;
-    if (rendererId === EntityRendererId.ER_QUERY_RENDERER) rendererId = entity.queryEntityRenderer();
+    if (rendererId === EntityRendererId.ER_QUERY_RENDERER)
+      rendererId = entity.queryEntityRenderer();
     return this.getRendererById(rendererId);
   }
 

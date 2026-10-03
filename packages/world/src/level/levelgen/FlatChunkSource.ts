@@ -30,7 +30,11 @@ export class FlatChunkSource extends ChunkSource {
 
   create(x: number, z: number): LevelChunk {
     const blocks = new Uint8Array(LevelChunk.ChunkBlockCount);
-    const onPlatform = x >= FlatChunkSource.PLATFORM_MIN && x <= FlatChunkSource.PLATFORM_MAX && z >= FlatChunkSource.PLATFORM_MIN && z <= FlatChunkSource.PLATFORM_MAX;
+    const onPlatform =
+      x >= FlatChunkSource.PLATFORM_MIN &&
+      x <= FlatChunkSource.PLATFORM_MAX &&
+      z >= FlatChunkSource.PLATFORM_MIN &&
+      z <= FlatChunkSource.PLATFORM_MAX;
     if (onPlatform) {
       for (let xx = 0; xx < 16; xx++)
         for (let zz = 0; zz < 16; zz++) {

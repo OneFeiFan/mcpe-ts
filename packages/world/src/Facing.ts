@@ -17,7 +17,14 @@ export class Facing {
     return 'Unknown facing';
   }
 
-  static readonly OPPOSITE_FACING: readonly number[] = [Facing.UP, Facing.DOWN, Facing.SOUTH, Facing.NORTH, Facing.EAST, Facing.WEST];
+  static readonly OPPOSITE_FACING: readonly number[] = [
+    Facing.UP,
+    Facing.DOWN,
+    Facing.SOUTH,
+    Facing.NORTH,
+    Facing.EAST,
+    Facing.WEST,
+  ];
   static readonly STEP_X: readonly number[] = [0, 0, 0, 0, -1, 1];
   static readonly STEP_Y: readonly number[] = [-1, 1, 0, 0, 0, 0];
   static readonly STEP_Z: readonly number[] = [0, 0, -1, 1, 0, 0];

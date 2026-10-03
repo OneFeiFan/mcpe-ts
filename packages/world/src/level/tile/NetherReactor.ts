@@ -20,7 +20,10 @@ export class NetherReactor extends EntityTile {
     for (let checkLevel = 0; checkLevel <= 2; ++checkLevel) {
       for (let checkX = -1; checkX <= 1; ++checkX) {
         for (let checkZ = -1; checkZ <= 1; ++checkZ) {
-          if (level.getTile(x + checkX, y + checkLevel - 1, z + checkZ) !== pattern.getTileAt(checkLevel, checkX + 1, checkZ + 1)) {
+          if (
+            level.getTile(x + checkX, y + checkLevel - 1, z + checkZ) !==
+            pattern.getTileAt(checkLevel, checkX + 1, checkZ + 1)
+          ) {
             player.displayClientMessage('Not the correct pattern!');
             return false;
           }
@@ -50,13 +53,22 @@ export class NetherReactor extends EntityTile {
   /** C++ getTexture(int face, int data) */
   override getTextureForData(_face: number, data: number): number {
     switch (data) {
-      case 1: return this.tex - 1;
-      case 2: return this.tex - 2;
-      default: return this.tex;
+      case 1:
+        return this.tex - 1;
+      case 2:
+        return this.tex - 2;
+      default:
+        return this.tex;
     }
   }
 
-  canSpawnStartNetherReactor(level: Level, x: number, y: number, z: number, player: Player): boolean {
+  canSpawnStartNetherReactor(
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    player: Player,
+  ): boolean {
     if (!this.allPlayersCloseToReactor(level, x, y, z)) {
       player.displayClientMessage('All players need to be close to the reactor.');
       return false;
@@ -73,7 +85,11 @@ export class NetherReactor extends EntityTile {
   allPlayersCloseToReactor(level: Level, x: number, y: number, z: number): boolean {
     for (const currentPlayer of level.players) {
       if (!(currentPlayer.x >= x - 5 && currentPlayer.x <= x + 5)) return false;
-      if (!(currentPlayer.y - currentPlayer.heightOffset >= y - 1 && currentPlayer.y - currentPlayer.heightOffset <= y + 1)) return false;
+      if (!(
+        currentPlayer.y - currentPlayer.heightOffset >= y - 1 &&
+        currentPlayer.y - currentPlayer.heightOffset <= y + 1
+      ))
+        return false;
       if (!(currentPlayer.z >= z - 5 && currentPlayer.z <= z + 5)) return false;
     }
     return true;

@@ -86,6 +86,7 @@ export function hashCode(s: string): number {
 function hashCodeUtf8(s: string): number {
   const bytes = (_encoder ??= new TextEncoder()).encode(s);
   let hash = 0;
-  for (let i = 0; i < bytes.length; i++) hash = ((hash << 5) - hash + ((bytes[i]! << 24) >> 24)) | 0;
+  for (let i = 0; i < bytes.length; i++)
+    hash = ((hash << 5) - hash + ((bytes[i]! << 24) >> 24)) | 0;
   return hash;
 }

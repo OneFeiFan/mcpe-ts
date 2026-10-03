@@ -1,15 +1,15 @@
 import { getEpochTimeS } from '@mcpe/platform';
-import { EntityTile } from "./EntityTile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { TileEntity, TileEntityFactory, TileEntityType } from "./entity/TileEntity";
-import { ItemEntity } from "../../entity/item/ItemEntity";
-import { ItemInstance } from "../../item/ItemInstance";
-import { Facing } from "../../Facing";
-import { Tile } from "./Tile";
-import { Random, Mth } from "@mcpe/util";
-import type { ChestTileEntity, Player } from "../..";
-import type { Mob } from "../../entity/Mob";
+import { EntityTile } from './EntityTile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { TileEntity, TileEntityFactory, TileEntityType } from './entity/TileEntity';
+import { ItemEntity } from '../../entity/item/ItemEntity';
+import { ItemInstance } from '../../item/ItemInstance';
+import { Facing } from '../../Facing';
+import { Tile } from './Tile';
+import { Random, Mth } from '@mcpe/util';
+import type { ChestTileEntity, Player } from '../..';
+import type { Mob } from '../../entity/Mob';
 
 export interface LevelSource {
   getData(x: number, y: number, z: number): number;
@@ -60,7 +60,7 @@ export class ChestTile extends EntityTile {
     const e = level.getTile(x + 1, y, z);
 
     let facing = 0;
-    const dir = Mth.floor(by.yRot * 4 / 360 + 0.5) & 3;
+    const dir = Mth.floor((by.yRot * 4) / 360 + 0.5) & 3;
 
     if (dir === 0) facing = Facing.NORTH;
     if (dir === 1) facing = Facing.EAST;
@@ -70,14 +70,15 @@ export class ChestTile extends EntityTile {
     if (n !== this.id && s !== this.id && w !== this.id && e !== this.id) {
       level.setData(x, y, z, facing);
     } else {
-      if ((n === this.id || s === this.id) &&
-          (facing === Facing.WEST || facing === Facing.EAST)) {
+      if ((n === this.id || s === this.id) && (facing === Facing.WEST || facing === Facing.EAST)) {
         if (n === this.id) level.setData(x, y, z - 1, facing);
         else level.setData(x, y, z + 1, facing);
         level.setData(x, y, z, facing);
       }
-      if ((w === this.id || e === this.id) &&
-          (facing === Facing.NORTH || facing === Facing.SOUTH)) {
+      if (
+        (w === this.id || e === this.id) &&
+        (facing === Facing.NORTH || facing === Facing.SOUTH)
+      ) {
         if (w === this.id) level.setData(x - 1, y, z, facing);
         else level.setData(x + 1, y, z, facing);
         level.setData(x, y, z, facing);
@@ -98,10 +99,12 @@ export class ChestTile extends EntityTile {
     // C++ fullchest 逻辑全部被注释掉
     {
       lockDir = level.getData(x, y, z);
-      if ((lockDir === Facing.NORTH && Tile.solid[n] === true)
-       || (lockDir === Facing.SOUTH && Tile.solid[s] === true)
-       || (lockDir === Facing.WEST  && Tile.solid[w] === true)
-       || (lockDir === Facing.EAST  && Tile.solid[e] === true)) {
+      if (
+        (lockDir === Facing.NORTH && Tile.solid[n] === true) ||
+        (lockDir === Facing.SOUTH && Tile.solid[s] === true) ||
+        (lockDir === Facing.WEST && Tile.solid[w] === true) ||
+        (lockDir === Facing.EAST && Tile.solid[e] === true)
+      ) {
         if (Tile.solid[n] === true && Tile.solid[s] !== true) lockDir = Facing.SOUTH;
         if (Tile.solid[s] === true && Tile.solid[n] !== true) lockDir = Facing.NORTH;
         if (Tile.solid[w] === true && Tile.solid[e] !== true) lockDir = Facing.EAST;
@@ -173,7 +176,10 @@ export class ChestTile extends EntityTile {
               item.count -= count;
 
               const itemEntity = new ItemEntity(
-                level, x + xo, y + yo, z + zo,
+                level,
+                x + xo,
+                y + yo,
+                z + zo,
                 new ItemInstance(item.id, count, item.getAuxValue()),
               );
               const pow = 0.05;
@@ -216,4 +222,3 @@ export class ChestTile extends EntityTile {
     return false; // @fullchest
   }
 }
-

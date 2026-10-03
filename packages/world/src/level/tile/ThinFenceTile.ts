@@ -1,9 +1,9 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { AABB } from "../../phys/AABB";
-import { Level } from "../Level";
-import type { Random } from "@mcpe/util";
-import type { LevelSource } from "../LevelSource";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { AABB } from '../../phys/AABB';
+import { Level } from '../Level';
+import type { Random } from '@mcpe/util';
+import type { LevelSource } from '../LevelSource';
 
 export class ThinFenceTile extends Tile {
   private readonly edgeTexture: number;
@@ -51,7 +51,9 @@ export class ThinFenceTile extends Tile {
   /** C++ ThinFenceTile::shouldRenderFace(LevelSource*, int, int, int, int) */
   override shouldRenderFace(
     level: LevelSource,
-    x: number, y: number, z: number,
+    x: number,
+    y: number,
+    z: number,
     face: number,
   ): boolean {
     const id = level.getTile(x, y, z);
@@ -60,12 +62,7 @@ export class ThinFenceTile extends Tile {
   }
 
   /** C++ ThinFenceTile::addAABBs(Level*, int, int, int, const AABB*, std::vector<AABB>&) */
-  override addAABBs(
-    level: Level,
-    x: number, y: number, z: number,
-    box: AABB,
-    boxes: AABB[],
-  ): void {
+  override addAABBs(level: Level, x: number, y: number, z: number, box: AABB, boxes: AABB[]): void {
     const n = this.attachsTo(level.getTile(x, y, z - 1));
     const s = this.attachsTo(level.getTile(x, y, z + 1));
     const w = this.attachsTo(level.getTile(x - 1, y, z));
@@ -76,10 +73,10 @@ export class ThinFenceTile extends Tile {
       this.setShape(0, 0, 7 / 16, 1, 1, 9 / 16);
       super.addAABBs(level, x, y, z, box, boxes);
     } else if (w && !e) {
-      this.setShape(0, 0, 7 / 16, .5, 1, 9 / 16);
+      this.setShape(0, 0, 7 / 16, 0.5, 1, 9 / 16);
       super.addAABBs(level, x, y, z, box, boxes);
     } else if (!w && e) {
-      this.setShape(.5, 0, 7 / 16, 1, 1, 9 / 16);
+      this.setShape(0.5, 0, 7 / 16, 1, 1, 9 / 16);
       super.addAABBs(level, x, y, z, box, boxes);
     }
 
@@ -88,10 +85,10 @@ export class ThinFenceTile extends Tile {
       this.setShape(7 / 16, 0, 0, 9 / 16, 1, 1);
       super.addAABBs(level, x, y, z, box, boxes);
     } else if (n && !s) {
-      this.setShape(7 / 16, 0, 0, 9 / 16, 1, .5);
+      this.setShape(7 / 16, 0, 0, 9 / 16, 1, 0.5);
       super.addAABBs(level, x, y, z, box, boxes);
     } else if (!n && s) {
-      this.setShape(7 / 16, 0, .5, 9 / 16, 1, 1);
+      this.setShape(7 / 16, 0, 0.5, 9 / 16, 1, 1);
       super.addAABBs(level, x, y, z, box, boxes);
     }
   }

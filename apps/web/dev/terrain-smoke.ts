@@ -1,9 +1,38 @@
 // S7 的 dev 页（长期保留）：真实世界 → Chunk.rebuild（TileRenderer、AO）→ FrustumCuller → RenderList，经 GLES1 兼容层画出来。
 import {
-  AppPlatform, Chunk, FrustumCuller, GL_ALPHA_TEST, GL_BACK, GL_COLOR_BUFFER_BIT, GL_CULL_FACE, GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_GREATER,
-  GL_LEQUAL, GL_MODELVIEW, GL_PROJECTION, GL_TEXTURE_2D, GLES1, glAlphaFunc, glClear, glClearColor, glCullFace, glDepthFunc, glEnable,
-  glGenBuffers, glLoadIdentity, glMatrixMode, glRotatef, glSetContext, gluPerspective, glViewport, Minecraft, RenderList, Tesselator,
-  TextureData, Textures,
+  AppPlatform,
+  Chunk,
+  FrustumCuller,
+  GL_ALPHA_TEST,
+  GL_BACK,
+  GL_COLOR_BUFFER_BIT,
+  GL_CULL_FACE,
+  GL_DEPTH_BUFFER_BIT,
+  GL_DEPTH_TEST,
+  GL_GREATER,
+  GL_LEQUAL,
+  GL_MODELVIEW,
+  GL_PROJECTION,
+  GL_TEXTURE_2D,
+  GLES1,
+  glAlphaFunc,
+  glClear,
+  glClearColor,
+  glCullFace,
+  glDepthFunc,
+  glEnable,
+  glGenBuffers,
+  glLoadIdentity,
+  glMatrixMode,
+  glRotatef,
+  glSetContext,
+  gluPerspective,
+  glViewport,
+  Minecraft,
+  RenderList,
+  Tesselator,
+  TextureData,
+  Textures,
 } from '@mcpe/client';
 import { createDemoLevel, loadImage } from './demoWorld';
 
@@ -26,7 +55,10 @@ async function main(): Promise<void> {
   const ctx = new GLES1(gl);
   glSetContext(ctx);
   Tesselator.instance.init();
-  const textures = new Textures(null, new DevPlatform(new Map([['terrain.png', await loadImage('/images/terrain.png')]])));
+  const textures = new Textures(
+    null,
+    new DevPlatform(new Map([['terrain.png', await loadImage('/images/terrain.png')]])),
+  );
   const level = createDemoLevel();
   Minecraft.useAmbientOcclusion = true; // LevelRenderer 按选项 ao（默认 true）设置
 
@@ -92,8 +124,15 @@ async function main(): Promise<void> {
     return Array.from(out);
   };
   const result = {
-    stats, drawCalls: ctx.drawCalls, glError: gl.getError(), buildMs: Math.round(t1 - t0),
-    oneCenter: px(240, 120), oneSky: px(240, 340), allNearWall: px(720, 40), allTop: px(720, 160), allSky: px(720, 350),
+    stats,
+    drawCalls: ctx.drawCalls,
+    glError: gl.getError(),
+    buildMs: Math.round(t1 - t0),
+    oneCenter: px(240, 120),
+    oneSky: px(240, 340),
+    allNearWall: px(720, 40),
+    allTop: px(720, 160),
+    allSky: px(720, 350),
   };
   (window as unknown as { __smoke: unknown }).__smoke = result;
   status.textContent = `完成：${JSON.stringify(result)}`;

@@ -23,7 +23,30 @@ import { WeaponItem } from './WeaponItem';
 import { HatchetItem } from './HatchetItem';
 import { Item, type ItemClasses } from './Item';
 
-export const ITEM_CLASSES: ItemClasses = { HatchetItem, BedItem, DoorItem, FlintAndSteelItem, HoeItem, ShearsItem, SignItem, TilePlanterItem, WeaponItem, ArmorItem, BowItem, BowlFoodItem, CameraItem, CoalItem, DyePowderItem, EggItem, FoodItem, HangingEntityItem, PickaxeItem, SeedItem, ShovelItem, SnowballItem };
+export const ITEM_CLASSES: ItemClasses = {
+  HatchetItem,
+  BedItem,
+  DoorItem,
+  FlintAndSteelItem,
+  HoeItem,
+  ShearsItem,
+  SignItem,
+  TilePlanterItem,
+  WeaponItem,
+  ArmorItem,
+  BowItem,
+  BowlFoodItem,
+  CameraItem,
+  CoalItem,
+  DyePowderItem,
+  EggItem,
+  FoodItem,
+  HangingEntityItem,
+  PickaxeItem,
+  SeedItem,
+  ShovelItem,
+  SnowballItem,
+};
 
 export function initItems(): void {
   Item.initItems(ITEM_CLASSES);

@@ -1,5 +1,5 @@
-import { Tag, TAG_Short } from "./Tag";
-import type { IDataInput, IDataOutput } from "@mcpe/util";
+import { Tag, TAG_Short } from './Tag';
+import type { IDataInput, IDataOutput } from '@mcpe/util';
 
 export class ShortTag extends Tag {
   public data: number;

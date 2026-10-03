@@ -2,16 +2,35 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { CompoundTag } from '@mcpe/nbt';
 import { Random } from '@mcpe/util';
 import {
-  DyePowderItem, Facing, FoodItem, HeavyTile, initTileEntities, Item, ItemInstance, type Level, LevelListener,
-  partitionTileEntities, type Player, SignTileEntity, Tile, TileEntity, TileEntityFactory, TileEntityType, TileItem,
+  DyePowderItem,
+  Facing,
+  FoodItem,
+  HeavyTile,
+  initTileEntities,
+  Item,
+  ItemInstance,
+  type Level,
+  LevelListener,
+  partitionTileEntities,
+  type Player,
+  SignTileEntity,
+  Tile,
+  TileEntity,
+  TileEntityFactory,
+  TileEntityType,
+  TileItem,
 } from '@mcpe/world';
 import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
 // S11 阶段 A：签名补全与先行的部分移植。ItemInstance、CompoundTag 已是正身（阶段 B）；Player 仍是前向声明，用最小的替身对象。
 const inst = (id: number, count: number, aux = 0) => new ItemInstance(id, count, aux);
 class TestTE extends TileEntity {
-  constructor() { super(TileEntityType.Undefined); }
-  shouldSave() { return true; }
+  constructor() {
+    super(TileEntityType.Undefined);
+  }
+  shouldSave() {
+    return true;
+  }
 }
 
 let level: Level;
@@ -26,16 +45,28 @@ beforeAll(() => {
 describe('TileEntity 与 SignTileEntity', () => {
   it('save/load：id 与坐标、四行文字（超长截到 15 个字符）；loadStatic 按 id 创建', () => {
     const s = new SignTileEntity();
-    s.x = 1; s.y = 2; s.z = 3;
+    s.x = 1;
+    s.y = 2;
+    s.z = 3;
     s.messages = ['hello', '', 'x'.repeat(20), 'end'];
     const tag = new CompoundTag();
     expect(s.save(tag)).toBe(true);
-    expect([tag.getString('id'), tag.getInt('x'), tag.getInt('y'), tag.getInt('z'), tag.getString('Text1')]).toEqual(['Sign', 1, 2, 3, 'hello']);
+    expect([
+      tag.getString('id'),
+      tag.getInt('x'),
+      tag.getInt('y'),
+      tag.getInt('z'),
+      tag.getString('Text1'),
+    ]).toEqual(['Sign', 1, 2, 3, 'hello']);
     const back = TileEntity.loadStatic(tag) as SignTileEntity;
     expect(back).toBeInstanceOf(SignTileEntity);
     expect(back.messages[2]).toBe('x'.repeat(15));
     expect(back.isEditable()).toBe(false);
-    expect([TileEntity.isType(back, TileEntityType.Sign), back.isType(TileEntityType.Furnace), TileEntity.isType(null, TileEntityType.Sign)]).toEqual([true, false, false]);
+    expect([
+      TileEntity.isType(back, TileEntityType.Sign),
+      back.isType(TileEntityType.Furnace),
+      TileEntity.isType(null, TileEntityType.Sign),
+    ]).toEqual([true, false, false]);
   });
 
   it('工厂：四种方块实体都能创建；未知类型返回 null', () => {
@@ -45,9 +76,13 @@ describe('TileEntity 与 SignTileEntity', () => {
   });
 
   it('partitionTileEntities：同一位置只留第一个，shouldSave 为假的分到另一边', () => {
-    const a = new TestTE(), b = new TestTE(), c = new TestTE();
-    b.x = 0; c.x = 5;
-    const keep: TileEntity[] = [], drop: TileEntity[] = [];
+    const a = new TestTE(),
+      b = new TestTE(),
+      c = new TestTE();
+    b.x = 0;
+    c.x = 5;
+    const keep: TileEntity[] = [],
+      drop: TileEntity[] = [];
     expect(partitionTileEntities([a, b, c], keep, drop)).toBe(2);
     expect(keep).toEqual([a, c]);
     expect(drop).toEqual([b]);
@@ -58,7 +93,11 @@ describe('TileEntity 与 SignTileEntity', () => {
     Tile.isEntityTile[7] = true; // 借用基岩当方块实体格（真正的方块实体方块在阶段 C 注册）
     try {
       const heard: number[][] = [];
-      const l = new (class extends LevelListener { override tileEntityChanged(x: number, y: number, z: number) { heard.push([x, y, z]); } })();
+      const l = new (class extends LevelListener {
+        override tileEntityChanged(x: number, y: number, z: number) {
+          heard.push([x, y, z]);
+        }
+      })();
       level.addListener(l);
       const te = new TestTE();
       level.setTileEntity(136, 0, 136, te);
@@ -81,7 +120,8 @@ describe('TileEntity 与 SignTileEntity', () => {
 
 describe('Tile 与 Item 的签名补全', () => {
   it('spawnResources 的随机数调用次数与 C++ 相同（S12 起会生成掉落物实体）', () => {
-    const r = new Random(42), ref = new Random(42);
+    const r = new Random(42),
+      ref = new Random(42);
     const lv = { isClientSide: false, random: r, addEntity: () => true } as unknown as Level;
     Tile.rock.spawnResources(lv, 0, 0, 0, 0); // 数量 1：odds 判定 1 次 + 偏移 3 次
     for (let i = 0; i < 4; i++) ref.nextFloat();
@@ -112,7 +152,16 @@ describe('Tile 与 Item 的签名补全', () => {
   it('FoodItem：受伤且不是无敌时开始进食；吃完数量减一，播放声音时消耗一次随机数', () => {
     const food = new FoodItem(4, 4, false);
     const calls: number[] = [];
-    const player = { x: 0, y: 0, z: 0, heightOffset: 1.62, abilities: { invulnerable: false }, isHurt: () => true, foodData: { eat: () => {} }, startUsingItem: (_i: ItemInstance, d: number) => calls.push(d) } as unknown as Player;
+    const player = {
+      x: 0,
+      y: 0,
+      z: 0,
+      heightOffset: 1.62,
+      abilities: { invulnerable: false },
+      isHurt: () => true,
+      foodData: { eat: () => {} },
+      startUsingItem: (_i: ItemInstance, d: number) => calls.push(d),
+    } as unknown as Player;
     const it = inst(260, 2);
     food.use(it, level, player);
     expect(calls).toEqual([32]);

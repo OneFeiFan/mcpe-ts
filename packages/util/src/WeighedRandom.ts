@@ -25,7 +25,11 @@ export class WeighedRandom {
     return totalWeight;
   }
 
-  static getRandomItem<T extends WeighedRandomItem>(random: Random, items: readonly T[], totalWeight = WeighedRandom.getTotalWeight(items)): T | null {
+  static getRandomItem<T extends WeighedRandomItem>(
+    random: Random,
+    items: readonly T[],
+    totalWeight = WeighedRandom.getTotalWeight(items),
+  ): T | null {
     let selection = random.nextInt(totalWeight);
     for (const it of items) {
       selection -= it.randomWeight;
@@ -36,7 +40,11 @@ export class WeighedRandom {
     return null;
   }
 
-  static getRandomItemIndex(random: Random, items: readonly WeighedRandomItem[], totalWeight = WeighedRandom.getTotalWeight(items)): number {
+  static getRandomItemIndex(
+    random: Random,
+    items: readonly WeighedRandomItem[],
+    totalWeight = WeighedRandom.getTotalWeight(items),
+  ): number {
     let selection = random.nextInt(totalWeight);
     for (let i = 0; i < items.length; ++i) {
       selection -= items[i]!.randomWeight;

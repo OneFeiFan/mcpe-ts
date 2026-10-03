@@ -29,16 +29,38 @@ export class StoneSlabTileItem extends TileItem {
     return super.getDescriptionIdForItem() + '.' + StoneSlabTile.SLAB_NAMES[auxValue]!;
   }
 
-  override useOnByPlayer(instance: ItemInstance, player: Player, level: Level, x: number, y: number, z: number, face: number, clickX: number, clickY: number, clickZ: number): boolean {
+  override useOnByPlayer(
+    instance: ItemInstance,
+    player: Player,
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    face: number,
+    clickX: number,
+    clickY: number,
+    clickZ: number,
+  ): boolean {
     if (instance.count === 0) return false;
     const currentTile = level.getTile(x, y, z);
     const currentData = level.getData(x, y, z);
     const slabType = currentData & StoneSlabTile.TYPE_MASK;
     const isUpper = (currentData & StoneSlabTile.TOP_SLOT_BIT) !== 0;
-    if (((face === Facing.UP && !isUpper) || (face === Facing.DOWN && isUpper)) && currentTile === Tile.stoneSlabHalf.id && slabType === instance.getAuxValue()) {
+    if (
+      ((face === Facing.UP && !isUpper) || (face === Facing.DOWN && isUpper)) &&
+      currentTile === Tile.stoneSlabHalf.id &&
+      slabType === instance.getAuxValue()
+    ) {
       const unobstructed = level.isUnobstructed(Tile.stoneSlab.getAABB(level, x, y, z)!);
       if (unobstructed && level.setTileAndData(x, y, z, Tile.stoneSlab.id, slabType)) {
-        level.playSound(x + 0.5, y + 0.5, z + 0.5, Tile.stoneSlab.soundType.getStepSound(), (Tile.stoneSlab.soundType.getVolume() + 1) / 2, Tile.stoneSlab.soundType.getPitch() * 0.8);
+        level.playSound(
+          x + 0.5,
+          y + 0.5,
+          z + 0.5,
+          Tile.stoneSlab.soundType.getStepSound(),
+          (Tile.stoneSlab.soundType.getVolume() + 1) / 2,
+          Tile.stoneSlab.soundType.getPitch() * 0.8,
+        );
         instance.count--;
       }
       return true;

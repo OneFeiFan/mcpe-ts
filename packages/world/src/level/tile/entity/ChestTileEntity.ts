@@ -15,7 +15,6 @@ import { ChestTile } from '../ChestTile';
 import { Tile } from '../Tile';
 import { TileEntity, TileEntityType } from './TileEntity';
 
-
 export class ChestTileEntity extends FillingContainerMixin(TileEntity) {
   private static readonly ItemsSize = 9 * 3;
 
@@ -111,10 +110,14 @@ export class ChestTileEntity extends FillingContainerMixin(TileEntity) {
     const level = this.level!;
     const { x, y, z } = this;
     const chest = Tile.chest.id;
-    if (level.getTile(x - 1, y, z) === chest) this.w = level.getTileEntity(x - 1, y, z) as ChestTileEntity;
-    if (level.getTile(x + 1, y, z) === chest) this.e = level.getTileEntity(x + 1, y, z) as ChestTileEntity;
-    if (level.getTile(x, y, z - 1) === chest) this.n = level.getTileEntity(x, y, z - 1) as ChestTileEntity;
-    if (level.getTile(x, y, z + 1) === chest) this.s = level.getTileEntity(x, y, z + 1) as ChestTileEntity;
+    if (level.getTile(x - 1, y, z) === chest)
+      this.w = level.getTileEntity(x - 1, y, z) as ChestTileEntity;
+    if (level.getTile(x + 1, y, z) === chest)
+      this.e = level.getTileEntity(x + 1, y, z) as ChestTileEntity;
+    if (level.getTile(x, y, z - 1) === chest)
+      this.n = level.getTileEntity(x, y, z - 1) as ChestTileEntity;
+    if (level.getTile(x, y, z + 1) === chest)
+      this.s = level.getTileEntity(x, y, z + 1) as ChestTileEntity;
     if (this.n !== null) this.n.clearCache();
     if (this.s !== null) this.s.clearCache();
     if (this.e !== null) this.e.clearCache();
@@ -137,7 +140,14 @@ export class ChestTileEntity extends FillingContainerMixin(TileEntity) {
         let zc = this.z + 0.5;
         if (this.s !== null) zc += 0.5;
         if (this.e !== null) xc += 0.5;
-        level.playSound(xc, this.y + 0.5, zc, 'random.chestopen', 0.5, level.random.nextFloat() * 0.1 + 0.9);
+        level.playSound(
+          xc,
+          this.y + 0.5,
+          zc,
+          'random.chestopen',
+          0.5,
+          level.random.nextFloat() * 0.1 + 0.9,
+        );
       }
     }
     if ((this.openCount === 0 && this.openness > 0) || (this.openCount > 0 && this.openness < 1)) {
@@ -154,7 +164,14 @@ export class ChestTileEntity extends FillingContainerMixin(TileEntity) {
           let zc = this.z + 0.5;
           if (this.s !== null) zc += 0.5;
           if (this.e !== null) xc += 0.5;
-          level.playSound(xc, this.y + 0.5, zc, 'random.chestclosed', 0.5, level.random.nextFloat() * 0.1 + 0.9);
+          level.playSound(
+            xc,
+            this.y + 0.5,
+            zc,
+            'random.chestclosed',
+            0.5,
+            level.random.nextFloat() * 0.1 + 0.9,
+          );
         }
       }
       if (this.openness < 0) {

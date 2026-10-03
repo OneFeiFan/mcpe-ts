@@ -10,7 +10,16 @@
  */
 import { Mouse, Multitouch } from '@mcpe/platform';
 import { Mth, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH } from '@mcpe/util';
-import { type Entity, HitResult, HitResultType, Material, type Mob, type Player, Tile, Vec3 } from '@mcpe/world';
+import {
+  type Entity,
+  HitResult,
+  HitResultType,
+  Material,
+  type Mob,
+  type Player,
+  Tile,
+  Vec3,
+} from '@mcpe/world';
 import { IntRectangle } from '../gui/components/ImageButton';
 import { Gui } from '../gui/Gui';
 import { EntityRenderDispatcher } from './entity/EntityRenderDispatcher';
@@ -20,12 +29,61 @@ import { OptionId } from '../Options';
 import type { LocalPlayer } from '../player/LocalPlayer';
 import { FrustumCuller } from './culling/FrustumCuller';
 import {
-  GL_ALPHA_TEST, GL_BLEND, GL_COLOR_BUFFER_BIT, GL_COLOR_MATERIAL, GL_CULL_FACE, GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_EXP, GL_FALSE, GL_FLAT,
-  GL_FOG, GL_FOG_COLOR, GL_FOG_DENSITY, GL_FOG_END, GL_FOG_MODE, GL_FOG_START, GL_LINEAR, GL_MODELVIEW, GL_MODELVIEW_MATRIX, GL_ONE_MINUS_SRC_ALPHA,
-  GL_PROJECTION, GL_PROJECTION_MATRIX, GL_SCISSOR_TEST, GL_SMOOTH, GL_SRC_ALPHA, GL_TRUE, glBlendFunc2, glClear, glClearColor, glColor4f2,
-  glColorMask, glDepthMask, glDisable, glDisable2, glEnable, glEnable2, glFogf, glFogfv, glFogx, glGetFloatv, glLoadIdentity2, glMatrixMode,
-  glOrthof, glRotatef, glRotatef2, glScalef2, glScissor, glShadeModel2, glTranslatef, glTranslatef2, gluPerspective, glViewport,
-  glLoadIdentity, glPopMatrix2, glPushMatrix2,
+  GL_ALPHA_TEST,
+  GL_BLEND,
+  GL_COLOR_BUFFER_BIT,
+  GL_COLOR_MATERIAL,
+  GL_CULL_FACE,
+  GL_DEPTH_BUFFER_BIT,
+  GL_DEPTH_TEST,
+  GL_EXP,
+  GL_FALSE,
+  GL_FLAT,
+  GL_FOG,
+  GL_FOG_COLOR,
+  GL_FOG_DENSITY,
+  GL_FOG_END,
+  GL_FOG_MODE,
+  GL_FOG_START,
+  GL_LINEAR,
+  GL_MODELVIEW,
+  GL_MODELVIEW_MATRIX,
+  GL_ONE_MINUS_SRC_ALPHA,
+  GL_PROJECTION,
+  GL_PROJECTION_MATRIX,
+  GL_SCISSOR_TEST,
+  GL_SMOOTH,
+  GL_SRC_ALPHA,
+  GL_TRUE,
+  glBlendFunc2,
+  glClear,
+  glClearColor,
+  glColor4f2,
+  glColorMask,
+  glDepthMask,
+  glDisable,
+  glDisable2,
+  glEnable,
+  glEnable2,
+  glFogf,
+  glFogfv,
+  glFogx,
+  glGetFloatv,
+  glLoadIdentity2,
+  glMatrixMode,
+  glOrthof,
+  glRotatef,
+  glRotatef2,
+  glScalef2,
+  glScissor,
+  glShadeModel2,
+  glTranslatef,
+  glTranslatef2,
+  gluPerspective,
+  glViewport,
+  glLoadIdentity,
+  glPopMatrix2,
+  glPushMatrix2,
 } from './gles';
 import { _t_keepPic } from './LevelRenderer';
 import { Lighting } from './Lighting';
@@ -106,8 +164,11 @@ export class GameRenderer {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity2();
     const stereoScale = 0.07;
-    if (mc.options.getBooleanValue(OptionId.OPTIONS_ANAGLYPH_3D)) glTranslatef2(-(eye * 2 - 1) * stereoScale, 0, 0);
-    const far = mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY) ? this.renderDistance * 2.0 : this.renderDistance;
+    if (mc.options.getBooleanValue(OptionId.OPTIONS_ANAGLYPH_3D))
+      glTranslatef2(-(eye * 2 - 1) * stereoScale, 0, 0);
+    const far = mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY)
+      ? this.renderDistance * 2.0
+      : this.renderDistance;
     if (this.zoom !== 1) {
       glTranslatef2(this.zoom_x, -this.zoom_y, 0);
       glScalef2(this.zoom, this.zoom, 1);
@@ -115,7 +176,8 @@ export class GameRenderer {
     gluPerspective((this._setupCameraFov = this.getFov(a, true)), mc.width / mc.height, 0.05, far);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity2();
-    if (mc.options.getBooleanValue(OptionId.OPTIONS_ANAGLYPH_3D)) glTranslatef2((eye * 2 - 1) * 0.1, 0, 0);
+    if (mc.options.getBooleanValue(OptionId.OPTIONS_ANAGLYPH_3D))
+      glTranslatef2((eye * 2 - 1) * 0.1, 0, 0);
     this.bobHurt(a);
     if (mc.options.getBooleanValue(OptionId.OPTIONS_VIEW_BOBBING)) this.bobView(a);
     this.moveCameraToPlayer(a);
@@ -166,7 +228,8 @@ export class GameRenderer {
       TIMER_PUSH('level');
       if (_t_keepPic.value < 0) {
         if (!(mc.screen && !mc.screen.renderGameBehind())) {
-          if (mc.screen && mc.screen.hasClippingArea(this.screenScissorArea)) this.useScreenScissor = true;
+          if (mc.screen && mc.screen.hasClippingArea(this.screenScissorArea))
+            this.useScreenScissor = true;
           this.renderLevel(a);
           hasClearedColorBuffer = true;
           if (!mc.options.getBooleanValue(OptionId.OPTIONS_HIDEGUI)) {
@@ -238,7 +301,12 @@ export class GameRenderer {
       this.saveMatrices();
       if (this.useScreenScissor) {
         glEnable2(GL_SCISSOR_TEST);
-        glScissor(this.screenScissorArea.x, this.screenScissorArea.y, this.screenScissorArea.w, this.screenScissorArea.h);
+        glScissor(
+          this.screenScissorArea.x,
+          this.screenScissorArea.y,
+          this.screenScissorArea.w,
+          this.screenScissorArea.h,
+        );
       }
       if (mc.options.getBooleanValue(OptionId.OPTIONS_AMBIENT_OCCLUSION)) {
         glShadeModel2(GL_SMOOTH);
@@ -254,7 +322,10 @@ export class GameRenderer {
 
       this.setupFog(-1);
       TIMER_POP_PUSH('sky');
-      if (mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY) && mc.options.getIntValue(OptionId.OPTIONS_VIEW_DISTANCE) < 2) {
+      if (
+        mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY) &&
+        mc.options.getIntValue(OptionId.OPTIONS_VIEW_DISTANCE) < 2
+      ) {
         // DEFERRED(Sky): levelRenderer->renderSky(a);
       } else if (!mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY)) {
         glFogf(GL_FOG_START, this.renderDistance * 0.2);
@@ -349,7 +420,8 @@ export class GameRenderer {
     if (!target.isAlive()) return;
     let range = mc.gameMode!.getPickRange();
     let isPicking = true;
-    const freeform = mc.useTouchscreen() && !mc.options.getBooleanValue(OptionId.OPTIONS_IS_JOY_TOUCH_AREA);
+    const freeform =
+      mc.useTouchscreen() && !mc.options.getBooleanValue(OptionId.OPTIONS_IS_JOY_TOUCH_AREA);
     if (freeform) {
       isPicking = this.updateFreeformPickDirection(a, this.pickDirection);
     } else {
@@ -424,12 +496,17 @@ export class GameRenderer {
   renderItemInHand(a: number, eye: number): void {
     const mc = this.mc;
     glLoadIdentity2();
-    if (mc.options.getBooleanValue(OptionId.OPTIONS_ANAGLYPH_3D)) glTranslatef2((eye * 2 - 1) * 0.1, 0, 0);
+    if (mc.options.getBooleanValue(OptionId.OPTIONS_ANAGLYPH_3D))
+      glTranslatef2((eye * 2 - 1) * 0.1, 0, 0);
     glPushMatrix2();
     this.bobHurt(a);
     if (mc.options.getBooleanValue(OptionId.OPTIONS_VIEW_BOBBING)) this.bobView(a);
     const target = mc.cameraTargetPlayer!;
-    if (!mc.options.getBooleanValue(OptionId.OPTIONS_THIRD_PERSON_VIEW) && target.isPlayer() && !(target as Player).isSleeping()) {
+    if (
+      !mc.options.getBooleanValue(OptionId.OPTIONS_THIRD_PERSON_VIEW) &&
+      target.isPlayer() &&
+      !(target as Player).isSleeping()
+    ) {
       if (!mc.options.getBooleanValue(OptionId.OPTIONS_HIDEGUI)) {
         const fov = this.getFov(a, false);
         if (fov !== this._setupCameraFov) {
@@ -442,7 +519,11 @@ export class GameRenderer {
       }
     }
     glPopMatrix2();
-    if (!mc.options.getBooleanValue(OptionId.OPTIONS_THIRD_PERSON_VIEW) && target.isPlayer() && !(target as Player).isSleeping()) {
+    if (
+      !mc.options.getBooleanValue(OptionId.OPTIONS_THIRD_PERSON_VIEW) &&
+      target.isPlayer() &&
+      !(target as Player).isSleeping()
+    ) {
       this.itemInHandRenderer.renderScreenEffect(a);
       this.bobHurt(a);
     }
@@ -514,7 +595,10 @@ export class GameRenderer {
           xo *= 0.1;
           yo *= 0.1;
           zo *= 0.1;
-          const hr = mc.level!.clip(new Vec3(x + xo, y + yo, z + zo), new Vec3(x - xd + xo + zo, y - yd + yo, z - zd + zo));
+          const hr = mc.level!.clip(
+            new Vec3(x + xo, y + yo, z + zo),
+            new Vec3(x - xd + xo + zo, y - yd + yo, z - zd + zo),
+          );
           if (hr.type !== HitResultType.NO_HIT) {
             const dist = hr.pos.distanceTo(x, y, z);
             if (dist < cameraDist) cameraDist = dist;
@@ -628,7 +712,11 @@ export class GameRenderer {
     }
     this.tickFov();
     const target = mc.cameraTargetPlayer!;
-    const brr = mc.level!.getBrightness(Mth.floor(target.x), Mth.floor(target.y), Mth.floor(target.z));
+    const brr = mc.level!.getBrightness(
+      Mth.floor(target.x),
+      Mth.floor(target.y),
+      Mth.floor(target.z),
+    );
     const whiteness = (3 - mc.options.getIntValue(OptionId.OPTIONS_VIEW_DISTANCE)) / 3.0;
     const fogBrT = brr * (1 - whiteness) + whiteness;
     this.fogBr += (fogBrT - this.fogBr) * 0.1;
@@ -691,7 +779,9 @@ export class GameRenderer {
   setupGuiScreen(clearColorBuffer: boolean): void {
     const screenWidth = Math.trunc(this.mc.width * Gui.InvGuiScale);
     const screenHeight = Math.trunc(this.mc.height * Gui.InvGuiScale);
-    const clearBits = clearColorBuffer ? GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT : GL_DEPTH_BUFFER_BIT;
+    const clearBits = clearColorBuffer
+      ? GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT
+      : GL_DEPTH_BUFFER_BIT;
     glClear(clearBits);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity2();

@@ -1,6 +1,18 @@
-import { GL_ALPHA_TEST, GL_BLEND, GL_FLAT, GL_ONE_MINUS_SRC_ALPHA, GL_SMOOTH, GL_SRC_ALPHA, GL_TEXTURE_2D, glBlendFunc2, glDisable2, glEnable2, glShadeModel2 } from "../renderer/gles";
-import { Tesselator } from "../renderer/Tesselator";
-import type { Font } from "./Font";
+import {
+  GL_ALPHA_TEST,
+  GL_BLEND,
+  GL_FLAT,
+  GL_ONE_MINUS_SRC_ALPHA,
+  GL_SMOOTH,
+  GL_SRC_ALPHA,
+  GL_TEXTURE_2D,
+  glBlendFunc2,
+  glDisable2,
+  glEnable2,
+  glShadeModel2,
+} from '../renderer/gles';
+import { Tesselator } from '../renderer/Tesselator';
+import type { Font } from './Font';
 
 /** 1:1 移植自 src/client/gui/GuiComponent.h 与 GuiComponent.cpp（S13；你的单元，阶段 C 校对：blit 的 sw、sh 改为可选） */
 export class GuiComponent {
@@ -23,7 +35,16 @@ export class GuiComponent {
   }
 
   /** C++ GuiComponent::blit(float x, float y, int sx, int sy, float w, float h, int sw=0, int sh=0) */
-  blit(x: number, y: number, sx: number, sy: number, w: number, h: number, sw?: number, sh?: number): void;
+  blit(
+    x: number,
+    y: number,
+    sx: number,
+    sy: number,
+    w: number,
+    h: number,
+    sw?: number,
+    sh?: number,
+  ): void;
   blit(x: number, y: number, sx: number, sy: number, w: number, h: number, sw = 0, sh = 0): void {
     // C++ 的 int、float 两个重载（R10 情形 A 合并）：int 版本 sw = w，float 版本 sw = (int)w——整数参数时两者相同
     if (!sw) sw = Math.trunc(w);
@@ -34,24 +55,21 @@ export class GuiComponent {
 
     const t = Tesselator.instance;
     t.begin();
-    t.vertexUV(x,     y + h, this.blitOffset, sx * us,        (sy + sh) * vs);
+    t.vertexUV(x, y + h, this.blitOffset, sx * us, (sy + sh) * vs);
     t.vertexUV(x + w, y + h, this.blitOffset, (sx + sw) * us, (sy + sh) * vs);
-    t.vertexUV(x + w, y,     this.blitOffset, (sx + sw) * us, sy * vs);
-    t.vertexUV(x,     y,     this.blitOffset, sx * us,        sy * vs);
+    t.vertexUV(x + w, y, this.blitOffset, (sx + sw) * us, sy * vs);
+    t.vertexUV(x, y, this.blitOffset, sx * us, sy * vs);
     t.draw();
   }
 
   /** C++ GuiComponent::fill(int x0, int y0, int x1, int y1, int col) */
   protected fill(x0: number, y0: number, x1: number, y1: number, col: number): void {
     glEnable2(GL_BLEND);
-	glDisable2(GL_TEXTURE_2D);
-	glBlendFunc2(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable2(GL_TEXTURE_2D);
+    glBlendFunc2(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // RGBA -> BGRA 重排
-    const color =
-      (col & 0xff00ff00) |
-      ((col & 0xff0000) >>> 16) |
-      ((col & 0xff) << 16);
+    const color = (col & 0xff00ff00) | ((col & 0xff0000) >>> 16) | ((col & 0xff) << 16);
 
     const t = Tesselator.instance;
     t.begin();
@@ -68,8 +86,12 @@ export class GuiComponent {
 
   /** C++ GuiComponent::fillGradient(float x0, float y0, float x1, float y1, int col1, int col2) */
   protected fillGradient(
-    x0: number, y0: number, x1: number, y1: number,
-    col1: number, col2: number,
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number,
+    col1: number,
+    col2: number,
   ): void {
     const a1 = ((col1 >> 24) & 0xff) / 255.0;
     const r1 = ((col1 >> 16) & 0xff) / 255.0;
@@ -107,8 +129,12 @@ export class GuiComponent {
 
   /** C++ GuiComponent::fillHorizontalGradient(float x0, float y0, float x1, float y1, int col1, int col2) */
   protected fillHorizontalGradient(
-    x0: number, y0: number, x1: number, y1: number,
-    col1: number, col2: number,
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number,
+    col1: number,
+    col2: number,
   ): void {
     const a1 = ((col1 >> 24) & 0xff) / 255.0;
     const r1 = ((col1 >> 16) & 0xff) / 255.0;

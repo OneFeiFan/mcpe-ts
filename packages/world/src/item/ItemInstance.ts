@@ -1,12 +1,12 @@
 import { I18n } from '@mcpe/locale';
 import { CompoundTag } from '@mcpe/nbt';
-import type { Entity } from "../entity/Entity";
-import type { Mob } from "../entity/Mob";
-import type { Player } from "../entity/player/Player";
-import type { Level } from "../level/Level";
-import type { Tile } from "../level/tile/Tile";
-import { Item } from "./Item";
-import { UseAnim } from "./UseAnim";
+import type { Entity } from '../entity/Entity';
+import type { Mob } from '../entity/Mob';
+import type { Player } from '../entity/player/Player';
+import type { Level } from '../level/Level';
+import type { Tile } from '../level/tile/Tile';
+import { Item } from './Item';
+import { UseAnim } from './UseAnim';
 
 export class ItemInstance {
   public count: number = 0;
@@ -31,9 +31,9 @@ export class ItemInstance {
       this.id = arg0.id;
       this.count = arg0.count;
       this.auxValue = arg0.auxValue;
-    } else if (typeof arg0 === "number") {
+    } else if (typeof arg0 === 'number') {
       this.init(arg0, count ?? 0, auxValue ?? 0);
-    } else if (typeof arg0 === "object" && arg0 !== null) {
+    } else if (typeof arg0 === 'object' && arg0 !== null) {
       // Tile 或 Item，都通过 .id 拿 id
       const id = (arg0 as { id: number }).id;
       this.init(id, count ?? 1, auxValue ?? 0);
@@ -62,15 +62,11 @@ export class ItemInstance {
   }
 
   equals(rhs: ItemInstance): boolean {
-    return this.id === rhs.id
-        && this.auxValue === rhs.auxValue
-        && this.count === rhs.count;
+    return this.id === rhs.id && this.auxValue === rhs.auxValue && this.count === rhs.count;
   }
 
   matches(b: ItemInstance): boolean {
-    return this.id === b.id
-        && this.count === b.count
-        && this.auxValue === b.auxValue;
+    return this.id === b.id && this.count === b.count && this.auxValue === b.auxValue;
   }
 
   static matches(a: ItemInstance | null, b: ItemInstance | null): boolean {
@@ -114,8 +110,17 @@ export class ItemInstance {
     return this.getItem()!.getDestroySpeed(this, tile);
   }
 
-  useOn(player: Player, level: Level, x: number, y: number, z: number,
-        face: number, clickX: number, clickY: number, clickZ: number): boolean {
+  useOn(
+    player: Player,
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    face: number,
+    clickX: number,
+    clickY: number,
+    clickZ: number,
+  ): boolean {
     return this.getItem()!.useOn(this, player, level, x, y, z, face, clickX, clickY, clickZ);
   }
 
@@ -132,9 +137,11 @@ export class ItemInstance {
   }
 
   static isStackable(a: ItemInstance, b: ItemInstance): boolean {
-    return a.id === b.id
-        && b.isStackable()
-        && (!b.isStackedByData() || a.getAuxValue() === b.getAuxValue());
+    return (
+      a.id === b.id &&
+      b.isStackable() &&
+      (!b.isStackedByData() || a.getAuxValue() === b.getAuxValue())
+    );
   }
 
   getMaxStackSize(): number {
@@ -233,18 +240,18 @@ export class ItemInstance {
   // ---- NBT 序列化 ----
 
   save(compoundTag: CompoundTag): CompoundTag {
-    compoundTag.putShort("id", this.id);
+    compoundTag.putShort('id', this.id);
     // 复刻 C++: (unsigned char) count，写低 8 位
-    compoundTag.putByte("Count", this.count & 0xff);
-    compoundTag.putShort("Damage", this.auxValue);
+    compoundTag.putByte('Count', this.count & 0xff);
+    compoundTag.putShort('Damage', this.auxValue);
     return compoundTag;
   }
 
   load(compoundTag: CompoundTag): void {
-    this.id = compoundTag.getShort("id");
+    this.id = compoundTag.getShort('id');
     // 复刻 C++: (unsigned char) getByte(...)
-    this.count = compoundTag.getByte("Count") & 0xff;
-    this.auxValue = compoundTag.getShort("Damage");
+    this.count = compoundTag.getByte('Count') & 0xff;
+    this.auxValue = compoundTag.getShort('Damage');
   }
 
   static fromTag(tag: CompoundTag): ItemInstance | null {
@@ -259,7 +266,7 @@ export class ItemInstance {
   // ---- 显示 ----
 
   getDescriptionId(): string {
-    return this.id ? this.getItem()!.getDescriptionId(this) : "EmptyItemInstance";
+    return this.id ? this.getItem()!.getDescriptionId(this) : 'EmptyItemInstance';
   }
 
   setDescriptionId(_id: string): ItemInstance {
@@ -267,7 +274,7 @@ export class ItemInstance {
   }
 
   getName(): string {
-    return I18n.get(this.getDescriptionId() + ".name");
+    return I18n.get(this.getDescriptionId() + '.name');
   }
 
   toString(): string {

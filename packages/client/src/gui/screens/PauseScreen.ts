@@ -76,7 +76,11 @@ export class PauseScreen extends Screen {
   override setupPositions(): void {
     this.saveStep = 0;
     let yBase = 16;
-    const c = this.bContinue!, o = this.bOptions!, q = this.bQuit!, ql = this.bQuitAndSaveLocally!, sv = this.bServerVisibility!;
+    const c = this.bContinue!,
+      o = this.bOptions!,
+      q = this.bQuit!,
+      ql = this.bQuitAndSaveLocally!,
+      sv = this.bServerVisibility!;
     const w = this.width;
     if (this.minecraft.options.getIntValue(OptionId.OPTIONS_MENU_STYLE) === 2) {
       yBase = 50;

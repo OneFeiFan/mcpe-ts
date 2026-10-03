@@ -1,9 +1,8 @@
-import { StoneTile } from "./StoneTile";
-import { Level } from "../Level";
-import type { Random } from "@mcpe/util";
-import { ParticleType } from "../../entity/EntityTypes";
-import { Tile } from "./Tile";
-
+import { StoneTile } from './StoneTile';
+import { Level } from '../Level';
+import type { Random } from '@mcpe/util';
+import { ParticleType } from '../../entity/EntityTypes';
+import { Tile } from './Tile';
 
 export class ObsidianTile extends StoneTile {
   private readonly isGlowing: boolean;

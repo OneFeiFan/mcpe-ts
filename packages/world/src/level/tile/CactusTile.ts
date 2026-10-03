@@ -1,12 +1,11 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { AABB } from "../../phys/AABB";
-import { Entity } from "../../entity/Entity";
-import type { Random } from "@mcpe/util";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { AABB } from '../../phys/AABB';
+import { Entity } from '../../entity/Entity';
+import type { Random } from '@mcpe/util';
 
 export class CactusTile extends Tile {
-
   /** C++ CactusTile::CactusTile(int id, int tex) */
   constructor(id: number, tex: number) {
     super(id, tex, Material.cactus);
@@ -41,7 +40,7 @@ export class CactusTile extends Tile {
     this.tmpBB.y0 = y;
     this.tmpBB.z0 = z + r;
     this.tmpBB.x1 = x + 1 - r;
-    this.tmpBB.y1 = y + 1 - r;   // 注意：y1 缩进 r
+    this.tmpBB.y1 = y + 1 - r; // 注意：y1 缩进 r
     this.tmpBB.z1 = z + 1 - r;
     return this.tmpBB;
   }
@@ -50,10 +49,7 @@ export class CactusTile extends Tile {
   override getTileAABB(_level: Level, x: number, y: number, z: number): AABB {
     const r = 1 / 16.0;
     // 注意：这里 y1 = y + 1（不缩进），和 getAABB 不同；且返回新对象
-    return new AABB(
-      x + r, y, z + r,
-      x + 1 - r, y + 1, z + 1 - r,
-    );
+    return new AABB(x + r, y, z + r, x + 1 - r, y + 1, z + 1 - r);
   }
 
   /** C++ CactusTile::getTexture(int face) */
@@ -90,11 +86,7 @@ export class CactusTile extends Tile {
   }
 
   /** C++ CactusTile::neighborChanged(Level*, int, int, int, int) */
-  override neighborChanged(
-    level: Level,
-    x: number, y: number, z: number,
-    _type: number,
-  ): void {
+  override neighborChanged(level: Level, x: number, y: number, z: number, _type: number): void {
     if (!this.canSurvive(level, x, y, z)) {
       // 注意：这里 odds = 1，不是 0
       this.spawnResources(level, x, y, z, level.getData(x, y, z), 1);
@@ -114,11 +106,7 @@ export class CactusTile extends Tile {
   }
 
   /** C++ CactusTile::entityInside(Level*, int, int, int, Entity*) */
-  override entityInside(
-    _level: Level,
-    _x: number, _y: number, _z: number,
-    entity: Entity,
-  ): void {
+  override entityInside(_level: Level, _x: number, _y: number, _z: number, entity: Entity): void {
     entity.hurt(null, 1);
   }
 }

@@ -1,9 +1,9 @@
-import { Tile } from "./Tile";
-import { Material } from "../material/Material";
-import { Level } from "../Level";
-import { Item } from "../../item/Item";
-import { LightLayer } from "../LightLayer";
-import type { Random } from "@mcpe/util";
+import { Tile } from './Tile';
+import { Material } from '../material/Material';
+import { Level } from '../Level';
+import { Item } from '../../item/Item';
+import { LightLayer } from '../LightLayer';
+import type { Random } from '@mcpe/util';
 
 export class SnowTile extends Tile {
   /** C++ SnowTile::SnowTile(int id, int tex) */

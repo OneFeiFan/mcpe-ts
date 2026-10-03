@@ -11,7 +11,21 @@
  */
 import { LOGI, Stopwatch } from '@mcpe/platform';
 import { Mth, Random, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH } from '@mcpe/util';
-import { type AABB, type Entity, FoliageColor, GrassColor, type HitResult, HitResultType, type Level, LevelConstants, LevelListener, type Mob, type Player, Tile, type Vec3 } from '@mcpe/world';
+import {
+  type AABB,
+  type Entity,
+  FoliageColor,
+  GrassColor,
+  type HitResult,
+  HitResultType,
+  type Level,
+  LevelConstants,
+  LevelListener,
+  type Mob,
+  type Player,
+  Tile,
+  type Vec3,
+} from '@mcpe/world';
 import { Minecraft } from '../Minecraft';
 import { OptionId } from '../Options';
 import { Chunk } from './Chunk';
@@ -20,10 +34,36 @@ import type { Culler } from './culling/Culler';
 import { DirtyChunkSorter, sorterComparator } from './DirtyChunkSorter';
 import { DistanceChunkSorter } from './DistanceChunkSorter';
 import {
-  GL_ALPHA_TEST, GL_BLEND, GL_DEPTH_TEST, GL_DST_COLOR, GL_FOG, GL_LIGHTING, GL_LINE_STRIP, GL_LINES, GL_ONE, GL_ONE_MINUS_SRC_ALPHA,
-  GL_POLYGON_OFFSET_FILL, GL_SRC_ALPHA, GL_SRC_COLOR, GL_TEXTURE_2D, glBlendFunc2, glColor4f2, glColorMask, glDepthMask, glDisable2,
-  glEnable2, glGenBuffers2, glLineWidth, glPolygonOffset, glPopMatrix2, glPushMatrix2, glTranslatef2, GL_VERTEX_ARRAY, GL_TEXTURE_COORD_ARRAY,
-  glEnableClientState2, glDisableClientState2,
+  GL_ALPHA_TEST,
+  GL_BLEND,
+  GL_DEPTH_TEST,
+  GL_DST_COLOR,
+  GL_FOG,
+  GL_LIGHTING,
+  GL_LINE_STRIP,
+  GL_LINES,
+  GL_ONE,
+  GL_ONE_MINUS_SRC_ALPHA,
+  GL_POLYGON_OFFSET_FILL,
+  GL_SRC_ALPHA,
+  GL_SRC_COLOR,
+  GL_TEXTURE_2D,
+  glBlendFunc2,
+  glColor4f2,
+  glColorMask,
+  glDepthMask,
+  glDisable2,
+  glEnable2,
+  glGenBuffers2,
+  glLineWidth,
+  glPolygonOffset,
+  glPopMatrix2,
+  glPushMatrix2,
+  glTranslatef2,
+  GL_VERTEX_ARRAY,
+  GL_TEXTURE_COORD_ARRAY,
+  glEnableClientState2,
+  glDisableClientState2,
 } from './gles';
 import { RenderList } from './RenderList';
 import { Tesselator } from './Tesselator';
@@ -101,7 +141,8 @@ export class LevelRenderer extends LevelListener {
     this.textures = mc.textures;
     // #ifdef OPENGL_ES
     const maxChunksWidth = ((2 * LevelConstants.LEVEL_WIDTH) / LevelRenderer.CHUNK_SIZE + 1) | 0;
-    this.numListsOrBuffers = maxChunksWidth * maxChunksWidth * ((128 / LevelRenderer.CHUNK_SIZE) | 0) * 3;
+    this.numListsOrBuffers =
+      maxChunksWidth * maxChunksWidth * ((128 / LevelRenderer.CHUNK_SIZE) | 0) * 3;
     this.chunkBuffers = new Uint32Array(this.numListsOrBuffers);
     glGenBuffers2(this.numListsOrBuffers, this.chunkBuffers);
     LOGI(`numBuffers: ${this.numListsOrBuffers}`);
@@ -257,7 +298,15 @@ export class LevelRenderer extends LevelListener {
       for (let y = 0; y < this.yChunks; y++) {
         for (let z = 0; z < this.zChunks; z++) {
           const c = this.getLinearCoord(x, y, z);
-          const chunk = new Chunk(this.level!, x * CS, y * CS, z * CS, CS, this.chunkLists + id, this.chunkBuffers.subarray(id, id + 3)); // &chunkBuffers[id]
+          const chunk = new Chunk(
+            this.level!,
+            x * CS,
+            y * CS,
+            z * CS,
+            CS,
+            this.chunkLists + id,
+            this.chunkBuffers.subarray(id, id + 3),
+          ); // &chunkBuffers[id]
           if (this.occlusionCheck) {
             chunk.occlusion_id = 0; //occlusionCheckIds.get(count);
           }
@@ -350,7 +399,8 @@ export class LevelRenderer extends LevelListener {
       this.allChanged();
     }
     const SmoothLightState = mc.options.getBooleanValue(OptionId.OPTIONS_AMBIENT_OCCLUSION);
-    if (SmoothLightState !== Minecraft.useAmbientOcclusion) { // mc->useAmbientOcclusion 是静态成员
+    if (SmoothLightState !== Minecraft.useAmbientOcclusion) {
+      // mc->useAmbientOcclusion 是静态成员
       Minecraft.useAmbientOcclusion = SmoothLightState;
       this.allChanged();
     }
@@ -398,7 +448,11 @@ export class LevelRenderer extends LevelListener {
       this.sortedChunks!.sort(sorterComparator(new DistanceChunkSorter(player)));
     }
     let count = 0;
-    if (this.occlusionCheck && !mc.options.getBooleanValue(OptionId.OPTIONS_ANAGLYPH_3D) && layer === 0) {
+    if (
+      this.occlusionCheck &&
+      !mc.options.getBooleanValue(OptionId.OPTIONS_ANAGLYPH_3D) &&
+      layer === 0
+    ) {
       // 遮挡查询分支：occlusionCheck 恒为 false，照原样保留
       const sorted = this.sortedChunks!;
       let from = 0;
@@ -554,7 +608,10 @@ export class LevelRenderer extends LevelListener {
           if (chunk.distanceToSqr(player) > 1024.0) {
             let index: number;
             for (index = 0; index < count; index++) {
-              if (toAdd[index] !== null && dirtyChunkSorter.compare(toAdd[index]!, chunk) === false) {
+              if (
+                toAdd[index] !== null &&
+                dirtyChunkSorter.compare(toAdd[index]!, chunk) === false
+              ) {
                 break;
               }
             }
@@ -667,7 +724,13 @@ export class LevelRenderer extends LevelListener {
       }
     }
   }
-  renderHitOutline(player: Player, h: HitResult, mode: number, _inventoryItem: unknown, a: number): void {
+  renderHitOutline(
+    player: Player,
+    h: HitResult,
+    mode: number,
+    _inventoryItem: unknown,
+    a: number,
+  ): void {
     if (mode === 0 && h.type === HitResultType.TILE) {
       glEnable2(GL_BLEND);
       glBlendFunc2(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -683,7 +746,11 @@ export class LevelRenderer extends LevelListener {
         const xo = player.xOld + (player.x - player.xOld) * a;
         const yo = player.yOld + (player.y - player.yOld) * a;
         const zo = player.zOld + (player.z - player.zOld) * a;
-        this.renderAABB(Tile.tiles[tileId]!.getTileAABB(level, h.x, h.y, h.z).grow(ss, ss, ss).cloneMove(-xo, -yo, -zo));
+        this.renderAABB(
+          Tile.tiles[tileId]!.getTileAABB(level, h.x, h.y, h.z)
+            .grow(ss, ss, ss)
+            .cloneMove(-xo, -yo, -zo),
+        );
       }
       glDepthMask(true);
       glEnable2(GL_TEXTURE_2D);
@@ -754,7 +821,14 @@ export class LevelRenderer extends LevelListener {
     this.setDirty(x - 1, y - 1, z - 1, x + 1, y + 1, z + 1);
   }
 
-  override setTilesDirty(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): void {
+  override setTilesDirty(
+    x0: number,
+    y0: number,
+    z0: number,
+    x1: number,
+    y1: number,
+    z1: number,
+  ): void {
     this.setDirty(x0 - 1, y0 - 1, z0 - 1, x1 + 1, y1 + 1, z1 + 1);
   }
 
@@ -800,9 +874,16 @@ export class LevelRenderer extends LevelListener {
         const entity = entities[i]!;
         const thirdPerson = mc.options.getBooleanValue(OptionId.OPTIONS_THIRD_PERSON_VIEW);
         if (entity.shouldRender(cam) && culler.isVisible(entity.bb)) {
-          if (entity === mc.cameraTargetPlayer && !thirdPerson && mc.cameraTargetPlayer.isPlayer() && !(mc.cameraTargetPlayer as Player).isSleeping()) continue;
+          if (
+            entity === mc.cameraTargetPlayer &&
+            !thirdPerson &&
+            mc.cameraTargetPlayer.isPlayer() &&
+            !(mc.cameraTargetPlayer as Player).isSleeping()
+          )
+            continue;
           if (entity === mc.cameraTargetPlayer && !thirdPerson) continue;
-          if (!level.hasChunkAt(Mth.floor(entity.x), Mth.floor(entity.y), Mth.floor(entity.z))) continue;
+          if (!level.hasChunkAt(Mth.floor(entity.x), Mth.floor(entity.y), Mth.floor(entity.z)))
+            continue;
           toRender.push(entity);
           this.renderedEntities++;
         }
@@ -831,7 +912,13 @@ export class LevelRenderer extends LevelListener {
   // OMIT(Sound): playSound(name, x, y, z, volume, pitch)  LevelRenderer.cpp:1453
   // OMIT(Particle): addParticle(name, ...)  LevelRenderer.cpp:1463
   // OMIT(Particle): addParticle(ParticleType::Id, ...)  LevelRenderer.cpp:1509
-  renderHitSelect(player: Player, h: HitResult, mode: number, _inventoryItem: unknown, a: number): void {
+  renderHitSelect(
+    player: Player,
+    h: HitResult,
+    mode: number,
+    _inventoryItem: unknown,
+    a: number,
+  ): void {
     if (mode === 0) {
       const t = Tesselator.instance;
       glEnable2(GL_BLEND);
@@ -889,7 +976,23 @@ export class LevelRenderer extends LevelListener {
   }
 
   /** ADAPTED(Test)：只给测试与 dev 页读统计用 */
-  _statsForTest(): { xChunks: number; yChunks: number; zChunks: number; chunksLength: number; dirty: number; rendered: number; level: Level | null } {
-    return { xChunks: this.xChunks, yChunks: this.yChunks, zChunks: this.zChunks, chunksLength: this.chunksLength, dirty: this.dirtyChunks.length, rendered: this.renderedChunks, level: this.level };
+  _statsForTest(): {
+    xChunks: number;
+    yChunks: number;
+    zChunks: number;
+    chunksLength: number;
+    dirty: number;
+    rendered: number;
+    level: Level | null;
+  } {
+    return {
+      xChunks: this.xChunks,
+      yChunks: this.yChunks,
+      zChunks: this.zChunks,
+      chunksLength: this.chunksLength,
+      dirty: this.dirtyChunks.length,
+      rendered: this.renderedChunks,
+      level: this.level,
+    };
   }
 }

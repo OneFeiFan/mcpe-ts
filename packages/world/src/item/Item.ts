@@ -258,103 +258,395 @@ export class Item {
   static initItems(c: ItemClasses): void {
     if (Item.isInited) return;
     Item.isInited = true;
-    Item.shovel_iron = new c.ShovelItem(0, Tier.IRON).setIcon(2, 5).setCategory(ItemCategory.Tools).setDescriptionId('shovelIron');
-    Item.pickAxe_iron = new c.PickaxeItem(1, Tier.IRON).setIcon(2, 6).setCategory(ItemCategory.Tools).setDescriptionId('pickaxeIron');
-    Item.hatchet_iron = new c.HatchetItem(2, Tier.IRON).setIcon(2, 7).setCategory(ItemCategory.Tools).setDescriptionId('hatchetIron');
-    Item.flintAndSteel = new c.FlintAndSteelItem(3).setIcon(5, 0).setCategory(ItemCategory.Tools).setDescriptionId('flintAndSteel');
-    Item.apple = new c.FoodItem(4, 4, false).setIcon(10, 0).setCategory(ItemCategory.FoodArmor).setDescriptionId('apple');
-    Item.bow = new c.BowItem(5).setIcon(5, 1).setCategory(ItemCategory.Tools).setDescriptionId('bow');
-    Item.arrow = new Item(6).setIcon(5, 2).setCategory(ItemCategory.Tools).setDescriptionId('arrow');
-    Item.coal = new c.CoalItem(7).setIcon(7, 0).setCategory(ItemCategory.Tools).setDescriptionId('coal');
-    Item.emerald = new Item(8).setIcon(7, 3).setCategory(ItemCategory.Decorations).setDescriptionId('emerald');
-    Item.ironIngot = new Item(9).setIcon(7, 1).setCategory(ItemCategory.Decorations).setDescriptionId('ingotIron');
-    Item.goldIngot = new Item(10).setIcon(7, 2).setCategory(ItemCategory.Decorations).setDescriptionId('ingotGold');
-    Item.sword_iron = new c.WeaponItem(11, Tier.IRON).setIcon(2, 4).setCategory(ItemCategory.Tools).setDescriptionId('swordIron');
-    Item.sword_wood = new c.WeaponItem(12, Tier.WOOD).setIcon(0, 4).setCategory(ItemCategory.Tools).setDescriptionId('swordWood');
-    Item.shovel_wood = new c.ShovelItem(13, Tier.WOOD).setIcon(0, 5).setCategory(ItemCategory.Tools).setDescriptionId('shovelWood');
-    Item.pickAxe_wood = new c.PickaxeItem(14, Tier.WOOD).setIcon(0, 6).setCategory(ItemCategory.Tools).setDescriptionId('pickaxeWood');
-    Item.hatchet_wood = new c.HatchetItem(15, Tier.WOOD).setIcon(0, 7).setCategory(ItemCategory.Tools).setDescriptionId('hatchetWood');
-    Item.sword_stone = new c.WeaponItem(16, Tier.STONE).setIcon(1, 4).setCategory(ItemCategory.Tools).setDescriptionId('swordStone');
-    Item.shovel_stone = new c.ShovelItem(17, Tier.STONE).setIcon(1, 5).setCategory(ItemCategory.Tools).setDescriptionId('shovelStone');
-    Item.pickAxe_stone = new c.PickaxeItem(18, Tier.STONE).setIcon(1, 6).setCategory(ItemCategory.Tools).setDescriptionId('pickaxeStone');
-    Item.hatchet_stone = new c.HatchetItem(19, Tier.STONE).setIcon(1, 7).setCategory(ItemCategory.Tools).setDescriptionId('hatchetStone');
-    Item.sword_emerald = new c.WeaponItem(20, Tier.EMERALD).setIcon(3, 4).setCategory(ItemCategory.Tools).setDescriptionId('swordDiamond');
-    Item.shovel_emerald = new c.ShovelItem(21, Tier.EMERALD).setIcon(3, 5).setCategory(ItemCategory.Tools).setDescriptionId('shovelDiamond');
-    Item.pickAxe_emerald = new c.PickaxeItem(22, Tier.EMERALD).setIcon(3, 6).setCategory(ItemCategory.Tools).setDescriptionId('pickaxeDiamond');
-    Item.hatchet_emerald = new c.HatchetItem(23, Tier.EMERALD).setIcon(3, 7).setCategory(ItemCategory.Tools).setDescriptionId('hatchetDiamond');
-    Item.stick = new Item(24).setIcon(5, 3).handEquipped().setCategory(ItemCategory.Structures).setDescriptionId('stick');
-    Item.bowl = new Item(25).setIcon(7, 4).setCategory(ItemCategory.FoodArmor).setDescriptionId('bowl');
-    Item.mushroomStew = new c.BowlFoodItem(26, 8).setIcon(8, 4).setCategory(ItemCategory.FoodArmor).setDescriptionId('mushroomStew');
-    Item.sword_gold = new c.WeaponItem(27, Tier.GOLD).setIcon(4, 4).setCategory(ItemCategory.Tools).setDescriptionId('swordGold');
-    Item.shovel_gold = new c.ShovelItem(28, Tier.GOLD).setIcon(4, 5).setCategory(ItemCategory.Tools).setDescriptionId('shovelGold');
-    Item.pickAxe_gold = new c.PickaxeItem(29, Tier.GOLD).setIcon(4, 6).setCategory(ItemCategory.Tools).setDescriptionId('pickaxeGold');
-    Item.hatchet_gold = new c.HatchetItem(30, Tier.GOLD).setIcon(4, 7).setCategory(ItemCategory.Tools).setDescriptionId('hatchetGold');
-    Item.string = new Item(31).setIcon(8, 0).setCategory(ItemCategory.Tools).setDescriptionId('string');
-    Item.feather = new Item(32).setIcon(8, 1).setCategory(ItemCategory.Tools).setDescriptionId('feather');
-    Item.sulphur = new Item(33).setIcon(8, 2).setCategory(ItemCategory.Tools).setDescriptionId('sulphur');
-    Item.hoe_wood = new c.HoeItem(34, Tier.WOOD).setIcon(0, 8).setCategory(ItemCategory.Tools).setDescriptionId('hoeWood');
-    Item.hoe_stone = new c.HoeItem(35, Tier.STONE).setIcon(1, 8).setCategory(ItemCategory.Tools).setDescriptionId('hoeStone');
-    Item.hoe_iron = new c.HoeItem(36, Tier.IRON).setIcon(2, 8).setCategory(ItemCategory.Tools).setDescriptionId('hoeIron');
-    Item.hoe_emerald = new c.HoeItem(37, Tier.EMERALD).setIcon(3, 8).setCategory(ItemCategory.Tools).setDescriptionId('hoeDiamond');
-    Item.hoe_gold = new c.HoeItem(38, Tier.GOLD).setIcon(4, 8).setCategory(ItemCategory.Tools).setDescriptionId('hoeGold');
-    Item.seeds_wheat = new c.SeedItem(39, Tile.crops.id, Tile.farmland.id).setIcon(9, 0).setCategory(ItemCategory.FoodArmor).setDescriptionId('seeds');
-    Item.wheat = new Item(40).setIcon(9, 1).setCategory(ItemCategory.FoodArmor).setDescriptionId('wheat');
-    Item.bread = new c.FoodItem(41, 5, false).setIcon(9, 2).setCategory(ItemCategory.FoodArmor).setDescriptionId('bread');
-    Item.helmet_cloth = new c.ArmorItem(42, c.ArmorItem.CLOTH, 0, c.ArmorItem.SLOT_HEAD).setIcon(0, 0).setCategory(ItemCategory.FoodArmor).setDescriptionId('helmetCloth');
-    Item.chestplate_cloth = new c.ArmorItem(43, c.ArmorItem.CLOTH, 0, c.ArmorItem.SLOT_TORSO).setIcon(0, 1).setCategory(ItemCategory.FoodArmor).setDescriptionId('chestplateCloth');
-    Item.leggings_cloth = new c.ArmorItem(44, c.ArmorItem.CLOTH, 0, c.ArmorItem.SLOT_LEGS).setIcon(0, 2).setCategory(ItemCategory.FoodArmor).setDescriptionId('leggingsCloth');
-    Item.boots_cloth = new c.ArmorItem(45, c.ArmorItem.CLOTH, 0, c.ArmorItem.SLOT_FEET).setIcon(0, 3).setCategory(ItemCategory.FoodArmor).setDescriptionId('bootsCloth');
-    Item.helmet_chain = new c.ArmorItem(46, c.ArmorItem.CHAIN, 1, c.ArmorItem.SLOT_HEAD).setIcon(1, 0).setCategory(ItemCategory.FoodArmor).setDescriptionId('helmetChain');
-    Item.chestplate_chain = new c.ArmorItem(47, c.ArmorItem.CHAIN, 1, c.ArmorItem.SLOT_TORSO).setIcon(1, 1).setCategory(ItemCategory.FoodArmor).setDescriptionId('chestplateChain');
-    Item.leggings_chain = new c.ArmorItem(48, c.ArmorItem.CHAIN, 1, c.ArmorItem.SLOT_LEGS).setIcon(1, 2).setCategory(ItemCategory.FoodArmor).setDescriptionId('leggingsChain');
-    Item.boots_chain = new c.ArmorItem(49, c.ArmorItem.CHAIN, 1, 3).setIcon(1, 3).setCategory(ItemCategory.FoodArmor).setDescriptionId('bootsChain');
-    Item.helmet_iron = new c.ArmorItem(50, c.ArmorItem.IRON, 2, c.ArmorItem.SLOT_HEAD).setIcon(2, 0).setCategory(ItemCategory.FoodArmor).setDescriptionId('helmetIron');
-    Item.chestplate_iron = new c.ArmorItem(51, c.ArmorItem.IRON, 2, c.ArmorItem.SLOT_TORSO).setIcon(2, 1).setCategory(ItemCategory.FoodArmor).setDescriptionId('chestplateIron');
-    Item.leggings_iron = new c.ArmorItem(52, c.ArmorItem.IRON, 2, c.ArmorItem.SLOT_LEGS).setIcon(2, 2).setCategory(ItemCategory.FoodArmor).setDescriptionId('leggingsIron');
-    Item.boots_iron = new c.ArmorItem(53, c.ArmorItem.IRON, 2, c.ArmorItem.SLOT_FEET).setIcon(2, 3).setCategory(ItemCategory.FoodArmor).setDescriptionId('bootsIron');
-    Item.helmet_diamond = new c.ArmorItem(54, c.ArmorItem.DIAMOND, 3, c.ArmorItem.SLOT_HEAD).setIcon(3, 0).setCategory(ItemCategory.FoodArmor).setDescriptionId('helmetDiamond');
-    Item.chestplate_diamond = new c.ArmorItem(55, c.ArmorItem.DIAMOND, 3, c.ArmorItem.SLOT_TORSO).setIcon(3, 1).setCategory(ItemCategory.FoodArmor).setDescriptionId('chestplateDiamond');
-    Item.leggings_diamond = new c.ArmorItem(56, c.ArmorItem.DIAMOND, 3, c.ArmorItem.SLOT_LEGS).setIcon(3, 2).setCategory(ItemCategory.FoodArmor).setDescriptionId('leggingsDiamond');
-    Item.boots_diamond = new c.ArmorItem(57, c.ArmorItem.DIAMOND, 3, c.ArmorItem.SLOT_FEET).setIcon(3, 3).setCategory(ItemCategory.FoodArmor).setDescriptionId('bootsDiamond');
-    Item.helmet_gold = new c.ArmorItem(58, c.ArmorItem.GOLD, 4, c.ArmorItem.SLOT_HEAD).setIcon(4, 0).setCategory(ItemCategory.FoodArmor).setDescriptionId('helmetGold');
-    Item.chestplate_gold = new c.ArmorItem(59, c.ArmorItem.GOLD, 4, c.ArmorItem.SLOT_TORSO).setIcon(4, 1).setCategory(ItemCategory.FoodArmor).setDescriptionId('chestplateGold');
-    Item.leggings_gold = new c.ArmorItem(60, c.ArmorItem.GOLD, 4, c.ArmorItem.SLOT_LEGS).setIcon(4, 2).setCategory(ItemCategory.FoodArmor).setDescriptionId('leggingsGold');
-    Item.boots_gold = new c.ArmorItem(61, c.ArmorItem.GOLD, 4, c.ArmorItem.SLOT_FEET).setIcon(4, 3).setCategory(ItemCategory.FoodArmor).setDescriptionId('bootsGold');
-    Item.flint = new Item(62).setIcon(6, 0).setCategory(ItemCategory.Tools).setDescriptionId('flint');
-    Item.porkChop_raw = new c.FoodItem(63, 3, true).setIcon(7, 5).setCategory(ItemCategory.FoodArmor).setDescriptionId('porkchopRaw');
-    Item.porkChop_cooked = new c.FoodItem(64, 8, true).setIcon(8, 5).setCategory(ItemCategory.FoodArmor).setDescriptionId('porkchopCooked');
-    Item.painting = new c.HangingEntityItem(65, EntityTypes.IdPainting).setIcon(10, 1).setCategory(ItemCategory.Decorations).setDescriptionId('painting');
-    Item.sign = new c.SignItem(67).setIcon(10, 2).setCategory(ItemCategory.Decorations).setDescriptionId('sign');
-    Item.door_wood = new c.DoorItem(68, Material.wood).setIcon(11, 2).setCategory(ItemCategory.Structures).setDescriptionId('doorWood');
-    Item.door_iron = new c.DoorItem(74, Material.metal).setIcon(12, 2).setCategory(ItemCategory.Structures).setDescriptionId('doorIron');
-    Item.snowBall = new c.SnowballItem(76).setIcon(14, 0).setCategory(ItemCategory.Decorations).setDescriptionId('snowball');
-    Item.leather = new Item(78).setIcon(7, 6).setCategory(ItemCategory.Tools).setDescriptionId('leather');
-    Item.brick = new Item(80).setIcon(6, 1).setCategory(ItemCategory.Structures).setDescriptionId('brick');
-    Item.clay = new Item(81).setIcon(9, 3).setCategory(ItemCategory.Structures).setDescriptionId('clay');
-    Item.reeds = new c.TilePlanterItem(82, Tile.reeds).setIcon(11, 1).setCategory(ItemCategory.FoodArmor).setDescriptionId('reeds');
-    Item.paper = new Item(83).setIcon(10, 3).setCategory(ItemCategory.Decorations).setDescriptionId('paper');
-    Item.book = new Item(84).setIcon(11, 3).setCategory(ItemCategory.Decorations).setDescriptionId('book');
-    Item.slimeBall = new Item(85).setIcon(14, 1).setCategory(ItemCategory.Decorations).setDescriptionId('slimeball');
-    Item.egg = new c.EggItem(88).setIcon(12, 0).setCategory(ItemCategory.FoodArmor).setDescriptionId('egg');
-    Item.compass = new Item(89).setIcon(6, 3).setCategory(ItemCategory.Tools).setDescriptionId('compass');
-    Item.clock = new Item(91).setIcon(6, 4).setCategory(ItemCategory.Tools).setDescriptionId('clock');
-    Item.yellowDust = new Item(92).setIcon(9, 4).setCategory(ItemCategory.Tools).setDescriptionId('yellowDust');
-    Item.dye_powder = new c.DyePowderItem(95).setIcon(14, 4).setCategory(ItemCategory.Decorations).setDescriptionId('dyePowder');
-    Item.bone = new Item(96).setIcon(12, 1).setCategory(ItemCategory.Tools).setDescriptionId('bone').handEquipped();
-    Item.sugar = new Item(97).setIcon(13, 0).setCategory(ItemCategory.FoodArmor).setDescriptionId('sugar').handEquipped();
-    Item.bed = new c.BedItem(99).setMaxStackSize(1).setIcon(13, 2).setCategory(ItemCategory.Structures).setDescriptionId('bed');
-    Item.shears = new c.ShearsItem(103).setIcon(13, 5).setCategory(ItemCategory.Tools).setDescriptionId('shears');
-    Item.melon = new c.FoodItem(104, 2, false).setIcon(13, 6).setCategory(ItemCategory.FoodArmor).setDescriptionId('melon');
-    Item.seeds_melon = new c.SeedItem(106, Tile.melonStem.id, Tile.farmland.id).setIcon(14, 3).setCategory(ItemCategory.FoodArmor).setDescriptionId('seeds_melon');
-    Item.beef_raw = new c.FoodItem(107, 3,  true).setIcon(9, 6).setCategory(ItemCategory.FoodArmor).setDescriptionId('beefRaw');
-    Item.beef_cooked = new c.FoodItem(108, 8,  true).setIcon(10, 6).setCategory(ItemCategory.FoodArmor).setDescriptionId('beefCooked');
-    Item.chicken_raw = new c.FoodItem(109, 2,  true).setIcon(9, 7).setCategory(ItemCategory.FoodArmor).setDescriptionId('chickenRaw');
-    Item.chicken_cooked = new c.FoodItem(110, 6,  true).setIcon(10, 7).setCategory(ItemCategory.FoodArmor).setDescriptionId('chickenCooked');
-    Item.netherbrick = new Item(149).setIcon(5, 9).setDescriptionId('netherbrickItem').setCategory(ItemCategory.Structures);
-    Item.netherQuartz = new Item(150).setIcon(5, 10).setDescriptionId('netherquartz').setCategory(ItemCategory.Mechanisms);
-    Item.camera = new c.CameraItem(200).setIcon(2, 15).setCategory(ItemCategory.Decorations).setDescriptionId('camera');
+    Item.shovel_iron = new c.ShovelItem(0, Tier.IRON)
+      .setIcon(2, 5)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('shovelIron');
+    Item.pickAxe_iron = new c.PickaxeItem(1, Tier.IRON)
+      .setIcon(2, 6)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('pickaxeIron');
+    Item.hatchet_iron = new c.HatchetItem(2, Tier.IRON)
+      .setIcon(2, 7)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('hatchetIron');
+    Item.flintAndSteel = new c.FlintAndSteelItem(3)
+      .setIcon(5, 0)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('flintAndSteel');
+    Item.apple = new c.FoodItem(4, 4, false)
+      .setIcon(10, 0)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('apple');
+    Item.bow = new c.BowItem(5)
+      .setIcon(5, 1)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('bow');
+    Item.arrow = new Item(6)
+      .setIcon(5, 2)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('arrow');
+    Item.coal = new c.CoalItem(7)
+      .setIcon(7, 0)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('coal');
+    Item.emerald = new Item(8)
+      .setIcon(7, 3)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('emerald');
+    Item.ironIngot = new Item(9)
+      .setIcon(7, 1)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('ingotIron');
+    Item.goldIngot = new Item(10)
+      .setIcon(7, 2)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('ingotGold');
+    Item.sword_iron = new c.WeaponItem(11, Tier.IRON)
+      .setIcon(2, 4)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('swordIron');
+    Item.sword_wood = new c.WeaponItem(12, Tier.WOOD)
+      .setIcon(0, 4)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('swordWood');
+    Item.shovel_wood = new c.ShovelItem(13, Tier.WOOD)
+      .setIcon(0, 5)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('shovelWood');
+    Item.pickAxe_wood = new c.PickaxeItem(14, Tier.WOOD)
+      .setIcon(0, 6)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('pickaxeWood');
+    Item.hatchet_wood = new c.HatchetItem(15, Tier.WOOD)
+      .setIcon(0, 7)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('hatchetWood');
+    Item.sword_stone = new c.WeaponItem(16, Tier.STONE)
+      .setIcon(1, 4)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('swordStone');
+    Item.shovel_stone = new c.ShovelItem(17, Tier.STONE)
+      .setIcon(1, 5)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('shovelStone');
+    Item.pickAxe_stone = new c.PickaxeItem(18, Tier.STONE)
+      .setIcon(1, 6)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('pickaxeStone');
+    Item.hatchet_stone = new c.HatchetItem(19, Tier.STONE)
+      .setIcon(1, 7)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('hatchetStone');
+    Item.sword_emerald = new c.WeaponItem(20, Tier.EMERALD)
+      .setIcon(3, 4)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('swordDiamond');
+    Item.shovel_emerald = new c.ShovelItem(21, Tier.EMERALD)
+      .setIcon(3, 5)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('shovelDiamond');
+    Item.pickAxe_emerald = new c.PickaxeItem(22, Tier.EMERALD)
+      .setIcon(3, 6)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('pickaxeDiamond');
+    Item.hatchet_emerald = new c.HatchetItem(23, Tier.EMERALD)
+      .setIcon(3, 7)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('hatchetDiamond');
+    Item.stick = new Item(24)
+      .setIcon(5, 3)
+      .handEquipped()
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('stick');
+    Item.bowl = new Item(25)
+      .setIcon(7, 4)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('bowl');
+    Item.mushroomStew = new c.BowlFoodItem(26, 8)
+      .setIcon(8, 4)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('mushroomStew');
+    Item.sword_gold = new c.WeaponItem(27, Tier.GOLD)
+      .setIcon(4, 4)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('swordGold');
+    Item.shovel_gold = new c.ShovelItem(28, Tier.GOLD)
+      .setIcon(4, 5)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('shovelGold');
+    Item.pickAxe_gold = new c.PickaxeItem(29, Tier.GOLD)
+      .setIcon(4, 6)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('pickaxeGold');
+    Item.hatchet_gold = new c.HatchetItem(30, Tier.GOLD)
+      .setIcon(4, 7)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('hatchetGold');
+    Item.string = new Item(31)
+      .setIcon(8, 0)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('string');
+    Item.feather = new Item(32)
+      .setIcon(8, 1)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('feather');
+    Item.sulphur = new Item(33)
+      .setIcon(8, 2)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('sulphur');
+    Item.hoe_wood = new c.HoeItem(34, Tier.WOOD)
+      .setIcon(0, 8)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('hoeWood');
+    Item.hoe_stone = new c.HoeItem(35, Tier.STONE)
+      .setIcon(1, 8)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('hoeStone');
+    Item.hoe_iron = new c.HoeItem(36, Tier.IRON)
+      .setIcon(2, 8)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('hoeIron');
+    Item.hoe_emerald = new c.HoeItem(37, Tier.EMERALD)
+      .setIcon(3, 8)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('hoeDiamond');
+    Item.hoe_gold = new c.HoeItem(38, Tier.GOLD)
+      .setIcon(4, 8)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('hoeGold');
+    Item.seeds_wheat = new c.SeedItem(39, Tile.crops.id, Tile.farmland.id)
+      .setIcon(9, 0)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('seeds');
+    Item.wheat = new Item(40)
+      .setIcon(9, 1)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('wheat');
+    Item.bread = new c.FoodItem(41, 5, false)
+      .setIcon(9, 2)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('bread');
+    Item.helmet_cloth = new c.ArmorItem(42, c.ArmorItem.CLOTH, 0, c.ArmorItem.SLOT_HEAD)
+      .setIcon(0, 0)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('helmetCloth');
+    Item.chestplate_cloth = new c.ArmorItem(43, c.ArmorItem.CLOTH, 0, c.ArmorItem.SLOT_TORSO)
+      .setIcon(0, 1)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('chestplateCloth');
+    Item.leggings_cloth = new c.ArmorItem(44, c.ArmorItem.CLOTH, 0, c.ArmorItem.SLOT_LEGS)
+      .setIcon(0, 2)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('leggingsCloth');
+    Item.boots_cloth = new c.ArmorItem(45, c.ArmorItem.CLOTH, 0, c.ArmorItem.SLOT_FEET)
+      .setIcon(0, 3)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('bootsCloth');
+    Item.helmet_chain = new c.ArmorItem(46, c.ArmorItem.CHAIN, 1, c.ArmorItem.SLOT_HEAD)
+      .setIcon(1, 0)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('helmetChain');
+    Item.chestplate_chain = new c.ArmorItem(47, c.ArmorItem.CHAIN, 1, c.ArmorItem.SLOT_TORSO)
+      .setIcon(1, 1)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('chestplateChain');
+    Item.leggings_chain = new c.ArmorItem(48, c.ArmorItem.CHAIN, 1, c.ArmorItem.SLOT_LEGS)
+      .setIcon(1, 2)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('leggingsChain');
+    Item.boots_chain = new c.ArmorItem(49, c.ArmorItem.CHAIN, 1, 3)
+      .setIcon(1, 3)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('bootsChain');
+    Item.helmet_iron = new c.ArmorItem(50, c.ArmorItem.IRON, 2, c.ArmorItem.SLOT_HEAD)
+      .setIcon(2, 0)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('helmetIron');
+    Item.chestplate_iron = new c.ArmorItem(51, c.ArmorItem.IRON, 2, c.ArmorItem.SLOT_TORSO)
+      .setIcon(2, 1)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('chestplateIron');
+    Item.leggings_iron = new c.ArmorItem(52, c.ArmorItem.IRON, 2, c.ArmorItem.SLOT_LEGS)
+      .setIcon(2, 2)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('leggingsIron');
+    Item.boots_iron = new c.ArmorItem(53, c.ArmorItem.IRON, 2, c.ArmorItem.SLOT_FEET)
+      .setIcon(2, 3)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('bootsIron');
+    Item.helmet_diamond = new c.ArmorItem(54, c.ArmorItem.DIAMOND, 3, c.ArmorItem.SLOT_HEAD)
+      .setIcon(3, 0)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('helmetDiamond');
+    Item.chestplate_diamond = new c.ArmorItem(55, c.ArmorItem.DIAMOND, 3, c.ArmorItem.SLOT_TORSO)
+      .setIcon(3, 1)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('chestplateDiamond');
+    Item.leggings_diamond = new c.ArmorItem(56, c.ArmorItem.DIAMOND, 3, c.ArmorItem.SLOT_LEGS)
+      .setIcon(3, 2)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('leggingsDiamond');
+    Item.boots_diamond = new c.ArmorItem(57, c.ArmorItem.DIAMOND, 3, c.ArmorItem.SLOT_FEET)
+      .setIcon(3, 3)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('bootsDiamond');
+    Item.helmet_gold = new c.ArmorItem(58, c.ArmorItem.GOLD, 4, c.ArmorItem.SLOT_HEAD)
+      .setIcon(4, 0)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('helmetGold');
+    Item.chestplate_gold = new c.ArmorItem(59, c.ArmorItem.GOLD, 4, c.ArmorItem.SLOT_TORSO)
+      .setIcon(4, 1)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('chestplateGold');
+    Item.leggings_gold = new c.ArmorItem(60, c.ArmorItem.GOLD, 4, c.ArmorItem.SLOT_LEGS)
+      .setIcon(4, 2)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('leggingsGold');
+    Item.boots_gold = new c.ArmorItem(61, c.ArmorItem.GOLD, 4, c.ArmorItem.SLOT_FEET)
+      .setIcon(4, 3)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('bootsGold');
+    Item.flint = new Item(62)
+      .setIcon(6, 0)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('flint');
+    Item.porkChop_raw = new c.FoodItem(63, 3, true)
+      .setIcon(7, 5)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('porkchopRaw');
+    Item.porkChop_cooked = new c.FoodItem(64, 8, true)
+      .setIcon(8, 5)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('porkchopCooked');
+    Item.painting = new c.HangingEntityItem(65, EntityTypes.IdPainting)
+      .setIcon(10, 1)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('painting');
+    Item.sign = new c.SignItem(67)
+      .setIcon(10, 2)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('sign');
+    Item.door_wood = new c.DoorItem(68, Material.wood)
+      .setIcon(11, 2)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('doorWood');
+    Item.door_iron = new c.DoorItem(74, Material.metal)
+      .setIcon(12, 2)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('doorIron');
+    Item.snowBall = new c.SnowballItem(76)
+      .setIcon(14, 0)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('snowball');
+    Item.leather = new Item(78)
+      .setIcon(7, 6)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('leather');
+    Item.brick = new Item(80)
+      .setIcon(6, 1)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('brick');
+    Item.clay = new Item(81)
+      .setIcon(9, 3)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('clay');
+    Item.reeds = new c.TilePlanterItem(82, Tile.reeds)
+      .setIcon(11, 1)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('reeds');
+    Item.paper = new Item(83)
+      .setIcon(10, 3)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('paper');
+    Item.book = new Item(84)
+      .setIcon(11, 3)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('book');
+    Item.slimeBall = new Item(85)
+      .setIcon(14, 1)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('slimeball');
+    Item.egg = new c.EggItem(88)
+      .setIcon(12, 0)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('egg');
+    Item.compass = new Item(89)
+      .setIcon(6, 3)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('compass');
+    Item.clock = new Item(91)
+      .setIcon(6, 4)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('clock');
+    Item.yellowDust = new Item(92)
+      .setIcon(9, 4)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('yellowDust');
+    Item.dye_powder = new c.DyePowderItem(95)
+      .setIcon(14, 4)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('dyePowder');
+    Item.bone = new Item(96)
+      .setIcon(12, 1)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('bone')
+      .handEquipped();
+    Item.sugar = new Item(97)
+      .setIcon(13, 0)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('sugar')
+      .handEquipped();
+    Item.bed = new c.BedItem(99)
+      .setMaxStackSize(1)
+      .setIcon(13, 2)
+      .setCategory(ItemCategory.Structures)
+      .setDescriptionId('bed');
+    Item.shears = new c.ShearsItem(103)
+      .setIcon(13, 5)
+      .setCategory(ItemCategory.Tools)
+      .setDescriptionId('shears');
+    Item.melon = new c.FoodItem(104, 2, false)
+      .setIcon(13, 6)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('melon');
+    Item.seeds_melon = new c.SeedItem(106, Tile.melonStem.id, Tile.farmland.id)
+      .setIcon(14, 3)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('seeds_melon');
+    Item.beef_raw = new c.FoodItem(107, 3, true)
+      .setIcon(9, 6)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('beefRaw');
+    Item.beef_cooked = new c.FoodItem(108, 8, true)
+      .setIcon(10, 6)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('beefCooked');
+    Item.chicken_raw = new c.FoodItem(109, 2, true)
+      .setIcon(9, 7)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('chickenRaw');
+    Item.chicken_cooked = new c.FoodItem(110, 6, true)
+      .setIcon(10, 7)
+      .setCategory(ItemCategory.FoodArmor)
+      .setDescriptionId('chickenCooked');
+    Item.netherbrick = new Item(149)
+      .setIcon(5, 9)
+      .setDescriptionId('netherbrickItem')
+      .setCategory(ItemCategory.Structures);
+    Item.netherQuartz = new Item(150)
+      .setIcon(5, 10)
+      .setDescriptionId('netherquartz')
+      .setCategory(ItemCategory.Mechanisms);
+    Item.camera = new c.CameraItem(200)
+      .setIcon(2, 15)
+      .setCategory(ItemCategory.Decorations)
+      .setDescriptionId('camera');
     for (let i = 256; i < Item.MAX_ITEMS; ++i) {
-      if (Item.items[i] && Item.items[i]!.category === -1) LOGE(`Error: Missing category for item ${Item.items[i]!.id}: ${Item.items[i]!.getDescriptionId()}`);
+      if (Item.items[i] && Item.items[i]!.category === -1)
+        LOGE(
+          `Error: Missing category for item ${Item.items[i]!.id}: ${Item.items[i]!.getDescriptionId()}`,
+        );
     }
   }
 
@@ -386,7 +678,7 @@ export class Item {
   // C++ Item::getIcon(const ItemInstance* itemInstance)
   getIcon(itemInstance: ItemInstance): number;
   getIcon(a: number | ItemInstance): number {
-    if (typeof a === "number") return this.getIconForAux(a);
+    if (typeof a === 'number') return this.getIconForAux(a);
     return this.getIconForInstance(a);
   }
 
@@ -399,18 +691,73 @@ export class Item {
   }
 
   /** C++ 的两个重载（R10）：useOn(itemInstance, level, x, y, z, face) 与 useOn(itemInstance, player, level, x, y, z, face, clickX, clickY, clickZ) */
-  useOn(itemInstance: ItemInstance, level: Level, x: number, y: number, z: number, face: number): boolean;
-  useOn(itemInstance: ItemInstance, player: Player, level: Level, x: number, y: number, z: number, face: number, clickX: number, clickY: number, clickZ: number): boolean;
+  useOn(
+    itemInstance: ItemInstance,
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    face: number,
+  ): boolean;
+  useOn(
+    itemInstance: ItemInstance,
+    player: Player,
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    face: number,
+    clickX: number,
+    clickY: number,
+    clickZ: number,
+  ): boolean;
   useOn(...a: unknown[]): boolean {
-    if (a.length <= 6) return this.useOnWithoutPlayer(a[0] as ItemInstance, a[1] as Level, a[2] as number, a[3] as number, a[4] as number, a[5] as number);
-    return this.useOnByPlayer(a[0] as ItemInstance, a[1] as Player, a[2] as Level, a[3] as number, a[4] as number, a[5] as number, a[6] as number, a[7] as number, a[8] as number, a[9] as number);
+    if (a.length <= 6)
+      return this.useOnWithoutPlayer(
+        a[0] as ItemInstance,
+        a[1] as Level,
+        a[2] as number,
+        a[3] as number,
+        a[4] as number,
+        a[5] as number,
+      );
+    return this.useOnByPlayer(
+      a[0] as ItemInstance,
+      a[1] as Player,
+      a[2] as Level,
+      a[3] as number,
+      a[4] as number,
+      a[5] as number,
+      a[6] as number,
+      a[7] as number,
+      a[8] as number,
+      a[9] as number,
+    );
   }
 
-  useOnWithoutPlayer(_itemInstance: ItemInstance, _level: Level, _x: number, _y: number, _z: number, _face: number): boolean {
+  useOnWithoutPlayer(
+    _itemInstance: ItemInstance,
+    _level: Level,
+    _x: number,
+    _y: number,
+    _z: number,
+    _face: number,
+  ): boolean {
     return false;
   }
 
-  useOnByPlayer(_itemInstance: ItemInstance, _player: Player, _level: Level, _x: number, _y: number, _z: number, _face: number, _clickX: number, _clickY: number, _clickZ: number): boolean {
+  useOnByPlayer(
+    _itemInstance: ItemInstance,
+    _player: Player,
+    _level: Level,
+    _x: number,
+    _y: number,
+    _z: number,
+    _face: number,
+    _clickX: number,
+    _clickY: number,
+    _clickZ: number,
+  ): boolean {
     return false;
   }
 
@@ -455,7 +802,13 @@ export class Item {
 
   hurtEnemy(_itemInstance: ItemInstance, _mob: Mob): void {}
 
-  mineBlock(_itemInstance: ItemInstance, _tile: number, _x: number, _y: number, _z: number): boolean {
+  mineBlock(
+    _itemInstance: ItemInstance,
+    _tile: number,
+    _x: number,
+    _y: number,
+    _z: number,
+  ): boolean {
     return false;
   }
 
@@ -497,7 +850,9 @@ export class Item {
 
   /** C++ 的两个重载：getDescription() 与 getDescription(const ItemInstance*)（R10：$0 / $1） */
   getDescription(instance?: ItemInstance | null): string {
-    return instance === undefined ? this.getDescriptionForItem() : this.getDescriptionForInstance(instance);
+    return instance === undefined
+      ? this.getDescriptionForItem()
+      : this.getDescriptionForInstance(instance);
   }
 
   getDescriptionForItem(): string {
@@ -510,7 +865,9 @@ export class Item {
 
   /** C++ 的两个重载：getDescriptionId() 与 getDescriptionId(const ItemInstance*)（R10：$0 / $1） */
   getDescriptionId(instance?: ItemInstance | null): string {
-    return instance === undefined ? this.getDescriptionIdForItem() : this.getDescriptionIdForInstance(instance);
+    return instance === undefined
+      ? this.getDescriptionIdForItem()
+      : this.getDescriptionIdForInstance(instance);
   }
 
   getDescriptionIdForItem(): string {
@@ -539,7 +896,12 @@ export class Item {
     return I18n.get(this.getDescriptionId() + '.name');
   }
 
-  releaseUsing(_itemInstance: ItemInstance, _level: Level, _player: Player, _durationLeft: number): void {}
+  releaseUsing(
+    _itemInstance: ItemInstance,
+    _level: Level,
+    _player: Player,
+    _durationLeft: number,
+  ): void {}
 
   getUseAnimation(): UseAnim.UseAnimation {
     return UseAnim.none;
