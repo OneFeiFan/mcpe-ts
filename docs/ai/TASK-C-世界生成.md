@@ -8,8 +8,13 @@
 
 原则不变：1:1 移植 C++；浏览器差异照旧集中在 VirtualFS / ADAPTED(Web) 那层。
 
-**一次只做一个步骤。** 每步结束：`pnpm typecheck && pnpm test` 通过、`pnpm ledger` 条数不升、提交。
+**一次只做一个步骤。** 每步结束：`pnpm typecheck && pnpm test` 通过、提交，并记下 `pnpm ledger` 的变化。
 步骤里写了"黄金样本"的，样本通过才算完成。
+
+> ⚠ **"台账条数不升"这条只适用于"把已有 DEFERRED 换成真实调用"的步骤**（B 那一串就是那样）。
+> C-2 / C-4 / C-5 都是**新起一个类**，没移植完的函数按 R3 留 DEFERRED，条数必然上升 ——
+> C-2 实测是 +10。要紧的是**每条新增都对得上具体哪句 C++**，而不是数字本身。
+> 会下降的是 C-3（`prepareHeights`/`buildSurfaces` 转正）和 C-7（`postProcess` 的账要结清）。
 
 ---
 
