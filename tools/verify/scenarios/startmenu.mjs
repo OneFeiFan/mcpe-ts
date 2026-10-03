@@ -232,4 +232,31 @@ export default async function (h) {
     s7.msg.includes('RandomLevelSource'),
     `抛的是"世界生成没移植"那一句（实际：${s7.msg.slice(0, 60)}）`,
   );
+
+  // ---- B8g：进世界的**另一条**入口 —— 在世界列表上点一张世界牌 ----
+  // 和上面「Create」是同一个坑（都走 Minecraft.selectLevel），但入口不同、代码不同，值得各钉一条。
+  // 这条断言**将来也会红** —— 那时候说明世界生成移植好了。
+  await h.state('从新建世界退回起始菜单', (a) => {
+    const s = a.screen;
+    s.buttonClicked(s.buttons.find((b) => b.id === 2)); // bBack
+    return { cls: a.screen.constructor.name };
+  });
+  const s8 = await h.state('进世界列表，点那张 demo 牌（预期撞上未移植的世界生成）', (a) => {
+    a.screenChooser.setScreen(5); // ScreenId.SCREEN_SELECTWORLD
+    const list = a.screen;
+    list.worldsList.selectItem(list.worldsList.selectedItem, false); // 点"已经选中"的那张 = 挑中它
+    const picked = list.worldsList.hasPickedLevel;
+    try {
+      list.tick(); // 真正的 selectLevel 在 tick 里（WorldSelectionList 只负责标记"挑中了"）
+      return { picked, threw: false, msg: '' };
+    } catch (e) {
+      return { picked, threw: true, msg: String(e && e.message) };
+    }
+  });
+  h.expect(s8.picked === true, '点一下世界牌，列表记下了"挑中这个"');
+  h.expect(s8.threw === true, '进世界会抛（世界生成还没移植）');
+  h.expect(
+    s8.msg.includes('RandomLevelSource'),
+    `抛的是"世界生成没移植"那一句（实际：${s8.msg.slice(0, 60)}）`,
+  );
 }

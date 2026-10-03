@@ -1,4 +1,36 @@
 // 默认场景：启动入口、进入世界、HUD、物品选择界面、暂停界面都能正常出现，且没有页面错误。
+//
+// 末尾是 B8g 的完整往返：**放一格方块 → 暂停里点「Quit to title」退回标题 → 再进那个世界 → 方块还在**。
+// 这是这条链在浏览器里唯一的端到端验证（单测 leave-game.test.ts 也做同样的事，但那是无头的）。
+// 和 storage.mjs 的区别：那个是"刷新页面"（走 IndexedDB → VFS → 重新读盘），
+// 这个是"退回标题再进"（走 leaveGame 的 saveAll(true)，VFS 还在内存里）。
+
+/** 在玩家正前方 3 格砌一格石头（朝向钉成 0，这样退出去再进来能按同一公式找回坐标） */
+const PLACE_STONE = (a) => {
+  a.player.yRot = 0; // 朝 +z
+  const x = Math.floor(a.player.x);
+  const z = Math.floor(a.player.z) + 3;
+  const y = Math.floor(a.player.y);
+  a.level.setTile(x, y, z, 1); // 1 = Tile.stone
+  return { x, y, z, tile: a.level.getTile(x, y, z) };
+};
+
+/** 重进之后按同一条公式找回那一格（只读）。顺带把镜头也报出来，便于对不上时看是哪儿变了 */
+const FIND_STONE = (a) => {
+  a.player.yRot = 0;
+  const x = Math.floor(a.player.x);
+  const z = Math.floor(a.player.z) + 3;
+  const y = Math.floor(a.player.y);
+  return {
+    x,
+    y,
+    z,
+    tile: a.level.getTile(x, y, z),
+    pos: [a.player.x, a.player.y, a.player.z],
+    rot: [a.player.yRot, a.player.xRot],
+  };
+};
+
 export default async function (h) {
   // 进世界时 Tile::initTiles / Item::initItems 会打 4 条 “Missing category for tile”。
   // 这是原版自己的诊断，不是移植问题：黄金样本 fixtures/golden/registry.json 里
@@ -69,6 +101,13 @@ export default async function (h) {
   );
 
   await h.shot('01-游戏中');
+
+  // ---- B8g：先砌一格石头，等下要靠它验证"退回标题时真的存下来了" ----
+  const placed = await h.state('在准星前方砌一格石头', PLACE_STONE);
+  h.expect(placed.tile === 1, '石头砌好了');
+  await h.wait(400); // 让区块标记成 unsaved
+  await h.shot('01b-砌了一格石头');
+
   await h.page.evaluate(() => window.__app.screenChooser.setScreen(6)); // SCREEN_BLOCKSELECTION
   await h.wait(800);
   const s1 = await h.state('物品选择界面', (a) => a.screen && a.screen.constructor.name);
@@ -82,10 +121,8 @@ export default async function (h) {
   await h.shot('03-暂停界面');
 
   // ---- B8f：暂停界面的「Quit to title」把世界拆掉、退回起始菜单 ----
-  // 【为什么放最后】拆掉之后这个 demo 世界就回不来了 —— 再进世界要走 selectLevel，
-  // 而世界生成（RandomLevelSource）还没移植。所以这一步之后场景就结束。
-  // "退出前先把改动落盘"由单测 leave-game.test.ts 钉住（那里能真的重进世界比对），
-  // 浏览器侧只验证拆干净了、界面退对了、而且拆完还能继续跑帧不报错。
+  // "退出前先把改动落盘"由单测 leave-game.test.ts 钉住，浏览器侧这里验证拆干净了、
+  // 界面退对了、拆完还能继续跑帧不报错；紧跟着再进一次世界把方块找回来（B8g）。
   const s3 = await h.state('点「Quit to title」', (a) => {
     const s = a.screen;
     s.buttonClicked(s.buttons.find((b) => b.msg === 'Quit to title'));
@@ -116,4 +153,23 @@ export default async function (h) {
   h.expect(s4.screen === 'TouchStartMenuScreen', '跑了几帧之后还稳稳停在起始菜单');
   h.expect(s4.hint === '' || s4.hint === undefined, '没有冒出报错提示（空指针会被主循环抛出来）');
   await h.shot('04-退回起始菜单');
+
+  // ---- B8g：再进那个世界，刚才那格石头还在不在 ----
+  await h.state('再进那个世界（场景后门）', (a) => {
+    a.startDemoWorld();
+    a.setScreen(null);
+    return { screen: a.screen === null ? null : a.screen.constructor.name };
+  });
+  await h.wait(1000);
+
+  const back = await h.state('退回标题前砌的那格石头还在不在', FIND_STONE);
+  h.expect(
+    back.x === placed.x && back.y === placed.y && back.z === placed.z,
+    '又站回同一个地方（世界是从存档恢复的）',
+  );
+  h.expect(
+    back.tile === 1,
+    '方块还在 —— leaveGame 里那句 saveAll(true) 在真浏览器里也生效了（没生效这里会是空气）',
+  );
+  await h.shot('05-退出去再进来，方块还在');
 }
