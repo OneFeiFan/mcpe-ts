@@ -5,13 +5,17 @@
  * 按标签里的 `id` 造实体再把标签读进去。**只有 `loadEntity` 有人调用**（存档的 loadEntities）；
  * `CreateEntity` 的另一个调用方是网络包处理（`ClientSideNetworkHandler.cpp:235`），没移植。
  *
- * 【本轮的移植范围：只有掉落物】`CreateEntity` 那张 switch 里七种实体，TS 里**只有 ItemEntity
- * 是真的**。所以六个 case 原地留 `DEFERRED(Entity)`，`id < 64` 那条（生物）整条走不了。
+ * 【本轮的移植范围：只有掉落物 + 落沙】`CreateEntity` 那张 switch 里七种实体，TS 里
+ * **ItemEntity 与 FallingTile 是真的**。所以五个 case 原地留 `DEFERRED(Entity)`，
+ * `id < 64` 那条（生物）整条走不了。
  *
- * 【任务单 D 正在一个个补上】D1 起 `FallingTile` 已经是真类（`entity/item/FallingTile.ts`），
- * 但**这个 switch 里的 case 还没接上** —— 接线是 D2 的事。其余五个
- * （PrimedTnt / Arrow / ThrownEgg / Snowball / Painting）仍无对应文件；
+ * 【任务单 D 正在一个个补上】D1 把 `FallingTile` 写成真类，D2 把这个 switch 的 case 接上。
+ * 其余五个（PrimedTnt / Arrow / ThrownEgg / Snowball / Painting）仍无对应文件；
  * TripodCamera 还是 FORWARD-DECL（它本来就不在这张表里，只由 CameraItem 生成）。
+ *
+ * 【行号说明】下面 DEFERRED 里的 `EntityFactory.cpp:N` 是**原始文件的行号**（D2 用
+ * `rg -n` 实测的）。之前写的那批（9..14 / 36）对不上任何一个版本 —— 实测 `IdFallingTile`
+ * 在 16、`IdPainting` 在 21、`MobFactory::CreateMob` 在 37。已按实测值改齐。
  *
  * 【为什么 id < 64 是生物】`EntityTypes::IdItemEntity` 等非生物实体的 id 都从 64 起，
  * 而 `MobTypes` 全在 1..36 —— 于是 `id < 64` 就等价于"这是只生物"。这个分界线是 C++ 用
@@ -23,6 +27,7 @@ import type { Level } from '../level/Level';
 import type { Entity } from './Entity';
 import { EntityTypes } from './EntityTypes';
 import { ItemEntity } from './item/ItemEntity';
+import { FallingTile } from './item/FallingTile';
 import { Item } from '../item/Item';
 
 // OMIT(Entity): static Mob* MobFactory::CreateMob(int mobType, Level* level)  MobFactory.h:2
@@ -42,12 +47,13 @@ export class EntityFactory {
     switch (typeId) {
       case EntityTypes.IdItemEntity:
         return new ItemEntity(level);
-      // DEFERRED(Entity): case EntityTypes::IdFallingTile: return new FallingTile(level);  EntityFactory.cpp:9
-      // DEFERRED(Entity): case EntityTypes::IdPrimedTnt:   return new PrimedTnt(level);    EntityFactory.cpp:10
-      // DEFERRED(Entity): case EntityTypes::IdArrow:       return new Arrow(level);        EntityFactory.cpp:11
-      // DEFERRED(Entity): case EntityTypes::IdThrownEgg:   return new ThrownEgg(level);    EntityFactory.cpp:12
-      // DEFERRED(Entity): case EntityTypes::IdSnowball:    return new Snowball(level);     EntityFactory.cpp:13
-      // DEFERRED(Entity): case EntityTypes::IdPainting:    return new Painting(level);     EntityFactory.cpp:14
+      case EntityTypes.IdFallingTile:
+        return new FallingTile(level);
+      // DEFERRED(Entity): case EntityTypes::IdPrimedTnt:   return new PrimedTnt(level);    EntityFactory.cpp:17
+      // DEFERRED(Entity): case EntityTypes::IdArrow:       return new Arrow(level);        EntityFactory.cpp:18
+      // DEFERRED(Entity): case EntityTypes::IdThrownEgg:   return new ThrownEgg(level);    EntityFactory.cpp:19
+      // DEFERRED(Entity): case EntityTypes::IdSnowball:    return new Snowball(level);     EntityFactory.cpp:20
+      // DEFERRED(Entity): case EntityTypes::IdPainting:    return new Painting(level);     EntityFactory.cpp:21
       default:
         break;
     }
@@ -72,7 +78,7 @@ export class EntityFactory {
       // C++ 这里打的是 "at MobFactory::loadEntity"（不是 EntityFactory），原文如此
       LOGE(`Negative ItemId: ${id} at MobFactory::loadEntity\n`);
     } else if (id < 64) {
-      // DEFERRED(Entity): e = MobFactory::CreateMob(id, level);  EntityFactory.cpp:36
+      // DEFERRED(Entity): e = MobFactory::CreateMob(id, level);  EntityFactory.cpp:37
       //   MobFactory 整个没移植（见文件头那条 OMIT），所以这里只能给 null —— 也就是"这只生物读不出来"。
       e = null;
     } else {

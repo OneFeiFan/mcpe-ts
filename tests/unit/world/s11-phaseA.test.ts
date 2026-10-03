@@ -4,6 +4,7 @@ import { Random } from '@mcpe/util';
 import {
   DyePowderItem,
   Facing,
+  FallingTile,
   FoodItem,
   HeavyTile,
   initTileEntities,
@@ -168,17 +169,35 @@ describe('Tile 与 Item 的签名补全', () => {
     expect(food.useTimeDepleted(it, level, player).count).toBe(1);
   });
 
-  it('HeavyTile：instaFall 时直接落到底；平时生成下落实体的语句 DEFERRED，方块原地不动', () => {
+  // 【D2 改过】原文钉的是"生成下落实体的语句 DEFERRED，方块原地不动"。现在那三句接上了，
+  // 所以这条同时验证两件事：**实体真的造出来了**（新加的断言），以及**原方块这一帧还没被清**
+  // —— 清它的是 FallingTile::tick()，而这里只调了 heavy.tick()，实体还在待 tick 的队伍里。
+  it('HeavyTile：instaFall 时直接落到底；平时生成一个下落实体，方块等实体 tick 时才清', () => {
     const heavy = new HeavyTile(200, 0);
     Tile.tiles[200] = heavy; // 注册发生在 initTiles 调用的 init() 里；这里直接放进表
     level.setTileNoUpdate(140, 70, 140, 200);
+
+    const before = level.entities.length;
     heavy.tick(level, 140, 70, 140, level.random);
-    expect(level.getTile(140, 70, 140)).toBe(200); // FallingTile 未移植
+    expect(level.getTile(140, 70, 140)).toBe(200); // 只造了实体，方块还在
+
+    // C++: new FallingTile(level, x + 0.5f, y + 0.5f, z + 0.5f, id, level->getData(x, y, z))
+    expect(level.entities.length).toBe(before + 1);
+    const e = level.entities[level.entities.length - 1]!;
+    expect(e).toBeInstanceOf(FallingTile);
+    const ft = e as FallingTile;
+    expect([ft.tile, ft.data]).toEqual([200, 0]);
+    expect([ft.x, ft.y, ft.z]).toEqual([140.5, 70.5, 140.5]);
+
     HeavyTile.instaFall = true;
     heavy.tick(level, 140, 70, 140, level.random);
     expect([level.getTile(140, 70, 140), level.getTile(140, 64, 140)]).toEqual([0, 200]);
+    // instaFall 走的是上面那个 if 分支，不再造实体
+    expect(level.entities.length).toBe(before + 1);
+
     HeavyTile.instaFall = false;
     level.setTileNoUpdate(140, 64, 140, 0);
+    level.removeEntity(ft); // 免得这条留下来的实体影响别的用例
     Tile.tiles[200] = null;
     expect(heavy.getTickDelay(level)).toBe(2);
     expect(heavy.getTickDelay()).toBe(Tile.rock.getTickDelay());

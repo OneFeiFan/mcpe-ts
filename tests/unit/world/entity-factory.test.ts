@@ -3,6 +3,7 @@ import { CompoundTag } from '@mcpe/nbt';
 import {
   EntityFactory,
   EntityTypes,
+  FallingTile,
   Item,
   ItemEntity,
   ItemInstance,
@@ -42,10 +43,15 @@ describe('world/EntityFactory', () => {
       expect(EntityFactory.CreateEntity(EntityTypes.IdItemEntity, lv())).toBeInstanceOf(ItemEntity);
     });
 
-    it('没移植的那几种返回 null（原地留着 DEFERRED(Entity)）', () => {
-      // FallingTile / PrimedTnt / Arrow / ThrownEgg / Snowball / Painting
+    // 【这条同时就是"接线完成"的检查点】任务单 D 每接完一个实体，就把对应的 id 从下面
+    // 那张"还没移植"的表里挪上来，改成 toBeInstanceOf。D2 挪的是 IdFallingTile。
+    it('IdFallingTile → FallingTile（D2 接的线）', () => {
+      expect(EntityFactory.CreateEntity(EntityTypes.IdFallingTile, lv())).toBeInstanceOf(FallingTile);
+    });
+
+    it('还没移植的那几种返回 null（原地留着 DEFERRED(Entity)）', () => {
+      // PrimedTnt / Arrow / ThrownEgg / Snowball / Painting
       for (const id of [
-        EntityTypes.IdFallingTile,
         EntityTypes.IdPrimedTnt,
         EntityTypes.IdArrow,
         EntityTypes.IdThrownEgg,

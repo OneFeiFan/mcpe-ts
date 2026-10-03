@@ -1,11 +1,17 @@
-// 1:1 移植自 src/world/level/tile/HeavyTile.h 与 HeavyTile.cpp（S11 阶段 A，部分移植）。
-// 部分：checkSlide 里生成下落方块实体（FallingTile，计划外）的三句 DEFERRED(Entity)。instaFall 为真或周围区块不全时直接落到底，照常移植。
+// 1:1 移植自 src/world/level/tile/HeavyTile.h 与 HeavyTile.cpp（S11 阶段 A；D2 接线完成）。
+// D2：checkSlide 里生成下落方块实体（FallingTile）的三句接上了，全类已无 DEFERRED。
 // C++ 的 getTickDelay(Level*) 是新增的重载，遮蔽了 Tile::getTickDelay()（与 BedTile::setShape 同一情况）：写成一个方法，按参数分派。
+//
+// 【为什么值导入 FallingTile 不会造成 ES 模块环】`Tile.ts` 对 HeavyTile 是 `import type`（运行时抹掉），
+// 而 FallingTile → Entity → Tile 这条链上，Tile 里对 Entity 只有 `createItemEntity` 一个值导入 ——
+// 那个环是**本来就有的**，靠 registerItemEntityClass 注入绕开（见 Entity.ts:22 的说明）。
 import type { Random } from '@mcpe/util';
-import type { FallingTile } from '../../entity/item/FallingTile';
+import { FallingTile } from '../../entity/item/FallingTile';
 import type { Level } from '../Level';
 import { Material } from '../material/Material';
 import { Tile } from './Tile';
+
+const f = Math.fround;
 
 export class HeavyTile extends Tile {
   static instaFall = false;
@@ -44,8 +50,16 @@ export class HeavyTile extends Tile {
     return false;
   }
 
+  /** C++ `virtual void HeavyTile::falling(FallingTile* entity)` —— 空函数，照抄 */
   falling(_entity: FallingTile): void {}
 
+  /**
+   * C++ `virtual void HeavyTile::onLand(Level*, int xt, int yt, int zt, int data)` —— 空函数。
+   *
+   * ⚠ **全 C++ 代码库里零调用方**：`rg onLand src/` 只命中 HeavyTile.h 的声明和 HeavyTile.cpp
+   * 的定义本身。`FallingTile::tick` 落地那两个分支被原作者掏空之后，就再也没人调它了 ——
+   * 这个虚函数是**死的**。照抄保留（子类将来可能覆盖它），但别以为它在跑。
+   */
   onLand(_level: Level, _xt: number, _yt: number, _zt: number, _data: number): void {}
 
   private checkSlide(level: Level, x: number, y: number, z: number): void {
@@ -61,9 +75,18 @@ export class HeavyTile extends Tile {
           level.setTile(x, y, z, this.id);
         }
       } else if (!level.isClientSide) {
-        // DEFERRED(Entity): FallingTile* e = new FallingTile(level, x + 0.5f, y + 0.5f, z + 0.5f, id, level->getData(x, y, z));
-        // DEFERRED(Entity): falling(e);
-        // DEFERRED(Entity): level->addEntity(e);
+        // ⚠ 这里的 `id` 是 C++ 的裸名字（类作用域里等价于 this->id）；`x + 0.5f` 是 int 提升成
+        // float 之后做的 float 加法，所以外面那层 f() 也要包上。
+        const e = new FallingTile(
+          level,
+          f(x + f(0.5)),
+          f(y + f(0.5)),
+          f(z + f(0.5)),
+          this.id,
+          level.getData(x, y, z),
+        );
+        this.falling(e);
+        level.addEntity(e);
       }
     }
   }
