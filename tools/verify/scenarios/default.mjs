@@ -54,4 +54,40 @@ export default async function (h) {
   const s2 = await h.state('暂停界面', (a) => a.screen && a.screen.constructor.name);
   h.expect(s2 === 'PauseScreen', '暂停界面能打开');
   await h.shot('03-暂停界面');
+
+  // ---- B8f：暂停界面的「Quit to title」把世界拆掉、退回起始菜单 ----
+  // 【为什么放最后】拆掉之后这个 demo 世界就回不来了 —— 再进世界要走 selectLevel，
+  // 而世界生成（RandomLevelSource）还没移植。所以这一步之后场景就结束。
+  // "退出前先把改动落盘"由单测 leave-game.test.ts 钉住（那里能真的重进世界比对），
+  // 浏览器侧只验证拆干净了、界面退对了、而且拆完还能继续跑帧不报错。
+  const s3 = await h.state('点「Quit to title」', (a) => {
+    const s = a.screen;
+    s.buttonClicked(s.buttons.find((b) => b.msg === 'Quit to title'));
+    return {
+      level: a.level === null ? null : 'still-there',
+      player: a.player === null ? null : 'still-there',
+      screen: a.screen && a.screen.constructor.name,
+      isInGame: a.screen && a.screen.isInGameScreen(),
+      rendererLevel: a.levelRenderer.level === null ? null : 'still-there',
+      files: window.__vfs.listDir('/games/com.mojang/minecraftWorlds/demo').sort(),
+    };
+  });
+  h.expect(s3.level === null, '世界拆掉了（app.level 变成 null）');
+  h.expect(s3.player === null, '玩家也清掉了');
+  h.expect(s3.rendererLevel === null, 'levelRenderer 上挂的世界一并摘掉（不然还接着画旧世界）');
+  h.expect(s3.screen === 'TouchStartMenuScreen', '界面退回起始菜单');
+  h.expect(s3.isInGame === false, '起始菜单不算游戏内界面');
+  h.expect(s3.files.includes('level.dat'), '存档没被顺手删掉：level.dat 还在');
+  h.expect(s3.files.includes('chunks.dat'), '存档没被顺手删掉：chunks.dat 还在');
+
+  // 关键：离开游戏之后主循环还在转（相机目标、玩家全是 null）。多跑几帧，
+  // 任何空指针都会变成 pageerror 让这个场景挂掉。
+  await h.wait(1200);
+  const s4 = await h.state('退出之后又跑了几帧', (a) => ({
+    screen: a.screen && a.screen.constructor.name,
+    hint: document.querySelector('#status')?.textContent,
+  }));
+  h.expect(s4.screen === 'TouchStartMenuScreen', '跑了几帧之后还稳稳停在起始菜单');
+  h.expect(s4.hint === '' || s4.hint === undefined, '没有冒出报错提示（空指针会被主循环抛出来）');
+  await h.shot('04-退回起始菜单');
 }

@@ -379,7 +379,49 @@ export class Minecraft extends App {
     this._running = true;
   }
 
-  // OMIT(Storage): leaveGame(renameLevel)  Minecraft.cpp:319
+  /**
+   * C++ 的 `Minecraft::leaveGame(bool renameLevel = false)`（Minecraft.cpp:319，B8f）。
+   *
+   * 把当前世界整个扔掉、退回起始菜单。顺序很要紧：**先 `saveAll(true)` 落盘，再拆引用**，
+   * 反过来就丢档了。
+   *
+   * 两处 `delete` 用不着写：
+   * - `delete level->getLevelStorage()`：它的析构只 `delete regionFile / loadedLevelData`
+   *   （ExternalFileLevelStorage.cpp:66），**不负责落盘** —— 落盘是上面那句 saveAll。
+   *   TS 有 GC，这里就没有对应的语句。
+   * - `delete netCallback`：单机版它恒为 null（见字段声明）。
+   *
+   * 网页版没有 STANDALONE_SERVER，所以 C++ 里两个 `#ifndef STANDALONE_SERVER` 块照常走。
+   */
+  leaveGame(renameLevel = false): void {
+    if (this.isGeneratingLevel || !this._hasSignaledGeneratingLevelFinished) return;
+    this.isGeneratingLevel = false;
+    const saveLevel = this.level !== null && (!this.level.isClientSide || renameLevel);
+    // DEFERRED(Network): raknetInstance->disconnect();（网页单机版 raknetInstance 恒为 null）
+    if (saveLevel) {
+      this.level!.getChunkSource().saveAll(true);
+    }
+    LOGI('Clearing levels');
+    this.cameraTargetPlayer = null;
+    if (this.levelRenderer !== null) this.levelRenderer.setLevel(null);
+    // DEFERRED(Particle): particleEngine->setLevel(NULL);
+    LOGI('Erasing callback');
+    this.netCallback = null;
+    LOGI('Erasing level');
+    if (this.level !== null) {
+      // 析构不移植（R3）：delete level->getLevelStorage(); delete level;
+      this.level = null;
+    }
+    this.player = null;
+    this.cameraTargetPlayer = null;
+    this._running = false;
+    this.gui.clearMessages();
+    if (renameLevel) {
+      // DEFERRED(Gui): setScreen(new RenameMPLevelScreen(LevelStorageSource::TempLevelId));（联机专用界面未移植）
+    } else {
+      this.screenChooser.setScreen(ScreenId.SCREEN_STARTMENU);
+    }
+  }
 
   prepareLevel(_title: string): void {
     const level = this.level!;

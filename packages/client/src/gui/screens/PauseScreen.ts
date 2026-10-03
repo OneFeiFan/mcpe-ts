@@ -1,7 +1,8 @@
 /**
  * 1:1 移植自 src/client/gui/screens/PauseScreen.h 与 PauseScreen.cpp（S13 阶段 C）。
- * 部分：“回到标题”（Minecraft::leaveGame，要用存档与起始菜单）、“选项”（OptionsScreen）、服务器可见性（网络）DEFERRED。
+ * 部分：“选项”（OptionsScreen）、服务器可见性（网络）DEFERRED。
  *   raknetInstance 在网页单机版为 null，所以“退出并复制地图”“服务器可见”两个按钮与 C++ 一样不加入。
+ * “回到标题”（Minecraft::leaveGame）B8f 接上了。
  */
 import { OptionId } from '../../Options';
 import { Button, TButton } from '../components/Button';
@@ -124,10 +125,13 @@ export class PauseScreen extends Screen {
       this.minecraft.setScreen(null);
     }
     if (button.id === this.bQuit!.id) {
-      // DEFERRED(Storage): minecraft->leaveGame();（回到起始菜单要用存档与起始界面）
+      this.minecraft.leaveGame();
     }
     if (button.id === this.bQuitAndSaveLocally!.id) {
-      // DEFERRED(Storage): minecraft->leaveGame(true);
+      // 【单机点不到】这个按钮只在 raknetInstance && !isServer() 时才 push 进 buttons
+      // （见 initScreen），而网页单机版的 raknetInstance 恒为 null —— 保留原句。
+      // 它落到 leaveGame 的 renameLevel 分支，那条路要 RenameMPLevelScreen（未移植）。
+      this.minecraft.leaveGame(true);
     }
     if (button.id === this.bOptions!.id) {
       // DEFERRED(Gui): minecraft->setScreen(new OptionsScreen());（选项界面未移植）
