@@ -13,6 +13,8 @@
 //   - TS 测试用夹具里记下的偏移量做同样的清零
 //   这样比对的是"除时间戳外的全部字节"，而那种"两边布局错位"的问题照样会被抓出来
 //   （偏移量对不上，后面所有字节就全对不上了）。
+// 【为什么不把读到的时钟值也写进夹具】那样这个夹具每次重新生成都必产生一行 diff，
+//   其它 14 个夹具都是完全可复现的，"重生成后应当一字节未变"那条验证对它就失效了。
 // ExternalFileLevelStorage.h 里用了 RakNet::TimeMS，但它自己没 include 那个头
 // （平时是靠别的头间接带进来的）。这里先把它带进来。
 #include "raknet/RakNetTime.h"
@@ -147,7 +149,6 @@ int main(int argc, char** argv) {
         return 1;
     }
     fprintf(o, "{\n");
-    fprintf(o, "  \"ts\": %u,\n", ts);
     fprintf(o, "  \"v1\": {\"version\": %d, \"size\": %d, \"tsOffset\": %d, \"tsLen\": %d, \"hex\": \"",
             v1.version, v1.size, v1.tsOffset, v1.tsLen);
     printHex(o, v1.bytes);

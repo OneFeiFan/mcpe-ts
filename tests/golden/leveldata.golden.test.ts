@@ -13,7 +13,6 @@ interface Case {
   hex: string;
 }
 interface Fixture {
-  ts: number;
   v1: Case;
   nbt: Case;
   readBack: {

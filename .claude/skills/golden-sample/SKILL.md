@@ -28,7 +28,7 @@ description: 需要证明 TS 移植的计算结果与原版 C++ 一致时使用�
    - 需要一个 Level：照 harness_collision.cpp 用 `GoldenStorage`（补 loadPlayer/savePlayer）+ `EmptyDimension`（空区块源），避免地形生成。
    - 只用到一个类的少数外部成员（如 Font 只用 Textures 的两个函数）：在 harness 里直接给出这几个成员的定义，不链接整个 .cpp。
 2. **build.sh**：照已有段落加一段（编译、自动生成未定义符号的陷阱桩 `ud2`、运行）。运行时触发桩会 SIGILL，说明走到了不该走的路径。
-3. 生成：`REF=$REF bash tools/golden/build.sh`（Linux 或 WSL；g++ -O0 -fwrapv）。检查 `git diff fixtures/golden`：**旧夹具不应该变**，变了先查原因。
+3. 生成：`REF=$REF bash tools/golden/build.sh <节名>`（Linux 或 WSL；g++ -O0 -fwrapv）。节名就是夹具主文件名（`--list` 可查），只生成这一节能省掉其它节；不给节名则全生成（约 1 分钟）。检查 `git diff fixtures/golden`：**旧夹具不应该变**，变了先查原因。
 4. **测试**（`tests/golden/xxx.golden.test.ts`）：读夹具，用同样输入调用 TS，比较。
 
 ## 三档比较规则
