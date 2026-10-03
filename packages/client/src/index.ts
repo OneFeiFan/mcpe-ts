@@ -5,6 +5,7 @@ export * from './App.js';
 export * from './Option.js';
 export * from './OptionStrings.js';
 export * from './Options.js';
+export * from './OptionsFile.js';
 export * from './Minecraft.js';
 export * from './renderer/gles.js';
 export * from './renderer/gl/GLES1.js';

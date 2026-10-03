@@ -217,8 +217,8 @@ export class VirtualFS {
     const p = VirtualFS.normalize(path);
     if (!this.dirs.has(VirtualFS.parentOf(p))) return null;
     if (this.dirs.has(p)) return null; // 目录不能当文件打开
-    if (mode !== 'wb' && mode !== 'w+b' && !this.files.has(p)) return null;
-    if (mode === 'wb' || mode === 'w+b') {
+    if (mode !== 'w' && mode !== 'wb' && mode !== 'w+b' && !this.files.has(p)) return null;
+    if (mode === 'w' || mode === 'wb' || mode === 'w+b') {
       this.files.set(p, new Uint8Array(0));
       this.markDirty(p);
     }

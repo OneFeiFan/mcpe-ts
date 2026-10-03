@@ -23,8 +23,16 @@
  */
 import type { VirtualFS } from './VirtualFS.js';
 
-/** C 的 fopen 模式。参考源码实测只用到这四种；`ab` 一次都没出现过，故意不实现。 */
-export type FsMode = 'rb' | 'wb' | 'r+b' | 'w+b';
+/**
+ * C 的 fopen 模式。参考源码实测只用到这几种；`ab` 一次都没出现过，故意不实现。
+ *
+ * 【为什么文本模式 `r` / `w` 也在里面】B1 当时只统计了存档那批代码（全是 `rb`/`wb`/`r+b`/`w+b`），
+ * 漏了 `OptionsFile.cpp` —— 它写的是 `fopen(path, "w")` 和 `fopen(path, "r")`。
+ * 参考构建的目标是 POSIX（Linux / Android / iOS），那里文本模式和二进制模式**逐字节等价**
+ * （没有换行转换），所以行为上和 `wb`/`rb` 一样；但源码写的既然是 `"w"`/`"r"`，
+ * 就把这两个也收进来，省得在调用处偷偷映射成 `wb` 而看不出差别。
+ */
+export type FsMode = 'r' | 'w' | 'rb' | 'wb' | 'r+b' | 'w+b';
 
 /** 与 <cstdio.h> 的 SEEK_* 一致 */
 export const SEEK_SET = 0;
@@ -55,9 +63,9 @@ export class CFile {
     readonly path: string,
     readonly mode: FsMode,
   ) {
-    // "rb" 只能读、"wb" 只能写，带 + 的两个可读可写（照 C）
-    this.readable = mode === 'rb' || mode === 'r+b' || mode === 'w+b';
-    this.writable = mode !== 'rb';
+    // "r"/"rb" 只能读、"w"/"wb" 只能写，带 + 的两个可读可写（照 C）
+    this.readable = mode === 'r' || mode === 'rb' || mode === 'r+b' || mode === 'w+b';
+    this.writable = mode !== 'r' && mode !== 'rb';
   }
 
   /**

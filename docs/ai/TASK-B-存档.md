@@ -373,6 +373,33 @@ B5b-2 那半（tick / savePendingUnsavedChunks / saveGame / saveAll 要真 Level
 
 - `Options.ts` 里 4 处 `DEFERRED(Storage)`：选项读写 `options.txt`，走 VirtualFS。
 
+**实测后拆三小步**（用户 2026-10-03）：`OptionsFile.cpp` 本体只有约 90 行，但连同两处基础设施改动、
+单测、黄金样本、接线和浏览器场景一共要碰 8 个文件、约 470 行，超了「一步 300 行 / 5 个文件」的线。
+
+| 步骤    | 内容                                         | 说明                                     |
+| ------- | -------------------------------------------- | ---------------------------------------- |
+| **B9a** | `OptionsFile` 本体 + `r`/`w` 文件模式 + 单测 | 4 个文件                                 |
+| **B9b** | 黄金样本 G9-1                                | `fgets` 的边界规则容易想当然，必须有真值 |
+| **B9c** | 接线 `Options.ts` 的 4 处 + 浏览器场景       | 选项真的存得住                           |
+
+**B9a 实测到的两处与 B0/B1 不符：**
+
+1. **`FsMode` 少了文本模式 `r` / `w`。** B1 按"实测只用到 `rb/wb/r+b/w+b`"定的四种，
+   而 `OptionsFile::save` 用的是 `fopen(path, "w")`、`getOptionStrings` 用的是 `fopen(path, "r")`。
+   POSIX 上这两个与 `wb`/`rb` 逐字节等价（没有换行转换），但既然源码写的就是 `"w"`/`"r"`，
+   就把这两个模式也加进去，别在调用处偷偷映射。
+2. **`fgets` 没有对应物。** `CFile` 只有 `read/write/seek/tell/close`。`OptionsFile` 靠 `fgets`
+   的几条规则读行：**最多读 127 字节**（超长的行会被切成两段）、**`
+`/`
+` 要从尾部剥掉**、
+   **剥完短于 3 的整行丢掉**、**按第一个 `:` 切成两半**。这些要在 TS 里逐条复刻
+   （按字节做，别按字符），并且用黄金样本钉住。
+
+**接线点已经都在**：`Minecraft.initApp` 调 `options.load()` + `reloadOptions()`（后者里有两次
+`options.save()`），`NinecraftApp.initApp` 调 `setOptionsFilePath(externalStoragePath)`。
+C++ 里 `Options::save` 的另外三个调用点（`OptionsScreen` ×2、`UsernameScreen`）都没移植，
+所以网页版**只会在启动时存一次** —— 验证时得手工触发一次 `options.save()`。
+
 ---
 
 ### 每一步提交前的自检
