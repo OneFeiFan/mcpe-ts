@@ -34,10 +34,12 @@ import { Random } from '@mcpe/util';
 import type { MobCategory } from '../../entity/MobCategory';
 import type { Biome } from '../biome/Biome';
 import { ChunkSource } from '../chunk/ChunkSource';
-import type { LevelChunk } from '../chunk/LevelChunk';
+import { ChunkPos } from '../ChunkPos';
+import { LevelChunk } from '../chunk/LevelChunk';
 import { LevelConstants } from '../LevelConstants';
 import type { Level } from '../Level';
 import { Tile } from '../tile/Tile';
+import { CanyonFeature } from './CanyonFeature';
 import { LargeCaveFeature } from './LargeCaveFeature';
 import { PerlinNoise } from './synth/PerlinNoise';
 
@@ -60,7 +62,8 @@ export class RandomLevelSource extends ChunkSource {
    * 这边顺序无所谓（它不依赖别的成员），但用字段初始化器正好也是先于构造函数体。
    */
   readonly caveFeature = new LargeCaveFeature();
-  // DEFERRED(Levelgen): CanyonFeature canyonFeature;  RandomLevelSource.h:64（C-5 移植该类时补上）
+  /** 与 `caveFeature` 同理，声明在 `private:` 段之前 */
+  readonly canyonFeature = new CanyonFeature();
 
   // OMIT(Levelgen): int waterDepths[16+16][16+16];  RandomLevelSource.h:68
   //   只在构造函数里被清零（.cpp:36-38），此后再没被读过。
@@ -127,14 +130,42 @@ export class RandomLevelSource extends ChunkSource {
     return true;
   }
 
-  getChunk(_x: number, _z: number): LevelChunk {
-    // DEFERRED(Levelgen): 整段 getChunk（.cpp:540-567）—— C-5 里连同 prepareHeights/buildSurfaces/洞穴峡谷一起做
-    throw new Error('RandomLevelSource.getChunk 尚未移植（C-5）');
+  /**
+   * `RandomLevelSource::getChunk`（.cpp:540-567）—— 把一个区块从零生成出来，五步串起来：
+   * 高度场 → 插值成方块 → 铺表层 → 挖洞穴 → 挖峡谷。结果按坐标缓存进 `chunkMap`。
+   *
+   * 【顺序不能动】`setSeed` 必须在最前（`buildSurfaces` 与洞穴/峡谷都吃这条随机流）；
+   * `getBiomeBlock` 必须排在读 `temperatures` 之前。
+   * 黄金样本 G15-1 的五段快照就是照着这个方法拆的。
+   */
+  getChunk(xOffs: number, zOffs: number): LevelChunk {
+    const hashedPos = ChunkPos.hashCode(xOffs, zOffs);
+
+    const cached = this.chunkMap.get(hashedPos);
+    if (cached !== undefined) return cached;
+
+    this.random.setSeed(xOffs * 341872712 + zOffs * 132899541);
+
+    const blocks = new Uint8Array(LevelChunk.ChunkBlockCount);
+    const levelChunk = new LevelChunk(this.level, blocks, xOffs, zOffs);
+    this.chunkMap.set(hashedPos, levelChunk);
+
+    const biomeSource = this.level.getBiomeSource();
+    const biomes = biomeSource.getBiomeBlock(xOffs * 16, zOffs * 16, 16, 16);
+    const temperatures = biomeSource.temperatures!;
+    this.prepareHeights(xOffs, zOffs, blocks, null, temperatures);
+    this.buildSurfaces(xOffs, zOffs, blocks, biomes);
+
+    // Carve caves into the chunk
+    this.caveFeature.apply(this, this.level, xOffs, zOffs, blocks, LevelChunk.ChunkBlockCount);
+    this.canyonFeature.apply(this, this.level, xOffs, zOffs, blocks, LevelChunk.ChunkBlockCount);
+    levelChunk.recalcHeightmap();
+
+    return levelChunk;
   }
 
-  create(_x: number, _z: number): LevelChunk {
-    // DEFERRED(Levelgen): return getChunk(x, z);  RandomLevelSource.cpp:536-538
-    throw new Error('RandomLevelSource.create 尚未移植（C-5）');
+  create(x: number, z: number): LevelChunk {
+    return this.getChunk(x, z);
   }
 
   /**

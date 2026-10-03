@@ -1,11 +1,18 @@
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { SharedConstants } from '@mcpe/core';
 import {
   BiomeSource,
+  FlatDimension,
+  GameType,
   initBiomes,
+  Level,
+  LevelChunk,
   LevelConstants,
+  LevelSettings,
+  MemoryLevelStorage,
   RandomLevelSource,
-  type Level,
+  type Level as LevelType,
 } from '@mcpe/world';
 import type { Random } from '@mcpe/util';
 import { initTestTiles } from '../helpers/initTestTiles';
@@ -16,7 +23,7 @@ import { initTestTiles } from '../helpers/initTestTiles';
 //
 // 【这个夹具分五段】高度场 / prepareHeights 后 / buildSurfaces 后 / **洞穴后** / 洞穴+峡谷后 ——
 // 因为 getChunk 是一整块出来的，不分段的话中间哪一步错了都只能看到"最后不一样"。
-// 本文件（C-4）比到"洞穴后"；最后一段（含峡谷）是 C-5 的事。
+// 本文件（C-5 起）**五段全比** —— 到这里就对完了 getChunk 的全部阶段。
 //
 // 夹具里还有一个 replayMatchesGetChunk 自检位 —— 那是 harness 自己的体检（拿真的 getChunk
 // 跟重放结果逐字节比），不属于 TS 要对的东西，但下面顺手断言一下，
@@ -77,12 +84,12 @@ const hexToBytes = (hex: string): number[] => {
  * `getSeed()`（BiomeSource 的构造要用）和 `getBiomeSource()`（getHeights 读 temperatures/downfalls）。
  * 所以这里给个只有这两个方法的鸭子类型就够了 —— 与 biomesource 黄金样本同一个做法。
  */
-const makeLevel = (seed: number): { level: Level; biomeSource: BiomeSource } => {
+const makeLevel = (seed: number): { level: LevelType; biomeSource: BiomeSource } => {
   let biomeSource!: BiomeSource;
   const level = {
     getSeed: () => seed,
     getBiomeSource: () => biomeSource,
-  } as unknown as Level;
+  } as unknown as LevelType;
   biomeSource = new BiomeSource(level);
   return { level, biomeSource };
 };
@@ -140,15 +147,23 @@ const runStages = (c: ChunkCase) => {
   src.buildSurfaces(c.x, c.z, blocks, biomes);
   const afterBuildSurfaces = Uint8Array.from(blocks);
 
-  // C++ 的 getChunk 紧接着就是这两句（洞穴、峡谷）。**C-4 只做洞穴**，
-  // 所以这里到洞穴为止 —— 最后一段（含峡谷）是 C-5 的事。
+  // C++ 的 getChunk 紧接着就是这两句。C-4 时只到洞穴为止，C-5 补上峡谷 —— 到这里就完整了。
   src.caveFeature.apply(src, level, c.x, c.z, blocks, G.chunkBlockCount);
+  const afterCaves = Uint8Array.from(blocks);
 
-  return { heights, afterPrepareHeights, afterBuildSurfaces, afterCaves: blocks };
+  // 接着是峡谷（C-5）。到这里就是完整的 getChunk 方块结果了。
+  src.canyonFeature.apply(src, level, c.x, c.z, blocks, G.chunkBlockCount);
+
+  return { heights, afterPrepareHeights, afterBuildSurfaces, afterCaves, afterFeatures: blocks };
 };
 
 beforeAll(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
+  // C++ 的 LevelChunk::ChunkBlockCount 静态初值是 0，要等 Minecraft::init 才设成 32768
+  // （PITFALLS 第 19 条）。不设的话 `getChunk` 里 new 出来的 blocks 是**零长度数组**，
+  // 所有写入静默丢掉 —— 重放路径自己 new Uint8Array(32768) 绕过了它，所以只有直接调
+  // getChunk 的那几条能抓到这件事。
+  LevelChunk.ChunkBlockCount = LevelConstants.CHUNK_BLOCK_COUNT;
   initTestTiles(); // Biome 的构造函数要读 Tile.grass、Tile.dirt，buildSurfaces 也要读 Tile.sand 等
   initBiomes();
 });
@@ -182,6 +197,31 @@ describe('RandomLevelSource 与 C++ 逐位一致（G15-1）', () => {
     it(`${at}：洞穴之后的 32768 个方块逐字节相同`, () => {
       const { afterCaves } = runStages(c);
       expect(Array.from(afterCaves)).toEqual(hexToBytes(c.afterCaves));
+    });
+
+    it(`${at}：洞穴+峡谷之后的 32768 个方块逐字节相同（= getChunk 的最终结果）`, () => {
+      const { afterFeatures } = runStages(c);
+      expect(Array.from(afterFeatures)).toEqual(hexToBytes(c.afterFeatures));
+    });
+
+    // 上面几条比的是"按 getChunk 的顺序重放"；这一条直接调 getChunk 本体 ——
+    // 缓存、recalcHeightmap、五个阶段的串接都一并验到。两者应当一模一样。
+    it(`${at}：直接调 getChunk 本体，结果同样逐字节相同`, () => {
+      // 这一条要用**真的 Level**：getChunk 最后会调 `recalcHeightmap()`，
+      // 它会读 `level.dimension.hasCeiling`、`level.getHeightmap(...)` 等一串东西。
+      // 上面的重放路径不经过 recalcHeightmap，所以鸭子类型的替身够用；这条不够。
+      // 建法与 tests/helpers/headlessLevel.ts 的 createFlatLevel 一致（维度用 FlatDimension 只是
+      // 为了让 Level 的构造函数能建出区块源来 —— 我们要的是它自己的 RandomLevelSource）。
+      const level = new Level(
+        new MemoryLevelStorage(),
+        'golden',
+        new LevelSettings(G.seed, GameType.Creative),
+        SharedConstants.GeneratorVersion,
+        new FlatDimension(),
+      );
+      const src = new RandomLevelSource(level, level.getSeed(), G.generatorVersion, G.spawnMobs);
+      const chunk = src.getChunk(c.x, c.z);
+      expect(Array.from(chunk.getBlockData()!)).toEqual(hexToBytes(c.afterFeatures));
     });
   }
 });

@@ -89,6 +89,7 @@ export * from './level/levelgen/FlatChunkSource.js';
 export * from './level/levelgen/RandomLevelSource.js';
 export * from './level/levelgen/LargeFeature.js';
 export * from './level/levelgen/LargeCaveFeature.js';
+export * from './level/levelgen/CanyonFeature.js';
 export * from './level/dimension/FlatDimension.js';
 export * from './level/tile/entity/TileEntity.js';
 export type { TripodCamera } from './entity/item/TripodCamera.js';
