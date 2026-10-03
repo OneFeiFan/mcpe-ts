@@ -24,5 +24,8 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      # 必须是 `pnpm run ci`：`pnpm ci` 是 pnpm 自带的子命令（等于 install --frozen-lockfile），
+      # 会**盖过** package.json 里的同名脚本 —— 在这里写 `pnpm ci` 的话这一步只会再装一遍依赖、
+      # 永远返回 0，等于整个 CI 什么都没验。
       - name: Verify
-        run: pnpm ci
+        run: pnpm run ci

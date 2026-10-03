@@ -135,7 +135,17 @@ function levelStub(): Level {
 }
 
 function makePlayer(): Player {
-  const p = new Player(createFlatLevel(), false);
+  const p = new TestPlayer(createFlatLevel(), false);
   p.name = 'Steve';
   return p;
 }
+
+/**
+ * Player 在 TS 里**显式声明成 abstract**（`export abstract class Player extends Mob`），直接 new 是
+ * 类型错误 —— 注意 vitest 用 esbuild 剥类型、不做检查，所以运行期照样能跑，只有 tsc 会报。
+ *
+ * 它那几个抽象成员（getEntityTypeId / readAdditionalSaveData / addAdditonalSaveData）其实都已经
+ * 实现了（在 Player 或它的祖先里），所以给个空的具体子类就能实例化。对应 C++ 那边：
+ * Player 同样是抽象基类，具体的是 LocalPlayer。
+ */
+class TestPlayer extends Player {}

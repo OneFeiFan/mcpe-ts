@@ -105,4 +105,4 @@ claude                            # REF 由 .claude/settings.json 提供，不�
 
 - **Playwright MCP**（交互式看网页、点按钮）：`claude mcp add playwright -- npx @playwright/mcp@latest`。适合排查画面问题；常规验证用 `tools/verify/smoke.mjs` 就够了，结果更可重复。
 - **把审查交给另一个模型**：`port-reviewer` 子代理可以在 frontmatter 里指定别的模型（如果你的接入方式支持），让“写的”和“审的”不是同一个模型。
-- **CI**：在 GitHub Actions 里跑 `pnpm ci`，防止某次提交把主干弄红。
+- **CI**：在 GitHub Actions 里跑 `pnpm run ci`，防止某次提交把主干弄红。**注意是 `pnpm run ci` 不是 `pnpm ci`** —— 后者是 pnpm 自带的子命令（等于 `install --frozen-lockfile`），会盖过 package.json 里的同名脚本，只装依赖、什么都不检查、永远返回 0。
