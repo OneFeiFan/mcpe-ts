@@ -12,11 +12,25 @@
 C++ 用 `FILE*`（fopen/fread/fwrite/fseek/fclose）同步读写磁盘。浏览器只有异步的 IndexedDB / OPFS。采用的方案（已定，照做）：
 
 - **虚拟文件系统 `VirtualFS`**（新文件 `packages/platform/src/fs/VirtualFS.ts`）：内存里一张 `Map<路径, Uint8Array>`，提供**同步**接口；
-  启动时（`apps/web/src/main.ts`，在 `app.init` 之前）从 IndexedDB 一次性读入全部文件；每次写入后标记脏，**防抖 1 秒**异步写回 IndexedDB；
-  `beforeunload` 时再同步触发一次写回。
-- C++ 的文件函数在 TS 里对应 `VirtualFS` 上一个小的 `CFile` 类：`fopen(path, mode)`、`fread`、`fwrite`、`fseek`、`ftell`、`fclose`，语义照 C 标准库（"rb"/"wb"/"r+b"/"ab"，读到末尾返回实际字节数）。
+  启动时（`apps/web/src/main.ts`，在 `app.init` 之前）从 IndexedDB 一次性读入全部文件；每次写入后标记脏，**防抖 200ms** 异步写回 IndexedDB；
+  卸载时用 **`pagehide` / `visibilitychange`** 触发一次写回。
+- C++ 的文件函数在 TS 里对应一个小的 `CFile` 类：取用方式是 `vfs.open(path, mode) -> CFile | null`（`open` 失败返回 null，好让 `if (file == NULL)` 原样对应成 `if (file === null)`），
+  上面有 `read` / `write` / `seek` / `tell` / `close`，语义照 C 标准库。
 - 目录：`mkdir`、`exists`、`listDir`、`remove`、`rename` 按路径前缀实现。
 - 单元测试里用纯内存的 `VirtualFS`（不接 IndexedDB）。
+
+**B0 的四处修正（B1 实测参考源码后改，前一版是错的）：**
+
+1. **`beforeunload` 里同步写回 IndexedDB 做不到。** IndexedDB 只有异步 API（旧的同步事务模式已被浏览器移除），卸载时发起的事务不保证提交完，Safari 尤其不可靠。→ 改成防抖 200ms + `pagehide`/`visibilitychange`。
+2. **文件模式不是 `"rb"/"wb"/"r+b"/"ab"`。** 实测存档代码的实际用法是 `rb`(5 次) / `wb`(2 次) / `r+b`(1 次) / **`w+b`(1 次，RegionFile.cpp:71)**；`ab` **一次都没出现**。漏掉 `w+b` 会让 B3 直接卡住。
+3. **`fread`/`fwrite` 返回的是「元素个数」，不是「读取的字节数」。** C 标准库的返回值是完整元素的个数（= 实读字节数 ÷ size）。参考源码靠这个判断成败：
+   `logAssert(fread(offsets, sizeof(int), SECTOR_INTS, file), SECTOR_INTS)` —— 比的是 `SECTOR_INTS`，不是 `SECTOR_INTS * 4`。按字节数实现会让 B3 的断言全错。
+4. **`IndexedDbBackend` 不能放 `packages/platform/`。** 该包的 tsconfig 是 `lib: ["ESNext"]`，没有 DOM，一引用 `indexedDB` 就类型检查失败；全仓库只有 `client` 和 `apps/web` 有 DOM。→ 放 `apps/web/src/IndexedDbBackend.ts`，platform 里只留纯类型的 `VfsBackend` 接口。
+
+**另外两条实测发现（B1 已实现并写了测试，后续步骤依赖它们）：**
+
+- `TypedArray.prototype.set` 是逐**元素**拷贝，不是逐字节。`new Uint8Array(8).set(new Int32Array([0x04030201]))` 得到 `[1,0,0,…]`。所以 `CFile.read/write` 收 `ArrayBufferView` 并先归一成字节视图；取数组元素地址写 `new Uint8Array(arr.buffer, i * 4, 4)`（等价于 C 的 `&arr[i]`，零拷贝）。
+- **目录必须单独持久化**：C++ 会建 `<世界>/players` 这种可能是空的目录，`exists` 要对它成立。只存文件的话刷新后空目录会消失。`VfsBackend` 因此有 `setDirs`。
 
 ## B1 VirtualFS 与 CFile（ADAPTED(Web)，非移植）
 - 新增：`packages/platform/src/fs/VirtualFS.ts`、`CFile.ts`、`IndexedDbBackend.ts`（只在浏览器里用）。

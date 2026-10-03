@@ -19,6 +19,10 @@ Thumbs.db
 tools/verify/out/
 .claude/.stop-attempts
 .claude/settings.local.json
+# 文件规划三件套（代理的磁盘工作记忆，不是项目内容）
+task_plan.md
+findings.md
+progress.md
 
 # CodeGraph 本地索引（每台机器重建即可：codegraph init）
 .codegraph/
