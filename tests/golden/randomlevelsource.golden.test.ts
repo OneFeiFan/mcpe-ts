@@ -25,6 +25,10 @@ import { initTestTiles } from '../helpers/initTestTiles';
 // 因为 getChunk 是一整块出来的，不分段的话中间哪一步错了都只能看到"最后不一样"。
 // 本文件（C-5 起）**五段全比** —— 到这里就对完了 getChunk 的全部阶段。
 //
+// 末尾（C-6a 起）还有一条**走生产路径**的：不手工 new RandomLevelSource，
+// 而是像菜单进世界那样经过 `DimensionFactory` → `Dimension.createRandomLevelSource()`。
+// 前面那些测试证明"算法对"，这条证明"接的线对"。
+//
 // 夹具里还有一个 replayMatchesGetChunk 自检位 —— 那是 harness 自己的体检（拿真的 getChunk
 // 跟重放结果逐字节比），不属于 TS 要对的东西，但下面顺手断言一下，
 // 免得哪天真重新生成了一个"重放不忠实"的坏夹具还当判据用。
@@ -224,4 +228,21 @@ describe('RandomLevelSource 与 C++ 逐位一致（G15-1）', () => {
       expect(Array.from(chunk.getBlockData()!)).toEqual(hexToBytes(c.afterFeatures));
     });
   }
+
+  // C-6 的接线本身也要有判据 —— 上面那些都是**手工** new 出 RandomLevelSource，
+  // 而菜单进世界走的是 `Dimension.createRandomLevelSource()`。这里就不传 fixedDimension，
+  // 让它走 `DimensionFactory` 的真路（创造模式 → Dimension.NORMAL），跟 `Minecraft.selectLevel` 一样。
+  it('走 Dimension.createRandomLevelSource（菜单进世界那条路）也拿到同一个区块', () => {
+    const c = G.chunks[0]!;
+    const level = new Level(
+      new MemoryLevelStorage(),
+      'golden',
+      new LevelSettings(G.seed, GameType.Creative),
+      SharedConstants.GeneratorVersion,
+    );
+    const src = level.dimension.createRandomLevelSource();
+    expect(src).toBeInstanceOf(RandomLevelSource);
+    const chunk = src.getChunk(c.x, c.z);
+    expect(Array.from(chunk.getBlockData()!)).toEqual(hexToBytes(c.afterFeatures));
+  });
 });

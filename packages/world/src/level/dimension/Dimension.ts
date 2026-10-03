@@ -2,9 +2,8 @@
  * 1:1 移植自 src/world/level/dimension/Dimension.h 与 Dimension.cpp（S4），同时包含 NormalDayCycleDimension.h 与 DimensionFactory。
  * 替换原来的 FORWARD-DECL(Dimension)。
  *
- * 【依赖未移植系统的一处】
- *  - createRandomLevelSource()：C++ 里 new RandomLevelSource（世界生成），本轮不移植。原句保留为 DEFERRED(Levelgen)，
- *    调用时抛出写明原因的错误。demo 的 FlatDimension（S5）重写这个方法返回 FlatChunkSource，不会走到这里。
+ * 【C-6 起 createRandomLevelSource 是真调用】它 new 的就是移植好的 `RandomLevelSource`（C-2~C-5），
+ *   原来是 DEFERRED(Levelgen) 的 throw。demo 的 FlatDimension（S5）仍然重写它返回 FlatChunkSource。
  *
  * 【C++ 的重载】init(Level*) 是 public，init() 是 protected，TS 只能有一个同名方法，按约定把无参版本写成 initDimension()；
  *   子类要重写 C++ 的 init() 时重写 initDimension。
@@ -20,6 +19,7 @@ import { BiomeSource } from '../biome/BiomeSource';
 import type { ChunkSource } from '../chunk/ChunkSource';
 import { Level } from '../Level';
 import { GameType } from '../LevelSettings';
+import { RandomLevelSource } from '../levelgen/RandomLevelSource';
 import type { LevelData } from '../storage/LevelData';
 import { Tile } from '../tile/Tile';
 
@@ -52,9 +52,11 @@ export class Dimension {
   }
 
   createRandomLevelSource(): ChunkSource {
-    // DEFERRED(Levelgen): return new RandomLevelSource(level, level->getSeed(), level->getLevelData()->getGeneratorVersion(), !level->isClientSide && level->getLevelData()->getSpawnMobs());
-    throw new Error(
-      'RandomLevelSource 尚未移植（世界生成）。demo 用 FlatDimension，它重写了 createRandomLevelSource',
+    return new RandomLevelSource(
+      this.level,
+      this.level.getSeed(),
+      this.level.getLevelData().getGeneratorVersion(),
+      !this.level.isClientSide && this.level.getLevelData().getSpawnMobs(),
     );
   }
 

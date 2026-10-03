@@ -170,8 +170,13 @@ export class FakeLevel extends LevelType {
   seed = 0;
   /** Tile.spawnResources 等用 level->random（S11 阶段 A 起） */
   override random = new Random(0);
-  /** Tile.popResource 判断创造模式、spawnResources 生成掉落物（S12 起） */
-  private readonly fakeLevelData = { getGameType: () => 0 };
+  /** Tile.popResource 判断创造模式、spawnResources 生成掉落物（S12 起）；
+   *  C-6 起 Dimension::createRandomLevelSource 还要读 getGeneratorVersion / getSpawnMobs */
+  private readonly fakeLevelData = {
+    getGameType: () => 0,
+    getGeneratorVersion: () => 0,
+    getSpawnMobs: () => false,
+  };
   override getLevelData(): never {
     return this.fakeLevelData as never;
   }

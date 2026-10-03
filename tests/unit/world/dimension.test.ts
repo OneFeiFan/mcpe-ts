@@ -9,6 +9,7 @@ import {
   LevelData,
   LevelSettings,
   NormalDayCycleDimension,
+  RandomLevelSource,
 } from '@mcpe/world';
 import { NormalDayCycleDimension as ViaHeaderPath } from '../../../packages/world/src/level/dimension/NormalDayCycleDimension';
 import { FakeLevel } from '../../helpers/fakeLevel';
@@ -42,7 +43,7 @@ describe('Dimension', () => {
     ]);
   });
 
-  it('init 创建 BiomeSource（用 level 的种子）；RandomLevelSource 未移植，调用时报出原因', () => {
+  it('init 创建 BiomeSource（用 level 的种子）；createRandomLevelSource 建出真的区块源', () => {
     const d = new Dimension();
     const lv = new FakeLevel();
     lv.seed = 12345;
@@ -50,7 +51,9 @@ describe('Dimension', () => {
     expect(d.biomeSource).toBeInstanceOf(BiomeSource);
     expect(isUnregistered(d.biomeSource)).toBe(false);
     expect(Number.isFinite(d.biomeSource.getTemperature(128, 128))).toBe(true); // Level.getSkyColor 每帧读它
-    expect(() => d.createRandomLevelSource()).toThrow(/RandomLevelSource 尚未移植/);
+    // C-6：这里原来是 DEFERRED(Levelgen) 的 throw，现在 new 的是移植好的 RandomLevelSource。
+    // 建出来的源能不能生成对，由黄金样本管（randomlevelsource.golden.test.ts 里那条走同一条路的）。
+    expect(d.createRandomLevelSource()).toBeInstanceOf(RandomLevelSource);
   });
 
   it('getNew 与 DimensionFactory：创造模式用 Dimension，生存模式用有昼夜的 NormalDayCycleDimension', () => {

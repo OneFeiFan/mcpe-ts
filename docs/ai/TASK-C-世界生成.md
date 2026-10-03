@@ -102,17 +102,23 @@ TS 里 `LevelConstants.CHUNK_WIDTH` 恰好是对的（16，与 `LevelConstants.c
 
 ---
 
-## 拆分（七小步）
+## 拆分（八小步）
 
-| 步骤    | 内容                                                 | 验收                             |
-| ------- | ---------------------------------------------------- | -------------------------------- |
-| **C-1** | **黄金样本先行**：`harness_randomlevelsource` + 夹具 | 夹具逐字节可复现                 |
-| **C-2** | 类骨架 + 构造函数 + `getHeights`                     | 高度场那串 float 对上            |
-| **C-3** | `prepareHeights` + `buildSurfaces`                   | 表层方块数组对上                 |
-| **C-4** | `LargeFeature` + `LargeCaveFeature`                  | 洞穴部分对上                     |
-| **C-5** | `CanyonFeature`                                      | **完整 `getChunk` 方块数组对上** |
-| **C-6** | 接线 `Dimension.ts` + 浏览器场景                     | **截图里真的有山有水**           |
-| **C-7** | 收尾：`postProcess` 标 DEFERRED、文档、台账          | —                                |
+| 步骤     | 内容                                          | 验收                             |
+| -------- | --------------------------------------------- | -------------------------------- |
+| **C-1**  | **黄金样本先行**：`harness_randomlevelsource` | 夹具逐字节可复现                 |
+| **C-2**  | 类骨架 + 构造函数 + `getHeights`              | 高度场那串 float 对上            |
+| **C-3**  | `prepareHeights` + `buildSurfaces`            | 表层方块数组对上                 |
+| **C-4**  | `LargeFeature` + `LargeCaveFeature`           | 洞穴部分对上                     |
+| **C-5**  | `CanyonFeature`                               | **完整 `getChunk` 方块数组对上** |
+| **C-6a** | 接线 `Dimension.ts` + 三个测试文件            | 生产路径出来的区块也对上夹具     |
+| **C-6b** | 浏览器实测：新场景 + 翻转两条"将来会红"的断言 | **截图里真的有山有水**           |
+| **C-7**  | 收尾：`postProcess` 标 DEFERRED、文档、台账   | —                                |
+
+> **C-6 为什么拆成两半**（2026-10-03）：原计划的 C-6 要动 9 个文件（`Dimension.ts`、4 个测试/辅助文件、
+> 新场景、`startmenu.mjs`、外加 3 个写着"点 Create 会抛"的过时注释），超过 CLAUDE.md
+> 「碰 5 个以上文件就停下拆细」的线。按性质切开：C-6a 是**接线 + 用黄金样本钉住它**，
+> C-6b 才是**画面上的验收**。两半各有独立判据，谁都不依赖对方先做完。
 
 ### C-1 为什么放第一步
 
@@ -144,8 +150,16 @@ TS 里 `LevelConstants.CHUNK_WIDTH` 恰好是对的（16，与 `LevelConstants.c
   `buildSurfaces` 里的 `runDepth` 逻辑照着抄。
 - **C-4**：洞穴递归里每层 `new Random(random.nextLong())` —— 随机流分叉，错一步整片洞错位。
 - **C-5**：峡谷的 `yScale = 5`、`y < 10` 限界别写错。
-- **C-6**：`Dimension.ts:54` 的 throw 换成真调用；`FlatDimension` 不受影响（它 override 了）。
-  浏览器场景要看到地形 + 能挖能放 + 存得住。
+- **C-6a**：`Dimension.ts:54` 的 throw 换成真调用；`FlatDimension` 不受影响（它 override 了）。
+  **接线本身也要有判据** —— 之前所有黄金样本都是**手工** `new RandomLevelSource`，
+  而菜单进世界走的是 `Dimension.createRandomLevelSource()`。补一条不传 `fixedDimension`、
+  走 `DimensionFactory` 真路的测试，跟夹具逐字节比。
+  顺带修 `tests/unit/world/dimension.test.ts` 里那条断言"调用即抛"的旧测试（它是钉 DEFERRED 的，现在该换了）。
+  动的文件：`Dimension.ts`、`randomlevelsource.golden.test.ts`、`dimension.test.ts`、`helpers/fakeLevel.ts`。
+- **C-6b**：浏览器实测。新场景走**真菜单**（开始游戏 → 新建世界 → Create），不看后门。
+  `startmenu.mjs` 里那两条写着"将来会红"的断言（`点 Create 会抛` / `进世界会抛`）**就是为这一刻留的**，
+  现在把它们翻成"真的进得去"。另外 3 处注释（`Minecraft.selectLevel`、
+  `NinecraftApp.startDemoWorld`、`SimpleChooseLevelScreen` 文件头）写着"会抛"，已经不成立，一并改掉。
 - **C-7**：`postProcess` 原句留成 `DEFERRED(LevelgenFeature)`。
 
 ---
