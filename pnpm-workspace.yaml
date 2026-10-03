@@ -3,3 +3,8 @@ packages:
   - 'apps/*'
 allowBuilds:
   esbuild: true
+# locale 与 world 互相依赖，是照搬 C++ 的结果（I18n.cpp 要用 Tile::cloth->id 等，
+# 而 ItemInstance / Item / Tile 又要调 I18n::get），不是写错了。C++ 不分包所以没这问题。
+# 本仓库所有包都是 noEmit、exports 直接指向 src/*.ts，各包 typecheck 之间没有先后依赖，
+# 所以让 pnpm 忽略这个环、随便按什么顺序跑都行。
+ignoreWorkspaceCycles: true
