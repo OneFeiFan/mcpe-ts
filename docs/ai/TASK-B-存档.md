@@ -32,11 +32,13 @@ C++ 用 `FILE*`（fopen/fread/fwrite/fseek/fclose）同步读写磁盘。浏览�
 - `TypedArray.prototype.set` 是逐**元素**拷贝，不是逐字节。`new Uint8Array(8).set(new Int32Array([0x04030201]))` 得到 `[1,0,0,…]`。所以 `CFile.read/write` 收 `ArrayBufferView` 并先归一成字节视图；取数组元素地址写 `new Uint8Array(arr.buffer, i * 4, 4)`（等价于 C 的 `&arr[i]`，零拷贝）。
 - **目录必须单独持久化**：C++ 会建 `<世界>/players` 这种可能是空的目录，`exists` 要对它成立。只存文件的话刷新后空目录会消失。`VfsBackend` 因此有 `setDirs`。
 
-## B1 VirtualFS 与 CFile（ADAPTED(Web)，非移植）
+## B1 VirtualFS 与 CFile（ADAPTED(Web)，非移植）—— 已完成
 
-- 新增：`packages/platform/src/fs/VirtualFS.ts`、`CFile.ts`、`IndexedDbBackend.ts`（只在浏览器里用）。
-- 单元测试 `tests/unit/platform/vfs.test.ts`：读写、追加、`fseek` 越过末尾再写（中间补 0，与 C 一致）、`r+b` 覆盖写、目录列举、重命名。
-- 验收：测试通过；`apps/web/src/main.ts` 启动时加载 IndexedDB（先只加载，不接到游戏）。
+- 新增：`packages/platform/src/fs/VirtualFS.ts`、`CFile.ts`；`apps/web/src/IndexedDbBackend.ts`（只浏览器用）。
+- 单元测试 `tests/unit/platform/vfs.test.ts`（27 条）：读写、追加、`fseek` 越过末尾再写（中间补 0，与 C 一致）、`r+b` 覆盖写、`w+b` 截断、目录列举、重命名（含目录子树）、`fread` 返回元素个数。
+- 单元测试 `tests/unit/web/indexeddb-backend.test.ts`（7 条，用 fake-indexeddb）：往返、删除、重命名不留旧 key、空目录活过刷新。
+- 验收：`apps/web/src/main.ts` 在 `app.init` 之前 `await vfs.load(new IndexedDbBackend())`，开 200ms 防抖写回、接 `pagehide`/`visibilitychange`，并挂 `window.__vfs`。
+- 浏览器场景 `tools/verify/scenarios/default.mjs` 里加了一条真浏览器上的 IndexedDB 写→落盘→读回往返断言（fake-indexeddb 只能证明逻辑，证明不了真 IDB）。
 
 ## B2 RakNet::BitStream 的最小子集（ADAPTED(Network)）
 

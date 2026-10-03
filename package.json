@@ -29,6 +29,7 @@
     "@types/node": "latest",
     "eslint": "latest",
     "eslint-config-prettier": "latest",
+    "fake-indexeddb": "^6.2.5",
     "playwright": "^1.63.0",
     "prettier": "latest",
     "tsx": "latest",
