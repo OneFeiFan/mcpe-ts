@@ -124,8 +124,17 @@ export default async function (h) {
       const src = list.find((e) => e.tile === 13);
       if (!src) return { frozen: null };
       const dy = src.y - (a.player.y + 1.62); // 眼睛在脚上方 1.62
-      a.player.xRot = -(Math.atan2(dy, 14) * 180) / Math.PI;
-      return { frozen: src.y, xRot: a.player.xRot };
+      const pitch = -(Math.atan2(dy, 14) * 180) / Math.PI;
+      a.player.xRot = pitch;
+      // ⚠ 暂停之后必须**手动把 xRotO 也对齐**：相机实际用的是
+      //   `xRotO + (xRot - xRotO) * a` 这个插值（EntityRenderer 分派器 prepare 里那句），
+      //   而 xRotO 只在 `Entity.tick()` 里被赋成 xRot。世界一按住就不 tick 了，
+      //   于是 xRotO 停在旧值、镜头只插值转过去一小截 —— 实体在 33 格高处，
+      //   直接被视锥裁掉，拍出来是一片空天（第一版就是这个原因，查了半天以为是渲染器没生效）。
+      a.player.xRotO = pitch;
+      a.player.yRot = 0;
+      a.player.yRotO = 0;
+      return { frozen: src.y, xRot: a.player.xRot, bb: [src.bb.x0, src.bb.y0, src.bb.z0] };
     });
     h.expect(froze.frozen !== null, `定格成功（y=${froze.frozen}）`);
     await h.wait(1500); // 让渲染真的追上这个状态

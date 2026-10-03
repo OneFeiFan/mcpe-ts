@@ -95,3 +95,11 @@
 - **`tools/verify/smoke.mjs` 默认 `deviceScaleFactor: 1`，会掩盖一整类高分屏 bug**（见第 28 条）。
   要测坐标换算就跑 `SMOKE_DPR=1.5 node tools/verify/smoke.mjs tools/verify/scenarios/cursor.mjs`。
   凡是”点得准不准””光标的坐标对不对”这类问题，**光看脚本过不过没用，要换 dpr 再跑一遍**。
+- **改 `player.xRot` 之后要连 `xRotO` 一起改，否则镜头不会真的转过去。**
+  相机渲染用的是插值 `xRotO + (xRot - xRotO) * a`，而 `xRotO` 只在 `Entity.tick()` 里被赋成 `xRot`。
+  平时看不出来（下个 tick 就对齐了），但**一旦 `app.pause = true` 把世界按住，就再也没有 tick** ——
+  此时改 `xRot` 只被插值走一小截，画面基本没转。表现是"明明对准了却一片空白"，
+  很容易误判成渲染没生效（D2.5 就在这里绕了半天）。`yRot` / `yRotO` 同理。
+- **想拍"运动中的东西"，用 `app.pause = true` 定格再拍，然后记得放开。**
+  `Minecraft.pause` 只挡 `level.tick / tickEntities`，渲染照跑，
+  所以按住之后等一两秒让画面追上来就能拍到静止的一帧（无头浏览器只有约 1 帧/秒，不等就是空画面）。

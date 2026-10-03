@@ -1,8 +1,10 @@
 /**
  * 1:1 移植自 src/client/renderer/entity/EntityRenderDispatcher.h 与 .cpp（S13 阶段 C，部分移植）。
- * 部分：只注册 ER_ITEM_RENDERER（掉落物）；人形、动物、TNT、箭、玩家、抛射物、画、下落方块的渲染器要用模型系统或计划外的实体，
- *   DEFERRED(EntityRender)。没有注册的渲染器 getRenderer 返回 null，render 什么都不画（与 C++ 找不到时一样）。
+ * 部分：注册了 ER_ITEM_RENDERER（掉落物）与 ER_FALLINGTILE_RENDERER（下落方块，D2.5 补的）；
+ *   人形、动物、TNT、箭、玩家、抛射物、画的渲染器要用模型系统或计划外的实体，留 DEFERRED(EntityRender)。
+ *   没有注册的渲染器 getRenderer 返回 null，render 什么都不画（与 C++ 找不到时一样）。
  * R10：render(entity, a) 与 render(entity, x, y, z, rot, a) → 分派入口 render + renderAt；getRenderer(Entity*) / getRenderer(id) → getRenderer + getRendererById。
+ * C++ 的 assign 在 `for (… init(this))` 循环**之前**逐条调用，这里照抄那个顺序。
  */
 import { Mth } from '@mcpe/util';
 import { type Entity, EntityRendererId, type Level, type Mob, Tile } from '@mcpe/world';
@@ -13,6 +15,7 @@ import { glColor4f2 } from '../gles';
 import type { ItemInHandRenderer } from '../ItemInHandRenderer';
 import type { Textures } from '../Textures';
 import type { EntityRenderer } from './EntityRenderer';
+import { FallingTileRenderer } from './FallingTileRenderer';
 import { ItemRenderer } from './ItemRenderer';
 
 export class EntityRenderDispatcher {
@@ -37,8 +40,10 @@ export class EntityRenderDispatcher {
 
   constructor() {
     this.assign(EntityRendererId.ER_ITEM_RENDERER, new ItemRenderer());
+    // D2.5：这个不依赖模型系统，所以能单拎出来先补 —— 补之前下落的方块在画面上是隐形的
+    this.assign(EntityRendererId.ER_FALLINGTILE_RENDERER, new FallingTileRenderer()); // EntityRenderDispatcher.cpp:58
     // DEFERRED(EntityRender): ER_HUMANOID、ER_PIG、ER_COW、ER_CHICKEN、ER_SHEEP、ER_SKELETON、ER_ZOMBIE、ER_CREEPER、ER_SPIDER、
-    //   ER_TNT、ER_ARROW、ER_PLAYER、ER_THROWNEGG、ER_SNOWBALL、ER_PAINTING、ER_FALLINGTILE 的渲染器（模型系统与这些实体计划外）
+    //   ER_TNT、ER_ARROW、ER_PLAYER、ER_THROWNEGG、ER_SNOWBALL、ER_PAINTING 的渲染器（模型系统与这些实体计划外）
     for (const r of this._renderers.values()) r.init(this);
   }
 

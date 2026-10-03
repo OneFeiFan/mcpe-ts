@@ -50,5 +50,8 @@ export type { LocalPlayer } from './player/LocalPlayer.js';
 export * from './gamemode/GameMode.js';
 export * from './gamemode/CreativeMode.js';
 export * from './gamemode/SurvivalMode.js';
+export * from './renderer/entity/EntityRenderer.js';
+export * from './renderer/entity/EntityRenderDispatcher.js';
 export * from './renderer/entity/ItemRenderer.js';
+export * from './renderer/entity/FallingTileRenderer.js';
 export * from './gui/Font.js';
