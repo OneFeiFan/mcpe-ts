@@ -176,7 +176,14 @@ TS 里 `LevelConstants.CHUNK_WIDTH` 恰好是对的（16，与 `LevelConstants.c
   场景本身也踩了两个坑，都写在 `worldgen.mjs` 的注释里：起伏那段的 `if (top < 0) top = y`
   记的是**最低**非空气格（于是"最高减最低"恒为 0，断言永远为假）；以及先把相机放在最高点朝低处看，
   方向反了 —— 种子 777 是"大片低地 + 东北角一片高地"，得**站在低处朝高地看**。
-- **C-7**：`postProcess` 原句留成 `DEFERRED(LevelgenFeature)`。
+- **C-7**：`postProcess` 整段留成 `DEFERRED(LevelgenFeature)`（C-6b 里已经把 throw 换成空实现，
+  标记原地保留，所以台账条数不变）。台账收口：`DEFERRED(LevelgenFeature)` 5 条
+  （`RandomLevelSource.ts:394` 的 `postProcess` + `Sapling.ts` 4 条树木地物）、
+  `OMIT(LevelgenFeature)` 5 条（`Biome.getTreeFeature`/`getGrassFeature` + 三个子群系的重写）、
+  `OMIT(Levelgen)` 4 条（`waterDepths`、`fi/fis`、`calcWaterDepths`、`PerformanceTestChunkSource`，
+  全是死代码）。**逐条核过，没有一条是过时的。**
+  文档：两份工作手册各加了一段"更正"，写明"从菜单进不去世界"那条已经不成立、
+  但**还没有地物**（所以挖不到矿）。
 
 ---
 
@@ -188,6 +195,33 @@ TS 里 `LevelConstants.CHUNK_WIDTH` 恰好是对的（16，与 `LevelConstants.c
 
 这一轮不做它，所以这个风险这一轮不触发。但**以后补它的时候，顺序是唯一要紧的事**，
 要先把地物系统做齐再写 `postProcess`。这条写在这里，是给那时的自己看的。
+
+---
+
+## 任务单 C 完成（C-1 ~ C-7）
+
+**最终数字**：67 个测试文件 / **621 条测试**；台账 **252 条**；五个浏览器场景全绿
+（default 21、storage 13、startmenu 44、options 8、**worldgen 22**）。
+
+**能做的**：从起始菜单点进一个**新生成的普通世界** —— 两条入口都通
+（「开始游戏 → 新建世界 → Create」和「选世界界面点一张世界牌」）。
+地形是 1:1 移植的：高度场 → 石头/水/冰 → 表层（草/沙/沙岩/砾石/雪）+ 基岩 → 洞穴 → 峡谷。
+在这之上能挖能放、能存能读、能退回标题再进。
+
+**做不了的（一条）**：**世界里没有地物** —— 湖、矿、树、花草、泉、雪整段是
+`RandomLevelSource::postProcess`（315 行），仍是空实现。所以**挖不到矿、没有树**。
+
+⚠ 而且注意：**区块照样会被标成 `terrainPopulated = true` 存下去**。以后补上地物时，
+这些老区块不会追溯补上 —— 开发期间测过的世界得**删掉重新生成**。
+
+**一条下一轮该补的**：黄金样本 G15-1 那 5 个区块全在真实世界（256×256）之外。
+判据本身有效，但游戏真正会生成的那片区域没被逐字节比过。
+补法：往 `tools/harness_randomlevelsource.cpp` 的 `CHUNKS` 里加一个落在 `0..15` 的区块，
+`REF=$REF bash tools/golden/build.sh randomlevelsource` 重新生成夹具。
+
+**给写 `postProcess` 的那个自己**：整段按固定顺序消耗同一个 `random` 流
+（湖 → 矿 → 树 → 花草 → 泉 → 雪）。**顺序是唯一要紧的事**，
+要先把地物系统做齐再写它 —— 顺序错一步整章地形全错位，而且从结果上看不出是哪儿错。
 
 ---
 
