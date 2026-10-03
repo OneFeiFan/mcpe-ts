@@ -14,6 +14,7 @@ export * from './level/material/WebMaterial.js';
 export * from './level/material/MaterialInclude.js';
 export * from './entity/item/ItemEntity.js'; // 先于 Entity：注册 ItemEntity 构造器
 export * from './entity/Entity.js';
+export * from './entity/EntityFactory.js';
 export * from './Facing.js';
 export * from './Direction.js';
 export * from './Unregistered.js';

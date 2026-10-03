@@ -4,8 +4,8 @@
  * 【进度】B4 做了三个静态函数：readLevelData / writeLevelData（level.dat）与 readPlayerData（player.dat）。
  * B5a 补上构造、析构、prepareLevel、saveLevelData、savePlayer/loadPlayer；
  * B5b 补上区块的 save/load、tick、savePendingUnsavedChunks、saveAll；
- * B5c-1 补上 saveEntities（实体文件），B5b-2 留下的三处 `DEFERRED(Entity)` 全部接上了。
- * **只剩 loadEntities（B5c-2）** —— 它要用 `EntityFactory::loadEntity`，那个还没移植。
+ * B5c 补上 saveEntities / loadEntities（实体文件）—— 至此 C++ 那个类的成员函数全部到位。
+ * （`loadEntities` 依赖的 `EntityFactory::loadEntity` 同批移植，见 entity/EntityFactory.ts。）
  *
  * level.dat 的文件布局（readLevelData / writeLevelData 两个函数一起看）：
  *     int32 version     ← 存档版本号，同时决定载荷用哪种格式
@@ -37,15 +37,17 @@
  * B5a 顺势把它和 FolderMethods 的其它函数一起归位了。
  */
 import { SharedConstants } from '@mcpe/core';
-import { CompoundTag, ListTag, NbtIo } from '@mcpe/nbt';
+import { CompoundTag, ListTag, NbtIo, TAG_Compound, TAG_List } from '@mcpe/nbt';
 import { LOGE, LOGI, SEEK_END, SEEK_SET, getTimeMs, getTimeS, getVfs } from '@mcpe/platform';
 import { BitStream, RakDataInput, RakDataOutput } from '@mcpe/util';
+import { EntityFactory } from '../../entity/EntityFactory';
 import type { Player } from '../../entity/player/Player';
 import { LevelChunk } from '../chunk/LevelChunk';
 import type { ChunkStorage } from '../chunk/storage/ChunkStorage';
 import type { Dimension } from '../dimension/Dimension';
 import type { Level } from '../Level';
 import { Tile } from '../tile/Tile';
+import { TileEntity } from '../tile/entity/TileEntity';
 import { LevelConstants } from '../LevelConstants';
 import { createFolderIfNotExists, getRemainingFileSize } from './FolderMethods';
 import { LevelData } from './LevelData';
@@ -73,6 +75,21 @@ const ChunkVersion_Light = 1;
  * TS 没有"字符串即字节数组"这回事，只能显式写出这 4 个字节。
  */
 const ENT_FILE_MAGIC = new Uint8Array([0x45, 0x4e, 0x54, 0x00]);
+
+/**
+ * 把一段字节按 C 的 `%s` 读法变成字符串：一直读到第一个 0，或者读完整段。
+ *
+ * `loadEntities` 里那个 `char header[5]` 只填了 4 个字节，第 5 个从没写过 —— C++ 拿它喂 `%s`
+ * 是在读越界内存，只是恰好被 magic 自带的那个 '\0'（第 4 个字节）截住，所以打印出来是 "ENT"。
+ * 这里按"读到 NUL 为止"还原那个恰好。
+ */
+function decodeCString(bytes: Uint8Array): string {
+  let end = 0;
+  while (end < bytes.length && bytes[end] !== 0) end++;
+  let s = '';
+  for (let i = 0; i < end; i++) s += String.fromCharCode(bytes[i]!);
+  return s;
+}
 
 /**
  * C++ 的 `UnsavedLevelChunk`（ExternalFileLevelStorage.h 里那个 struct）：
@@ -572,6 +589,101 @@ export class ExternalFileLevelStorage extends LevelStorage {
     const tt = getTimeS() - st;
     // C++ 是 %d / %f / %d。%f 按仓库既有约定用 toFixed(6)（见 platform/src/time.ts）
     LOGI(`Time to save ${count} entities: ${tt.toFixed(6)} s. Size: ${numBytes} bytes\n`);
+  }
+
+  /**
+   * 从 entities.dat 读回实体与方块实体。文件格式见 saveEntities。
+   *
+   * 【哪些情况什么都不读】整段读取被 `if (numBytes <= left && numBytes > 0)` 包着：
+   * 文件只有头（left == 0）、或者头里写的长度比实际剩下的还多（被截断），都直接跳过载荷。
+   * 头本身读失败时**完全不看返回值**（见下面那条注释）。
+   *
+   * 【两条路回填的方式不一样】
+   *   - 实体：造出来 → `level.addEntity(e)`，交给 Level 的常规入列逻辑。
+   *   - 方块实体：造出来 → 找到它坐标所在的区块 → 那个位置**还没有**方块实体才 `chunk.addTileEntity(e)`，
+   *     否则直接丢掉（并且分两种日志：区块找不到 / 位置被占）。
+   *
+   * 【原样保留：这里不检查 NbtIo::read 的返回值】同一个文件里的 readLevelData 和 loadPlayer
+   * **都**写了 `if (tag)`，偏偏 loadEntities 没写 —— 参考源码自己的不一致。留着照抄：
+   * 标签读不出来时 C++ 会段错误，TS 会抛 TypeError，都是崩。这里写成 `tag!` 就是那个"不检查"。
+   */
+  override loadEntities(level: Level, _chunk: LevelChunk | null): void {
+    this.lastSavedEntitiesTick = this.tickCount;
+    const fp = getVfs().open(this.levelPath + '/entities.dat', 'rb');
+    if (fp) {
+      // C++ 是 `char header[5]`，只读 4 个字节，第 5 个从没写过 —— 所以它**不是**以 NUL 结尾的，
+      // 最后那句 LOGI("%s") 其实在读越界内存。实际能读到的就是 "ENT"，因为第 4 个字节
+      // （magic 里那个 '\0'）正好把它截住。这里按"读到第一个 0 为止"还原那 4 个字节。
+      const headerBytes = new Uint8Array(4);
+      const versionBuf = new Int32Array(1);
+      const numBytesBuf = new Int32Array(1);
+
+      // 【三个 fread 的返回值全被忽略】文件短于 12 字节时 C++ 的 version/numBytes 是**未初始化的
+      // 栈内存**（UB），TS 复刻不了，只能先用 0 —— 好在下面那道 `numBytes > 0` 会兜住，
+      // 表现是"什么都不读"，也就是 C++ 在多数情况下碰巧的表现。
+      fp.read(headerBytes, 1, 4);
+      fp.read(versionBuf, 4, 1);
+      fp.read(numBytesBuf, 4, 1);
+
+      const version = versionBuf[0]!;
+      const numBytes = numBytesBuf[0]!;
+      const left = getRemainingFileSize(fp);
+
+      if (numBytes <= left && numBytes > 0) {
+        const buf = new Uint8Array(numBytes);
+        fp.read(buf, 1, numBytes);
+        const stream = new BitStream(buf, numBytes, false);
+        const tag = NbtIo.read(new RakDataInput(stream))!; // 见函数头：不检查 null，照抄
+
+        if (tag.contains('Entities', TAG_List)) {
+          const entityTags = tag.getList('Entities');
+          for (let i = 0; i < entityTags.size(); ++i) {
+            const _et = entityTags.get(i);
+            if (!_et || _et.getId() !== TAG_Compound) {
+              // C++ 是 `LOGE(..., _et, _et?_et->getId() : -1)` —— 第一个参数是 %p 指针，
+              // JS 没有指针，只保留后一半（元素类型或 -1）
+              LOGE(`Entity tag is either NULL or not a compoundTag: ${_et ? _et.getId() : -1}!\n`);
+              continue;
+            }
+            const e = EntityFactory.loadEntity(_et as CompoundTag, level);
+            if (e) level.addEntity(e);
+          }
+        }
+
+        if (tag.contains('TileEntities', TAG_List)) {
+          const tileEntityTags = tag.getList('TileEntities');
+          for (let i = 0; i < tileEntityTags.size(); ++i) {
+            const _et = tileEntityTags.get(i);
+            if (!_et || _et.getId() !== TAG_Compound) {
+              LOGE(
+                `TileEntity tag is either NULL or not a compoundTag: ${_et ? _et.getId() : -1}!\n`,
+              );
+              continue;
+            }
+            const e = TileEntity.loadStatic(_et as CompoundTag);
+            if (e) {
+              // 【这个判断永远为真】C++ 的 getChunkAt 走 ChunkCache::getChunk，区块不在就当场生成
+              // 一个出来，所以它不会返回 NULL —— "Couldn't find chunk" 那条是死代码。照抄。
+              // TS 的返回类型不带 null，这里显式放宽只是为了让下面两个分支都写得出来。
+              const chunk: LevelChunk | null = level.getChunkAt(e.x, e.z);
+              if (chunk && !chunk.hasTileEntityAt(e)) {
+                LOGI(`Adding TileEntity ${e.type} to ${e.x}, ${e.y}, ${e.z}\n`);
+                chunk.addTileEntity(e);
+              } else {
+                // C++ 这里是 `delete e;` —— 这个方块实体没人要，TS 交给 GC
+                if (!chunk) LOGE(`Couldn't find chunk at ${e.x}, ${e.z} to add ${e.type}\n`);
+                else LOGE(`Already have TileEntity at ${e.x}, ${e.z} to add ${e.type}\n`);
+              }
+            }
+          }
+        }
+        // C++ 之后是 `tag->deleteChildren(); delete tag; delete[] buf;` —— 内存归属，TS 交给 GC
+      }
+
+      const header = decodeCString(headerBytes);
+      LOGI(`header: ${header}, version: ${version}, bytes: ${numBytes} (remaining: ${left})\n`);
+      fp.close();
+    }
   }
 
   /**

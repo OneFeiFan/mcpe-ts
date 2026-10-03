@@ -7,8 +7,9 @@ import {
   ExternalFileLevelStorage,
   ItemEntity,
   ItemInstance,
+  initTileEntities,
   SignTileEntity,
-  TileEntity,
+  Tile,
   type Level,
 } from '@mcpe/world';
 import { createFlatLevel } from '../helpers/headlessLevel';
@@ -52,11 +53,17 @@ interface Case {
   bytesLen: number;
   bytesHex: string;
 }
+interface LoadedState {
+  entityCount: number;
+  entities: { type: number; pos: number[]; item?: number[]; age?: number }[];
+  tePresent: number[];
+}
 interface Fixture {
   magicHex: string;
   version: number;
   input: { entities: EntSpec[]; tileEntities: TeSpec[] };
   cases: Case[];
+  roundTrip: { firstLoad: LoadedState; secondLoad: LoadedState; truncated: LoadedState };
 }
 
 const fixture = JSON.parse(
@@ -124,11 +131,73 @@ function saveInto(dir: string, level: Level): Uint8Array {
 function freshWorld(): { vfs: VirtualFS; level: Level } {
   const vfs = new VirtualFS();
   setVfs(vfs);
-  TileEntity.initTileEntities();
+  // 必须用 TileEntityInclude 那个：它先把子类注入 TileEntityFactory，再执行 C++ 的
+  // TileEntity::initTileEntities。只调 TileEntity.initTileEntities 的话 id→类名 的映射有了、
+  // 类名→构造器 的映射却是空的，loadStatic 会抛"尚未移植"。
+  initTileEntities();
   const level = createFlatLevel();
   vfs.mkdir(DIR_EMPTY);
   vfs.mkdir(DIR_FULL);
   return { vfs, level };
+}
+
+/**
+ * 准备一个"区块刚从磁盘读出来"的世界：坐标上有方块，但**还没有方块实体**。
+ *
+ * 【为什么不调 chunk.setTile】`LevelChunk.setTile` 末尾会调 `Tile.tiles[t].onPlace(...)`，
+ * 而 `SignTile.onPlace` 正是创建方块实体并挂上去的地方 —— 走它的话等 loadEntities 跑到时
+ * 那个坐标已经有方块实体了，"Adding TileEntity" 那条正常分支永远走不到（C++ 那边实测踩过）。
+ * 直接写方块数组就绕开了 onPlace。harness 的区块源做的是同一件事（见 harness_entities.cpp）。
+ */
+function worldForLoad(): Level {
+  const level = createFlatLevel();
+  for (const s of fixture.input.tileEntities) {
+    const c = level.getChunkAt(s.pos[0]!, s.pos[2]!);
+    const idx = ((s.pos[0]! & 15) << 11) | ((s.pos[2]! & 15) << 7) | s.pos[1]!;
+    c.getBlockData()![idx] = Tile.sign.id;
+  }
+  return level;
+}
+
+/** 与 harness 的 emitLoadedState 一一对应 */
+function snapshot(level: Level): LoadedState {
+  return {
+    entityCount: level.entities.length,
+    entities: level.entities.map((e) => {
+      const o: LoadedState['entities'][number] = {
+        type: e.getEntityTypeId(),
+        pos: [e.x, e.y, e.z],
+      };
+      if (e.isItemEntity()) {
+        const it = (e as ItemEntity).item;
+        // auxValue 是私有的（C++ 也是），得走 getAuxValue()
+        o.item = [it.id, it.count, it.getAuxValue()];
+        o.age = (e as ItemEntity).age;
+      }
+      return o;
+    }),
+    tePresent: fixture.input.tileEntities.map((s) => {
+      const c = level.getChunkAt(s.pos[0]!, s.pos[2]!);
+      return c.hasTileEntityAt(s.pos[0]!, s.pos[1]!, s.pos[2]!) ? 1 : 0;
+    }),
+  };
+}
+
+const DIR_TRUNC = '/trunc';
+
+function fromHex(h: string): Uint8Array {
+  const out = new Uint8Array(h.length / 2);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(h.slice(i * 2, i * 2 + 2), 16);
+  return out;
+}
+
+/** 把 fixtures 里 full 那个文件的字节砍掉尾巴 8 字节 —— 头里的 numBytes 就比剩下的多了 */
+function writeTruncated(vfs: VirtualFS): void {
+  vfs.mkdir(DIR_TRUNC);
+  const full = fromHex(caseOf('full').bytesHex);
+  const f = vfs.open(DIR_TRUNC + FN, 'wb')!;
+  f.write(full.subarray(0, full.length - 8), 1, full.length - 8);
+  f.close();
 }
 
 afterEach(() => {
@@ -198,5 +267,70 @@ describe('G14-6 entities.dat 的字节', () => {
     expect(te.getString('id')).toBe('Sign');
     expect(te.getString('Text1')).toBe(fixture.input.tileEntities[0]!.text[0]);
     expect(te.getInt('x')).toBe(fixture.input.tileEntities[0]!.pos[0]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 读回来那一半（loadEntities）
+// ---------------------------------------------------------------------------
+
+const RT = fixture.roundTrip;
+
+describe('G14-6 loadEntities：把 entities.dat 读回世界', () => {
+  /** 把夹具里 `full` 那个文件写进 dir */
+  function putFullFile(vfs: VirtualFS, dir: string): void {
+    const full = fromHex(caseOf('full').bytesHex);
+    const f = vfs.open(dir + FN, 'wb')!;
+    f.write(full, 1, full.length);
+    f.close();
+  }
+
+  it('第一次读：实体进去了，方块实体也挂到了区块上', () => {
+    const vfs = freshWorld().vfs;
+    putFullFile(vfs, DIR_FULL);
+
+    const level = worldForLoad();
+    new ExternalFileLevelStorage('w', DIR_FULL).loadEntities(level, null);
+
+    // 夹具里 full 写了两条掉落物，但第二条 removed=true 当时没进文件 —— 所以这里只该读回一条
+    expect(snapshot(level)).toEqual(RT.firstLoad);
+    expect(RT.firstLoad.tePresent, '方块实体确实挂上去了（不是被 setTileEntity 拒绝）').toEqual([
+      1,
+    ]);
+  });
+
+  it('再读一次：实体是新建的（id 是新的）所以又加了一遍；方块实体那个位置已占，被丢掉', () => {
+    const vfs = freshWorld().vfs;
+    putFullFile(vfs, DIR_FULL);
+
+    const level = worldForLoad();
+    const store = new ExternalFileLevelStorage('w', DIR_FULL);
+    store.loadEntities(level, null);
+    store.loadEntities(level, null);
+
+    expect(snapshot(level)).toEqual(RT.secondLoad);
+    // 第二条没被加成第二个方块实体 —— 走的是 "Already have TileEntity" 那条分支
+    expect(RT.secondLoad.tePresent).toEqual([1]);
+  });
+
+  it('文件被截短（numBytes 比剩下的多）时什么都不读', () => {
+    const vfs = freshWorld().vfs;
+    writeTruncated(vfs);
+
+    const level = worldForLoad();
+    new ExternalFileLevelStorage('w', DIR_TRUNC).loadEntities(level, null);
+
+    expect(snapshot(level)).toEqual(RT.truncated);
+    expect(RT.truncated.entityCount).toBe(0);
+  });
+
+  it('文件不存在时什么都不做，也不抛（对应 fopen 返回 NULL）', () => {
+    const vfs = freshWorld().vfs;
+    vfs.mkdir('/none');
+    const level = worldForLoad();
+    expect(() =>
+      new ExternalFileLevelStorage('w', '/none').loadEntities(level, null),
+    ).not.toThrow();
+    expect(level.entities.length).toBe(0);
   });
 });

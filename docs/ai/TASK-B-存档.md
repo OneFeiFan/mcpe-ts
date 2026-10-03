@@ -122,8 +122,31 @@ C++ 用 `FILE*`（fopen/fread/fwrite/fseek/fclose）同步读写磁盘。浏览�
 | **B5a-2** | 构造函数、析构、`prepareLevel`、`saveLevelData`（成员 + 静态）、`savePlayer`/`loadPlayer`（各两个重载）+ **黄金样本 G14-4**（跑一遍完整 `saveLevelData`，记录目录里最终留下的文件与各自字节） | 完成（`0b96738`） |
 | **B5b-1** | `LevelConverters`（两个转换函数）+ 区块 `save`/`load`（LevelChunk 序列化：方块、数据、光照数组）+ **黄金样本 G14-5**                                                                          | 完成（`f5d1ed0`） |
 | **B5b-2** | `tick`、`savePendingUnsavedChunks`（未保存区块列表的时间戳用 `getTimeMs`）、`saveGame`、`saveAll`；顺手把 `createChunkStorage` 返回 `this` 时缺的 ChunkStorage 那一半补上                     | 完成（`2977749`） |
-| **B5c-1** | `saveEntities`（实体文件写入）+ 补上 tick / saveGame / createChunkStorage 三处 `DEFERRED(Entity)` + **黄金样本 G14-6**（entities.dat 的字节）                                                 | 待办              |
-| **B5c-2** | `EntityFactory`（新文件：`CreateEntity` + `loadEntity`，`MobFactory::CreateMob` 标 OMIT）+ `loadEntities` + G14-6 补上"读回来"那半                                                            | 待办              |
+| **B5c-1** | `saveEntities`（实体文件写入）+ 补上 tick / saveGame / createChunkStorage 三处 `DEFERRED(Entity)` + **黄金样本 G14-6**（entities.dat 的字节）                                                 | 完成（`a49af5a`） |
+| **B5c-2** | `EntityFactory`（新文件：`CreateEntity` + `loadEntity`，`MobFactory::CreateMob` 标 OMIT）+ `loadEntities` + G14-6 补上"读回来"那半                                                            | 完成              |
+
+**B5c-2 的三条实测发现：**
+
+1. **`CreateEntity` 那张 switch 只有掉落物是真的。** TS 里 `FallingTile` / `TripodCamera` 只是
+   FORWARD-DECL（空接口），`PrimedTnt` / `Arrow` / `ThrownEgg` / `Snowball` / `Painting` 连文件都没有。
+   所以六个 case 原地留 `DEFERRED(Entity)`，`id < 64` 那条（生物）整条走不了 —— `MobFactory::CreateMob`
+   标 `OMIT(Entity)`。台账 236 → 244。
+2. **`loadEntities` 不检查 `NbtIo::read` 的返回值**，而**同一个文件里的 `readLevelData` 和 `loadPlayer`
+   都写了 `if (tag)`** —— 参考源码自己的不一致。照抄（标签读不出来时 C++ 段错误、TS 抛 TypeError）。
+3. **`getChunkAt` 从不会返回 NULL**（ChunkCache 会当场把区块生成出来），所以 "Couldn't find chunk"
+   那条错误分支是死代码。照抄。
+
+**harness 里踩的两个坑（都不是实现问题）：**
+
+1. **`harness_chunk` 那个两参 `LevelChunk(Level*, x, z)` 不分配方块数组**，任何 `getTile` 都是空指针
+   取值。harness_chunk 里没暴露是因为它从没读过区块里的方块；这里 `loadEntities` 会走
+   `addTileEntity → setTileEntity → SignTileEntity::setLevelAndPos → Level::getTile`，第一次跑就段错误。
+   （定位用的是 ASan，`tools/golden` 里没装 gdb：把 harness 单独用 `-fsanitize=address -g` 重编、
+   跟 `$LVL/*.o` 和 `ent.stubs.oo` 一起链接。）
+2. **方块实体得自己埋，而且不能走 `chunk->setTile`**。`setTile` 末尾会调 `Tile::tiles[t]->onPlace(...)`，
+   而 `SignTile::onPlace` 正是创建方块实体挂上去的地方 —— 走它的话等 `loadEntities` 跑到时那个坐标
+   已经有方块实体了，"Adding TileEntity" 那条正常分支永远走不到（实测两次都走 "Already have"）。
+   改成往方块数组里直接写值，绕开 onPlace —— 这也正是"区块刚从磁盘读出来"的样子。
 
 **B5c 开工前实测，任务单原文有两处错（已改）：**
 
