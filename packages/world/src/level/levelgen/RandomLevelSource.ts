@@ -38,6 +38,7 @@ import type { LevelChunk } from '../chunk/LevelChunk';
 import { LevelConstants } from '../LevelConstants';
 import type { Level } from '../Level';
 import { Tile } from '../tile/Tile';
+import { LargeCaveFeature } from './LargeCaveFeature';
 import { PerlinNoise } from './synth/PerlinNoise';
 
 const f = Math.fround;
@@ -54,7 +55,11 @@ export class RandomLevelSource extends ChunkSource {
   /** ⚠ 死常量：`.cpp` 用的是 `LevelConstants::CHUNK_WIDTH`（16），不是这个。原样保留。 */
   static readonly CHUNK_WIDTH = 4;
 
-  // DEFERRED(Levelgen): LargeCaveFeature caveFeature;  RandomLevelSource.h:63（C-4 移植该类时补上）
+  /**
+   * C++ 里这个成员声明在 `private:` 段**之前**，所以它比 `random`/`chunkMap` 先构造。
+   * 这边顺序无所谓（它不依赖别的成员），但用字段初始化器正好也是先于构造函数体。
+   */
+  readonly caveFeature = new LargeCaveFeature();
   // DEFERRED(Levelgen): CanyonFeature canyonFeature;  RandomLevelSource.h:64（C-5 移植该类时补上）
 
   // OMIT(Levelgen): int waterDepths[16+16][16+16];  RandomLevelSource.h:68

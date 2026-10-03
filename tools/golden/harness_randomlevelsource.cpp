@@ -9,9 +9,13 @@
 //     3. afterBuildSurfaces  buildSurfaces 之后（草/沙/沙岩/砾石/冰 + 基岩）
 //     4. afterFeatures       洞穴 + 峡谷之后
 //
-// 另外还从**真的 `getChunk`** 取一份 `fromGetChunk`。它和 `afterFeatures` 应当逐字节相同 ——
-// 这是 harness 自己的体检：如果这两个对不上，说明上面那条"重放"路径没有忠实还原 getChunk，
-// 那份快照就不能当判据。
+// 五份快照：高度场 / prepareHeights 后 / buildSurfaces 后 / **洞穴后** / 洞穴+峡谷后。
+// （洞穴单独一段是给 C-4 用的：拿最后的 afterFeatures 当判据会把峡谷一起算进去。）
+//
+// 另外还从**真的 `getChunk`** 取一份结果跟 `afterFeatures` 逐字节比 —— 这是 harness 自己的体检，
+// 对不上说明上面那条"重放"路径没有忠实还原 getChunk，整份快照就不能当判据。
+// **那份结果只写成一个布尔，不存进夹具**：自检成立时它按构造等于 `afterFeatures`，
+// 存两份纯属重复（要占整个夹具的四分之一）。
 //
 // 【区块是扫出来的，不是随手挑的】地形在有些区域整片都在海平面以上，那样的区块里
 // 水、冰、沙、砾石、沙岩一个都不会出现 —— 拿它当判据，C-3 把这几条分支全写错也测不出来。
@@ -72,8 +76,8 @@ struct Stages {
   std::string heights;
   std::string afterPrepareHeights;
   std::string afterBuildSurfaces;
+  std::string afterCaves;
   std::string afterFeatures;
-  std::string fromGetChunk;
   bool replayMatchesGetChunk;
 };
 
@@ -146,8 +150,12 @@ static Stages computeChunk(Level* level, int version, int cx, int cz) {
   src.buildSurfaces(cx, cz, blocks, biomes);
   st.afterBuildSurfaces = hexOf(blocks, LevelChunk::ChunkBlockCount);
 
-  // ---- 4) 洞穴 + 峡谷 ----
+  // ---- 4) 洞穴 ----
+  // 洞穴与峡谷分开记：C-4 只做洞穴，拿 afterFeatures 当判据的话会连带峡谷一起算进去。
   src.caveFeature.apply(&src, level, cx, cz, blocks, LevelChunk::ChunkBlockCount);
+  st.afterCaves = hexOf(blocks, LevelChunk::ChunkBlockCount);
+
+  // ---- 5) 峡谷 ----
   src.canyonFeature.apply(&src, level, cx, cz, blocks, LevelChunk::ChunkBlockCount);
   st.afterFeatures = hexOf(blocks, LevelChunk::ChunkBlockCount);
 
@@ -155,8 +163,10 @@ static Stages computeChunk(Level* level, int version, int cx, int cz) {
   RandomLevelSource src2(level, level->getSeed(), version, false);
   LevelChunk* viaGetChunk = src2.getChunk(cx, cz);
   // `LevelChunk::blocks` 是 protected，走公开的 getBlockData()（同一个指针）
-  st.fromGetChunk = hexOf(viaGetChunk->getBlockData(), LevelChunk::ChunkBlockCount);
-  st.replayMatchesGetChunk = (st.afterFeatures == st.fromGetChunk);
+  // 真 getChunk 的结果**只用来做自检，不写进夹具**：自检成立时它按构造等于 afterFeatures，
+  // 存两份纯属重复（占整个夹具的四分之一）。自检不成立的话这个夹具本来就不该用。
+  const std::string fromGetChunk = hexOf(viaGetChunk->getBlockData(), LevelChunk::ChunkBlockCount);
+  st.replayMatchesGetChunk = (st.afterFeatures == fromGetChunk);
 
   delete[] heights;
   delete lc;
@@ -283,10 +293,10 @@ int main(int argc, char** argv) {
     jsonStr(o, st.afterPrepareHeights);
     std::fprintf(o, ", \"afterBuildSurfaces\": ");
     jsonStr(o, st.afterBuildSurfaces);
+    std::fprintf(o, ", \"afterCaves\": ");
+    jsonStr(o, st.afterCaves);
     std::fprintf(o, ", \"afterFeatures\": ");
     jsonStr(o, st.afterFeatures);
-    std::fprintf(o, ", \"fromGetChunk\": ");
-    jsonStr(o, st.fromGetChunk);
     std::fprintf(o, ", \"replayMatchesGetChunk\": %s}", st.replayMatchesGetChunk ? "true" : "false");
   }
   std::fprintf(o, "\n  ]\n}\n");

@@ -14,12 +14,12 @@ import { initTestTiles } from '../helpers/initTestTiles';
 // 用**真实的 Level**：GoldenStorage:MemoryLevelStorage + DimensionFactory 拿 NormalDayCycleDimension，
 // 所以 getBiomeSource() 出来的 temperatures/downfalls 是真货）。
 //
-// 【这个夹具分四段】高度场 / prepareHeights 后 / buildSurfaces 后 / 洞穴峡谷后 —— 因为 getChunk 是
-// 一整块出来的，不分段的话中间哪一步错了都只能看到"最后不一样"。
-// 本文件（C-3）比前三段；第四段（洞穴峡谷）是 C-4/C-5 的事。
+// 【这个夹具分五段】高度场 / prepareHeights 后 / buildSurfaces 后 / **洞穴后** / 洞穴+峡谷后 ——
+// 因为 getChunk 是一整块出来的，不分段的话中间哪一步错了都只能看到"最后不一样"。
+// 本文件（C-4）比到"洞穴后"；最后一段（含峡谷）是 C-5 的事。
 //
-// 夹具里还有一份 fromGetChunk（真 getChunk 的结果）与 replayMatchesGetChunk 自检位 ——
-// 那是 harness 自己的体检，不属于 TS 要对的东西，但下面顺手断言一下，
+// 夹具里还有一个 replayMatchesGetChunk 自检位 —— 那是 harness 自己的体检（拿真的 getChunk
+// 跟重放结果逐字节比），不属于 TS 要对的东西，但下面顺手断言一下，
 // 免得哪天真重新生成了一个"重放不忠实"的坏夹具还当判据用。
 type ChunkCase = {
   x: number;
@@ -27,8 +27,8 @@ type ChunkCase = {
   heights: string;
   afterPrepareHeights: string;
   afterBuildSurfaces: string;
+  afterCaves: string;
   afterFeatures: string;
-  fromGetChunk: string;
   replayMatchesGetChunk: boolean;
 };
 type Fixture = {
@@ -138,8 +138,13 @@ const runStages = (c: ChunkCase) => {
   src.prepareHeights(c.x, c.z, blocks, null, temperatures);
   const afterPrepareHeights = Uint8Array.from(blocks);
   src.buildSurfaces(c.x, c.z, blocks, biomes);
+  const afterBuildSurfaces = Uint8Array.from(blocks);
 
-  return { heights, afterPrepareHeights, afterBuildSurfaces: blocks };
+  // C++ 的 getChunk 紧接着就是这两句（洞穴、峡谷）。**C-4 只做洞穴**，
+  // 所以这里到洞穴为止 —— 最后一段（含峡谷）是 C-5 的事。
+  src.caveFeature.apply(src, level, c.x, c.z, blocks, G.chunkBlockCount);
+
+  return { heights, afterPrepareHeights, afterBuildSurfaces, afterCaves: blocks };
 };
 
 beforeAll(() => {
@@ -153,7 +158,6 @@ describe('RandomLevelSource 与 C++ 逐位一致（G15-1）', () => {
     expect(G.chunks.length).toBeGreaterThan(0);
     for (const c of G.chunks) {
       expect(c.replayMatchesGetChunk, `区块 (${c.x},${c.z}) 的重放与真 getChunk 对不上`).toBe(true);
-      expect(c.afterFeatures).toBe(c.fromGetChunk);
     }
   });
 
@@ -173,6 +177,11 @@ describe('RandomLevelSource 与 C++ 逐位一致（G15-1）', () => {
     it(`${at}：buildSurfaces 之后的 32768 个方块逐字节相同`, () => {
       const { afterBuildSurfaces } = runStages(c);
       expect(Array.from(afterBuildSurfaces)).toEqual(hexToBytes(c.afterBuildSurfaces));
+    });
+
+    it(`${at}：洞穴之后的 32768 个方块逐字节相同`, () => {
+      const { afterCaves } = runStages(c);
+      expect(Array.from(afterCaves)).toEqual(hexToBytes(c.afterCaves));
     });
   }
 });
