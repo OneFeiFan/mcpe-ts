@@ -1,14 +1,20 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { SharedConstants } from '@mcpe/core';
-import { VirtualFS, setVfs } from '@mcpe/platform';
+import { CompoundTag, NbtIo } from '@mcpe/nbt';
+import { SEEK_END, SEEK_SET, VirtualFS, getVfs, setVfs } from '@mcpe/platform';
+import { BitStream, RakDataInput } from '@mcpe/util';
 import {
+  type Entity,
   ExternalFileLevelStorage,
   GameType,
+  ItemEntity,
+  ItemInstance,
   LevelChunk,
   LevelConstants,
   LevelData,
   Player,
   RegionFile,
+  type TileEntity,
   type Level,
 } from '@mcpe/world';
 import { createFlatLevel } from '../../helpers/headlessLevel';
@@ -164,12 +170,15 @@ class TestPlayer extends Player {}
 // ---------------------------------------------------------------------------
 
 /**
- * tick 只会对 level 调一件事：`getChunk(x, z)`。所以给它一个只有这一个方法的替身就够了 ——
+ * tick 只会对 level 调两件事：`getChunk(x, z)`（收待保存区块）与 `entities`/`tileEntities`
+ * （B5c-1 起接上了 saveEntities）。所以给它一个只有这三样东西的替身就够了 ——
  * 用真 Level 的话，tick 每轮扫 16×16 会让平坦世界当场生成 256 个区块，又慢又跟被测的点无关。
  */
 function stubLevel(chunks: Map<string, LevelChunk>): Level {
   return {
     getChunk: (x: number, z: number): LevelChunk | null => chunks.get(`${x},${z}`) ?? null,
+    entities: [],
+    tileEntities: [],
   } as unknown as Level;
 }
 
@@ -253,5 +262,117 @@ describe('world/ExternalFileLevelStorage 的 tick 与 saveAll', () => {
 
     expect(written(DIR, 2, 3)).toBe(true);
     expect(written(DIR, 4, 5)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// B5c-1：saveEntities 以及它接上的那三处
+// ---------------------------------------------------------------------------
+
+/**
+ * saveEntities 只读 level 的两个数组（entities / tileEntities）。
+ * getChunk 是给 tick 用的 —— 传 null 就不生成区块，不然 tick 每 1000 拍会当场造 256 个。
+ */
+function entityStubLevel(entities: Entity[], tileEntities: TileEntity[]): Level {
+  return {
+    entities,
+    tileEntities,
+    getChunk: (): LevelChunk | null => null,
+  } as unknown as Level;
+}
+
+const ENTITIES_DAT = DIR + '/entities.dat';
+
+/** 造一个会被存下去的掉落物（Player 不行，见下面那条测试） */
+function droppable(): ItemEntity {
+  return new ItemEntity(createFlatLevel(), 8.5, 64, 8.5, new ItemInstance(1, 1, 0));
+}
+
+/** 把 entities.dat 解回标签树 */
+function readTag(path: string): CompoundTag {
+  const file = getVfs().open(path, 'rb')!;
+  file.seek(0, SEEK_END);
+  const size = file.tell();
+  file.seek(0, SEEK_SET);
+  const buf = new Uint8Array(size);
+  file.read(buf, 1, size);
+  file.close();
+
+  const numBytes = new DataView(buf.buffer, buf.byteOffset).getInt32(8, true);
+  const nbtBytes = buf.subarray(12, 12 + numBytes);
+  return NbtIo.read(new RakDataInput(new BitStream(nbtBytes, nbtBytes.length, false)))!;
+}
+
+describe('world/ExternalFileLevelStorage 的 saveEntities', () => {
+  it('saveGame 转调 saveEntities：写下 entities.dat', () => {
+    const vfs = freshVfs();
+    vfs.mkdir(DIR);
+    const ext = new ExternalFileLevelStorage('w1', DIR);
+
+    expect(vfs.exists(ENTITIES_DAT)).toBe(false);
+    ext.saveGame(entityStubLevel([droppable()], []));
+    expect(vfs.exists(ENTITIES_DAT)).toBe(true);
+  });
+
+  it('【B5b-2 记下的问题】saveEntities 会把 lastSavedEntitiesTick 重置，tick 的 60 秒分支不再每拍都成立', () => {
+    const vfs = freshVfs();
+    vfs.mkdir(DIR);
+    const ext = new ExternalFileLevelStorage('w1', DIR);
+    ext.prepareLevel(entityStubLevel([droppable()], []));
+    const PERIOD = 60 * SharedConstants.TicksPerSecond; // 1200
+
+    // 【初值 -999999 的用意就在这】第 1 拍 tickCount(1) - (-999999) 早就大于 1200 了，
+    // 所以刚读进来的世界会**立刻**存一次实体，不是等 60 秒。
+    ext.tick();
+    expect(vfs.exists(ENTITIES_DAT), '第 1 拍就存').toBe(true);
+
+    // 把文件删掉当"哨兵"：后面那些拍要是又存了一次，它就会重新出现
+    vfs.remove(ENTITIES_DAT);
+    for (let i = 0; i < PERIOD; i++) ext.tick();
+    expect(vfs.exists(ENTITIES_DAT), `刚存过，接下来 ${PERIOD} 拍都不该再存`).toBe(false);
+
+    ext.tick(); // 又够 1201 拍了
+    expect(vfs.exists(ENTITIES_DAT), `再过 ${PERIOD + 1} 拍才存第二次`).toBe(true);
+  });
+
+  it('removed 的实体不进列表（Entity::save 返回 false → 走 else 分支丢掉）', () => {
+    const vfs = freshVfs();
+    vfs.mkdir(DIR);
+    const alive = droppable();
+    const dead = droppable();
+    dead.removed = true;
+
+    new ExternalFileLevelStorage('w1', DIR).saveEntities(entityStubLevel([alive, dead], []), null);
+
+    const tag = readTag(ENTITIES_DAT);
+    expect(tag.getList('Entities').size()).toBe(1);
+    expect(tag.getList('TileEntities').size()).toBe(0);
+  });
+
+  /**
+   * 【原样保留的行为】Player::getEntityTypeId() 返回 0，而 Entity::save 开头就是
+   * `if (removed || id == 0) return false;` —— 所以**玩家永远不会被写进 entities.dat**。
+   * 这不是漏了：玩家有单独的一条路（players/<名字>.dat，走 savePlayer）。
+   */
+  it('玩家不进 entities.dat（Player 的 typeId 是 0，Entity::save 会拒绝）', () => {
+    const vfs = freshVfs();
+    vfs.mkdir(DIR);
+    new ExternalFileLevelStorage('w1', DIR).saveEntities(entityStubLevel([makePlayer()], []), null);
+
+    expect(readTag(ENTITIES_DAT).getList('Entities').size()).toBe(0);
+  });
+
+  // 【为什么要先建再删】构造函数里就有 createFolderIfNotExists(levelPath)（C++ 也是），
+  // 所以"世界目录不存在"这件事在正常路径上根本发生不了。想测 fopen 打不开那条路，
+  // 只能构造完再把目录拆掉。拆之前得先删 players/ —— VirtualFS.remove **删不掉非空目录**
+  // （这是照抄 C++ 的怪癖，见 VirtualFS 里那段注释）。
+  it('存档目录打不开时什么都不写，也不抛（对应 fopen 返回 NULL 就跳过整个写入）', () => {
+    const vfs = freshVfs();
+    const ext = new ExternalFileLevelStorage('w1', DIR);
+    vfs.remove(DIR + '/players');
+    expect(vfs.remove(DIR), 'players 删掉之后世界目录才删得掉').toBe(true);
+
+    expect(() => ext.saveGame(entityStubLevel([droppable()], []))).not.toThrow();
+    expect(vfs.exists(ENTITIES_DAT)).toBe(false);
   });
 });

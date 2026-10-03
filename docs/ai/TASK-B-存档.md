@@ -121,10 +121,32 @@ C++ 用 `FILE*`（fopen/fread/fwrite/fseek/fclose）同步读写磁盘。浏览�
 | **B5a-1** | `FolderMethods`（7 个函数，其中 3 个 POSIX 裸原语标 `OMIT(Web)`）+ `getRemainingFileSize` 归位 + 补上 `LevelData.createTagForPlayers` 里那处 `DEFERRED(Player)`                               | 完成（`e627cc5`） |
 | **B5a-2** | 构造函数、析构、`prepareLevel`、`saveLevelData`（成员 + 静态）、`savePlayer`/`loadPlayer`（各两个重载）+ **黄金样本 G14-4**（跑一遍完整 `saveLevelData`，记录目录里最终留下的文件与各自字节） | 完成（`0b96738`） |
 | **B5b-1** | `LevelConverters`（两个转换函数）+ 区块 `save`/`load`（LevelChunk 序列化：方块、数据、光照数组）+ **黄金样本 G14-5**                                                                          | 完成（`f5d1ed0`） |
-| **B5b-2** | `tick`、`savePendingUnsavedChunks`（未保存区块列表的时间戳用 `getTimeMs`）、`saveGame`、`saveAll`；顺手把 `createChunkStorage` 返回 `this` 时缺的 ChunkStorage 那一半补上                     | 待办              |
-| **B5c**   | `loadEntities`/`saveEntities`（实体文件，RegionFile 的第二个实例）。只保存已移植的实体（掉落物）；其余实体类型的创建在 EntityFactory 里标 DEFERRED                                            | 待办              |
+| **B5b-2** | `tick`、`savePendingUnsavedChunks`（未保存区块列表的时间戳用 `getTimeMs`）、`saveGame`、`saveAll`；顺手把 `createChunkStorage` 返回 `this` 时缺的 ChunkStorage 那一半补上                     | 完成（`2977749`） |
+| **B5c-1** | `saveEntities`（实体文件写入）+ 补上 tick / saveGame / createChunkStorage 三处 `DEFERRED(Entity)` + **黄金样本 G14-6**（entities.dat 的字节）                                                 | 待办              |
+| **B5c-2** | `EntityFactory`（新文件：`CreateEntity` + `loadEntity`，`MobFactory::CreateMob` 标 OMIT）+ `loadEntities` + G14-6 补上"读回来"那半                                                            | 待办              |
 
-样本编号说明：G14-3 已被 B4d 的 `player.dat` 用掉，所以区块样本是 **G14-5**。
+**B5c 开工前实测，任务单原文有两处错（已改）：**
+
+1. **`entities.dat` 不是 RegionFile。** 原文写"实体文件，RegionFile 的第二个实例" —— 但 `entitiesFile`
+   这个 `RegionFile*` 字段在 C++ 里**声明了却从没被用过**（全文件只有两处：`ExternalFileLevelStorage.h:90`
+   的声明、`.cpp:86` 的 `entitiesFile(NULL)`）。`saveEntities`/`loadEntities` 走的是裸 `fopen`：
+
+   ```
+   "ENT\0"   4 字节
+   int32     version    ← 写死 1；读出来只用于打日志
+   int32     numBytes   ← 后面 NBT 的字节数
+   byte[]    NbtIo::write 的产物（Entities / TileEntities 两个 ListTag）
+   ```
+
+2. **`ChunkVersion_Entity = 2` 是死的。** 原文说它"到 B5c 的 loadEntities 才用到" —— 实际它只出现在
+   一行**被注释掉的**代码里（`.cpp:469` 的 `//if (loadedStorageVersion >= ChunkVersion_Entity) {`）。
+   照原样留一条注释，不建常量。
+
+**为什么拆成 B5c-1 / B5c-2**（CLAUDE.md：超 300 行或碰 5 个以上文件就拆）：原文一步要碰 6 个文件、
+约 420 行。`saveEntities` 不依赖 `EntityFactory`（只有 `loadEntities` 依赖），所以按"存 / 读"拆，
+每步的夹具只记这一步真正移植的那半。用户已确认（2026-10-03）。
+
+样本编号说明：G14-3 已被 B4d 的 `player.dat` 用掉，区块样本是 **G14-5**，实体文件是 **G14-6**。
 B5b-2 那半（tick / savePendingUnsavedChunks / saveGame / saveAll 要真 Level + 区块缓存）不再加样本，用单元测试盖。
 
 - 验收：四个样本通过；浏览器场景 "放一个方块 → 调用 `app.level.saveGame()` → 新建 Level 读同一个世界 → 方块还在"。

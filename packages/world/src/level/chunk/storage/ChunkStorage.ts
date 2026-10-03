@@ -9,7 +9,8 @@ export class ChunkStorage {
 
   save(_level: Level, _levelChunk: LevelChunk): void {}
 
-  saveEntities(_level: Level, _levelChunk: LevelChunk): void {}
+  // 参数是指针；ExternalFileLevelStorage 的 tick/saveGame 传的是 NULL（而且函数体从没读过它）
+  saveEntities(_level: Level, _levelChunk: LevelChunk | null): void {}
 
   saveAll(level: Level, levelChunks: LevelChunk[]): void {
     for (let i = 0; i < levelChunks.length; ++i) this.save(level, levelChunks[i]!);

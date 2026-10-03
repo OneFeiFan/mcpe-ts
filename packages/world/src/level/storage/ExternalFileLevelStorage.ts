@@ -3,9 +3,9 @@
  *
  * 【进度】B4 做了三个静态函数：readLevelData / writeLevelData（level.dat）与 readPlayerData（player.dat）。
  * B5a 补上构造、析构、prepareLevel、saveLevelData、savePlayer/loadPlayer；
- * B5b 补上区块的 save/load、tick、savePendingUnsavedChunks、saveAll。
- * **只剩 loadEntities / saveEntities（B5c）** —— 相关的三处已经是 DEFERRED(Entity)：
- * tick 里的"存实体"分支、saveGame 整体、createChunkStorage 的断言还差 saveEntities 一个方法。
+ * B5b 补上区块的 save/load、tick、savePendingUnsavedChunks、saveAll；
+ * B5c-1 补上 saveEntities（实体文件），B5b-2 留下的三处 `DEFERRED(Entity)` 全部接上了。
+ * **只剩 loadEntities（B5c-2）** —— 它要用 `EntityFactory::loadEntity`，那个还没移植。
  *
  * level.dat 的文件布局（readLevelData / writeLevelData 两个函数一起看）：
  *     int32 version     ← 存档版本号，同时决定载荷用哪种格式
@@ -37,8 +37,8 @@
  * B5a 顺势把它和 FolderMethods 的其它函数一起归位了。
  */
 import { SharedConstants } from '@mcpe/core';
-import { CompoundTag, NbtIo } from '@mcpe/nbt';
-import { LOGE, LOGI, SEEK_END, SEEK_SET, getTimeMs, getVfs } from '@mcpe/platform';
+import { CompoundTag, ListTag, NbtIo } from '@mcpe/nbt';
+import { LOGE, LOGI, SEEK_END, SEEK_SET, getTimeMs, getTimeS, getVfs } from '@mcpe/platform';
 import { BitStream, RakDataInput, RakDataOutput } from '@mcpe/util';
 import type { Player } from '../../entity/player/Player';
 import { LevelChunk } from '../chunk/LevelChunk';
@@ -56,9 +56,23 @@ import { RegionFile } from './RegionFile';
 /**
  * C++ 里这是文件内的 `static const int ChunkVersion_Light = 1;`。
  * 它跟 level.dat 的 storageVersion 是**两个不同的东西**，但 load 里拿后者当版本号用了 —— 照抄。
- * （另一个常量 ChunkVersion_Entity = 2 要到 B5c 的 loadEntities 才用到，那时再加。）
+ * （ChunkVersion_Entity = 2 见下面那条注释 —— 它其实是死的。）
  */
 const ChunkVersion_Light = 1;
+
+// C++ 里 ChunkVersion_Entity = 2 也在这里声明（`.cpp:22`），但**从头到尾只出现在一行被注释掉的
+// 代码里**（`.cpp:469` 的 `//if (loadedStorageVersion >= ChunkVersion_Entity) {`）。
+// 照原样不建这个常量，只留这条注释 —— 任务单原文说它"到 B5c 才用到"，那是错的。
+
+/**
+ * C++ 的 `fwrite("ENT\0", 1, 4, fp)`。
+ *
+ * 【字面量是 5 字节，只写 4 个】C 的 `"ENT\0"` 在内存里是 `E N T \0 \0`（末尾还有一个编译器
+ * 补的结束符），fwrite 的第三个参数把写入截到 4 字节，所以文件里就是 `45 4E 54 00`。
+ *
+ * TS 没有"字符串即字节数组"这回事，只能显式写出这 4 个字节。
+ */
+const ENT_FILE_MAGIC = new Uint8Array([0x45, 0x4e, 0x54, 0x00]);
 
 /**
  * C++ 的 `UnsavedLevelChunk`（ExternalFileLevelStorage.h 里那个 struct）：
@@ -183,8 +197,13 @@ export class ExternalFileLevelStorage extends LevelStorage {
   private levelPath: string;
   /** C++ 是 LevelData* 且可能为 NULL（两个文件都读不出来时就 delete 掉了），所以这里要能是 null */
   private loadedLevelData: LevelData | null;
-  // regionFile / entitiesFile 只有 B5b/B5c 的区块与实体读写会用到，这里先按 C++ 的初始化列表演成 null
+  // regionFile 只有区块读写会用到，这里按 C++ 的初始化列表演成 null
   private regionFile: RegionFile | null = null;
+  /**
+   * C++ 头文件里有这个字段（`RegionFile* entitiesFile;`），构造函数也把它初始化成 NULL ——
+   * 但**它从没被任何一个函数用过**：实体文件走的是裸 `fopen`，不是 RegionFile。
+   * 留着是为了跟 C++ 的字段表一致，也免得以后有人以为漏了。真要用它反而是错的。
+   */
   private entitiesFile: RegionFile | null = null;
   private level: Level | null = null;
   private tickCount = 0;
@@ -194,7 +213,11 @@ export class ExternalFileLevelStorage extends LevelStorage {
    * 用数组代替 —— 这里只需要"追加""按下标删""从头扫"，list 的迭代器稳定性用不上。
    */
   private unsavedChunkList: UnsavedLevelChunk[] = [];
-  /** C++ 的 lastSavedEntitiesTick(-999999)；只有 saveEntities 会写它（B5c） */
+  /**
+   * C++ 的 `lastSavedEntitiesTick(-999999)`。**只有 saveEntities 会写它**（开头那句
+   * `lastSavedEntitiesTick = tickCount;`）—— 也就是说 tick 里那个"每 60 秒存一次实体"的
+   * 判断，节拍是由"上一次真的存了"来重置的，不是由判断本身。
+   */
   private lastSavedEntitiesTick = -999999;
 
   /**
@@ -231,7 +254,7 @@ export class ExternalFileLevelStorage extends LevelStorage {
   /**
    * C++ 的析构是 `delete regionFile; delete loadedLevelData;`。
    * TS 没有析构函数，这两个对象交给 GC —— 不写等价物是**有意的**，不是什么都没做。
-   * （regionFile/entitiesFile 在 B5b/B5c 里才真正被打开。）
+   * （C++ 的析构里没有 entitiesFile —— 它从没被 new 过，理由见上面那个字段的注释。）
    */
 
   prepareLevel(_level: Level): LevelData | null {
@@ -242,11 +265,10 @@ export class ExternalFileLevelStorage extends LevelStorage {
   /**
    * C++ 的 `ChunkStorage* createChunkStorage(Dimension*) { return this; }` —— 返回自己。
    *
-   * 【B5c 之前还差一个函数】C++ 里这个类**同时继承 LevelStorage 和 ChunkStorage**，TS 只能单继承，
-   * 所以返回 this 时得断言一下。ChunkStorage 那一半共六个：load / save / saveAll / tick / flush
-   * 已经补齐（B5b-1 与 B5b-2），**只差 saveEntities**（B5c）。所以现在这个对象还不能真的当
-   * ChunkStorage 用 —— B5c 补上之后这个断言才完全名副其实。这个类要到 B7 才接进 Minecraft，
-   * 在那之前没人会调它。
+   * 【为什么要断言】C++ 里这个类**同时继承 LevelStorage 和 ChunkStorage**，TS 只能单继承，
+   * 所以返回 this 时要显式跨过类型系统。ChunkStorage 那一半共六个方法：load / save / tick /
+   * flush（B5b-1、B5b-2）、saveAll（B5b-2，见那里的注释）、saveEntities（B5c-1），**现在齐了**。
+   * 这个类要到 B7 才接进 Minecraft，在那之前没人会调它。
    */
   createChunkStorage(_dimension: Dimension): ChunkStorage {
     return this as unknown as ChunkStorage;
@@ -383,7 +405,8 @@ export class ExternalFileLevelStorage extends LevelStorage {
    * 把一个区块写进 chunks.dat。
    *
    * 【regionFile 是懒打开的】第一次用到才 new + open；打不开就把指针清回 null 并直接返回 ——
-   * 于是下次调用会**再试一遍**。全类只有 save / load 两处这么做（loadEntities 之类是 B5c）。
+   * 于是下次调用会**再试一遍**。全类只有 save / load 两处这么做 —— 剩下的读写都各开各的文件
+   * （saveEntities/loadEntities 直接 fopen entities.dat，不走 regionFile）。
    *
    * 区块在文件里的布局就是五个数组首尾相接，**没有长度前缀也没有版本号**：
    *     CHUNK_BLOCK_COUNT    字节  方块 id
@@ -468,6 +491,90 @@ export class ExternalFileLevelStorage extends LevelStorage {
   }
 
   /**
+   * 把 level 里的实体与方块实体全存进 entities.dat。
+   *
+   * 【这不是 RegionFile，是平文件】任务单原文写的"RegionFile 的第二个实例"是错的 ——
+   * `entitiesFile` 这个 `RegionFile*` 字段在 C++ 里**声明了却从没被用过**（全文件只有
+   * `ExternalFileLevelStorage.h:90` 的声明与 `.cpp:86` 的 `entitiesFile(NULL)`），
+   * 这个函数走的是裸 `fopen`。文件布局：
+   *
+   *     "ENT\0"    4 字节（C 的字面量其实是 5 字节，"ENT\0" 后面那个隐含的 '\0' 会被丢掉）
+   *     int32      version  ← 写死 1；读的时候只拿去打日志，从没参与判断
+   *     int32      numBytes ← 后面 NBT 的字节数
+   *     byte[]     NbtIo::write 的产物
+   *
+   * 【两个 int 是小端】它们走的是 `fwrite(&version, sizeof(int), 1, fp)` —— 直接倒内存，
+   * 不经过 BitStream 那套端序交换。VFS 的 CFile.write 正好也是原样落字节，所以喂 Int32Array 就对。
+   *
+   * 【实体与方块实体各自成一张表】`Entities` 与 `TileEntities` 是两个平级的 ListTag，
+   * 不嵌套、不分组。`count` 是两者**加起来**的条数（只影响日志）。
+   *
+   * 【两个数组的过滤条件不一样】实体是"`save` 返回 false 就丢掉"，方块实体在 save 之前
+   * **多一道 `shouldSave()`**（false 直接 continue，连标签都不建）。
+   *
+   * 【玩家永远不会进这个文件】`Entity::save` 开头是 `if (removed || id == 0) return false;`，
+   * 而 `Player::getEntityTypeId()` 返回的就是 **0** —— 所以 level->entities 里的玩家每次都被
+   * 这一条挡掉。这不是漏了：玩家有单独的一条路（`players/<名字>.dat`，走 savePlayer）。
+   *
+   * 【`levelChunk` 参数从来没被读过】C++ 的签名里有它（为了跟 `save` 对齐、满足 ChunkStorage 的接口），
+   * 函数体里一次都没用到 —— 传进来的总是 NULL。照抄。
+   */
+  saveEntities(level: Level, _levelChunk: LevelChunk | null): void {
+    this.lastSavedEntitiesTick = this.tickCount;
+    let count = 0;
+    const st = getTimeS();
+
+    const entities = level.entities;
+    const entityTags = new ListTag();
+    for (let i = 0; i < entities.length; ++i) {
+      const e = entities[i]!;
+      const tag = new CompoundTag();
+      if (e.save(tag)) {
+        count++;
+        entityTags.add(tag);
+      }
+      // C++ 这里是 `else delete tag;`（save 失败就把标签删掉，不进列表）—— TS 交给 GC
+    }
+
+    const tileEntities = level.tileEntities;
+    const tileEntityTags = new ListTag();
+    for (let i = 0; i < tileEntities.length; ++i) {
+      const e = tileEntities[i]!;
+      if (!e.shouldSave()) continue;
+      const tag = new CompoundTag();
+      if (e.save(tag)) {
+        count++;
+        tileEntityTags.add(tag);
+      }
+    }
+
+    const base = new CompoundTag();
+    base.put('Entities', entityTags);
+    base.put('TileEntities', tileEntityTags);
+    const stream = new BitStream();
+    const dos = new RakDataOutput(stream);
+    NbtIo.write(base, dos);
+    const numBytes = stream.getNumberOfBytesUsed();
+
+    // C++ 把 "entities.dat" 直接写在字符串里，没有独立常量（对应 fnLevelDat 那些）
+    const fp = getVfs().open(this.levelPath + '/entities.dat', 'wb');
+    if (fp) {
+      const version = 1;
+      fp.write(ENT_FILE_MAGIC, 1, 4);
+      fp.write(new Int32Array([version]), 4, 1);
+      fp.write(new Int32Array([numBytes]), 4, 1);
+      fp.write(stream.getData(), 1, numBytes);
+      fp.close();
+    }
+    // C++ 在这里 `base.deleteChildren();`（标签树的对象归 NbtIo::write 用完后由谁删，C++ 得手动来）
+    // —— TS 交给 GC。写文件那一段用的是已经序列化好的 stream，与这棵树再无关系。
+
+    const tt = getTimeS() - st;
+    // C++ 是 %d / %f / %d。%f 按仓库既有约定用 toFixed(6)（见 platform/src/time.ts）
+    LOGI(`Time to save ${count} entities: ${tt.toFixed(6)} s. Size: ${numBytes} bytes\n`);
+  }
+
+  /**
    * 每 tick 调一次，做两件节奏不同的事：
    *   1. **每 1000 tick**（且已经 prepareLevel 过）：把区块缓存 16×16 扫一遍，凡是标了
    *      `unsaved` 的收进"待保存列表"并把标记清掉；然后挑最老的存两个。
@@ -505,10 +612,11 @@ export class ExternalFileLevelStorage extends LevelStorage {
       }
       this.savePendingUnsavedChunks(2);
     }
+    // 【在 if (… && level) 外面】C++ 这一句不在上面那个"每 1000 tick"的块里，也没做空判断 ——
+    // level 为 NULL 时它会直接解引用。实际路径上 tick 只在 prepareLevel 之后调用，所以从没炸过。
+    // 照抄：`this.level!` 就是那个不检查的写法。
     if (this.tickCount - this.lastSavedEntitiesTick > 60 * SharedConstants.TicksPerSecond) {
-      // DEFERRED(Entity): saveEntities(level, NULL);  ExternalFileLevelStorage.cpp:263
-      //   saveEntities 是 B5c 的。它顺带会把 lastSavedEntitiesTick 设成 tickCount（那里 527/590 行），
-      //   本步没做，所以这个分支现在每 tick 都成立 —— B5c 补上之后才恢复正常节奏。
+      this.saveEntities(this.level!, null);
     }
   }
 
@@ -558,12 +666,9 @@ export class ExternalFileLevelStorage extends LevelStorage {
     LOGI(`Saving ${numChunks} additional chunks.\n`);
   }
 
-  /**
-   * C++ 是 `saveEntities(level, NULL);` 一句 —— 整个都在 B5c。
-   * 基类 LevelStorage 的默认实现就是空的，这里覆盖只为把"还欠这一句"写明白。
-   */
-  override saveGame(_level: Level): void {
-    // DEFERRED(Entity): saveEntities(level, NULL);  ExternalFileLevelStorage.cpp:457
+  /** C++ 的 `saveGame` 只有一句：`saveEntities(level, NULL);` */
+  override saveGame(level: Level): void {
+    this.saveEntities(level, null);
   }
 
   /** C++ 的空实现：`virtual void flush() {}` */
