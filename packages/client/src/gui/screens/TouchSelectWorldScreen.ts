@@ -14,13 +14,21 @@
  *   - 预览图那条路是**死的**（见 `commit()` 里的说明），永远用 `gui/default_world.png`。
  */
 import type { LevelSummary, LevelSummaryList } from '@mcpe/world';
-import { LevelSettings } from '@mcpe/world';
+import { LevelSettings, LevelStorageSource, levelSummaryLess } from '@mcpe/world';
 import { Mth } from '@mcpe/util';
-import { Mouse, MouseAction } from '@mcpe/platform';
+import { LOGI, Mouse, MouseAction } from '@mcpe/platform';
 import type { Minecraft } from '../../Minecraft';
+import { OptionId } from '../../Options';
 import { Tesselator } from '../../renderer/Tesselator';
 import { TweenData } from '../TweenData';
+import { Button } from '../components/Button';
+import { TButton, THeader } from '../components/Button';
+import { ImageButton, ImageDef, IntRectangle } from '../components/ImageButton';
 import { RolledSelectionListH } from '../components/RolledSelectionListH';
+import { Screen } from '../Screen';
+import { ConfirmScreen } from './ConfirmScreen';
+import { ProgressScreen } from './ProgressScreen';
+import { ScreenId } from './ScreenChooser';
 
 /** C++ 里是这个 .cpp 内部的一个 static 函数（PITFALLS 第 14 条：提到模块级） */
 function quadraticInOut(t: number, dur: number, start: number, stop: number): number {
@@ -70,11 +78,13 @@ export class TouchWorldSelectionList extends RolledSelectionListH {
     this._renderBottomBorder = false;
   }
 
-  protected override getNumberOfItems(): number {
+  /** C++ 是 protected + `friend class SelectWorldScreen`；TS 没有 friend，被外层屏用到的就放宽为 public */
+  override getNumberOfItems(): number {
     return this.levels.length + 1; // +1 是那张 "Create new"
   }
 
-  protected override selectItem(item: number, _doubleClick: boolean): void {
+  /** C++ 是 protected + `friend class SelectWorldScreen`；TS 没有 friend，被外层屏用到的就放宽为 public */
+  override selectItem(item: number, _doubleClick: boolean): void {
     if (this.selectedItem < 0) return;
     const delta = item - this.selectedItem;
     if (delta === -1) this.stepLeft();
@@ -147,7 +157,8 @@ export class TouchWorldSelectionList extends RolledSelectionListH {
     }
   }
 
-  private stepLeft(): void {
+  /** C++ 里是 public（外层屏和键盘左右键都要调它） */
+  stepLeft(): void {
     if (this.selectedItem > 0) {
       const xoffset = Math.trunc(
         this.xo - (this.selectedItem * this.itemWidth + (this.itemWidth - this.width) * 0.5),
@@ -161,7 +172,8 @@ export class TouchWorldSelectionList extends RolledSelectionListH {
     }
   }
 
-  private stepRight(): void {
+  /** C++ 里是 public（同 stepLeft） */
+  stepRight(): void {
     if (this.selectedItem >= 0 && this.selectedItem < this.getNumberOfItems() - 1) {
       const xoffset = Math.trunc(
         this.xo - (this.selectedItem * this.itemWidth + (this.itemWidth - this.width) * 0.5),
@@ -280,5 +292,248 @@ export class TouchWorldSelectionList extends RolledSelectionListH {
 
   protected override selectCancel(): void {
     this._newWorldSelected = false;
+  }
+}
+
+/**
+ * C++ 的 `static char ILLEGAL_FILE_CHARACTERS[]`。
+ *
+ * 【声明了但没人用】唯一的使用点（把世界名里的非法字符过滤掉）在 `SelectWorldScreen::tick()`
+ * 里一个 `#if 0` 块内 —— 整块不参与编译。留着是为了让结构看得见。值是 15 个字符，
+ * 外加 C++ 数组隐式的终止符 `'\0'`，所以下面写 16 个。
+ */
+const ILLEGAL_FILE_CHARACTERS = [
+  '/',
+  '\n',
+  '\r',
+  '\t',
+  '\0',
+  '\f',
+  '`',
+  '?',
+  '*',
+  '\\',
+  '<',
+  '>',
+  '|',
+  '"',
+  ':',
+  '\0',
+];
+
+/**
+ * C++ 的 `Touch::DeleteWorldScreen`：删世界前的确认框，直接继承 ConfirmScreen。
+ * 它**不传 parent**（NULL），所以 ConfirmScreen::postResult 那条路走不到 —— 这里盖掉了。
+ */
+export class TouchDeleteWorldScreen extends ConfirmScreen {
+  private _level: LevelSummary;
+
+  constructor(level: LevelSummary) {
+    // R10：ConfirmScreen 的 TS 版把 id 提到了第 4 位，按钮文字跟在后面（见那个文件头）
+    super(
+      null,
+      'Are you sure you want to delete this world?',
+      `'${level.name}' will be lost forever!`,
+      0,
+      'Delete',
+      'Cancel',
+    );
+    this._level = level;
+    this.tabButtonIndex = 1;
+  }
+
+  protected override postResult(isOk: boolean): void {
+    if (isOk) {
+      const storageSource = this.minecraft.getLevelSource()!;
+      storageSource.deleteLevel(this._level.id);
+    }
+    this.minecraft.screenChooser.setScreen(ScreenId.SCREEN_SELECTWORLD);
+  }
+}
+
+export class SelectWorldScreen extends Screen {
+  private bDelete = new ImageButton(1, '');
+  private bCreate = new TButton(2, 'Create new');
+  private bBack = new TButton(3, 'Back');
+  private bHeader = new THeader(0, 'Select world');
+  /** 只进 tabButtons、不进 buttons —— 它靠 tab 选中态决定列表吃不吃键盘 */
+  private bWorldView = new Button(4, '');
+  private worldsList: TouchWorldSelectionList | null = null;
+  /** loadLevelSource() 灌进来的原始列表（还没剔掉临时世界），getUniqueLevelName 也用它 */
+  private levels: LevelSummaryList = [];
+  /** C++ 里没在构造函数里初始化（只有 init() 里才赋值）—— 按 PITFALLS 第 20 条给 false */
+  private _mouseHasBeenUp = false;
+  private _hasStartedLevel = false;
+
+  constructor() {
+    super();
+    this.bDelete.active = false;
+    const def = new ImageDef();
+    def.name = 'gui/touchgui.png';
+    def.width = 34;
+    def.height = 26;
+    def.setSrc(new IntRectangle(150, 0, Math.trunc(def.width), Math.trunc(def.height)));
+    this.bDelete.setImageDef(def, true);
+  }
+
+  protected override initScreen(): void {
+    this.worldsList = new TouchWorldSelectionList(this.minecraft, this.width, this.height);
+    this.loadLevelSource();
+    this.worldsList.commit();
+    this.buttons.push(this.bDelete);
+    this.buttons.push(this.bCreate);
+    this.buttons.push(this.bBack);
+    this.buttons.push(this.bHeader);
+    this._mouseHasBeenUp = Mouse.getButtonState(MouseAction.ACTION_LEFT) === 0;
+    this.tabButtons.push(this.bWorldView);
+    this.tabButtons.push(this.bDelete);
+    this.tabButtons.push(this.bCreate);
+    this.tabButtons.push(this.bBack);
+  }
+
+  override setupPositions(): void {
+    this.bCreate.y = 0;
+    this.bBack.y = 0;
+    this.bHeader.y = 0;
+    this.bDelete.y = this.height - 30;
+    this.bDelete.x = Math.trunc((this.width - this.bDelete.width) / 2);
+    this.bCreate.x = this.width - this.bCreate.width;
+    this.bBack.x = 0;
+    this.bHeader.x = this.bBack.width;
+    this.bHeader.width = this.width - (this.bBack.width + this.bCreate.width);
+    this.bHeader.height = this.bCreate.height;
+  }
+
+  protected override buttonClicked(button: Button): void {
+    if (button.id === this.bCreate.id) {
+      if (!this._hasStartedLevel) {
+        const name = this.getUniqueLevelName('World');
+        void name;
+        // DEFERRED(Gui): minecraft->setScreen(new SimpleChooseLevelScreen(name));（新建世界界面未移植）
+      }
+    }
+    if (button.id === this.bDelete.id) {
+      if (this.isIndexValid(this.worldsList!.selectedItem)) {
+        const level = this.worldsList!.levels[this.worldsList!.selectedItem]!;
+        LOGI(`level: ${level.id}, ${level.name}\n`);
+        this.minecraft.setScreen(new TouchDeleteWorldScreen(level));
+      }
+    }
+    if (button.id === this.bBack.id) {
+      // DEFERRED(Network): minecraft->cancelLocateMultiplayer();
+      this.minecraft.screenChooser.setScreen(ScreenId.SCREEN_STARTMENU);
+    }
+    if (button.id === this.bWorldView.id) {
+      this.worldsList!.selectItem(
+        this.worldsList!.getItemAtPosition(Math.trunc(this.width / 2), Math.trunc(this.height / 2)),
+        false,
+      );
+    }
+  }
+
+  override handleBackEvent(isDown: boolean): boolean {
+    if (!isDown) {
+      // DEFERRED(Network): minecraft->cancelLocateMultiplayer();
+      this.minecraft.screenChooser.setScreen(ScreenId.SCREEN_STARTMENU);
+    }
+    return true;
+  }
+
+  isIndexValid(index: number): boolean {
+    return this.worldsList !== null && index >= 0 && index < this.worldsList.getNumberOfItems() - 1;
+  }
+
+  protected override mouseWheel(_dx: number, dy: number, _xm: number, _ym: number): void {
+    if (!this.worldsList) return;
+    if (dy === 0) return;
+    const num = this.worldsList.getNumberOfItems();
+    let idx = this.worldsList.selectedItem;
+    if (dy > 0) {
+      if (idx > 0) {
+        idx--;
+        this.worldsList.stepLeft();
+      }
+    } else {
+      if (idx < num - 1) {
+        idx++;
+        this.worldsList.stepRight();
+      }
+    }
+    this.worldsList.selectedItem = idx;
+  }
+
+  override tick(): void {
+    this.worldsList!.tick();
+    if (this.worldsList!.hasPickedLevel) {
+      if (this.worldsList!.pickedIndex === this.worldsList!.levels.length) {
+        // 点的是 "Create new" —— 去新建世界
+        this.worldsList!.hasPickedLevel = false;
+        const name = this.getUniqueLevelName('World');
+        void name;
+        // DEFERRED(Gui): minecraft->setScreen(new SimpleChooseLevelScreen(name));（新建世界界面未移植）
+      } else {
+        this.minecraft.selectLevel(
+          this.worldsList!.pickedLevel!.id,
+          this.worldsList!.pickedLevel!.name,
+          LevelSettings.None(),
+        );
+        // DEFERRED(Network): minecraft->hostMultiplayer();
+        this.minecraft.setScreen(new ProgressScreen());
+        this._hasStartedLevel = true;
+        return;
+      }
+    }
+    this.bDelete.active = this.isIndexValid(this.worldsList!.selectedItem);
+  }
+
+  override render(xm: number, ym: number, a: number): void {
+    this.renderBackground();
+    this.worldsList!.setComponentSelected(this.bWorldView.selected);
+    if (this._mouseHasBeenUp) {
+      this.worldsList!.render(xm, ym, a);
+    } else {
+      // 【第一次渲染用 (0,0)】鼠标还没抬起来时不把当前指针位置喂给列表，免得一进来就当成拖动
+      this.worldsList!.render(0, 0, a);
+      this._mouseHasBeenUp = Mouse.getButtonState(MouseAction.ACTION_LEFT) === 0;
+    }
+    super.render(xm, ym, a);
+  }
+
+  private loadLevelSource(): void {
+    const levelSource = this.minecraft.getLevelSource()!;
+    levelSource.getLevelList(this.levels);
+    // C++ 的 std::sort 不稳定（同 lastPlayed 的两个世界次序不保证）；JS 的 sort 是稳定的，
+    // 顺序只会更确定，不影响结果。
+    this.levels.sort((a, b) => (levelSummaryLess(a, b) ? -1 : levelSummaryLess(b, a) ? 1 : 0));
+    for (let i = 0; i < this.levels.length; ++i) {
+      // 临时世界（_LastJoinedServer）不进列表
+      if (this.levels[i]!.id !== LevelStorageSource.TempLevelId) {
+        this.worldsList!.levels.push(this.levels[i]!);
+      }
+    }
+  }
+
+  private getUniqueLevelName(level: string): string {
+    const set = new Set<string>();
+    for (let i = 0; i < this.levels.length; ++i) set.add(this.levels[i]!.id);
+    let s = level;
+    while (set.has(s)) s += '-';
+    return s;
+  }
+
+  override isInGameScreen(): boolean {
+    return true;
+  }
+
+  protected override keyPressed(eventKey: number): void {
+    // bWorldView.selected 靠 Screen::updateTabButtonSelection 设，而那个函数整个在 #ifdef TABBING 里
+    // —— 网页版构建没开，所以这里恒为假（照抄 C++ 的分支，不简化）。
+    if (this.bWorldView.selected) {
+      if (eventKey === this.minecraft.options.getIntValue(OptionId.OPTIONS_KEY_LEFT))
+        this.worldsList!.stepLeft();
+      if (eventKey === this.minecraft.options.getIntValue(OptionId.OPTIONS_KEY_RIGHT))
+        this.worldsList!.stepRight();
+    }
+    super.keyPressed(eventKey);
   }
 }

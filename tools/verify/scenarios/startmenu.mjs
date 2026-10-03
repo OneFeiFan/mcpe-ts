@@ -93,4 +93,58 @@ export default async function (h) {
     `竖屏下三个按钮的 x 仍按原版公式排（屏宽 ${s1.w}，spacing=${sp}）`,
   );
   await h.shot('02-起始菜单-竖屏');
+
+  // ---- B8d-3：点「开始游戏」应该进世界列表 ----
+  // 换回横屏再看，列表要横着翻牌才有意义。
+  await h.page.setViewportSize({ width: 960, height: 540 });
+  await h.wait(400);
+
+  await h.state('点「开始游戏」', (a) => {
+    // buttonClicked 在 TS 里是 protected，但浏览器里那只是编译期的 —— 直接调，
+    // 走的是和真点击同一条路（Screen::mouseReleased → buttonClicked）。
+    const start = a.screen.buttons.find((b) => b.id === 2);
+    a.screen.buttonClicked(start);
+    return { cls: a.screen.constructor.name };
+  });
+  // 【删除按钮的亮灭要等 tick】它是 tick() 里按当前选中项算出来的，刚 init 完还是构造函数
+  // 里那个 false。这里等几帧再读。
+  await h.wait(400);
+  const s2 = await h.state('世界列表', (a) => {
+    const s = a.screen;
+    return {
+      cls: s.constructor.name,
+      isInGame: s.isInGameScreen(),
+      listItems: s.worldsList.getNumberOfItems(),
+      worldIds: s.worldsList.levels.map((l) => l.id),
+      deleteActive: s.buttons.find((b) => b.id === 1).active,
+      selected: s.worldsList.selectedItem,
+      // 卡片上的预览图。**没进预加载表不会报错**，但 loadTexture 返回 InvalidId、bind 不执行，
+      // 于是沿用上一次绑定的纹理 —— 表现为卡片上是一坨花屏（正好是刚画完字的字体图集）。
+      preview: (() => {
+        const id = a.textures.loadAndBindTexture('gui/default_world.png');
+        const d = a.textures.getTemporaryTextureData(id);
+        return d ? [d.w, d.h] : null;
+      })(),
+    };
+  });
+  h.expect(s2.cls === 'SelectWorldScreen', '进到选世界界面了');
+  h.expect(s2.isInGame === true, '它算游戏内界面（列表背后还画着世界）');
+  h.expect(s2.listItems === s2.worldIds.length + 1, '列表项数 = 世界数 + 1（那张 "Create new"）');
+  h.expect(s2.worldIds.includes('demo'), 'demo 世界在列表里');
+  h.expect(s2.selected === 0, '一进来选中的是第 0 张');
+  h.expect(s2.deleteActive === true, '选中一个世界时删除按钮是亮的');
+  h.expect(s2.preview !== null && s2.preview[0] > 0, '卡片预览图 gui/default_world.png 真的加载了');
+  await h.shot('03-选世界');
+
+  // ---- 「Create new」那张牌应该能翻到 ----
+  const s3 = await h.state('往右翻一张', (a) => {
+    const s = a.screen;
+    s.worldsList.selectedItem = 0;
+    s.worldsList.stepRight();
+    return { mode: s.worldsList.mode, dur: s.worldsList.td.dur };
+  });
+  h.expect(s3.mode === 1, '翻牌起了一段补间');
+  h.expect(s3.dur === 8, '补间 8 帧');
+  await h.wait(400);
+  await h.shot('04-翻到-Create-new');
 }

@@ -31,6 +31,10 @@ export const PRELOAD: readonly string[] = [
   //   github 那几行会**一起**不画 —— TouchStartMenuScreen::render 里它们都在同一层 if 里）
   'gui/title.png',
   'gui/logo/github.png',
+  // B8d：世界列表每张牌的预览图。漏了它不会报错，但 `loadTexture` 返回 InvalidId、`bind` 不执行，
+  //   于是**沿用上一次绑定的纹理** —— 表现为卡片上是一坨花屏（正好是刚画完字的字体图集）。
+  //   PITFALLS 第 25 条说的就是这种"画错了图"。
+  'gui/default_world.png',
   // S13：掉落物的阴影、水下覆盖层
   'misc/shadow.png',
   'misc/water.png',
