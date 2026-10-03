@@ -6,9 +6,12 @@
  * `CreateEntity` 的另一个调用方是网络包处理（`ClientSideNetworkHandler.cpp:235`），没移植。
  *
  * 【本轮的移植范围：只有掉落物】`CreateEntity` 那张 switch 里七种实体，TS 里**只有 ItemEntity
- * 是真的**。FallingTile / TripodCamera 那两个文件在 TS 里只是 FORWARD-DECL（空接口），
- * PrimedTnt / Arrow / ThrownEgg / Snowball / Painting 根本还没有对应文件。
- * 所以六个 case 原地留 `DEFERRED(Entity)`，`id < 64` 那条（生物）整条走不了。
+ * 是真的**。所以六个 case 原地留 `DEFERRED(Entity)`，`id < 64` 那条（生物）整条走不了。
+ *
+ * 【任务单 D 正在一个个补上】D1 起 `FallingTile` 已经是真类（`entity/item/FallingTile.ts`），
+ * 但**这个 switch 里的 case 还没接上** —— 接线是 D2 的事。其余五个
+ * （PrimedTnt / Arrow / ThrownEgg / Snowball / Painting）仍无对应文件；
+ * TripodCamera 还是 FORWARD-DECL（它本来就不在这张表里，只由 CameraItem 生成）。
  *
  * 【为什么 id < 64 是生物】`EntityTypes::IdItemEntity` 等非生物实体的 id 都从 64 起，
  * 而 `MobTypes` 全在 1..36 —— 于是 `id < 64` 就等价于"这是只生物"。这个分界线是 C++ 用
