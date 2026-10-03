@@ -281,10 +281,69 @@ B5b-2 那半（tick / savePendingUnsavedChunks / saveGame / saveAll 要真 Level
 
 ## B8 界面：起始菜单、选择世界、新建世界（触屏风格，菜单风格 0）
 
-- 读 `ScreenChooser.cpp`：菜单风格 0 用 `touch/TouchStartMenuScreen`、`touch/TouchSelectWorldScreen`。依赖可能包括 `RolledSelectionListH`、`SimpleChooseLevelScreen`、`ProgressScreen`、`TextBox`。逐个列出，按依赖顺序一个一个移植（每个都是单独的步骤）。
-- 暂停界面的 “Quit to title” 去掉 DEFERRED，接 `leaveGame()`。
-- 需要的新纹理全部加进 `apps/web/src/assets.ts`。
-- 浏览器场景 `tools/verify/scenarios/storage.mjs`：新建世界 → 放方块 → 回到标题 → 重新进入 → 方块还在；**刷新页面**后再进入，方块还在。
+**开工前实测后改了拆分**（用户 2026-10-03 确认）：按 `ScreenChooser.cpp` 一读，这一步不是"两个屏"，
+是 **2000+ 行 C++、10 个新文件**的整条界面链 —— 远超「一步 300 行 / 5 个文件」的线，拆成七小步。
+
+### 依赖清单（实测，按依赖顺序）
+
+| 层           | 文件                                                                                             | C++ 行 | TS 现状     |
+| ------------ | ------------------------------------------------------------------------------------------------ | ------ | ----------- |
+| 横向翻牌列表 | `components/RolledSelectionListH` + `TweenData.h`                                                | 299    | ✗           |
+| 小零件       | `components/LargeImageButton` / `components/TextBox` / `screens/ConfirmScreen`                   | 290    | ✗           |
+| 加载界面     | `screens/ProgressScreen`                                                                         | 99     | ✗           |
+| 新建世界     | `screens/ChooseLevelScreen` + `screens/SimpleChooseLevelScreen`                                  | 287    | ✗           |
+| 起始菜单     | `screens/touch/TouchStartMenuScreen`                                                             | 230    | ✗           |
+| 选世界       | `screens/touch/TouchSelectWorldScreen`（含 `TouchWorldSelectionList`、`TouchDeleteWorldScreen`） | 605    | ✗           |
+| 收尾         | `Minecraft::leaveGame` + 暂停界面接线                                                            | 35     | 现为 `OMIT` |
+
+已有、直接可用：`TButton` / `THeader`（`Button.ts`）、`ImageButton`、`I18n`、`Minecraft.selectLevel` /
+`getLevelSource`。`Screen.ts` 里早留好了 `textBoxes` 数组和 `TextBoxLike` 接口，就是给这一步铺的路。
+
+**`components/ScrolledSelectionList` 不在范围内**（实测剔掉的）：名字像列表基类，但 `RolledSelectionListH`
+**并不继承它** —— 它直接继承 `GuiComponent`，把纵向那套字段抄成了横向。全仓库只有 `JoinGameScreen`
+（联机，`OMIT(Network)`）真正继承 `ScrolledSelectionList`；两个 `StartMenuScreen` 里的 `#include`
+是没人用的残留。所以 B8 一个屏都不需要它。
+
+### 拆分（七小步，每步单独提交、单独汇报）
+
+| 步骤    | 内容                                                     | 说明                                   |
+| ------- | -------------------------------------------------------- | -------------------------------------- |
+| **B8a** | `TweenData` + `RolledSelectionListH`                     | 横向翻牌列表（滚动、惯性、拖动、补间） |
+| **B8b** | `LargeImageButton` + `TextBox` + `ConfirmScreen`         | 三个小零件                             |
+| **B8c** | `Touch::StartMenuScreen` + 接线                          | **这一步起浏览器里能看见东西**         |
+| **B8d** | `ProgressScreen` + `Touch::SelectWorldScreen`            | 世界列表能翻牌、能选、能删             |
+| **B8e** | `ChooseLevelScreen` + `SimpleChooseLevelScreen`          | 新建世界                               |
+| **B8f** | `Minecraft::leaveGame` + 暂停界面 "Quit to title"        | 收尾                                   |
+| **B8g** | 场景扩写（新建世界 → 放方块 → 回标题 → 重进 → 方块还在） | 受下面待决问题影响                     |
+
+前几步画面上看不到，只能靠单测；B8c 起开截图验证。**验证菜单的办法**：场景里直接
+`__app.screenChooser.setScreen(ScreenId.SCREEN_STARTMENU)` 把菜单调出来截图（不用走启动入口）。
+
+### 三条已定的决策（用户 2026-10-03）
+
+1. **不搞平坦维度绕行。** `selectLevel` 忠实留着，调用即抛（世界生成没移植）。B8 交付的是**界面本身**，
+   "点进去"这条路要等世界生成。
+2. **文本框挂隐藏 `<input>`，真能打字。** 聚焦时 `focus()` 一个隐藏 input：手机弹软键盘、桌面直接敲键盘，
+   一套机制两边都管用。标 `ADAPTED(Web)`，对照 C++ 的 `platform()->showKeyboard()`。
+3. **启动入口 B8 期间不动。** 现在是打开页面直接进 demo 世界，中间每一步都不影响现有场景。
+
+### ⚠ B8g 的待决问题（到那一步再找用户确认）
+
+"入口换成起始菜单"和决策 1 冲突：换了之后 demo 世界就**进不去**了（Start Game → 选世界 → `selectLevel` 抛），
+`default.mjs` / `storage.mjs` 两个场景也跟着断。到 B8g 再定是"先不换"还是"换但接受点不进去"。
+
+### 顺带查到的两件事
+
+- **`gui/title.png` 和 `gui/default_world.png` 没在 `apps/web/src/assets.ts` 的预加载表里。**
+  参考 `data/images/gui/` 里两个文件都在。不补的话起始菜单的标题、世界列表的缩略图是空白。B8d / B8e 补。
+- **`TouchWorldSelectionList::commit()` 里的预览图逻辑是死代码**：`id` 刚赋成 `InvalidId` 就拿去比
+  `id != InvalidId`，永远为假，所以永远用 `gui/default_world.png`。C++ 的怪癖，照抄。
+
+### 其余要求（沿用）
+
+- 暂停界面的 "Quit to title" 去掉 DEFERRED，接 `leaveGame()`。（B8g）
+- 浏览器场景 `tools/verify/scenarios/storage.mjs`：新建世界 → 放方块 → 回到标题 → 重新进入 → 方块还在；
+  **刷新页面**后再进入，方块还在。（B8g，受上面待决问题影响）
 
 ## B9 选项文件（OptionsFile）
 
