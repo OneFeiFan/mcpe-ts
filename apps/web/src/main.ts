@@ -37,7 +37,9 @@ async function main(): Promise<void> {
   input.lockAllowed = () => app.screen === null; // C++：有界面时点击不 grabMouse
   input.attach();
 
-  if (status) status.textContent = '点击画面开始：鼠标转向，WASD 移动，空格上升，左 Shift 下降，F 切换视距，Esc 解锁';
+  // 游戏起来了就把 #status 清空：原版画面上没有这行字，留着会一直压在画面左上角。
+  // 这个元素只留给“正在初始化…”和 main() 抛异常时的“启动失败：…”，不要拿它显示常驻提示。
+  if (status) status.textContent = '';
   const frame = () => {
     app.update();
     requestAnimationFrame(frame);

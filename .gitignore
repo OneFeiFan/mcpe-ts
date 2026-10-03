@@ -19,3 +19,8 @@ Thumbs.db
 tools/verify/out/
 .claude/.stop-attempts
 .claude/settings.local.json
+
+# 工作手册与清单：留在本地给人和模型看，不进仓库（按具体文件名忽略，不用 docs/*.html 通配，
+# 免得以后真要对某份 HTML 文档纳入版本管理时被这条挡住）
+docs/MCPE-TS最小Demo实施流程-修订版10.html
+docs/MCPE-TS后续清单-S11-S13.html
