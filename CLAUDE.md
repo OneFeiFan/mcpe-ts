@@ -25,7 +25,7 @@ Claude Code 每次启动都会读这个文件。**先读完它，再动手。**
 1. 读 C++：`python tools/porting/clean.py $REF/src/<路径>.h $REF/src/<路径>.cpp`（已按网页版构建展开 #ifdef）。
 2. 查依赖：它用到的类在 TS 里有没有（`rg "class 名字" packages`）。没有就先写前向声明（FORWARD-DECL）或把那几句标 DEFERRED。
 3. 写 TS：大类先用 `tools/porting/cls2ts.py` 生成草稿，再逐函数人工核对；小类直接手写。
-4. 逐项核对 `.claude/skills/mcpe-porting/PITFALLS.md` 里的 26 条语言差异。至少跑：
+4. 逐项核对 `.claude/skills/mcpe-porting/PITFALLS.md` 里的 28 条语言差异。至少跑：
    - `python tools/porting/divs.py <file.ts>`：逐条判断整数除法；
    - `python tools/porting/shadow.py <file.ts> <成员清单>`：查漏加的 this.；
 5. 接线：把原来的 `DEFERRED(...)` / `OMIT(...)` 换成真实调用。

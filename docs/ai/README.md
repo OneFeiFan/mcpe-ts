@@ -55,7 +55,7 @@ claude                            # REF 由 .claude/settings.json 提供，不�
 | 位置                              | 作用                                                                        |
 | --------------------------------- | --------------------------------------------------------------------------- |
 | `CLAUDE.md`                       | 每次启动自动读：目标、硬规则、每个单元的标准流程、常用命令                  |
-| `.claude/skills/mcpe-porting/`    | 移植流程 + **PITFALLS.md（26 条 C++→TS 语言差异，全是本项目真实踩过的坑）** |
+| `.claude/skills/mcpe-porting/`    | 移植流程 + **PITFALLS.md（28 条 C++→TS 语言差异，全是本项目真实踩过的坑）** |
 | `.claude/skills/golden-sample/`   | 怎么写 C++ harness 生成标准答案、怎么比较                                   |
 | `.claude/skills/browser-verify/`  | 怎么用 Playwright 跑场景、读游戏状态、截图并查看                            |
 | `.claude/commands/`               | 斜杠命令：`/port-unit`、`/verify`、`/golden`、`/review-port`                |
