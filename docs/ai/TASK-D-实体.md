@@ -103,6 +103,7 @@
 | **D0** | 把计划落成这份任务单 | 文件在、`task_plan.md` 指过来 |
 | **D1** | `FallingTile` 类本身 | 单测：下落 + 落地放回方块 |
 | **D2** | `FallingTile` 接线（HeavyTile/SandTile/EntityFactory） | **截图里沙子真的落下来了** |
+| **D2.5** | （D2 收尾时补的）`FallingTileRenderer` + 注册 | **截图里下落途中真的看得见那格方块** |
 | **D3** | `Explosion` + `Level.explode` | 单测：炸出坑、方块数减少 |
 | **D4** | `PrimedTnt` 类 + 接线 | 场景：TNT 炸掉周围方块 |
 | **D5** | `TripodCamera` 类 + `Level.takePicture` | 单测：生成后 tick 不崩 |
@@ -131,9 +132,13 @@
   > 但**世界里跑的沙子走的是 HeavyTile 那条路**。详见 progress.md 的 D2 段。
   >
   > **D2 还暴露出一个 D0 没算到的缺口**：实体**渲染器**没移植 →
-  > **降落的方块在画面上看不见**，落地才重新出现。补 `FallingTileRenderer` 约 30 行 + 一行注册
-  > （`FallingTileRenderer.cpp` 32 行；`TileRenderer` 3227 行已移植）。
-  > 要不要把它提到 D3 之前，等用户定。
+  > **降落的方块在画面上看不见**，落地才重新出现。
+  > **2026-10-04 用户拍板：先补 → 已做成 D2.5**（提交 `4a9eca6`）：
+  > 新建 `packages/client/src/renderer/entity/FallingTileRenderer.ts` +
+  > `EntityRenderDispatcher` 注册一行 + client 出口补 `EntityRenderer`/`EntityRenderDispatcher`。
+  > 单测 `tests/unit/client/fallingtile-renderer.test.ts` 4 条钉住**注册那一行**。
+  > ⚠ 补完渲染器画面还是空的，又查出一层相机插值的问题（`xRotO` 不跟着 `xRot` 走）——
+  > 详见 progress.md 的 D2.5 段和 PITFALLS 的 F 节。
 - **D3**：`Level.explode` 里 `ExplodePacket` 那句照旧 `DEFERRED(Network)`。
 - **D4**：`TntTile.ts:38-40` 的 `wasExploded` **连着一条随机数调用**
   （`level.random.nextInt(primed.life/4) + primed.life/8`），必须一起还原，不然随机流会错位。
