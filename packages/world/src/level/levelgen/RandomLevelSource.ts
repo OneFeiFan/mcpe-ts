@@ -1,7 +1,8 @@
 /**
  * 1:1 移植自 src/world/level/levelgen/RandomLevelSource.h 与 .cpp。
- * **C-3：类骨架 + 构造函数 + `getHeights` + `prepareHeights` + `buildSurfaces`。**
- * 还差：洞穴峡谷（C-4/C-5）、`getChunk`/`create`（C-5）、`postProcess`（C-7）。
+ * **C-5 起地形全部就位**：构造函数 + `getHeights` + `prepareHeights` + `buildSurfaces` +
+ * 洞穴峡谷（走 `caveFeature`/`canyonFeature`）+ `getChunk`/`create`。
+ * **只差 `postProcess`**（整段地物：湖/矿/树/花草/泉/雪，315 行）—— 现在是空实现，C-7 结账。
  *
  * 【⚠ 浮点字面量必须过 `f`】这是本文件里最容易写错、而且**测不出来**的一类：
  * C++ 的 `0.2f` 是 float，TS 直接写 `0.2` 是 double —— 两者差约**半个 float ULP**，
@@ -374,9 +375,26 @@ export class RandomLevelSource extends ChunkSource {
     }
   }
 
+  /**
+   * C-6b：整段地物生成这一轮不做，所以**这里什么都不干**。
+   *
+   * 【但它必须是个空实现，不能抛 —— 这是 C-6b 浏览器实测撞出来的】
+   * 它不在什么边缘路径上：`ChunkCache.getChunk` 每凑齐 2×2 个区块就调一次
+   * （`ChunkCache.ts:145` 起那四段判断），也就是**每个区块都会走到**。
+   * 这里原来写的是 `throw`，于是"从菜单进世界"整条路走不通 ——
+   * 而且它在 `Dimension.createRandomLevelSource` 那条 throw 后面才轮到，
+   * 之前一直没被走到，是因为前一句先炸了。
+   *
+   * 【空实现的后果已写进 task_plan】`ChunkCache.postProcess` 会先把
+   * `chunk.terrainPopulated = true` 再调这里 —— 那是 C++ 自己的顺序，不能为了这个去改。
+   * 所以这一轮生成的世界**带着"地物已生成"的标记存下去，实际上一棵草都没有**；
+   * 以后补地物时这些老区块不会追溯补上，得删掉重新生成。
+   */
   postProcess(_parent: ChunkSource, _xt: number, _zt: number): void {
-    // DEFERRED(LevelgenFeature): 整段 postProcess（.cpp:220-534，315 行：湖/矿/树/花草/泉）—— C-7
-    throw new Error('RandomLevelSource.postProcess 尚未移植（C-7，本轮不做地物）');
+    // DEFERRED(LevelgenFeature): 整段 postProcess（.cpp:220-534，315 行：湖/矿/树/花草/泉/雪）
+    //   连开头的 `level->isGeneratingTerrain = true; HeavyTile::instaFall = true;`
+    //   与结尾把这两个置回 false 也一并 DEFERRED —— 那对开关是给地物用的
+    //   （生成期间沙子砾石不许往下掉）。地物没做，就没有"生成期间"可言。
   }
 
   tick(): boolean {

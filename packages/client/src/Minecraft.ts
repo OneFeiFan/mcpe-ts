@@ -326,14 +326,12 @@ export class Minecraft extends App {
    * 【`settings` 到这里就没用了】C++ 那行注释写得很清楚：它要么被拷进新建的 LevelData，
    * 要么被从文件读出来的 LevelData 盖掉。所以世界已经存在时传什么都不影响结果。
    *
-   * 【⚠ 现在调用它会抛异常】这里不传维度（C++ 也没传），于是 `Level._init` 走
-   * `DimensionFactory.createDefaultDimension`，拿到普通维度；而普通维度的
-   * `createRandomLevelSource()` 在 TS 里还是 `DEFERRED(Levelgen)` —— `RandomLevelSource`
-   * （地形生成）没移植，被调用时直接抛。
-   *
-   * 也就是说：**世界生成移植好之前，这个函数只在"读一个已经存在的平坦世界"时才有用**，
-   * 而那条路得靠调用方自己指定 `FlatDimension`。demo 入口（`NinecraftApp.startDemoWorld`）
-   * 就是因此绕开了它、直接构造 `ServerLevel`。等 RandomLevelSource 移植完，这里原封不动就能用。
+   * 【C-6b 起它能用了】这里不传维度（C++ 也没传），于是 `Level._init` 走
+   * `DimensionFactory.createDefaultDimension` 拿到普通维度，再由
+   * `Dimension.createRandomLevelSource()` 建出真的 `RandomLevelSource`。
+   * 在 C-6a 之前那句是个 `DEFERRED(Levelgen)` 的 throw，所以"从菜单进世界"整条路走不通 ——
+   * `NinecraftApp.startDemoWorld` 当时就是为绕开它才直接构造 `ServerLevel` 的。
+   * 现在两条路都通，`startmenu.mjs` 场景把两个入口各钉了一条。
    */
   selectLevel(levelId: string, levelName: string, settings: LevelSettings): void {
     this.level = new ServerLevel(

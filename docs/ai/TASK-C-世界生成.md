@@ -112,7 +112,7 @@ TS 里 `LevelConstants.CHUNK_WIDTH` 恰好是对的（16，与 `LevelConstants.c
 | **C-4**  | `LargeFeature` + `LargeCaveFeature`           | 洞穴部分对上                     |
 | **C-5**  | `CanyonFeature`                               | **完整 `getChunk` 方块数组对上** |
 | **C-6a** | 接线 `Dimension.ts` + 三个测试文件            | 生产路径出来的区块也对上夹具     |
-| **C-6b** | 浏览器实测：新场景 + 翻转两条"将来会红"的断言 | **截图里真的有山有水**           |
+| **C-6b** | 浏览器实测：新场景 + 翻转两条"将来会红"的断言 | **截图里真的有山有水** ✓         |
 | **C-7**  | 收尾：`postProcess` 标 DEFERRED、文档、台账   | —                                |
 
 > **C-6 为什么拆成两半**（2026-10-03）：原计划的 C-6 要动 9 个文件（`Dimension.ts`、4 个测试/辅助文件、
@@ -156,10 +156,26 @@ TS 里 `LevelConstants.CHUNK_WIDTH` 恰好是对的（16，与 `LevelConstants.c
   走 `DimensionFactory` 真路的测试，跟夹具逐字节比。
   顺带修 `tests/unit/world/dimension.test.ts` 里那条断言"调用即抛"的旧测试（它是钉 DEFERRED 的，现在该换了）。
   动的文件：`Dimension.ts`、`randomlevelsource.golden.test.ts`、`dimension.test.ts`、`helpers/fakeLevel.ts`。
-- **C-6b**：浏览器实测。新场景走**真菜单**（开始游戏 → 新建世界 → Create），不看后门。
+- **C-6b**：浏览器实测。新场景 `tools/verify/scenarios/worldgen.mjs` 走**真菜单**
+  （开始游戏 → Create new → 填种子 → Create），不看后门。
   `startmenu.mjs` 里那两条写着"将来会红"的断言（`点 Create 会抛` / `进世界会抛`）**就是为这一刻留的**，
-  现在把它们翻成"真的进得去"。另外 3 处注释（`Minecraft.selectLevel`、
-  `NinecraftApp.startDemoWorld`、`SimpleChooseLevelScreen` 文件头）写着"会抛"，已经不成立，一并改掉。
+  现在已经翻成"真的进得去"（两个入口各一条）。另外 3 处注释（`Minecraft.selectLevel`、
+  `NinecraftApp.startDemoWorld`、`SimpleChooseLevelScreen`）写着"会抛"，一并改掉。
+
+  **实测撞出来的事，三条都值得记住**：
+
+  1. **`postProcess` 之前是个 `throw`，不是空实现。** `ChunkCache.getChunk` 每凑齐 2×2 个区块就调它一次，
+     每个区块都会走到 —— 接完 `Dimension` 那条线，菜单路卡在这儿。改成空实现（决策见下面的"已知后果"）。
+  2. **这个世界只有 256×256。** `ChunkCache::fits` 写死区块 `0 <= x,z < 16`，范围外返回
+     `EmptyLevelChunk`（整块 `invisible_bedrock` 95、`heightmap` 恒 0）。连带：
+     `Level.getHeightmap` 对没生成的区块返回 0 且不触发生成；出生点从世界中心 **(128,128)** 起步，不是 (0,0)。
+  3. **夹具的覆盖盲点**：G15-1 那 5 个区块全在真实世界之外。它们仍是有效判据
+     （生成器对坐标没有"世界边界"概念），但游戏真正会生成的 256×256 里一个都没比过。
+     补法：往 harness 的 `CHUNKS` 里加一个落在 `0..15` 的区块再重新生成夹具。**本轮没做，记在这里。**
+
+  场景本身也踩了两个坑，都写在 `worldgen.mjs` 的注释里：起伏那段的 `if (top < 0) top = y`
+  记的是**最低**非空气格（于是"最高减最低"恒为 0，断言永远为假）；以及先把相机放在最高点朝低处看，
+  方向反了 —— 种子 777 是"大片低地 + 东北角一片高地"，得**站在低处朝高地看**。
 - **C-7**：`postProcess` 原句留成 `DEFERRED(LevelgenFeature)`。
 
 ---

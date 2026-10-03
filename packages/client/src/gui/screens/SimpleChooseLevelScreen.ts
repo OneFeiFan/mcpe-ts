@@ -4,9 +4,9 @@
  * 「新建世界」那一屏：顶栏一个标题加一个返回、两个输入框（世界名 / 种子）、
  * 两个切换按钮（游戏模式 / 作弊），底部一个「Create」。
  *
- * ⚠ **点「Create」现在会抛异常** —— 它走 `minecraft.selectLevel()`，那条路要建普通维度，
- * 而世界生成（`RandomLevelSource`）还没移植。这是 B8 开工时就定下的（只做界面，不做绕行），
- * 代码忠实照抄，不额外加保护。
+ * 【C-6b 起点「Create」真的能进世界了】它走 `minecraft.selectLevel()` → 普通维度 →
+ * `Dimension.createRandomLevelSource()`，整条路 C-6a/C-6b 已经接通。
+ * B8 那会儿这条路会抛（世界生成没移植，那时只做界面不做绕行），现在不用再绕。
  *
  * 部分：
  *   - `minecraft->hostMultiplayer()` 是联机（DEFERRED(Network)）。
@@ -227,7 +227,6 @@ export class SimpleChooseLevelScreen extends ChooseLevelScreen {
       }
       const levelId = this.getUniqueLevelName(this.tLevelName.text);
       const settings = new LevelSettings(seed, this.gamemode, this.cheatsEnabled);
-      // ⚠ 这一句现在会抛（世界生成没移植），见文件头
       this.minecraft.selectLevel(levelId, levelId, settings);
       // DEFERRED(Network): minecraft->hostMultiplayer();
       this.minecraft.setScreen(new ProgressScreen());

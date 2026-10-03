@@ -101,14 +101,12 @@ export class NinecraftApp extends Minecraft {
    * ADAPTED(Demo)：建/进 demo 世界（一个平坦世界，**并且它真的会存下去**）。
    *
    * 【B8g 起它不是"入口"了】启动入口已经换回 C++ 原样的 `screenChooser.setScreen(SCREEN_STARTMENU)`。
-   * 现在只剩**场景/测试**会调它 —— 因为从菜单进世界要走 `Minecraft.selectLevel`，而那条路
-   * 会抛（见下面的说明）。所以这是个后门，正常玩家点不出来。
+   * 现在只剩**场景/测试**会调它 —— 而且从菜单进世界那条路 C-6b 起已经通了
+   * （`Minecraft.selectLevel`），所以它现在纯粹是个"一键建个平坦世界"的测试后门。
    *
-   * 【为什么不走 Minecraft.selectLevel】它不传维度，于是走 `DimensionFactory` 的默认维度，
-   * 而普通维度的 `createRandomLevelSource()` 在 TS 里还是 `DEFERRED(Levelgen)`（`RandomLevelSource`
-   * 没移植，调用即抛）。demo 用的是平坦世界，本来就指定 `FlatDimension`，所以这里直接构造
-   * `ServerLevel` —— 除了多传一个维度，其余与 `selectLevel` 逐行相同。
-   * 世界生成移植好之后，这个函数可以直接换成 `this.selectLevel(...)`。
+   * 【为什么仍然不走 Minecraft.selectLevel】它是「指定平坦维度」的入口；而 `selectLevel`
+   * 不传维度、走 `DimensionFactory` 的默认维度（也就是普通地形）。两个世界长得完全不一样，
+   * 场景要用哪个就调哪个。这边除了多传一个 `FlatDimension`，其余与 `selectLevel` 逐行相同。
    */
   startDemoWorld(): void {
     this.startLevel(NinecraftApp.DEMO_LEVEL_ID, 'demo');

@@ -5,7 +5,10 @@
 // "启动入口是什么"这个前提。
 // 【但世界列表得有东西可列】以前是启动时自动建 demo 世界，现在不会了。所以下面先走一遍
 // 「进世界 → 退回标题」把世界造出来再存下去 —— 顺带把 B8f 那条路也覆盖了。
-// 从菜单真去点「开始游戏 → 进世界」走的还是 `selectLevel`，那条路会抛（世界生成没移植）。
+//
+// 【C-6b 起这个场景能一路走到底了】B8 那会儿从菜单进世界会抛（世界生成没移植），
+// 所以最后那两条断言写成了"点 Create / 点世界牌**会**抛"，注释里标明"将来会红"。
+// 世界生成接上之后它们真的红了，现在翻成"真的进得去"—— 进世界的两条入口各钉一条。
 //
 // 【h.state 的 fn 只能写字面量】它会被 toString() 之后在页面里重新求值，闭包全丢。
 // 所以进页面的数字一律写死（ScreenId.SCREEN_STARTMENU = 1）。
@@ -216,47 +219,65 @@ export default async function (h) {
   h.expect(after5.endsWith('XYZ'), '敲进去的就是 XYZ（追加在默认名后面）');
   await h.shot('06-输入框聚焦并已输入');
 
-  // ---- 点「Create」：**这一步现在必然会失败**，见 B8 的决策 1 ----
-  // 它走 minecraft.selectLevel()，那条路要建普通维度，而世界生成（RandomLevelSource）还没移植。
-  // 这条断言**将来会红** —— 那时候说明世界生成移植好了，把它改成"真的能进世界"。
-  const s7 = await h.state('点「Create」（预期撞上未移植的世界生成）', (a) => {
+  // ---- C-6b：点「Create」**真的进世界**（B8 时这里必抛，那两条断言就是为这一刻留的）----
+  const s7 = await h.state('点「Create」', (a) => {
+    const s = a.screen;
+    const b = s.buttons.find((x) => x.id === 3); // bCreate
     try {
-      a.screen.buttonClicked(a.screen.buttons.find((b) => b.id === 3));
-      return { threw: false, msg: '' };
+      s.buttonClicked(b);
+      return { threw: false, msg: '', screen: a.screen ? a.screen.constructor.name : null };
     } catch (e) {
-      return { threw: true, msg: String(e && e.message) };
+      return { threw: true, msg: String(e && e.message), screen: null };
     }
   });
-  h.expect(s7.threw === true, '点 Create 会抛（世界生成还没移植）');
-  h.expect(
-    s7.msg.includes('RandomLevelSource'),
-    `抛的是"世界生成没移植"那一句（实际：${s7.msg.slice(0, 60)}）`,
-  );
+  h.expect(s7.threw === false, `点 Create 不再抛（实际：${s7.msg.slice(0, 80)}）`);
+  h.expect(s7.screen === 'ProgressScreen', '先看到「Generating world」那张加载屏');
+  await h.wait(5000); // 普通世界比平坦世界慢：出生点周围要现算好几个区块
+  const s7b = await h.state('世界建起来了', (a) => ({
+    level: a.level === null ? null : 'loaded',
+    player: a.player === null ? null : 'created',
+    screen: a.screen ? a.screen.constructor.name : null,
+    dimension: a.level ? a.level.dimension.constructor.name : null,
+  }));
+  h.expect(s7b.level === 'loaded' && s7b.player === 'created', '世界与玩家都建出来了');
+  h.expect(s7b.screen === null, '加载屏自己关掉了（ProgressScreen.render 里那句 setScreen(null)）');
+  h.expect(s7b.dimension !== 'FlatDimension', '是普通维度的真地形，不是 demo 那个平坦世界');
+  await h.shot('07-从新建世界真的进了世界');
 
-  // ---- B8g：进世界的**另一条**入口 —— 在世界列表上点一张世界牌 ----
-  // 和上面「Create」是同一个坑（都走 Minecraft.selectLevel），但入口不同、代码不同，值得各钉一条。
-  // 这条断言**将来也会红** —— 那时候说明世界生成移植好了。
-  await h.state('从新建世界退回起始菜单', (a) => {
-    const s = a.screen;
-    s.buttonClicked(s.buttons.find((b) => b.id === 2)); // bBack
-    return { cls: a.screen.constructor.name };
+  // 退回标题，接着测**另一个**入口
+  const back2 = await h.state('退回起始菜单', (a) => {
+    a.leaveGame();
+    return { cls: a.screen ? a.screen.constructor.name : null, level: a.level === null ? null : 'x' };
   });
-  const s8 = await h.state('进世界列表，点那张 demo 牌（预期撞上未移植的世界生成）', (a) => {
+  h.expect(back2.cls === 'TouchStartMenuScreen', '退回起始菜单');
+  h.expect(back2.level === null, '世界拆掉了');
+  await h.wait(600);
+
+  // ---- C-6b：进世界的**另一条**入口 —— 在世界列表上点一张世界牌 ----
+  // 和上面「Create」是同一个坑（都走 Minecraft.selectLevel），但入口不同、代码不同，值得各钉一条。
+  const s8 = await h.state('进世界列表，点那张牌', (a) => {
     a.screenChooser.setScreen(5); // ScreenId.SCREEN_SELECTWORLD
     const list = a.screen;
-    list.worldsList.selectItem(list.worldsList.selectedItem, false); // 点"已经选中"的那张 = 挑中它
+    // 点"已经选中"的那张 = 挑中它；真正的 selectLevel 在 Screen.tick 里
+    list.worldsList.selectItem(list.worldsList.selectedItem, false);
     const picked = list.worldsList.hasPickedLevel;
     try {
-      list.tick(); // 真正的 selectLevel 在 tick 里（WorldSelectionList 只负责标记"挑中了"）
-      return { picked, threw: false, msg: '' };
+      list.tick();
+      return { picked, threw: false, msg: '', screen: a.screen ? a.screen.constructor.name : null };
     } catch (e) {
-      return { picked, threw: true, msg: String(e && e.message) };
+      return { picked, threw: true, msg: String(e && e.message), screen: null };
     }
   });
   h.expect(s8.picked === true, '点一下世界牌，列表记下了"挑中这个"');
-  h.expect(s8.threw === true, '进世界会抛（世界生成还没移植）');
-  h.expect(
-    s8.msg.includes('RandomLevelSource'),
-    `抛的是"世界生成没移植"那一句（实际：${s8.msg.slice(0, 60)}）`,
-  );
+  h.expect(s8.threw === false, `进世界不再抛（实际：${s8.msg.slice(0, 80)}）`);
+  await h.wait(5000);
+  const s8b = await h.state('这个世界也建起来了', (a) => ({
+    level: a.level === null ? null : 'loaded',
+    player: a.player === null ? null : 'created',
+    screen: a.screen ? a.screen.constructor.name : null,
+    seed: a.level ? a.level.getSeed() : null,
+  }));
+  h.expect(s8b.level === 'loaded' && s8b.player === 'created', '世界与玩家都建出来了');
+  h.expect(s8b.screen === null, '加载屏自己关掉了');
+  await h.shot('08-从世界列表真的进了世界');
 }
