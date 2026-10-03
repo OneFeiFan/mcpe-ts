@@ -147,4 +147,67 @@ export default async function (h) {
   h.expect(s3.dur === 8, '补间 8 帧');
   await h.wait(400);
   await h.shot('04-翻到-Create-new');
+
+  // ---- B8e：从选世界界面进「新建世界」 ----
+  const s4 = await h.state('点「Create new」', (a) => {
+    const list = a.screen;
+    list.buttonClicked(list.buttons.find((b) => b.id === 2)); // bCreate
+    const s = a.screen;
+    return {
+      cls: s.constructor.name,
+      nameText: s.tLevelName.text,
+      modeMsg: s.buttons.find((b) => b.id === 1).msg,
+      levelBox: [s.tLevelName.x, s.tLevelName.y, s.tLevelName.width],
+      seedBox: [s.tSeed.x, s.tSeed.y, s.tSeed.width],
+    };
+  });
+  h.expect(s4.cls === 'SimpleChooseLevelScreen', '进到新建世界界面了');
+  h.expect(s4.nameText.length > 0, '世界名有默认值（I18n 的 selectWorld.newWorld）');
+  h.expect(s4.levelBox[2] === 200 && s4.seedBox[2] === 200, '两个输入框都是 200 宽');
+  h.expect(s4.seedBox[1] === s4.levelBox[1] + 30, '种子框在世界名下方 30 像素');
+  await h.wait(300);
+  await h.shot('05-新建世界');
+
+  // ---- B8b-2 的隐藏 input：点输入框之后，焦点应该跑到它上面 ----
+  const s5 = await h.state('点一下世界名输入框', (a) => {
+    const s = a.screen;
+    s.mouseClicked(s.tLevelName.x + 10, s.tLevelName.y + 5, 1); // 1 = ACTION_LEFT
+    return { focused: s.tLevelName.focused };
+  });
+  h.expect(s5.focused === true, '点一下输入框，它拿到焦点');
+
+  const s6 = await h.state('焦点跑到哪去了', () => ({
+    tag: document.activeElement ? document.activeElement.tagName : null,
+    type: document.activeElement ? document.activeElement.type : null,
+  }));
+  h.expect(
+    s6.tag === 'INPUT',
+    '焦点落在 AppPlatform_web 挂的那个隐藏 <input> 上（手机上软键盘就是靠它弹出来的）',
+  );
+
+  // 用**真键盘**敲几个字，走完整的 DomInput → Keyboard.feedText → TextBox.charPressed 那条链
+  const before5 = await h.state('敲字前', (a) => a.screen.tLevelName.text);
+  await h.page.keyboard.type('XYZ');
+  await h.wait(300);
+  const after5 = await h.state('敲字后', (a) => a.screen.tLevelName.text);
+  h.expect(before5 !== after5, '键盘输入真的进了输入框');
+  h.expect(after5.endsWith('XYZ'), '敲进去的就是 XYZ（追加在默认名后面）');
+  await h.shot('06-输入框聚焦并已输入');
+
+  // ---- 点「Create」：**这一步现在必然会失败**，见 B8 的决策 1 ----
+  // 它走 minecraft.selectLevel()，那条路要建普通维度，而世界生成（RandomLevelSource）还没移植。
+  // 这条断言**将来会红** —— 那时候说明世界生成移植好了，把它改成"真的能进世界"。
+  const s7 = await h.state('点「Create」（预期撞上未移植的世界生成）', (a) => {
+    try {
+      a.screen.buttonClicked(a.screen.buttons.find((b) => b.id === 3));
+      return { threw: false, msg: '' };
+    } catch (e) {
+      return { threw: true, msg: String(e && e.message) };
+    }
+  });
+  h.expect(s7.threw === true, '点 Create 会抛（世界生成还没移植）');
+  h.expect(
+    s7.msg.includes('RandomLevelSource'),
+    `抛的是"世界生成没移植"那一句（实际：${s7.msg.slice(0, 60)}）`,
+  );
 }

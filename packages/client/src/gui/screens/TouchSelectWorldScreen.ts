@@ -29,6 +29,7 @@ import { Screen } from '../Screen';
 import { ConfirmScreen } from './ConfirmScreen';
 import { ProgressScreen } from './ProgressScreen';
 import { ScreenId } from './ScreenChooser';
+import { SimpleChooseLevelScreen } from './SimpleChooseLevelScreen';
 
 /** C++ 里是这个 .cpp 内部的一个 static 函数（PITFALLS 第 14 条：提到模块级） */
 function quadraticInOut(t: number, dur: number, start: number, stop: number): number {
@@ -408,8 +409,7 @@ export class SelectWorldScreen extends Screen {
     if (button.id === this.bCreate.id) {
       if (!this._hasStartedLevel) {
         const name = this.getUniqueLevelName('World');
-        void name;
-        // DEFERRED(Gui): minecraft->setScreen(new SimpleChooseLevelScreen(name));（新建世界界面未移植）
+        this.minecraft.setScreen(new SimpleChooseLevelScreen(name));
       }
     }
     if (button.id === this.bDelete.id) {
@@ -469,8 +469,7 @@ export class SelectWorldScreen extends Screen {
         // 点的是 "Create new" —— 去新建世界
         this.worldsList!.hasPickedLevel = false;
         const name = this.getUniqueLevelName('World');
-        void name;
-        // DEFERRED(Gui): minecraft->setScreen(new SimpleChooseLevelScreen(name));（新建世界界面未移植）
+        this.minecraft.setScreen(new SimpleChooseLevelScreen(name));
       } else {
         this.minecraft.selectLevel(
           this.worldsList!.pickedLevel!.id,

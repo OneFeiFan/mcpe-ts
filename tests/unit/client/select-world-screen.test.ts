@@ -9,6 +9,7 @@ import {
   TouchDeleteWorldScreen,
   TouchWorldSelectionList,
 } from '../../../packages/client/src/gui/screens/TouchSelectWorldScreen';
+import { SimpleChooseLevelScreen } from '../../../packages/client/src/gui/screens/SimpleChooseLevelScreen';
 
 // Touch::SelectWorldScreen（B8d-3）：选世界界面外层屏（B8d-2 已经把它的列表移植好了）。
 //
@@ -208,11 +209,21 @@ describe('client/SelectWorldScreen', () => {
       expect(setScreenCalls).toEqual([]);
     });
 
-    it('"Create new" 现在不打开任何东西（新建世界界面是 B8e）', () => {
-      const { screen, setScreenCalls, setScreens } = makeScreen([makeLevel('a', 'A', 1)]);
+    it('"Create new" 打开新建世界界面，并把去重后的世界名传进去', () => {
+      // B8d-3 时这里断言的是"什么都不做"（那时 SimpleChooseLevelScreen 还没移植，注释里写着 B8e）。
+      // B8e 接上之后改成断言真实行为。
+      const { screen, setScreenCalls, setScreens } = makeScreen([
+        makeLevel('World', 'W1', 1),
+        makeLevel('demo', 'D', 2),
+      ]);
       click(screen, raw(screen).bCreate);
-      expect(setScreenCalls).toEqual([]);
-      expect(setScreens).toEqual([]);
+      expect(setScreenCalls.length).toBe(1);
+      expect(setScreenCalls[0]).toBeInstanceOf(SimpleChooseLevelScreen);
+      // levelName 在类里是 private（而且 C++ 那边它是个没人用的死字段），
+      // 所以不能跟类做交叉类型断言 —— 直接按结构取。
+      const made = setScreenCalls[0] as unknown as { levelName: string };
+      expect(made.levelName).toBe('World-');
+      expect(setScreens, '走的是 setScreen 而不是 screenChooser').toEqual([]);
     });
   });
 
