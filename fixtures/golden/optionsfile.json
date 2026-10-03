@@ -1,0 +1,38 @@
+{
+  "counterSize": 128,
+  "save": [
+    {"name": "two-lines", "created": true, "bytes": "6f7074696f6e732e613a310a6f7074696f6e732e623a68656c6c6f0a"},
+    {"name": "empty", "created": true, "bytes": ""},
+    {"name": "value-has-newline", "created": true, "bytes": "6f7074696f6e732e613a310a320a"},
+    {"name": "value-has-nul", "created": true, "bytes": "6f7074696f6e732e613a31320a"},
+    {"name": "empty-element", "created": true, "bytes": "0a"},
+    {"name": "utf8-value", "created": true, "bytes": "6f7074696f6e732e757365726e616d653ae5bca0e4b8890a"},
+    {"name": "creates-parents", "created": true, "bytes": "6f7074696f6e732e613a310a"}
+  ],
+  "read": [
+    {"name": "normal", "bytes": "6f7074696f6e732e613a310a6f7074696f6e732e623a320a", "out": ["options.a","1","options.b","2"]},
+    {"name": "crlf", "bytes": "6f7074696f6e732e613a310d0a6f7074696f6e732e623a320d0a", "out": ["options.a","1","options.b","2"]},
+    {"name": "lone-cr", "bytes": "6f7074696f6e732e613a310d", "out": ["options.a","1"]},
+    {"name": "empty-file", "bytes": "", "out": []},
+    {"name": "only-newline", "bytes": "0a", "out": []},
+    {"name": "blank-lines-between", "bytes": "6f7074696f6e732e613a310a0a0a6f7074696f6e732e623a320a", "out": ["options.a","1","options.b","2"]},
+    {"name": "one-byte-line", "bytes": "610a6f7074696f6e732e613a310a", "out": ["options.a","1"]},
+    {"name": "two-byte-line", "bytes": "61620a6f7074696f6e732e613a310a", "out": ["options.a","1"]},
+    {"name": "three-byte-line", "bytes": "6162630a6f7074696f6e732e613a310a", "out": ["options.a","1"]},
+    {"name": "exactly-3-with-colon", "bytes": "613a310a6f7074696f6e732e613a310a", "out": ["a","1","options.a","1"]},
+    {"name": "no-colon", "bytes": "6f7074696f6e732e610a6f7074696f6e732e623a320a", "out": ["options.b","2"]},
+    {"name": "two-colons", "bytes": "6f7074696f6e732e69703a312e322e332e343a383038300a", "out": ["options.ip","1.2.3.4:8080"]},
+    {"name": "empty-value", "bytes": "6f7074696f6e732e613a0a", "out": ["options.a",""]},
+    {"name": "leading-trailing-space", "bytes": "2020206f7074696f6e732e61203a203120200a", "out": ["   options.a "," 1  "]},
+    {"name": "no-trailing-newline", "bytes": "6f7074696f6e732e613a310a6f7074696f6e732e623a32", "out": ["options.a","1","options.b","2"]},
+    {"name": "cr-in-middle", "bytes": "6f7074696f6e732e613a310d320a", "out": ["options.a","1\u000d2"]},
+    {"name": "nul-in-line", "bytes": "6f7074696f6e732e613a31320068696464656e0a", "out": ["options.a","12"]},
+    {"name": "line-125", "bytes": "78787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878783a310a", "out": ["xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","1"]},
+    {"name": "line-126", "bytes": "7878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878783a310a", "out": ["xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",""]},
+    {"name": "line-127", "bytes": "787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878783a310a", "out": []},
+    {"name": "line-130", "bytes": "787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878783a310a", "out": ["xxx","1"]},
+    {"name": "line-126-no-newline", "bytes": "7878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878783a31", "out": ["xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",""]}
+  ],
+  "missing": [],
+  "defaultPath": "options.txt"
+}

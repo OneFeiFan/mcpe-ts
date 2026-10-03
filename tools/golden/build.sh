@@ -25,7 +25,7 @@ CXX="${CXX:-g++}"
 JOBS="${JOBS:-$(nproc 2>/dev/null || echo 4)}"
 
 # ---- 选择性生成：不给节名就全生成，给了就只生成这几节 ----
-ALL_SECTIONS=(random mth util s4 synth biomesource registry nbt i18n inventory entity collision font regionfile leveldata playerdata saveleveldata chunk entities)
+ALL_SECTIONS=(random mth util s4 synth biomesource optionsfile registry nbt i18n inventory entity collision font regionfile leveldata playerdata saveleveldata chunk entities)
 SECTIONS=("$@")
 if [ "${#SECTIONS[@]}" -gt 0 ] && [ "${SECTIONS[0]}" = "--list" ]; then
     printf '%s\n' "${ALL_SECTIONS[@]}"
@@ -90,6 +90,12 @@ fi
 if want util; then
     "$CXX" -O0 -std=c++17 -I"$REF/src" -o "$TMP/harness_util" "$ROOT/tools/golden/harness_util.cpp" "$REF/src/util/PerfTimer.cpp" "$REF/src/util/StringUtils.cpp"
     "$TMP/harness_util" "$OUT/util.json"
+fi
+if want optionsfile; then
+    # 只用到自身的源文件 + log.h 桩（LOGI 在 harness 里不需要出声）。
+    # CF 带上 -DPLATFORM_WEB 与 stub 目录，log.h 才走得到桩。
+    "$CXX" "${CF[@]}" -o "$TMP/harness_optionsfile" "$ROOT/tools/golden/harness_optionsfile.cpp" "$REF/src/client/OptionsFile.cpp"
+    "$TMP/harness_optionsfile" "$OUT/optionsfile.json"
 fi
 if want s4; then
     "$CXX" -O0 -std=c++17 -fwrapv -I"$REF/src" -o "$TMP/harness_s4" "$ROOT/tools/golden/harness_s4.cpp"
