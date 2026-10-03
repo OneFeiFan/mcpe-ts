@@ -19,11 +19,13 @@ function run(cmd) {
   }
 }
 
-// pnpm 不在 PATH 上时退回 npx（与 package.json 的 packageManager 一致）
+// 用 --silent 而不是 -s：pnpm 12 起把 -s 这个简写去掉了，会直接报
+// “unexpected argument '-s' found”，于是钩子每次都误判成“类型检查失败”。
+// pnpm 不在 PATH 上、或这个 pnpm 不认 --silent 时，退回 npx 拉一个 pnpm@10。
 let PNPM = 'pnpm';
-try { execSync('pnpm --version', { stdio: 'ignore' }); } catch { PNPM = 'npx -y pnpm@10'; }
-const tc = run(`${PNPM} -s typecheck`);
-const tests = tc ? null : run(`${PNPM} -s test`);
+try { execSync('pnpm --silent --version', { stdio: 'ignore' }); } catch { PNPM = 'npx -y pnpm@10'; }
+const tc = run(`${PNPM} --silent typecheck`);
+const tests = tc ? null : run(`${PNPM} --silent test`);
 if (!tc && !tests) {
   if (existsSync(counter)) unlinkSync(counter);
   process.exit(0);
