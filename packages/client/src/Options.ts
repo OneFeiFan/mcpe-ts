@@ -2,7 +2,8 @@
  * 1:1 移植自 src/client/Options.h 与 Options.cpp（S6）。
  *  - 各个 Option 对象在 C++ 里是文件级全局变量（所有 Options 实例共用），这里同样放在模块顶层。
  *  - 构建开关：网页版定义了 PLATFORM_WEB，没有 PLATFORM_DESKTOP 或 RPI，所以 initTable 里把灵敏度乘 0.4 的一段不执行（默认 0.5）。
- *  - 读写选项文件经 OptionsFile 访问磁盘，本轮 DEFERRED(Storage)，demo 用默认值。
+ *  - 读写选项文件走 OptionsFile（B9c 接上），文件路径默认 "options.txt"，
+ *    由 NinecraftApp 用 setOptionsFilePath(externalStoragePath) 改到存储根目录下。
  *  - ADAPTED(Cpp)：C++ 的 set(key, int)、set(key, float)、set(key, string) 靠实参的静态类型选重载（类型不匹配时 dynamic_cast 失败、什么都不做）；
  *    JS 分不出 int 与 float，这里写成一个 set(key, value)：字符串只设 OptionString；数字按选项本身的类型设 OptionInt 或 OptionFloat。
  *  - OptionId 是 C++ 的 enum，写成常量对象；没有登记进表的 id（例如 OPTIONS_COMPLETE_LIGHTING）取值时返回默认的 0、false、空串。
@@ -10,6 +11,7 @@
 import { Keyboard } from '@mcpe/platform';
 import { Difficulty } from '@mcpe/world';
 import type { Minecraft } from './Minecraft';
+import { OptionsFile } from './OptionsFile';
 import { Option, OptionBool, OptionFloat, OptionInt, OptionString } from './Option';
 
 export const SOUND_MIN_VALUE = 0.0;
@@ -167,7 +169,8 @@ export class Options {
   private readonly m_options: (Option | null)[] = new Array<Option | null>(
     OptionId.OPTIONS_COUNT,
   ).fill(null);
-  // DEFERRED(Storage): OptionsFile optionsFile;
+  /** C++ 的成员 `OptionsFile optionsFile`（默认构造，路径初值 "options.txt"） */
+  private readonly optionsFile = new OptionsFile();
   private readonly minecraft: Minecraft | null;
 
   constructor(minecraft: Minecraft | null, _workingDirectory = '') {
@@ -290,8 +293,7 @@ export class Options {
   }
 
   load(): void {
-    // DEFERRED(Storage): StringVector optionStrings = optionsFile.getOptionStrings();
-    const optionStrings: string[] = [];
+    const optionStrings: string[] = this.optionsFile.getOptionStrings();
     for (let i = 0; i < optionStrings.length; i += 2) {
       const key = optionStrings[i]!;
       const value = optionStrings[i + 1]!;
@@ -306,8 +308,7 @@ export class Options {
     for (const it of this.m_options) {
       if (it) stringVec.push(it.serialize());
     }
-    void stringVec;
-    // DEFERRED(Storage): optionsFile.save(stringVec);
+    this.optionsFile.save(stringVec);
   }
 
   // ADAPTED(Cpp): 三个按实参类型区分的 set 重载合成一个，见文件头
@@ -333,8 +334,8 @@ export class Options {
     }
   }
 
-  setOptionsFilePath(_path: string): void {
-    // DEFERRED(Storage): optionsFile.setOptionsPath(path + "/options.txt");
+  setOptionsFilePath(path: string): void {
+    this.optionsFile.setOptionsPath(path + '/options.txt');
   }
 
   toggle(key: OptionId): void {
