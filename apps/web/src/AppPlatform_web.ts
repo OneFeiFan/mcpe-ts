@@ -66,6 +66,14 @@ export class AppPlatform_web extends AppPlatform {
     this.canvas.style.cursor = hide ? 'none' : '';
   }
 
+  /**
+   * ADAPTED(Web)：对照 AppPlatform_glfw.h 里那段的 `__EMSCRIPTEN__` 分支
+   * —— `emscripten_run_script("window.open('" + url + "', '_blank')")`。这里就是同一件事。
+   */
+  override openURL(url: string): void {
+    window.open(url, '_blank');
+  }
+
   override getPlatformStringVar(_stringId: number): string {
     return navigator.userAgent;
   }

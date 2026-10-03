@@ -27,6 +27,10 @@ export const PRELOAD: readonly string[] = [
   'gui/itemframe.png',
   'gui/touchgui.png',
   'gui/background.png',
+  // B8c：起始菜单的标题图与右下角的 github 图标（漏了 title.png 的话标题、版本号、版权、
+  //   github 那几行会**一起**不画 —— TouchStartMenuScreen::render 里它们都在同一层 if 里）
+  'gui/title.png',
+  'gui/logo/github.png',
   // S13：掉落物的阴影、水下覆盖层
   'misc/shadow.png',
   'misc/water.png',
