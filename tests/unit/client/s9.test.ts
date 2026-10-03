@@ -8,7 +8,7 @@ import {
   NinecraftApp,
   TextureData,
 } from '@mcpe/client';
-import { getTimeMs, Mouse, MouseAction } from '@mcpe/platform';
+import { VirtualFS, getTimeMs, Mouse, MouseAction, setVfs } from '@mcpe/platform';
 import { FlatDimension, Level } from '@mcpe/world';
 
 // S9 检查点：无头 GLES1 上完整跑一遍 NinecraftApp（init → startDemoWorld → tick → render）
@@ -29,6 +29,9 @@ let app: NinecraftApp;
 beforeAll(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
   vi.spyOn(console, 'log').mockImplementation(() => {});
+  // B7 起 NinecraftApp.init 会建真存档（ExternalFileLevelStorageSource），
+  // 那些目录操作全走 VirtualFS —— 不注入就抛"还没有注入 VirtualFS"。
+  setVfs(new VirtualFS());
   glSetContext(new GLES1(null));
   app = new NinecraftApp();
   app.init({ platform: new FakePlatform(), doRender: true });

@@ -61,6 +61,7 @@ export * from './level/storage/PlayerData.js';
 export * from './level/storage/LevelData.js';
 export * from './level/storage/LevelStorage.js';
 export * from './level/storage/LevelStorageSource.js';
+export * from './server/ServerLevel.js';
 export * from './level/storage/MemoryLevelStorage.js';
 export * from './level/storage/RegionFile.js';
 export * from './level/storage/FolderMethods.js';

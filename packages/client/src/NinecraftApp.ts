@@ -8,9 +8,10 @@
  */
 import { I18n } from '@mcpe/locale';
 import { SharedConstants } from '@mcpe/core';
-import { Mouse, Multitouch } from '@mcpe/platform';
+import { LOGI, Mouse, Multitouch } from '@mcpe/platform';
 import { Mth } from '@mcpe/util';
 import {
+  ExternalFileLevelStorageSource,
   FlatDimension,
   GameType,
   initBiomes,
@@ -18,10 +19,11 @@ import {
   initMaterials,
   initTileEntities,
   initTiles,
-  Level,
   LevelSettings,
-  MemoryLevelStorage,
+  type LevelSummary,
+  levelSummaryLess,
   MobCategory,
+  ServerLevel,
 } from '@mcpe/world';
 import { Minecraft } from './Minecraft';
 import { OptionId } from './Options';
@@ -74,25 +76,61 @@ export class NinecraftApp extends Minecraft {
       this.options.setOptionsFilePath(this.externalStoragePath);
     }
     super.initApp(); // Minecraft::init();
-    // DEFERRED(Storage): storageSource = new MemoryLevelStorageSource();（DEMO_MODE 分支）
+    // 照 C++ 的 `#if !defined(DEMO_MODE) && !defined(APPLE_DEMO_PROMOTION) && !defined(NO_STORAGE)`
+    // 那一支（网页版三个开关都没定义）。网页版把根目录固定成空串，于是
+    // basePath = "/games/com.mojang/minecraftWorlds"（照 externalPath 的结构，ADAPTED(Web)）。
+    this.storageSource = new ExternalFileLevelStorageSource(
+      this.externalStoragePath,
+      this.externalCacheStoragePath,
+    );
     this._running = false;
     // DEFERRED(Gui): screenChooser.setScreen(SCREEN_STARTMENU);
-    // ADAPTED(Demo): 没有起始界面，在这里直接进入 demo 世界。setScreen(起始界面) 的副作用 releaseMouse() 照样执行：
+    // ADAPTED(Demo): 没有起始界面，在这里直接进世界。setScreen(起始界面) 的副作用 releaseMouse() 照样执行：
     //   mouseGrabbed 的初值是 true，C++ 靠起始界面把它置回 false，进游戏时 setScreen(NULL) → grabMouse() 才真正锁定光标。
     //   这里没有界面，第一次点击画面时由 tickInput 的“点击即 grabMouse”完成锁定；否则光标没锁定时移动鼠标也会转动视角。
     this.releaseMouse();
-    this.startDemoWorld();
+    // ADAPTED(Demo)：C++ 由起始界面选世界，这里退化成"有存档就进最近的那个、没有就新建一个 demo"。
+    const levels: LevelSummary[] = [];
+    this.storageSource.getLevelList(levels);
+    if (levels.length > 0) {
+      levels.sort((a, b) => (levelSummaryLess(a, b) ? -1 : 1));
+      const best = levels[0]!;
+      LOGI(`Loading world '${best.name}' (${best.id})`);
+      this.startLevel(best.id, best.name);
+    } else {
+      LOGI('No saved world found, creating a new demo world');
+      this.startDemoWorld();
+    }
     if (this.options.getBooleanValue(OptionId.OPTIONS_FIRST_LAUNCH)) {
       this.options.toggle(OptionId.OPTIONS_FIRST_LAUNCH);
       // DEFERRED(Gui): setScreen(new UsernameScreen());
     }
   }
 
-  /** ADAPTED(Demo)：新建平坦世界（手册 S9 的 startDemoWorld 规格）；S12 起由真正的玩家进入世界 */
+  /** ADAPTED(Demo)：demo 世界的目录名。C++ 的名字由用户在"新建世界"界面里输入（B8） */
+  static readonly DEMO_LEVEL_ID = 'demo';
+
+  /**
+   * ADAPTED(Demo)：没有任何存档时新建一个平坦世界，**并且它真的会存下去**。
+   *
+   * 【为什么不走 Minecraft.selectLevel】它不传维度，于是走 `DimensionFactory` 的默认维度，
+   * 而普通维度的 `createRandomLevelSource()` 在 TS 里还是 `DEFERRED(Levelgen)`（`RandomLevelSource`
+   * 没移植，调用即抛）。demo 用的是平坦世界，本来就指定 `FlatDimension`，所以这里直接构造
+   * `ServerLevel` —— 除了多传一个维度，其余与 `selectLevel` 逐行相同。
+   * 世界生成移植好之后，这个函数可以直接换成 `this.selectLevel(...)`。
+   */
   startDemoWorld(): void {
-    const level = new Level(
-      new MemoryLevelStorage(),
-      'demo',
+    this.startLevel(NinecraftApp.DEMO_LEVEL_ID, 'demo');
+  }
+
+  /**
+   * `Minecraft.selectLevel` 去掉"从 DimensionFactory 取维度"那一步的版本（见 startDemoWorld）。
+   * 存档目录来自真的 `ExternalFileLevelStorageSource`，所以世界会落盘、刷新后还在。
+   */
+  private startLevel(levelId: string, levelName: string): void {
+    const level = new ServerLevel(
+      this.storageSource!.selectLevel(levelId, false),
+      levelName,
       new LevelSettings(0, GameType.Creative),
       SharedConstants.GeneratorVersion,
       new FlatDimension(),

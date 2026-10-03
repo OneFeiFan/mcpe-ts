@@ -224,11 +224,60 @@ B5b-2 那半（tick / savePendingUnsavedChunks / saveGame / saveAll 要真 Level
 **没写黄金样本**：这一步的产物是"哪些世界被列出来、删/改名之后文件系统长什么样"，
 不是字节格式；字节那一层（level.dat）已由 G14-2 / G14-4 逐字节盖住。用单元测试盖（20 条）。
 
-## B7 接进 Minecraft
+## B7 接进 Minecraft —— 已完成（提交见下）
 
-- `Minecraft.selectLevel`、`leaveGame`、`getLevelSource`、`setScreen` 里的 `level->saveGame()`；`NinecraftApp` 用 `ExternalFileLevelStorageSource`。
-- C++ 的 `selectLevel` 创建的是 `ServerLevel`。先查 TS 里有没有；没有就移植（它主要是网络相关，网络部分 DEFERRED）。
-- demo 入口：保留 `startDemoWorld` 作为“没有任何存档时自动新建一个平坦世界”的 ADAPTED(Demo)，有存档时直接进入最近的世界。
+**开工前实测后改了拆分**（用户 2026-10-03 确认）：原计划含 `leaveGame`，但它那 35 行里一头一尾
+都不是存档的活 —— 开头 `raknetInstance->disconnect()`（网络），结尾
+`setScreen(new RenameMPLevelScreen(...))` / `screenChooser.setScreen(SCREEN_STARTMENU)`（界面）。
+而它**唯一的调用方是暂停界面的 "Quit to title"**，那是 B8。现在移植它只会得到一堆 `DEFERRED`
+空壳，而且没有任何测试能碰到。**`leaveGame` 挪到 B8**，和它的调用方一起做。
+
+本步做：
+
+- `ServerLevel`（新文件，`src/server/ServerLevel.h/.cpp` 97 行）。C++ 的 `selectLevel` 造的就是它。
+  四个函数里三个要 `raknetInstance->send(...)`（睡眠同步、天亮、时间包），那些行标 `DEFERRED(Network)`。
+- `Minecraft.selectLevel` / `getLevelSource`（现在都是 `OMIT(Storage)`）、`setScreen` 里的
+  `level->saveGame()`（现在是 `DEFERRED(Storage)`）。
+- `NinecraftApp` 接上 `ExternalFileLevelStorageSource`：**有存档就进最近的那个，没有才走
+  `startDemoWorld`**（ADAPTED(Demo) 的入口保留）。
+- 浏览器场景：放一个方块 → 刷新页面 → 方块还在。
+
+### 网页版的存档根目录
+
+`ExternalFileLevelStorageSource(externalPath, temporaryFilesPath)` 内部拼的是
+`externalPath + "/games/com.mojang/minecraftWorlds"`，所以传 **空字符串** 正好得到
+`/games/com.mojang/minecraftWorlds`。已确认 `createFolderIfNotExists('')` 会短路到根目录
+（它先 `exists(name)`，而 `VirtualFS.normalize('')` 得到 `'/'`），所以那三级目录照样建得出来。
+
+### B7 记录
+
+**三条实测发现（都不是"顺手改"，是必须处理）：**
+
+1. **`Minecraft.selectLevel` 现在调不通。** 它不传维度，于是 `Level._init` 走
+   `DimensionFactory.createDefaultDimension` 拿到普通维度，而普通维度的
+   `createRandomLevelSource()` 在 TS 里还是 `DEFERRED(Levelgen)` —— `RandomLevelSource`
+   （地形生成）没移植，**被调用时直接抛**。所以：
+   - `selectLevel` 忠实移植、原样留着（等世界生成移植好就能用），注释里写明这件事；
+   - **demo 入口绕开它**：`NinecraftApp.startLevel` 直接构造 `ServerLevel` 并指定
+     `FlatDimension`（demo 本来就是平坦世界），其余与 `selectLevel` 逐行相同。
+     这意味着 **B8 的世界选择界面对非平坦世界还走不通**，得等世界生成。
+
+2. **`main.ts` 从来没调过 `setVfs()`。** B1b 只把 VFS 挂到 `window.__vfs`（给 smoke 场景用），
+   模块级注入点一直没装。B7 之前应用路径上没有任何代码走 `getVfs()`，所以一直没暴露 ——
+   一接上真存档，页面直接起不来（"还没有注入 VirtualFS"）。已补。
+
+3. **`ServerLevel.updateSleepingPlayerList` 会把所有人的睡眠计时清零。** 它判定"全睡了"之后给
+   每个人调 `setAllPlayersSleeping()`，而 C++ 那个函数头一句就是 `sleepCounter = 0`。
+   于是"刚全睡的那一瞬间" `allPlayersSleeping()` 还是 false，得再睡满一整轮。写测试时被这条绊了一下，
+   单独立了一条用例钉住。
+
+**浏览器实测**（`tools/verify/scenarios/storage.mjs`）：真浏览器里放方块 → 存盘 → **刷新页面** →
+方块还在。刷新前后两张截图逐像素相同。默认场景 `default.mjs` 也重跑过，没坏。
+
+**其余**：`getLevelSource`（3 行）、`setScreen` 里的 `level.saveGame()` 都接上了；
+`NinecraftApp` 换成 `ExternalFileLevelStorageSource('', '')`（网页版根目录）；
+有存档就进最近的、没有才新建 demo。台账 246 → 245
+（−4 条 Storage、+2 条 `DEFERRED(Network)`、+1 条 `ADAPTED(Demo)`）。
 
 ## B8 界面：起始菜单、选择世界、新建世界（触屏风格，菜单风格 0）
 

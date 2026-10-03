@@ -4,7 +4,7 @@
  * requestAnimationFrame 驱动 update()。键鼠由 DomInput 喂给 Keyboard、Mouse；pointer lock 解除时调用 releaseMouse()（A6）。
  */
 import { GLES1, glSetContext, NinecraftApp } from '@mcpe/client';
-import { LOGW, VirtualFS } from '@mcpe/platform';
+import { LOGW, VirtualFS, setVfs } from '@mcpe/platform';
 import { AppPlatform_web } from './AppPlatform_web';
 import { preloadAssets, preloadFiles } from './assets';
 import { DomInput } from './DomInput';
@@ -32,6 +32,11 @@ async function main(): Promise<void> {
   // 存档用的虚拟文件系统：先把 IndexedDB 里的内容读进内存，再启动游戏。
   // 必须在 app.init 之前完成，否则读存档的代码会看到一个空的文件系统。
   const vfs = new VirtualFS();
+  // 【B7 补上】模块级注入点。C++ 那边 fopen 是全局函数，存档代码直接调；TS 对应成 getVfs()，
+  // 所以要在这里把实例装进去。B1b 只把它挂到了 window.__vfs（给 smoke 场景用），
+  // 装注入点这一步一直没做 —— 在 B7 之前应用路径上没人调 getVfs()，所以没暴露出来。
+  // 放在 try 外面：就算 IndexedDB 打不开，内存里这个文件系统也照样能用（只是存不下去）。
+  setVfs(vfs);
   try {
     await vfs.load(new IndexedDbBackend());
     vfs.enableAutoFlush(200);

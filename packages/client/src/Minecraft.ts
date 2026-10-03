@@ -16,17 +16,22 @@ import {
   Multitouch,
   Stopwatch,
 } from '@mcpe/platform';
+import { SharedConstants } from '@mcpe/core';
 import { PerfTimer, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH } from '@mcpe/util';
 import {
   Difficulty,
   FoliageColor,
+  GameType,
   GrassColor,
   HitResult,
   HitResultType,
   type Level,
   LevelChunk,
   LevelConstants,
+  LevelSettings,
+  type LevelStorageSource,
   type Mob,
+  ServerLevel,
   Tile,
 } from '@mcpe/world';
 import { App } from './App';
@@ -137,8 +142,8 @@ export class Minecraft extends App {
   protected timer = new Timer(20);
   protected isGeneratingLevel = false;
   protected _hasSignaledGeneratingLevelFinished = true;
-  /** FORWARD-DECL(LevelStorageSource)：DEFERRED(Storage) */
-  protected storageSource: unknown = null;
+  /** B7 起是真类型了（原来是 FORWARD-DECL(LevelStorageSource)）；由 NinecraftApp 在 initApp 里装上 */
+  protected storageSource: LevelStorageSource | null = null;
   protected _running = false;
   protected _powerVr = false;
 
@@ -312,7 +317,35 @@ export class Minecraft extends App {
     return this._supportsNonTouchscreen;
   }
 
-  // OMIT(Storage): selectLevel(levelId, levelName, settings)  Minecraft.cpp:249
+  /**
+   * C++ 的 `Minecraft::selectLevel(levelId, levelName, settings)`（Minecraft.cpp:249，B7 移植）。
+   *
+   * 走 `storageSource->selectLevel(levelId, false)` 拿到一个存档目录，再套成 `ServerLevel`。
+   * （C++ 前面还有一段 `#if defined(CREATORMODE) ... #else`，网页版构建走 `#else` 的 ServerLevel。）
+   *
+   * 【`settings` 到这里就没用了】C++ 那行注释写得很清楚：它要么被拷进新建的 LevelData，
+   * 要么被从文件读出来的 LevelData 盖掉。所以世界已经存在时传什么都不影响结果。
+   *
+   * 【⚠ 现在调用它会抛异常】这里不传维度（C++ 也没传），于是 `Level._init` 走
+   * `DimensionFactory.createDefaultDimension`，拿到普通维度；而普通维度的
+   * `createRandomLevelSource()` 在 TS 里还是 `DEFERRED(Levelgen)` —— `RandomLevelSource`
+   * （地形生成）没移植，被调用时直接抛。
+   *
+   * 也就是说：**世界生成移植好之前，这个函数只在"读一个已经存在的平坦世界"时才有用**，
+   * 而那条路得靠调用方自己指定 `FlatDimension`。demo 入口（`NinecraftApp.startDemoWorld`）
+   * 就是因此绕开了它、直接构造 `ServerLevel`。等 RandomLevelSource 移植完，这里原封不动就能用。
+   */
+  selectLevel(levelId: string, levelName: string, settings: LevelSettings): void {
+    this.level = new ServerLevel(
+      this.storageSource!.selectLevel(levelId, false),
+      levelName,
+      settings,
+      SharedConstants.GeneratorVersion,
+    );
+    this.setLevel(this.level, 'Generating level');
+    this.setIsCreativeMode(this.level.getLevelData().getGameType() === GameType.Creative);
+    this._running = true;
+  }
 
   setLevel(level: Level | null, message = '', forceInsertPlayer: LocalPlayer | null = null): void {
     void message;
@@ -761,7 +794,7 @@ export class Minecraft extends App {
       screen.init(this, screenWidth, screenHeight);
       if (screen.isInGameScreen() && this.level) {
         this.level.saveLevelData();
-        // DEFERRED(Storage): level->saveGame();（存档未移植）
+        this.level.saveGame();
       }
     } else {
       this.pause = false;
@@ -853,7 +886,10 @@ export class Minecraft extends App {
     return this.level !== null && !this.isGeneratingLevel;
   }
 
-  // OMIT(Storage): getLevelSource()  Minecraft.cpp:1611
+  /** C++ 的 `Minecraft::getLevelSource()`（Minecraft.cpp:1611）—— 就一句 return */
+  getLevelSource(): LevelStorageSource | null {
+    return this.storageSource;
+  }
   // OMIT(Sound): audioEngineOn()  Minecraft.cpp:1622
   // OMIT(Sound): audioEngineOff()  Minecraft.cpp:1627
   setIsCreativeMode(isCreative: boolean): void {
