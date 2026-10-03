@@ -11,17 +11,19 @@
  */
 import { LOGI, Stopwatch } from '@mcpe/platform';
 import { Mth, Random, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH } from '@mcpe/util';
-import { type AABB, FoliageColor, GrassColor, type HitResult, HitResultType, type Level, LevelConstants, LevelListener, type Mob, type Player, Tile } from '@mcpe/world';
+import { type AABB, type Entity, FoliageColor, GrassColor, type HitResult, HitResultType, type Level, LevelConstants, LevelListener, type Mob, type Player, Tile, type Vec3 } from '@mcpe/world';
 import { Minecraft } from '../Minecraft';
 import { OptionId } from '../Options';
 import { Chunk } from './Chunk';
+import { EntityRenderDispatcher } from './entity/EntityRenderDispatcher';
 import type { Culler } from './culling/Culler';
 import { DirtyChunkSorter, sorterComparator } from './DirtyChunkSorter';
 import { DistanceChunkSorter } from './DistanceChunkSorter';
 import {
   GL_ALPHA_TEST, GL_BLEND, GL_DEPTH_TEST, GL_DST_COLOR, GL_FOG, GL_LIGHTING, GL_LINE_STRIP, GL_LINES, GL_ONE, GL_ONE_MINUS_SRC_ALPHA,
   GL_POLYGON_OFFSET_FILL, GL_SRC_ALPHA, GL_SRC_COLOR, GL_TEXTURE_2D, glBlendFunc2, glColor4f2, glColorMask, glDepthMask, glDisable2,
-  glEnable2, glGenBuffers2, glLineWidth, glPolygonOffset, glPopMatrix2, glPushMatrix2, glTranslatef2,
+  glEnable2, glGenBuffers2, glLineWidth, glPolygonOffset, glPopMatrix2, glPushMatrix2, glTranslatef2, GL_VERTEX_ARRAY, GL_TEXTURE_COORD_ARRAY,
+  glEnableClientState2, glDisableClientState2,
 } from './gles';
 import { RenderList } from './RenderList';
 import { Tesselator } from './Tesselator';
@@ -202,7 +204,9 @@ export class LevelRenderer extends LevelListener {
     this.xOld = -9999;
     this.yOld = -9999;
     this.zOld = -9999;
-    // DEFERRED(EntityRender): EntityRenderDispatcher::getInstance()->setLevel(level); ->setMinecraft(mc);
+    EntityRenderDispatcher.getInstance().setLevel(level);
+    EntityRenderDispatcher.getInstance().setMinecraft(this.mc);
+    // DEFERRED(TileEntityRender): TileEntityRenderDispatcher::getInstance()->setLevel(level);
     this.level = level;
     this.tileRenderer = new TileRenderer(level);
     if (level !== null) {
@@ -630,7 +634,39 @@ export class LevelRenderer extends LevelListener {
     }
   }
 
-  // OMIT(HitSelect): renderHit(player, h, mode, inventoryItem, a)  LevelRenderer.cpp:836
+  renderHit(player: Player, h: HitResult, mode: number, _inventoryItem: unknown, a: number): void {
+    if (mode === 0) {
+      if (this.destroyProgress > 0) {
+        const t = Tesselator.instance;
+        glEnable2(GL_BLEND);
+        glBlendFunc2(GL_DST_COLOR, GL_SRC_COLOR);
+        this.textures!.loadAndBindTexture('terrain.png');
+        glPushMatrix2();
+        const level = this.level!;
+        const tileId = level.getTile(h.x, h.y, h.z);
+        let tile = tileId > 0 ? (Tile.tiles[tileId] ?? null) : null;
+        glPolygonOffset(-3.0, -3.0);
+        glEnable2(GL_POLYGON_OFFSET_FILL);
+        t.begin();
+        t.color(1.0, 1.0, 1.0, 0.5);
+        t.noColor();
+        const xo = player.xOld + (player.x - player.xOld) * a;
+        const yo = player.yOld + (player.y - player.yOld) * a;
+        const zo = player.zOld + (player.z - player.zOld) * a;
+        t.offset(-xo, -yo, -zo);
+        if (tile === null) tile = Tile.rock;
+        const progress = Math.trunc(this.destroyProgress * 10);
+        this.tileRenderer!.tesselateInWorld(tile, h.x, h.y, h.z, 15 * 16 + progress);
+        t.draw();
+        t.offset(0, 0, 0);
+        glPolygonOffset(0.0, 0.0);
+        glDisable2(GL_POLYGON_OFFSET_FILL);
+        glDisable2(GL_BLEND);
+        glDepthMask(true);
+        glPopMatrix2();
+      }
+    }
+  }
   renderHitOutline(player: Player, h: HitResult, mode: number, _inventoryItem: unknown, a: number): void {
     if (mode === 0 && h.type === HitResultType.TILE) {
       glEnable2(GL_BLEND);
@@ -735,8 +771,60 @@ export class LevelRenderer extends LevelListener {
   }
 
   // OMIT(Sky): skyColorChanged()  LevelRenderer.cpp:980
-  // OMIT(EntityRender): renderEntities(cam, culler, a)  LevelRenderer.cpp:996
-  // OMIT(Debug): gatherStats1()  LevelRenderer.cpp:1063
+  renderEntities(cam: Vec3, culler: Culler, a: number): void {
+    if (this.noEntityRenderFrames > 0) {
+      this.noEntityRenderFrames--;
+      return;
+    }
+    const mc = this.mc;
+    const level = this.level!;
+    TIMER_PUSH('prepare');
+    // DEFERRED(TileEntityRender): TileEntityRenderDispatcher::getInstance()->prepare(level, textures, mc->font, mc->cameraTargetPlayer, a);
+    const disp = EntityRenderDispatcher.getInstance();
+    disp.prepare(level, mc.font, mc.cameraTargetPlayer!, mc.options, a);
+    this.totalEntities = 0;
+    this.renderedEntities = 0;
+    this.culledEntities = 0;
+    const player = mc.cameraTargetPlayer!;
+    EntityRenderDispatcher.xOff = player.xOld + (player.x - player.xOld) * a;
+    EntityRenderDispatcher.yOff = player.yOld + (player.y - player.yOld) * a;
+    EntityRenderDispatcher.zOff = player.zOld + (player.z - player.zOld) * a;
+    glEnableClientState2(GL_VERTEX_ARRAY);
+    glEnableClientState2(GL_TEXTURE_COORD_ARRAY);
+    TIMER_POP_PUSH('entities');
+    const entities = level.getAllEntities();
+    this.totalEntities = entities.length;
+    if (this.totalEntities > 0) {
+      const toRender: Entity[] = [];
+      for (let i = 0; i < this.totalEntities; i++) {
+        const entity = entities[i]!;
+        const thirdPerson = mc.options.getBooleanValue(OptionId.OPTIONS_THIRD_PERSON_VIEW);
+        if (entity.shouldRender(cam) && culler.isVisible(entity.bb)) {
+          if (entity === mc.cameraTargetPlayer && !thirdPerson && mc.cameraTargetPlayer.isPlayer() && !(mc.cameraTargetPlayer as Player).isSleeping()) continue;
+          if (entity === mc.cameraTargetPlayer && !thirdPerson) continue;
+          if (!level.hasChunkAt(Mth.floor(entity.x), Mth.floor(entity.y), Mth.floor(entity.z))) continue;
+          toRender.push(entity);
+          this.renderedEntities++;
+        }
+      }
+      if (this.renderedEntities > 0) {
+        toRender.sort((x, y) => x.entityRendererId - y.entityRendererId); // entityRenderPredicate（std::sort 不稳定，同类次序不保证）
+        for (let i = 0; i < this.renderedEntities; ++i) disp.render(toRender[i]!, a);
+      }
+    }
+    TIMER_POP_PUSH('tileentities');
+    // DEFERRED(TileEntityRender): for (tileEntities) TileEntityRenderDispatcher::getInstance()->render(level->tileEntities[i], a);（箱子、告示牌）
+    glDisableClientState2(GL_VERTEX_ARRAY);
+    glDisableClientState2(GL_TEXTURE_COORD_ARRAY);
+    TIMER_POP();
+  }
+  gatherStats1(): string {
+    return `C: ${this.renderedChunks}/${this.totalChunks}. F: ${this.offscreenChunks}, O: ${this.occludedChunks}, E: ${this.emptyChunks}\n`;
+  }
+
+  gatherStats2(): string {
+    return `E: ${this.renderedEntities}/${this.totalEntities}. B: ${this.culledEntities}, I: ${this.totalEntities - this.culledEntities - this.renderedEntities}\n`;
+  }
   // OMIT(Sky): renderSky(alpha)  LevelRenderer.cpp:1130
   // OMIT(Clouds): renderClouds(alpha)  LevelRenderer.cpp:1263
   // OMIT(Clouds): renderAdvancedClouds(alpha)  LevelRenderer.cpp:1317
@@ -789,7 +877,10 @@ export class LevelRenderer extends LevelListener {
     this.allChanged();
   }
 
-  // OMIT(EntityRender): entityAdded(entity)  LevelRenderer.cpp:1630
+  override entityAdded(entity: Entity): void {
+    if (!entity.isPlayer()) return;
+    EntityRenderDispatcher.getInstance().onGraphicsReset();
+  }
   // OMIT(Entity): takePicture(cam, entity)  LevelRenderer.cpp:1641
   // OMIT(Sound): levelEvent(player, type, x, y, z, data)  LevelRenderer.cpp:1669
 

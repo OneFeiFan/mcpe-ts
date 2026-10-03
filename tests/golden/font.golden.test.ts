@@ -13,8 +13,7 @@ const G = JSON.parse(readFileSync(new URL('../../fixtures/golden/font.json', imp
 const raw = readFileSync(new URL('../../tools/golden/inputs/default8.rgba', import.meta.url));
 const tex = { w: (raw[0]! << 8) | raw[1]!, h: (raw[2]! << 8) | raw[3]!, data: new Uint8Array(raw.subarray(4)), numBytes: raw.length - 4, transparent: true };
 const fakeTextures = { loadTexture: () => 1, getTemporaryTextureData: () => tex };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const FontClass = (FontModule as any).Font as (new (options: unknown, name: string, textures: unknown) => { width(s: string): number }) | undefined;
+const FontClass = (FontModule as unknown as Record<string, unknown>).Font as (new (options: unknown, name: string, textures: unknown) => { width(s: string): number }) | undefined;
 
 describe('G13-1 字体字宽', () => {
   it.skipIf(typeof FontClass !== 'function')('256 个字宽与 Font.width 与 C++ 相同', () => {

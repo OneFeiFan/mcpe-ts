@@ -112,7 +112,7 @@ describe('Tile 与 Item 的签名补全', () => {
   it('FoodItem：受伤且不是无敌时开始进食；吃完数量减一，播放声音时消耗一次随机数', () => {
     const food = new FoodItem(4, 4, false);
     const calls: number[] = [];
-    const player = { x: 0, y: 0, z: 0, heightOffset: 1.62, abilities: { invulnerable: false }, isHurt: () => true, startUsingItem: (_i: ItemInstance, d: number) => calls.push(d) } as unknown as Player;
+    const player = { x: 0, y: 0, z: 0, heightOffset: 1.62, abilities: { invulnerable: false }, isHurt: () => true, foodData: { eat: () => {} }, startUsingItem: (_i: ItemInstance, d: number) => calls.push(d) } as unknown as Player;
     const it = inst(260, 2);
     food.use(it, level, player);
     expect(calls).toEqual([32]);

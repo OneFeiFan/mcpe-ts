@@ -13,6 +13,8 @@ import { Mth, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH } from '@mcpe/util';
 import { type Entity, HitResult, HitResultType, Material, type Mob, type Player, Tile, Vec3 } from '@mcpe/world';
 import { IntRectangle } from '../gui/components/ImageButton';
 import { Gui } from '../gui/Gui';
+import { EntityRenderDispatcher } from './entity/EntityRenderDispatcher';
+import { ItemInHandRenderer } from './ItemInHandRenderer';
 import type { Minecraft } from '../Minecraft';
 import { OptionId } from '../Options';
 import type { LocalPlayer } from '../player/LocalPlayer';
@@ -23,6 +25,7 @@ import {
   GL_PROJECTION, GL_PROJECTION_MATRIX, GL_SCISSOR_TEST, GL_SMOOTH, GL_SRC_ALPHA, GL_TRUE, glBlendFunc2, glClear, glClearColor, glColor4f2,
   glColorMask, glDepthMask, glDisable, glDisable2, glEnable, glEnable2, glFogf, glFogfv, glFogx, glGetFloatv, glLoadIdentity2, glMatrixMode,
   glOrthof, glRotatef, glRotatef2, glScalef2, glScissor, glShadeModel2, glTranslatef, glTranslatef2, gluPerspective, glViewport,
+  glLoadIdentity, glPopMatrix2, glPushMatrix2,
 } from './gles';
 import { _t_keepPic } from './LevelRenderer';
 import { Lighting } from './Lighting';
@@ -49,8 +52,7 @@ export function renderCursor(x: number, y: number, minecraft: Minecraft): void {
 }
 
 export class GameRenderer {
-  /** FORWARD-DECL(ItemInHandRenderer)：DEFERRED(ItemInHand)，始终为 null */
-  itemInHandRenderer: unknown = null;
+  itemInHandRenderer: ItemInHandRenderer;
 
   private mc: Minecraft;
   private renderDistance = 0;
@@ -90,9 +92,10 @@ export class GameRenderer {
   constructor(mc: Minecraft) {
     this.mc = mc;
     this.saveMatrices();
-    // DEFERRED(ItemInHand): itemInHandRenderer = new ItemInHandRenderer(mc);
-    // DEFERRED(ItemInHand): EntityRenderDispatcher* e = EntityRenderDispatcher::getInstance(); e->itemInHandRenderer = itemInHandRenderer;
-    // DEFERRED(ItemInHand): e->textures = mc->textures;
+    this.itemInHandRenderer = new ItemInHandRenderer(mc);
+    const e = EntityRenderDispatcher.getInstance();
+    e.itemInHandRenderer = this.itemInHandRenderer;
+    e.textures = mc.textures;
   }
 
   /*private*/
@@ -170,7 +173,7 @@ export class GameRenderer {
             TIMER_POP_PUSH('gui');
             this.setupGuiScreen(false);
             hasSetupGuiScreen = true;
-            // DEFERRED(Gui): mc->gui.render(a, mc->screen != NULL, xMouse, yMouse);
+            mc.gui.render(a, mc.screen !== null, xMouse, yMouse);
           }
         }
       }
@@ -281,7 +284,7 @@ export class GameRenderer {
       glShadeModel2(GL_FLAT);
       Lighting.turnOn(mc);
       TIMER_POP_PUSH('entities');
-      // DEFERRED(EntityRender): mc->levelRenderer->renderEntities(cameraEntity->getPos(a), &frustum, a);
+      levelRenderer.renderEntities(cameraEntity.getPos(a), frustum, a);
       TIMER_POP_PUSH('particles');
       // DEFERRED(Particle): particleEngine->render(cameraEntity, a);
       Lighting.turnOff();
@@ -313,7 +316,7 @@ export class GameRenderer {
           } else {
             levelRenderer.renderHitSelect(player, mc.hitResult, 0, null, a); // normal pe one - shredder
           }
-          // DEFERRED(HitSelect): levelRenderer->renderHit(player, mc->hitResult, 0, NULL, a);（挖掘裂纹，S13）
+          levelRenderer.renderHit(player, mc.hitResult, 0, null, a);
         }
       }
       glDisable2(GL_FOG);
@@ -327,7 +330,7 @@ export class GameRenderer {
       if (this.zoom === 1 && !mc.options.getBooleanValue(OptionId.OPTIONS_HIDEGUI)) {
         TIMER_POP_PUSH('hand');
         glClear(GL_DEPTH_BUFFER_BIT);
-        // DEFERRED(ItemInHand): renderItemInHand(a, i);
+        this.renderItemInHand(a, i);
       }
       if (!mc.options.getBooleanValue(OptionId.OPTIONS_ANAGLYPH_3D)) {
         TIMER_POP();
@@ -418,7 +421,33 @@ export class GameRenderer {
     _shTicks = 1;
     return false;
   }
-  // OMIT(ItemInHand): renderItemInHand(a, eye)  GameRenderer.cpp:912
+  renderItemInHand(a: number, eye: number): void {
+    const mc = this.mc;
+    glLoadIdentity2();
+    if (mc.options.getBooleanValue(OptionId.OPTIONS_ANAGLYPH_3D)) glTranslatef2((eye * 2 - 1) * 0.1, 0, 0);
+    glPushMatrix2();
+    this.bobHurt(a);
+    if (mc.options.getBooleanValue(OptionId.OPTIONS_VIEW_BOBBING)) this.bobView(a);
+    const target = mc.cameraTargetPlayer!;
+    if (!mc.options.getBooleanValue(OptionId.OPTIONS_THIRD_PERSON_VIEW) && target.isPlayer() && !(target as Player).isSleeping()) {
+      if (!mc.options.getBooleanValue(OptionId.OPTIONS_HIDEGUI)) {
+        const fov = this.getFov(a, false);
+        if (fov !== this._setupCameraFov) {
+          glMatrixMode(GL_PROJECTION);
+          glLoadIdentity();
+          gluPerspective(fov, mc.width / mc.height, 0.05, this.renderDistance);
+          glMatrixMode(GL_MODELVIEW);
+        }
+        this.itemInHandRenderer.render(a);
+      }
+    }
+    glPopMatrix2();
+    if (!mc.options.getBooleanValue(OptionId.OPTIONS_THIRD_PERSON_VIEW) && target.isPlayer() && !(target as Player).isSleeping()) {
+      this.itemInHandRenderer.renderScreenEffect(a);
+      this.bobHurt(a);
+    }
+    if (mc.options.getBooleanValue(OptionId.OPTIONS_VIEW_BOBBING)) this.bobView(a);
+  }
   // OMIT(Clouds): prepareAndRenderClouds(levelRenderer, a)  GameRenderer.cpp:961
 
   private tickFov(): void {
@@ -604,7 +633,7 @@ export class GameRenderer {
     const fogBrT = brr * (1 - whiteness) + whiteness;
     this.fogBr += (fogBrT - this.fogBr) * 0.1;
     this._tick++;
-    // DEFERRED(ItemInHand): itemInHandRenderer->tick();
+    this.itemInHandRenderer.tick();
   }
 
   /*private*/
@@ -673,7 +702,7 @@ export class GameRenderer {
   }
 
   onGraphicsReset(): void {
-    // DEFERRED(ItemInHand): if (itemInHandRenderer) itemInHandRenderer->onGraphicsReset();
+    if (this.itemInHandRenderer) this.itemInHandRenderer.onGraphicsReset();
   }
 
   private saveMatrices(): void {

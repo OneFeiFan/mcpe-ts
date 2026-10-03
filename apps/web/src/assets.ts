@@ -16,6 +16,12 @@ export const PRELOAD: readonly string[] = [
   'terrain.png', 'misc/grasscolor.png', 'misc/foliagecolor.png',
   // S13：Gui 与 Font
   'gui/gui.png', 'gui/icons.png', 'gui/items.png', 'gui/gui_blocks.png', 'font/default8.png',
+  // S13：界面类（物品选择界面）
+  'gui/spritesheet.png', 'gui/itemframe.png', 'gui/touchgui.png', 'gui/background.png',
+  // S13：掉落物的阴影、水下覆盖层
+  'misc/shadow.png', 'misc/water.png',
+  // Gui::renderVignette（漂亮画质 + 暗角选项默认打开）：没有预加载时会沿用上一次绑定的 gui/icons.png，整张画到屏幕上，左上角就出现生命、护甲、气泡图标的残影
+  'misc/vignette.png',
 ];
 
 /** 启动时预加载的其他资源文件（AppPlatform::readAssetFile 读取，ADAPTED(Web)）：文件在 public/ 的同名路径下 */

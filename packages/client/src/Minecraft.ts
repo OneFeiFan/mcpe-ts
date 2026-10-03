@@ -13,10 +13,13 @@ import { App } from './App';
 import { PlatformStringVars } from './AppPlatform';
 import { CreativeMode } from './gamemode/CreativeMode';
 import type { GameMode } from './gamemode/GameMode';
+import { Font } from './gui/Font';
+import { EntityRenderDispatcher } from './renderer/entity/EntityRenderDispatcher';
 import { SurvivalMode } from './gamemode/SurvivalMode';
 import { BuildActionIntention } from './player/input/IBuildInput';
 import { Gui } from './gui/Gui';
 import type { Screen } from './gui/Screen';
+import { ScreenChooser, ScreenId } from './gui/screens/ScreenChooser';
 import { createConfig } from './IConfigListener';
 import { MouseHandler } from './MouseHandler';
 import { OptionFloat } from './Option';
@@ -73,9 +76,11 @@ export class Minecraft extends App {
   soundEngine: unknown = null;
   gameMode: GameMode | null = null;
   textures: Textures | null = null;
-  // DEFERRED(Gui): ScreenChooser screenChooser;
-  /** FORWARD-DECL(Font)：DEFERRED(Gui)，始终为 null */
-  font: unknown = null;
+  /** C++ 的成员 ScreenChooser screenChooser（构造函数初始化列表 screenChooser(this)） */
+  screenChooser: ScreenChooser = new ScreenChooser(this);
+  font: Font | null = null;
+  /** C++ 的成员 Gui gui（构造函数初始化列表 gui(this)）：C++ 按成员声明顺序在 options 之后构造，这里在构造函数里 options 赋值之后创建 */
+  gui!: Gui;
   /** FORWARD-DECL(IRakNetInstance)：DEFERRED(Network)，始终为 null */
   raknetInstance: unknown = null;
   netCallback: unknown = null;
@@ -86,7 +91,6 @@ export class Minecraft extends App {
   player: LocalPlayer | null = null;
   inputHolder: IInputHolder | null = null;
   cameraTargetPlayer: Mob | null = null;
-  // DEFERRED(Gui): Gui gui;
   generateLevelThread: unknown = null;
   screen: Screen | null = null;
   mouseHandler = new MouseHandler();
@@ -120,6 +124,7 @@ export class Minecraft extends App {
   protected constructor() {
     super();
     this.options = new Options(this);
+    this.gui = new Gui(this);
     // DEFERRED(Network): raknetInstance = new RakNetInstance();
     // DEFERRED(Sound): soundEngine = new SoundEngine(20.0f); soundEngine->init(this, &options);
   }
@@ -139,7 +144,7 @@ export class Minecraft extends App {
     this.textures.addDynamicTexture(new LavaSideTexture());
     this.textures.addDynamicTexture(new FireTexture(0));
     this.textures.addDynamicTexture(new FireTexture(1));
-    // DEFERRED(Gui): gui.texturesLoaded(textures);
+    this.gui.texturesLoaded(this.textures!);
     this.levelRenderer = new LevelRenderer(this);
     this.gameRenderer = new GameRenderer(this);
     // DEFERRED(Particle): particleEngine = new ParticleEngine(level, textures);
@@ -154,7 +159,7 @@ export class Minecraft extends App {
     GrassColor.setUseTint(tint);
     const sideTint = this.options.getBooleanValue(OptionId.OPTIONS_TINTED_SIDE);
     TileRenderer.setUseTint(sideTint);
-    // DEFERRED(Gui): font = new Font(&options, "font/default8.png", textures);
+    this.font = new Font(this.options, 'font/default8.png', this.textures!);
     // DEFERRED(Gui): _perfRenderer = new PerfRenderer(this, font);
     checkGlError('Init complete');
     this.options.load();
@@ -194,7 +199,7 @@ export class Minecraft extends App {
     const screenWidth = Math.trunc(this.width * Gui.InvGuiScale);
     const screenHeight = Math.trunc(this.height * Gui.InvGuiScale);
     const config = createConfig(this);
-    // DEFERRED(Gui): gui.onConfigChanged(config);
+    this.gui.onConfigChanged(config);
     if (this.screen) this.screen.setSize(screenWidth, screenHeight);
     if (this.inputHolder) this.inputHolder.onConfigChanged(config);
   }
@@ -404,7 +409,7 @@ export class Minecraft extends App {
     TIMER_POP_PUSH('input');
     this.tickInput();
     TIMER_POP_PUSH('gui');
-    // DEFERRED(Gui): gui.tick();
+    this.gui.tick();
     if (this.isGeneratingLevel) {
       return;
     } else if (!this._hasSignaledGeneratingLevelFinished) {
@@ -456,7 +461,7 @@ export class Minecraft extends App {
         this.screen.updateEvents();
         this.screenMutex = false;
         if (this.hasScheduledScreen) {
-          // DEFERRED(Gui): setScreen(scheduledScreen);
+          this.setScreen(this.scheduledScreen);
           this.scheduledScreen = null;
           this.hasScheduledScreen = false;
         }
@@ -465,7 +470,9 @@ export class Minecraft extends App {
       if (!this.player) {
         return;
       }
-      // DEFERRED(Gui): bool mouseDiggable = !gui.isInside(Mouse::getX(), Mouse::getY()); bool allowGuiClicks = true;
+      const mouseDiggable = !this.gui.isInside(Mouse.getX(), Mouse.getY()); // #ifndef RPI
+      void mouseDiggable;
+      const allowGuiClicks = true;
       TIMER_PUSH('mouse');
       while (Mouse.next()) {
         const passedTime = getTimeMs() - this.lastTickTime;
@@ -476,8 +483,17 @@ export class Minecraft extends App {
             this.grabMouse();
           }
         }
-        // DEFERRED(Gui): if (allowGuiClicks && e.action == ACTION_LEFT && e.data == DATA_DOWN) gui.handleClick(...);
-        // DEFERRED(Gui): ACTION_WHEEL —— 聊天滚动或切换物品栏格子
+        if (allowGuiClicks && e.action === MouseAction.ACTION_LEFT && e.data === MouseAction.DATA_DOWN) {
+          this.gui.handleClick(MouseAction.ACTION_LEFT, Mouse.getX(), Mouse.getY());
+        }
+        if (e.action === MouseAction.ACTION_WHEEL) {
+          // 聊天、控制台界面计划外（DEFERRED(Gui)），只走切换物品栏格子的分支
+          const v = this.player.inventory;
+          let numSlots = this.gui.getNumSlots();
+          if (!this.useTouchscreen()) numSlots--;
+          const slot = (v.selected - e.dy + numSlots) % numSlots;
+          v.selectSlot(slot);
+        }
       }
       TIMER_POP_PUSH('keyboard');
       while (Keyboard.next()) {
@@ -485,11 +501,19 @@ export class Minecraft extends App {
         const isPressed = Keyboard.getEventKeyState() === KeyboardAction.KEYDOWN;
         this.player.setKey(key, isPressed);
         if (isPressed) {
-          // DEFERRED(Gui): gui.handleKeyPressed(key); 数字键选物品栏格子
+          this.gui.handleKeyPressed(key);
+          if (key >= 0x30 && key <= 0x39) {
+            const digit = key - 0x30;
+            const slot = digit - 1;
+            if (slot >= 0 && slot < this.gui.getNumSlots()) this.player.inventory.selectSlot(slot);
+          }
           if (key === Keyboard.KEY_LEFT_CTRL) {
             this.player.setSprinting(true);
           }
-          // DEFERRED(Gui): KEY_E 物品选择界面；KEY_T 控制台界面
+          if (key === Keyboard.KEY_E) {
+            this.screenChooser.setScreen(ScreenId.SCREEN_BLOCKSELECTION);
+          }
+          // DEFERRED(Gui): if (!screen && key == KEY_T && level) setScreen(new ConsoleScreen());（控制台界面未移植）
           if (key === Keyboard.KEY_F3) {
             this.options.toggle(OptionId.OPTIONS_RENDER_DEBUG);
           }
@@ -505,7 +529,7 @@ export class Minecraft extends App {
           }
           // DEFERRED(Gui): if (options.getBooleanValue(OPTIONS_RENDER_DEBUG) && '0'..'9') _perfRenderer->debugFpsMeterKeyPress(key - '0');
           if (key === Keyboard.KEY_ESCAPE) {
-            // DEFERRED(Gui): pauseGame(false);
+            this.pauseGame(false);
           }
         }
       }
@@ -614,7 +638,7 @@ export class Minecraft extends App {
       const item = player.inventory.getSelected();
       if (item && !player.isUsingItem()) {
         if (gameMode.useItem(player, level, item)) {
-          // DEFERRED(ItemInHand): gameRenderer->itemInHandRenderer->itemUsed();
+          this.gameRenderer!.itemInHandRenderer.itemUsed();
         }
         if (item && item.count <= 0) {
           player.inventory.clearSlot(player.inventory.selected);
@@ -624,9 +648,48 @@ export class Minecraft extends App {
   }
   // OMIT(Network): isOnlineClient()  Minecraft.cpp:1048
   // OMIT(Network): isOnline()  Minecraft.cpp:1053
-  // OMIT(Gui): pauseGame(isBackPaused)  Minecraft.cpp:1058
-  // OMIT(Gui): gameLostFocus()  Minecraft.cpp:1075
-  // OMIT(Gui): setScreen(screen)  Minecraft.cpp:1084
+  pauseGame(isBackPaused: boolean): void {
+    const canFreeze = false; // DEFERRED(Network)：服务器且不接受连接时才可冻结（单机为 false）
+    this.pause = canFreeze;
+    if (this.screen !== null) return;
+    this.screenChooser.setScreen(isBackPaused ? ScreenId.SCREEN_PAUSEPREV : ScreenId.SCREEN_PAUSE);
+  }
+
+  gameLostFocus(): void {
+    if (this.screen !== null) {
+      this.screen.lostFocus();
+    }
+  }
+
+  setScreen(screen: Screen | null): void {
+    Mouse.reset();
+    Multitouch.reset();
+    Multitouch.resetThisUpdate();
+    if (this.screenMutex) {
+      this.hasScheduledScreen = true;
+      this.scheduledScreen = screen;
+      return;
+    }
+    if (screen !== null && screen.isErrorScreen()) return;
+    if (screen === null && this.level === null) screen = this.screenChooser.createScreen(ScreenId.SCREEN_STARTMENU);
+    if (this.screen !== null) {
+      this.screen.removed();
+    }
+    this.screen = screen;
+    if (screen !== null) {
+      this.releaseMouse();
+      const screenWidth = Math.trunc(this.width * Gui.InvGuiScale);
+      const screenHeight = Math.trunc(this.height * Gui.InvGuiScale);
+      screen.init(this, screenWidth, screenHeight);
+      if (screen.isInGameScreen() && this.level) {
+        this.level.saveLevelData();
+        // DEFERRED(Storage): level->saveGame();（存档未移植）
+      }
+    } else {
+      this.pause = false;
+      this.grabMouse();
+    }
+  }
   // OMIT(Network): locateMultiplayer()  Minecraft.cpp:1366
   // OMIT(Network): cancelLocateMultiplayer()  Minecraft.cpp:1373
   // OMIT(Network): joinMultiplayer(server)  Minecraft.cpp:1382
@@ -655,7 +718,7 @@ export class Minecraft extends App {
     if (this.levelRenderer !== null) this.levelRenderer.setLevel(level);
     // DEFERRED(Particle): if (particleEngine != NULL) particleEngine->setLevel(level);
     this.gameMode!.adjustPlayer(this.player!);
-    // DEFERRED(Gui): gui.onLevelGenerated();
+    this.gui.onLevelGenerated();
     level.validateSpawn();
     level.loadPlayer(this.player, true);
     if (this.player && !level.isClientSide) {
@@ -669,7 +732,22 @@ export class Minecraft extends App {
     this._hasSignaledGeneratingLevelFinished = true;
   }
 
-  // OMIT(Debug): gatherStats1() .. gatherStats4()  Minecraft.cpp:1510
+  gatherStats1(): string {
+    return this.levelRenderer!.gatherStats1();
+  }
+
+  gatherStats2(): string {
+    return this.levelRenderer!.gatherStats2();
+  }
+
+  gatherStats3(): string {
+    // DEFERRED(Particle): particleEngine->countParticles()（粒子计划外，记为 0）
+    return 'P: 0. T: ' + this.level!.gatherStats();
+  }
+
+  gatherStats4(): string {
+    return this.level!.gatherChunkSourceStats();
+  }
   // OMIT(Player): respawnPlayer(playerId)  Minecraft.cpp:1538
   // OMIT(Player): resetPlayer(player)  Minecraft.cpp:1548
   // OMIT(Player): respawnPlayer()  Minecraft.cpp:1566
@@ -677,10 +755,12 @@ export class Minecraft extends App {
   /** C++ 的 void onGraphicsReset()（覆盖 App 的 protected 纯虚函数） */
   protected onAppGraphicsReset(): void {
     this.textures!.clear();
-    // DEFERRED(Gui): font->onGraphicsReset(); gui.onGraphicsReset();
+    this.font!.onGraphicsReset();
+    this.gui.onGraphicsReset();
     if (this.levelRenderer) this.levelRenderer.onGraphicsReset();
     if (this.gameRenderer) this.gameRenderer.onGraphicsReset();
-    // DEFERRED(EntityRender): EntityRenderDispatcher / TileEntityRenderDispatcher ->onGraphicsReset();
+    EntityRenderDispatcher.getInstance().onGraphicsReset();
+    // DEFERRED(TileEntityRender): TileEntityRenderDispatcher::getInstance()->onGraphicsReset();
   }
 
   getProgressStatusId(): number {
@@ -755,7 +835,9 @@ export class Minecraft extends App {
     }
   }
 
-  // OMIT(Gui): addMessage(msg)  Minecraft.cpp:1715
+  addMessage(msg: string): void {
+    this.gui.addMessage(msg);
+  }
 
   getTicks(): number {
     return this.ticks;

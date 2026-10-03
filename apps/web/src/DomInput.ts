@@ -76,6 +76,9 @@ export class DomInput {
     MouseHandler.platformHooks = null;
   }
 
+  /** 由页面设置：当前是否允许点击时锁定指针（主页：没有打开界面时）。默认允许 */
+  lockAllowed: () => boolean = () => true;
+
   private requestLock(): void {
     if (document.pointerLockElement !== this.canvas) {
       // 不在用户手势里时浏览器会拒绝；mousedown 里会再请求
@@ -125,7 +128,7 @@ export class DomInput {
   }
 
   private onButton(e: MouseEvent, isDown: boolean): void {
-    if (isDown && !this.locked) this.requestLock(); // 用户手势里同步请求
+    if (isDown && !this.locked && this.lockAllowed()) this.requestLock(); // 用户手势里同步请求（打开界面时不锁定：C++ 只在没有界面时点击才 grabMouse）
     const [x, y] = this.pos(e);
     const data = isDown ? MouseAction.DATA_DOWN : MouseAction.DATA_UP;
     if (e.button === 0) {

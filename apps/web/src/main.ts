@@ -34,6 +34,7 @@ async function main(): Promise<void> {
   window.addEventListener('resize', resize);
 
   const input = new DomInput(canvas, { onPointerUnlock: () => app.releaseMouse(), onPointerLock: () => app.grabMouse() });
+  input.lockAllowed = () => app.screen === null; // C++：有界面时点击不 grabMouse
   input.attach();
 
   if (status) status.textContent = '点击画面开始：鼠标转向，WASD 移动，空格上升，左 Shift 下降，F 切换视距，Esc 解锁';

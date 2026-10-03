@@ -14,3 +14,8 @@ Thumbs.db
 !.env.example
 
 *.tsbuildinfo
+
+# AI 工作流
+tools/verify/out/
+.claude/.stop-attempts
+.claude/settings.local.json

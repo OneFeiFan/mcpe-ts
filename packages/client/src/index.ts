@@ -50,4 +50,4 @@ export * from './gamemode/GameMode.js';
 export * from './gamemode/CreativeMode.js';
 export * from './gamemode/SurvivalMode.js';
 export * from './renderer/entity/ItemRenderer.js';
-export type { Font } from './gui/Font.js';
+export * from './gui/Font.js';

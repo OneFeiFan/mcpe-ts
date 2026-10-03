@@ -1,5 +1,5 @@
 // 1:1 移植自 src/world/item/FoodItem.h（S11 阶段 A，部分移植）。BowlFoodItem 继承它。
-// 部分：player->foodData.eat(this) 等食物数据（SimpleFoodData，S12）DEFERRED(Player)。
+// 食物数据 player->foodData.eat(this) 在 S13 恢复（SimpleFoodData 已在 S12 移植）。
 // 注释掉的 setEatEffect、getSaturationModifier 与效果字段不移植。
 import type { Player } from '../entity/player/Player';
 import type { Level } from '../level/Level';
@@ -28,7 +28,7 @@ export class FoodItem extends Item {
 
   override useTimeDepleted(instance: ItemInstance, level: Level, player: Player): ItemInstance {
     instance.count--;
-    // DEFERRED(Player): player->foodData.eat(this);
+    player.foodData.eat(this);
     level.playSound(player, 'random.burp', 0.5, level.random.nextFloat() * 0.1 + 0.9);
     return new ItemInstance(instance); // C++ 按值返回 *instance 的副本
   }

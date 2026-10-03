@@ -2,7 +2,7 @@
 import { Mth } from '@mcpe/util';
 import { Vec3 } from '../../phys/Vec3';
 
-// FORWARD-DECL(Inventory): Inventory::MAX_SELECTION_SIZE —— Inventory 未移植，先用它的值
+/** Inventory::MAX_SELECTION_SIZE（PlayerData 与 Inventory 互相引用，这里取值不导入，避免加载期循环；值由测试核对） */
 const MAX_SELECTION_SIZE = 9; // Including "More..." right now
 
 // PlayerData.h 里的文件内静态函数，只被已 OMIT 的 loadPlayer 使用

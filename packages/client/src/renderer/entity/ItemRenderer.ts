@@ -1,15 +1,16 @@
 /**
  * 1:1 移植自 src/client/renderer/entity/ItemRenderer.h 与 ItemRenderer.cpp（S13 阶段 A，部分移植：只有物品栏用的静态绘制函数）。
- * 部分：实体渲染（继承 EntityRenderer 的 render(Entity*, …)，画掉落物）DEFERRED(EntityRender)，在 S13 阶段 C 与 EntityRenderer 一起移植；
- *   在那之前这里是独立的类，只提供静态函数。
+ * 物品栏的静态绘制在 S13 阶段 A，画掉落物的 render（继承 EntityRenderer）在阶段 C。
  * R10：renderGuiItem 的两个重载——短的以 w = h = 16 转调长的，但参数位置不同（fancy 在最后），按情形 B：
  *   renderGuiItem(font, textures, item, x, y, fancy)  →  分派入口 renderGuiItem
  *   renderGuiItem(font, textures, item, x, y, w, h, fancy)  →  renderGuiItemSized
  *   renderGuiItemDecorations 的两个重载：(font, textures, item, x, y) 保留原名；(item, x, y) → renderGuiItemDamage（它只画耐久条）。
  */
-import { Item, type ItemInstance, Tile } from '@mcpe/world';
+import { type Entity, Item, type ItemEntity, type ItemInstance, Tile } from '@mcpe/world';
+import { Mth, Random } from '@mcpe/util';
 import type { Font } from '../../gui/Font';
-import { glColor4f, glColor4f2, glPopMatrix2, glPushMatrix2, glRotatef2, glScalef2, glTranslatef2 } from '../gles';
+import { GL_RESCALE_NORMAL, glColor4f, glColor4f2, glDisable2, glEnable2, glPopMatrix2, glPushMatrix2, glRotatef2, glScalef2, glTranslatef2 } from '../gles';
+import { EntityRenderer } from './EntityRenderer';
 import { Tesselator } from '../Tesselator';
 import type { Textures } from '../Textures';
 import { TileRenderer } from '../TileRenderer';
@@ -35,7 +36,86 @@ const _byAux: Readonly<Record<number, readonly number[]>> = {
 const ff = 0;
 const gg = 0;
 
-export class ItemRenderer {
+export class ItemRenderer extends EntityRenderer {
+  private random = new Random();
+
+  constructor() {
+    super();
+    this.shadowRadius = 0.15;
+    this.shadowStrength = 0.75;
+  }
+
+  render(itemEntity_: Entity, x: number, y: number, z: number, _rot: number, a: number): void {
+    const itemEntity = itemEntity_ as ItemEntity;
+    this.random.setSeed(187);
+    const item = itemEntity.item;
+    glPushMatrix2();
+    const bob = Math.fround(Mth.sin((itemEntity.age + a) / 10.0 + itemEntity.bobOffs) * 0.1 + 0.1);
+    const spin = Math.fround(((itemEntity.age + a) / 20.0 + itemEntity.bobOffs) * Mth.RADDEG);
+    let count = 1;
+    if (item.count > 20) count = 4;
+    else if (item.count > 5) count = 3;
+    else if (item.count > 1) count = 2;
+    glTranslatef2(x, y + bob, z);
+    glEnable2(GL_RESCALE_NORMAL);
+    const erd = EntityRenderer.entityRenderDispatcher!;
+    if (item.id < 256 && TileRenderer.canRender(Tile.tiles[item.id]!.getRenderShape())) {
+      glRotatef2(spin, 0, 1, 0);
+      let br = itemEntity.getBrightness(a);
+      if (item.id === Tile.sand.id || item.id === Tile.sandStone.id) br *= 0.8;
+      glColor4f2(br, br, br, 1.0);
+      this.bindTexture('terrain.png');
+      let s = 1 / 4.0;
+      const shape = Tile.tiles[item.id]!.getRenderShape();
+      if (shape === Tile.SHAPE_CROSS_TEXTURE || shape === Tile.SHAPE_TORCH) s = 0.5;
+      glScalef2(s, s, s);
+      for (let i = 0; i < count; i++) {
+        if (i > 0) {
+          glPushMatrix2();
+          const xo = ((this.random.nextFloat() * 2 - 1) * 0.2) / s;
+          const yo = ((this.random.nextFloat() * 2 - 1) * 0.2) / s;
+          const zo = ((this.random.nextFloat() * 2 - 1) * 0.2) / s;
+          glTranslatef2(xo, yo, zo);
+        }
+        erd.itemInHandRenderer!.renderItem(null, item);
+        if (i > 0) glPopMatrix2();
+      }
+    } else {
+      glScalef2(1 / 2.0, 1 / 2.0, 1 / 2.0);
+      const icon = item.getIcon();
+      if (item.id < 256) this.bindTexture('terrain.png');
+      else this.bindTexture('gui/items.png');
+      const t = Tesselator.instance;
+      const u0 = ((icon % 16) * 16 + 0) / 256.0;
+      const u1 = ((icon % 16) * 16 + 16) / 256.0;
+      const v0 = (Math.trunc(icon / 16) * 16 + 0) / 256.0;
+      const v1 = (Math.trunc(icon / 16) * 16 + 16) / 256.0;
+      const r = 1.0;
+      const xo = 0.5;
+      const yo = 0.25;
+      for (let i = 0; i < count; i++) {
+        glPushMatrix2();
+        if (i > 0) {
+          const _xo = (this.random.nextFloat() * 2 - 1) * 0.3;
+          const _yo = (this.random.nextFloat() * 2 - 1) * 0.3;
+          const _zo = (this.random.nextFloat() * 2 - 1) * 0.3;
+          glTranslatef2(_xo, _yo, _zo);
+        }
+        glRotatef2(180 - erd.playerRotY, 0, 1, 0);
+        t.begin();
+        t.normal(0, 1, 0);
+        t.vertexUV(0 - xo, 0 - yo, 0, u0, v1);
+        t.vertexUV(r - xo, 0 - yo, 0, u1, v1);
+        t.vertexUV(r - xo, 1 - yo, 0, u1, v0);
+        t.vertexUV(0 - xo, 1 - yo, 0, u0, v0);
+        t.draw();
+        glPopMatrix2();
+      }
+    }
+    glDisable2(GL_RESCALE_NORMAL);
+    glPopMatrix2();
+  }
+
   /** C++ 的 static TileRenderer* tileRenderer = new TileRenderer();（没有 level 的 TileRenderer） */
   private static tileRenderer: TileRenderer | null = new TileRenderer();
 
@@ -188,5 +268,4 @@ export class ItemRenderer {
     t.draw();
   }
 
-  // OMIT(EntityRender): ItemRenderer()、render(itemEntity, x, y, z, rot, a)  ItemRenderer.cpp:20（S13 阶段 C，与 EntityRenderer 一起）
 }
