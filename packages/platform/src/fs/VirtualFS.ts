@@ -303,3 +303,37 @@ export class VirtualFS {
     this.dirsDirty = false;
   }
 }
+
+/**
+ * 模块级的默认 VirtualFS 实例。
+ *
+ * 为什么要有这个：C++ 里 fopen 是全局函数，移植过来的存档代码（B3 的 RegionFile、
+ * B6 的 FolderMethods 那些自由函数、B5 的 ExternalFileLevelStorage）内部直接调它，
+ * 没有地方接一个额外的参数。TS 这边 vfs.open 需要一个实例，所以在模块级留一个注入点。
+ *
+ * 做法参照项目里已有的 MouseHandler.platformHooks：启动时注入真实实例，
+ * 测试里在 beforeAll 换成内存实例。放在这里而不是像那个一样挂在类上，是因为
+ * 消费方（RegionFile 等）本来就要 import VirtualFS 的类型，多 import 两个函数不增加耦合。
+ *
+ * 网页版在 main.ts 里注入；单元测试与黄金样本测试各自注入自己的实例。
+ * 测试之间必须重新注入 —— 这个变量是模块级的，会跨用例残留。
+ */
+let currentVfs: VirtualFS | null = null;
+
+/** 注入全局 VirtualFS；传 null 清掉（测试收尾用） */
+export function setVfs(vfs: VirtualFS | null): void {
+  currentVfs = vfs;
+}
+
+/**
+ * 取全局 VirtualFS。**没有注入时直接抛**，而不是悄悄返回一个空实例 ——
+ * 后者会让"忘了注入"表现成"存档莫名其妙读不到"，很难查。
+ */
+export function getVfs(): VirtualFS {
+  if (currentVfs === null) {
+    throw new Error(
+      '还没有注入 VirtualFS：网页启动时由 main.ts 调 setVfs()，测试里在 beforeAll 里调',
+    );
+  }
+  return currentVfs;
+}
