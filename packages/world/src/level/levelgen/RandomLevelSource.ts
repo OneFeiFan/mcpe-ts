@@ -1,7 +1,16 @@
 /**
  * 1:1 移植自 src/world/level/levelgen/RandomLevelSource.h 与 .cpp。
- * **C-2：只到类骨架 + 构造函数 + `getHeights`。**`prepareHeights` / `buildSurfaces`（C-3）、
- * 洞穴峡谷（C-4/C-5）、`getChunk`（C-5）、`postProcess`（C-7）都还是 DEFERRED。
+ * **C-3：类骨架 + 构造函数 + `getHeights` + `prepareHeights` + `buildSurfaces`。**
+ * 还差：洞穴峡谷（C-4/C-5）、`getChunk`/`create`（C-5）、`postProcess`（C-7）。
+ *
+ * 【⚠ 浮点字面量必须过 `f`】这是本文件里最容易写错、而且**测不出来**的一类：
+ * C++ 的 `0.2f` 是 float，TS 直接写 `0.2` 是 double —— 两者差约**半个 float ULP**，
+ * 所以 `f(r * 0.2)` 与 C++ 的 `r * 0.2f` 在约两成输入上差 1 位。正确写法是 `f(r * f(0.2))`。
+ * 注意区分：**两个已经是 float 的值**之间的 +−×÷，在 double 里算完再 fround，
+ * 与 C++ 的单步 float 运算是逐位相同的（double 的 53 位够用，二次舍入无害）；
+ * 出问题的只有十进制字面量本身。本文件里需要包的就这几处：`0.2`（buildSurfaces 两处）、
+ * `0.3`、`1.4`（getHeights 两处）、`0.15`、`109.0134`、`684.412` —— 其余（0.25、1.121、2 的幂等）
+ * 要么二进制精确、要么已经被 `getRegion` 内部 fround 掉了。
  *
  * 【它继承 ChunkSource，不是 LevelSource】这点容易搞错 —— `RandomLevelSource.h:32` 写的是
  * `class RandomLevelSource: public ChunkSource`。`LevelSource` 是另一个接口，只有 `Level` 和 `Region` 实现。
@@ -28,6 +37,7 @@ import { ChunkSource } from '../chunk/ChunkSource';
 import type { LevelChunk } from '../chunk/LevelChunk';
 import { LevelConstants } from '../LevelConstants';
 import type { Level } from '../Level';
+import { Tile } from '../tile/Tile';
 import { PerlinNoise } from './synth/PerlinNoise';
 
 const f = Math.fround;
@@ -122,20 +132,210 @@ export class RandomLevelSource extends ChunkSource {
     throw new Error('RandomLevelSource.create 尚未移植（C-5）');
   }
 
+  /**
+   * `RandomLevelSource::prepareHeights`（.cpp:66-137）：把高度场三线性插值成方块，
+   * 水下填水/冰、地上填石头。
+   *
+   * 【逐句对齐的两处】`xc/zc` 只到 `xChunks`（= 1），所以外层看着只有一趟、实际是靠 xc/zc 的
+   * `<< 11` / `<< 7` 错开来铺满整个区块，别"顺手"改成 16 重循环。
+   * `s0..s3` 在 y 循环末尾累加、`_s0/_s1` 在 x 循环末尾累加 —— 累加位置写错整片地形就斜了。
+   *
+   * `biomes` 参数在 C++ 里就没用过（getChunk 传的是 0），照原样收下不用。
+   */
   prepareHeights(
-    _xOffs: number,
-    _zOffs: number,
-    _blocks: Uint8Array,
+    xOffs: number,
+    zOffs: number,
+    blocks: Uint8Array,
     _biomes: null,
-    _temperatures: Float32Array,
+    temperatures: Float32Array,
   ): void {
-    // DEFERRED(Levelgen): 整段 prepareHeights（.cpp:66-137）—— C-3
-    throw new Error('RandomLevelSource.prepareHeights 尚未移植（C-3）');
+    const xChunks = Math.trunc(16 / LevelConstants.CHUNK_WIDTH);
+    // C++ 的 `Level::DEPTH - 64`；Level.DEPTH 就是 LevelConstants.LEVEL_HEIGHT（128）
+    const waterHeight = LevelConstants.LEVEL_HEIGHT - 64;
+
+    const xSize = xChunks + 1;
+    const ySize = Math.trunc(128 / RandomLevelSource.CHUNK_HEIGHT) + 1;
+    const zSize = xChunks + 1;
+    this.buffer = this.getHeights(
+      this.buffer,
+      xOffs * xChunks,
+      0,
+      zOffs * xChunks,
+      xSize,
+      ySize,
+      zSize,
+    );
+
+    for (let xc = 0; xc < xChunks; xc++) {
+      for (let zc = 0; zc < xChunks; zc++) {
+        for (let yc = 0; yc < Math.trunc(128 / RandomLevelSource.CHUNK_HEIGHT); yc++) {
+          const yStep = f(1 / RandomLevelSource.CHUNK_HEIGHT);
+          const buf = this.buffer;
+          let s0 = buf[((xc + 0) * zSize + (zc + 0)) * ySize + (yc + 0)]!;
+          let s1 = buf[((xc + 0) * zSize + (zc + 1)) * ySize + (yc + 0)]!;
+          let s2 = buf[((xc + 1) * zSize + (zc + 0)) * ySize + (yc + 0)]!;
+          let s3 = buf[((xc + 1) * zSize + (zc + 1)) * ySize + (yc + 0)]!;
+
+          let s0a = f((buf[((xc + 0) * zSize + (zc + 0)) * ySize + (yc + 1)]! - s0) * yStep);
+          let s1a = f((buf[((xc + 0) * zSize + (zc + 1)) * ySize + (yc + 1)]! - s1) * yStep);
+          let s2a = f((buf[((xc + 1) * zSize + (zc + 0)) * ySize + (yc + 1)]! - s2) * yStep);
+          let s3a = f((buf[((xc + 1) * zSize + (zc + 1)) * ySize + (yc + 1)]! - s3) * yStep);
+
+          for (let y = 0; y < RandomLevelSource.CHUNK_HEIGHT; y++) {
+            const xStep = f(1 / LevelConstants.CHUNK_WIDTH);
+
+            let _s0 = s0;
+            let _s1 = s1;
+            let _s0a = f((s2 - s0) * xStep);
+            let _s1a = f((s3 - s1) * xStep);
+
+            for (let x = 0; x < LevelConstants.CHUNK_WIDTH; x++) {
+              let offs =
+                ((x + xc * LevelConstants.CHUNK_WIDTH) << 11) |
+                ((0 + zc * LevelConstants.CHUNK_WIDTH) << 7) |
+                (yc * RandomLevelSource.CHUNK_HEIGHT + y);
+              const step = 1 << 7;
+              const zStep = f(1 / LevelConstants.CHUNK_WIDTH);
+
+              let val = _s0;
+              let vala = f((_s1 - _s0) * zStep);
+              for (let z = 0; z < LevelConstants.CHUNK_WIDTH; z++) {
+                const temp =
+                  temperatures[
+                    (xc * LevelConstants.CHUNK_WIDTH + x) * 16 +
+                      (zc * LevelConstants.CHUNK_WIDTH + z)
+                  ]!;
+                let tileId = 0;
+                if (yc * RandomLevelSource.CHUNK_HEIGHT + y < waterHeight) {
+                  if (
+                    temp < RandomLevelSource.SNOW_CUTOFF &&
+                    yc * RandomLevelSource.CHUNK_HEIGHT + y >= waterHeight - 1
+                  ) {
+                    tileId = Tile.ice.id;
+                  } else {
+                    tileId = Tile.calmWater.id;
+                  }
+                }
+                if (val > 0) {
+                  tileId = Tile.rock.id;
+                } else {
+                  // C++ 这里是空 else，照原样留着
+                }
+
+                blocks[offs] = tileId & 0xff;
+                offs += step;
+                val = f(val + vala);
+              }
+              _s0 = f(_s0 + _s0a);
+              _s1 = f(_s1 + _s1a);
+            }
+            s0 = f(s0 + s0a);
+            s1 = f(s1 + s1a);
+            s2 = f(s2 + s2a);
+            s3 = f(s3 + s3a);
+          }
+        }
+      }
+    }
   }
 
-  buildSurfaces(_xOffs: number, _zOffs: number, _blocks: Uint8Array, _biomes: Biome[]): void {
-    // DEFERRED(Levelgen): 整段 buildSurfaces（.cpp:139-218）—— C-3
-    throw new Error('RandomLevelSource.buildSurfaces 尚未移植（C-3）');
+  /**
+   * `RandomLevelSource::buildSurfaces`（.cpp:139-218）：在石头顶上铺草/沙/沙岩/砾石，
+   * 水面补冰，最底下 `random.nextInt(5)` 层做基岩。
+   *
+   * 【这一步大量消耗 random，而且调用点藏在循环里】`if (y <= 0 + random.nextInt(5))` 在
+   * **每一层 y 都会调一次**（每列 128 次、每区块 32768 次），`sand`/`gravel`/`runDepth` 各一次。
+   * 顺序或次数差一点，后面 C-4/C-5 的洞穴随机流就全错位。
+   *
+   * 【`temp` 是写死的 1】C++ 那句 `float temp = 1; // @todo: read temp from BiomeSource` ——
+   * 原作者自己留的 TODO，照原样，别去读真实的温度。
+   */
+  buildSurfaces(xOffs: number, zOffs: number, blocks: Uint8Array, biomes: (Biome | null)[]): void {
+    const waterHeight = LevelConstants.LEVEL_HEIGHT - 64;
+    const s = f(1 / 32.0);
+    this.perlinNoise2.getRegion(this.sandBuffer, xOffs * 16, zOffs * 16, 0, 16, 16, 1, s, s, 1);
+    this.perlinNoise2.getRegion(
+      this.gravelBuffer,
+      xOffs * 16,
+      f(109.0134),
+      zOffs * 16,
+      16,
+      1,
+      16,
+      s,
+      1,
+      s,
+    );
+    this.perlinNoise3.getRegion(
+      this.depthBuffer,
+      xOffs * 16,
+      zOffs * 16,
+      0,
+      16,
+      16,
+      1,
+      f(s * 2),
+      f(s * 2),
+      f(s * 2),
+    );
+
+    for (let x = 0; x < 16; x++) {
+      for (let z = 0; z < 16; z++) {
+        const temp = 1; // @todo: read temp from BiomeSource
+        const b = biomes[x + z * 16]!;
+        const sand = f(this.sandBuffer[x + z * 16]! + f(this.random.nextFloat() * f(0.2))) > 0;
+        const gravel = f(this.gravelBuffer[x + z * 16]! + f(this.random.nextFloat() * f(0.2))) > 3;
+        let runDepth = Math.trunc(
+          f(f(f(this.depthBuffer[x + z * 16]! / 3) + 3) + f(this.random.nextFloat() * 0.25)),
+        );
+        let run = -1;
+        let top = b.topMaterial;
+        let material = b.material;
+        for (let y = 127; y >= 0; y--) {
+          const offs = (z * 16 + x) * 128 + y;
+          if (y <= 0 + this.random.nextInt(5)) {
+            blocks[offs] = ((Tile.unbreakable.id << 24) >> 24) & 0xff;
+          } else {
+            const old = blocks[offs]!;
+            if (old === 0) {
+              run = -1;
+            } else if (old === Tile.rock.id) {
+              if (run === -1) {
+                if (runDepth <= 0) {
+                  top = 0;
+                  material = (Tile.rock.id << 24) >> 24;
+                } else if (y >= waterHeight - 4 && y <= waterHeight + 1) {
+                  top = b.topMaterial;
+                  material = b.material;
+                  if (gravel) {
+                    top = 0;
+                    material = (Tile.gravel.id << 24) >> 24;
+                  }
+                  if (sand) {
+                    top = (Tile.sand.id << 24) >> 24;
+                    material = (Tile.sand.id << 24) >> 24;
+                  }
+                }
+                if (y < waterHeight && top === 0) {
+                  if (temp < f(0.15)) top = (Tile.ice.id << 24) >> 24;
+                  else top = (Tile.calmWater.id << 24) >> 24;
+                }
+                run = runDepth;
+                if (y >= waterHeight - 1) blocks[offs] = top & 0xff;
+                else blocks[offs] = material & 0xff;
+              } else if (run > 0) {
+                run--;
+                blocks[offs] = material & 0xff;
+                if (run === 0 && material === (Tile.sand.id << 24) >> 24) {
+                  run = this.random.nextInt(4);
+                  material = (Tile.sandStone.id << 24) >> 24;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   postProcess(_parent: ChunkSource, _xt: number, _zt: number): void {
@@ -239,12 +439,12 @@ export class RandomLevelSource extends ChunkSource {
         scale = f(scale * dd);
         if (scale > 1) scale = 1;
         let depth = f(this.dr![pp]! / 8000.0);
-        if (depth < 0) depth = f(-depth * 0.3);
+        if (depth < 0) depth = f(-depth * f(0.3));
         depth = f(f(depth * 3.0) - 2.0);
         if (depth < 0) {
           depth = f(depth / 2);
           if (depth < -1) depth = -1;
-          depth = f(depth / 1.4);
+          depth = f(depth / f(1.4));
           depth = f(depth / 2);
           scale = 0;
         } else {
