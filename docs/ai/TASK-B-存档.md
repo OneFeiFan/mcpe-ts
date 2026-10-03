@@ -73,7 +73,30 @@ C++ 用 `FILE*`（fopen/fread/fwrite/fseek/fclose）同步读写磁盘。浏览�
 `sectorsNeeded = size / SECTOR_BYTES + 1` 的整数除法；上限判断写 `> 256` 但字段只有 8 位；
 `write()` 不补齐到扇区边界（扇区尾部留残留字节，逐字节比对依赖它）。
 
-## B4 LevelData 的读写
+## B4 LevelData 的读写 —— 拆成四步执行
+
+**开工前实测发现，这一步比原描述大得多：**
+
+1. **`StorageVersion = 3`，不是 1** —— 所以 `writeLevelData` 默认走 NBT 分支
+   （`createTag()` + `NbtIo::write`），**B2 那套 `v1_write`/`v1_read` 在默认值下根本不会被用到**。
+   （好消息：`NbtIo` 在 TS 里已经移植好了。）
+2. **TS 的 `LevelData` 有 11 处 `OMIT(NBT)` 要补**：`createTag`×2、`getTagData`、`setTagData`、
+   `setPlayerTag`、`getLoadedPlayerTag`、`setLoadedPlayerTag`、`LevelData(CompoundTag*)`、
+   `v1_write`、`v1_read`、`setLoadedPlayerTo`。
+3. **`RakDataInput`/`RakDataOutput` 适配层 TS 里没有**（`src/util/RakDataIO.h`），要先做。
+4. **`readPlayerData` 是裸结构体转储**（`fread(&dest.playerData, 1, sizeof(dest.playerData), fp)`），
+   字节布局取决于 C++ 字段顺序 + **编译器对齐填充**，是「照抄 ABI」而不是「照抄逻辑」。
+
+按 CLAUDE.md 的拆分规则（超 5 个文件 / 300 行就先拆），分成四步，风险从低到高：
+
+| 步骤    | 内容                                                                    | 风险                                                  |
+| ------- | ----------------------------------------------------------------------- | ----------------------------------------------------- |
+| **B4a** | `packages/util/src/RakDataIO.ts`：`RakDataInput`/`RakDataOutput` + 单测 | 低                                                    |
+| **B4b** | `LevelData` 补齐 11 处 OMIT（含 `v1_write`/`v1_read`）                  | 低                                                    |
+| **B4c** | `readLevelData`/`writeLevelData` + **黄金样本 G14-2**（level.dat 字节） | 中（判定 B2 里 `long` 宽度的判断）                    |
+| **B4d** | `readPlayerData`（裸结构体转储）                                        | **高**：先写 harness 量出 `sizeof` 与各字段偏移再动手 |
+
+## B4 原描述（保留备查）
 
 - 先查 `packages/world/src/level/storage/LevelData.ts` 已有哪些函数（`getTagData`/`setTagData`、`createTag` 等），补齐 C++ 里还没移植的；
   再移植 `ExternalFileLevelStorage` 里的静态函数 `readLevelData`、`writeLevelData`、`readPlayerData`（level.dat 的文件头 + NBT）。
