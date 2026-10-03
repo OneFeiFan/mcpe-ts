@@ -81,4 +81,15 @@ LVL="$TMP/lvl"; mkdir -p "$LVL"
 "$CXX" -c "$REG/font.stubs.s" -o "$REG/font.stubs.oo"
 "$CXX" -no-pie -o "$REG/harness_font" "$REG/harness_font.oo" "$REG/Font.oo" "$REG"/*.o "$REG/font.stubs.oo" "$REG/sigill_diag.oo"
 "$REG/harness_font" "$OUT/font.json" "$ROOT/tools/golden/inputs/default8.rgba"
+# ---- S-B3：区块存档文件格式（G14-1）。
+# 只换两个头文件（raknet/BitStream.h、platform/log.h 用 tools/golden/stub 下的替身），
+# RegionFile.h/.cpp 照用参考源码原样编译 —— 与上面 BiomeSource 那一段同样的做法。
+# 替身只提供 RegionFile 真正用到的成员，理由写在替身文件头部。
+RF="$TMP/rf"; mkdir -p "$RF/world/level/storage" "$RF/raknet" "$RF/platform"
+cp "$REF/src/world/level/storage/RegionFile.h" "$REF/src/world/level/storage/RegionFile.cpp" "$RF/world/level/storage/"
+cp "$ROOT/tools/golden/stub/raknet/BitStream.h" "$RF/raknet/"
+cp "$ROOT/tools/golden/stub/platform/log.h" "$RF/platform/"
+"$CXX" -O0 -std=c++17 -I"$RF" -o "$TMP/harness_regionfile" \
+  "$ROOT/tools/golden/harness_regionfile.cpp" "$RF/world/level/storage/RegionFile.cpp"
+"$TMP/harness_regionfile" "$OUT/regionfile.json"
 echo "黄金样本已写入 $OUT"

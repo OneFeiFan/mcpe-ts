@@ -47,12 +47,31 @@ C++ 用 `FILE*`（fopen/fread/fwrite/fseek/fclose）同步读写磁盘。浏览�
 - 新增 `packages/util/src/BitStream.ts`，只实现这些重载（按 RakNet 的字节序：**确认后**写在文件头；拿不准就用黄金样本 B3 来判定）。
 - 验收：单元测试覆盖用到的每个重载。
 
-## B3 RegionFile（移植 `world/level/storage/RegionFile.h/.cpp`，216 行）
+## B3 RegionFile（移植 `world/level/storage/RegionFile.h/.cpp`，216 行）—— 已完成
 
-- 用 `/port-unit world/level/storage/RegionFile`。`FILE*` 换成 `CFile`；`std::map<int,bool> sectorFree` 用 `Map` 并注意遍历顺序要按键排序。
-- **黄金样本 G14-1**：harness 用参考 C++ 的 RegionFile 往一个临时文件写入若干固定内容的区块（含覆盖写、变大后换扇区的情况），把文件全部字节以十六进制输出；
-  TS 在 VirtualFS 上做同样操作，逐字节比较。
-- 验收：G14-1 通过。
+按 CLAUDE.md「碰 5 个以上文件就拆细」拆成两步执行（原本要动 6 个文件）：
+
+**B3a 移植本体**（提交 `eb176ee`）
+
+- `packages/world/src/level/storage/RegionFile.ts`：`FILE*` → `CFile`；`BitStream` 用 B2 的；
+  `int* offsets`/`emptyChunk` → `Int32Array`（能零拷贝直接喂给 `CFile.read/write`）。
+- 顺带加了模块级注入点 `setVfs/getVfs`（`packages/platform/src/fs/VirtualFS.ts`）—— 对应 C++ 里
+  fopen 是全局函数。B5/B6 都从这里取实例，做法照 `MouseHandler.platformHooks`。
+- 修正任务单原文一处：**`sectorFree` 全程只用了 `find` 和 `operator[]`，从没被遍历**，
+  所以「注意遍历顺序要按键排序」这条在这份代码里用不上。
+
+**B3b 黄金样本 G14-1**（提交见下）
+
+- `tools/golden/harness_regionfile.cpp` + `tools/golden/stub/{raknet/BitStream.h,platform/log.h}`。
+  做法照 build.sh 里 BiomeSource 那一段：**只换这两个头文件，RegionFile.h/.cpp 照用参考源码**。
+  替身只提供 RegionFile 真正用到的成员（构造/GetData/GetNumberOfBytesUsed），理由写在替身文件头。
+- 场景：新建文件 + 追加扇区、等长原地覆写、变长后重新分配扇区、**复用被释放的扇区**。
+- 验收：G14-1 通过 ✅。夹具 `fixtures/golden/regionfile.json`（24576 字节文件 + 4 次读回）。
+
+**移植时原样保留了 5 处 C++ 怪癖**（都在代码注释里标了，不要"顺手修好"）：
+`open()` 不清 `sectorFree`；`readChunk` 里 `if (length <= 0) { }` 是个漏了 return 的空块；
+`sectorsNeeded = size / SECTOR_BYTES + 1` 的整数除法；上限判断写 `> 256` 但字段只有 8 位；
+`write()` 不补齐到扇区边界（扇区尾部留残留字节，逐字节比对依赖它）。
 
 ## B4 LevelData 的读写
 
