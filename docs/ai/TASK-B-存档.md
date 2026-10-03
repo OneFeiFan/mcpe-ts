@@ -286,15 +286,15 @@ B5b-2 那半（tick / savePendingUnsavedChunks / saveGame / saveAll 要真 Level
 
 ### 依赖清单（实测，按依赖顺序）
 
-| 层           | 文件                                                                                             | C++ 行 | TS 现状     |
-| ------------ | ------------------------------------------------------------------------------------------------ | ------ | ----------- |
-| 横向翻牌列表 | `components/RolledSelectionListH` + `TweenData.h`                                                | 299    | ✗           |
-| 小零件       | `components/LargeImageButton` / `components/TextBox` / `screens/ConfirmScreen`                   | 290    | ✗           |
-| 加载界面     | `screens/ProgressScreen`                                                                         | 99     | ✗           |
-| 新建世界     | `screens/ChooseLevelScreen` + `screens/SimpleChooseLevelScreen`                                  | 287    | ✗           |
-| 起始菜单     | `screens/touch/TouchStartMenuScreen`                                                             | 230    | ✗           |
-| 选世界       | `screens/touch/TouchSelectWorldScreen`（含 `TouchWorldSelectionList`、`TouchDeleteWorldScreen`） | 605    | ✗           |
-| 收尾         | `Minecraft::leaveGame` + 暂停界面接线                                                            | 35     | 现为 `OMIT` |
+| 层           | 文件                                                                                             | C++ 行 | TS 现状 |
+| ------------ | ------------------------------------------------------------------------------------------------ | ------ | ------- |
+| 横向翻牌列表 | `components/RolledSelectionListH` + `TweenData.h`                                                | 299    | ✗       |
+| 小零件       | `components/LargeImageButton` / `components/TextBox` / `screens/ConfirmScreen`                   | 290    | ✗       |
+| 加载界面     | `screens/ProgressScreen`                                                                         | 99     | ✗       |
+| 新建世界     | `screens/ChooseLevelScreen` + `screens/SimpleChooseLevelScreen`                                  | 287    | ✗       |
+| 起始菜单     | `screens/touch/TouchStartMenuScreen`                                                             | 230    | ✗       |
+| 选世界       | `screens/touch/TouchSelectWorldScreen`（含 `TouchWorldSelectionList`、`TouchDeleteWorldScreen`） | 605    | ✗       |
+| 收尾         | `Minecraft::leaveGame` + 暂停界面接线                                                            | 35     | 完成    |
 
 已有、直接可用：`TButton` / `THeader`（`Button.ts`）、`ImageButton`、`I18n`、`Minecraft.selectLevel` /
 `getLevelSource`。`Screen.ts` 里早留好了 `textBoxes` 数组和 `TextBoxLike` 接口，就是给这一步铺的路。
@@ -317,7 +317,7 @@ B5b-2 那半（tick / savePendingUnsavedChunks / saveGame / saveAll 要真 Level
 | **B8d-3** | `Touch::SelectWorldScreen` + `Touch::DeleteWorldScreen` + 接线 | 「开始游戏」真的能点进去               |
 | **B8e**   | `ChooseLevelScreen` + `SimpleChooseLevelScreen`                | 新建世界                               |
 | **B8f**   | `Minecraft::leaveGame` + 暂停界面 "Quit to title"              | 收尾                                   |
-| **B8g**   | 场景扩写（新建世界 → 放方块 → 回标题 → 重进 → 方块还在）       | 受下面待决问题影响                     |
+| **B8g**   | 场景扩写（放方块 → 回标题 → 重进 → 方块还在）+ 换启动入口      | 又拆成 B8g-1 / B8g-2                   |
 
 **B8b 为什么又拆**：`LargeImageButton` + `ConfirmScreen` 约 130 行，`TextBox` 加上网页版的输入接线
 （隐藏 `<input>`）和它自己的测试约 270 行 —— 合起来 ~400，超了「约 300 行」的线，
@@ -337,11 +337,24 @@ B5b-2 那半（tick / savePendingUnsavedChunks / saveGame / saveAll 要真 Level
 2. **文本框挂隐藏 `<input>`，真能打字。** 聚焦时 `focus()` 一个隐藏 input：手机弹软键盘、桌面直接敲键盘，
    一套机制两边都管用。标 `ADAPTED(Web)`，对照 C++ 的 `platform()->showKeyboard()`。
 3. **启动入口 B8 期间不动。** 现在是打开页面直接进 demo 世界，中间每一步都不影响现有场景。
+   （**B8g 时改了**，见下。）
 
-### ⚠ B8g 的待决问题（到那一步再找用户确认）
+### B8g 的两半（用户 2026-10-03 现场拍板）
 
-"入口换成起始菜单"和决策 1 冲突：换了之后 demo 世界就**进不去**了（Start Game → 选世界 → `selectLevel` 抛），
-`default.mjs` / `storage.mjs` 两个场景也跟着断。到 B8g 再定是"先不换"还是"换但接受点不进去"。
+决策 3 到期。原来是"入口换成起始菜单"和决策 1 冲突：换了之后 demo 世界就**进不去**了
+（Start Game → 选世界 → `selectLevel` 抛），`default.mjs` / `storage.mjs` 也跟着断。
+用户选的是 **换**（"换但接受点不进去"）。
+
+按「一步 5 个文件」的线又拆两小步：
+
+- **B8g-1 换启动入口**：`NinecraftApp.initApp` 换成 C++ 原样的 `screenChooser.setScreen(SCREEN_STARTMENU)`；
+  `startDemoWorld()` 降级成**场景/测试后门**。三个场景改成自己走一遍后门进世界。
+  **代价（用户已接受）**：从菜单点进任何一个世界都会抛 —— 界面齐了，但世界进不去。
+- **B8g-2 场景扩写**：`default.mjs` 补"放方块 → 退回标题 → 重进 → 方块还在"；
+  `startmenu.mjs` 把进世界的**两个入口**都钉上（新建世界的 Create、世界列表上点一张牌）。
+
+⚠ **原计划的"新建世界 → 放方块 → …"做不了**：新建世界也走 `selectLevel`，同样抛。所以改用
+`startDemoWorld()` 后门进世界 —— 能测的那半（退出落盘、重进恢复）测透了，进不去的那半等世界生成。
 
 ### 顺带查到的两件事
 
@@ -352,9 +365,9 @@ B5b-2 那半（tick / savePendingUnsavedChunks / saveGame / saveAll 要真 Level
 
 ### 其余要求（沿用）
 
-- 暂停界面的 "Quit to title" 去掉 DEFERRED，接 `leaveGame()`。（B8g）
-- 浏览器场景 `tools/verify/scenarios/storage.mjs`：新建世界 → 放方块 → 回到标题 → 重新进入 → 方块还在；
-  **刷新页面**后再进入，方块还在。（B8g，受上面待决问题影响）
+- 暂停界面的 "Quit to title" 接 `leaveGame()`。**完成**（B8f）。
+- 浏览器往返：放方块 → 回到标题 → 重新进入 → 方块还在（`default.mjs`，B8g-2），
+  **刷新页面**后再进入、方块还在（`storage.mjs`，B7 就有）。两条路都盖上了。
 
 ## B9 选项文件（OptionsFile）
 
