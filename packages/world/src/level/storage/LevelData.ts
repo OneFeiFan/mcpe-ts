@@ -154,8 +154,9 @@ export class LevelData {
     const player = players.length > 0 ? players[0]! : null;
     if (player !== null) {
       playerTag = new CompoundTag();
-      // DEFERRED(Player): player->saveWithoutId(playerTag);  LevelData.cpp:126
-      //   Player 的存档序列化还没移植；这一步没做，写出来的 Player 标签是空的。
+      // Player 不覆盖 saveWithoutId/load，只覆盖 readAdditionalSaveData/addAdditonalSaveData，
+      // 那四个在 TS 里都已经有了且没有 DEFERRED —— 所以这一步能真做（B5a 补上）。
+      player.saveWithoutId(playerTag);
     }
     this.setTagData(tag, playerTag);
     return tag;

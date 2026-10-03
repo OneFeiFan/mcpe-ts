@@ -14,14 +14,15 @@
  * 而 `writeLevelData` 只在 storageVersion == 1 时才用 v1_write。也就是说 **v1 那条分支在默认
  * 配置下是死代码** —— 但它是 C++ 里真实存在的分支，照原样留着（读的时候 version==1 仍要能读）。
  *
- * 【getRemainingFileSize 暂时放在这里】它在 C++ 里属于 FolderMethods.cpp（B6 移植）。
- * 为了不把 B6 拖到这一步前面，先作为模块内私有函数放在这里，B6 时再挪过去。
+ * 【getRemainingFileSize 已经挪回 FolderMethods】B4c 时它临时放在这里（注释写着"B6 时再挪过去"），
+ * B5a 顺势把它和 FolderMethods 的其它函数一起归位了。
  */
-import { SEEK_END, SEEK_SET, getVfs, type CFile } from '@mcpe/platform';
+import { getVfs } from '@mcpe/platform';
 import { NbtIo } from '@mcpe/nbt';
 import { BitStream, RakDataInput, RakDataOutput } from '@mcpe/util';
 import type { Player } from '../../entity/player/Player';
 import { LevelConstants } from '../LevelConstants';
+import { getRemainingFileSize } from './FolderMethods';
 import { LevelData } from './LevelData';
 import type { PlayerData } from './PlayerData';
 
@@ -30,20 +31,6 @@ export const fnLevelDatOld = 'level.dat_old';
 export const fnLevelDatNew = 'level.dat_new';
 export const fnLevelDat = 'level.dat';
 export const fnPlayerDat = 'player.dat';
-
-/**
- * 对应 FolderMethods.cpp 的 `int getRemainingFileSize(FILE* fp)`：
- * 从当前位置到文件末尾还有多少字节，且**不改动当前位置**。
- * C++ 用的是 ftell → seek(END) → ftell → seek 回去（SEEK_SET，不是 SEEK_CUR）。
- */
-function getRemainingFileSize(fp: CFile | null): number {
-  if (!fp) return 0;
-  const current = fp.tell();
-  fp.seek(0, SEEK_END);
-  const end = fp.tell();
-  fp.seek(current, SEEK_SET);
-  return end - current;
-}
 
 /**
  * PlayerData 在 player.dat 里的**内存布局**（ADAPTED(Cpp)）。
