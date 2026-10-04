@@ -11,7 +11,7 @@
  * 这份清单仍然需要有个地方落脚** —— 没搬过来的那些就记在这里。
  *
  * 【这份清单里 TS 侧目前的对应关系】9 条里：
- *   - 2 条要搬（`HumanoidModel` G7、`ChickenModel` G9，都在本任务单里，暂记 `DEFERRED`）；
+ *   - 2 条已落地（`HumanoidModel` G7、`ChickenModel` G9 —— 本文件里各有一条再导出）；
  *   - 6 条**不搬**（4 只四足兽 + 僵尸 + 骷髅）：它们要的实体类在 TS 里根本不存在，
  *     见文件末尾的 6 条 `OMIT(Entity)`；
  *   - 1 条**挡住**（`SignModel`）：它唯一的用户是方块实体渲染器，见文件末尾的 `DEFERRED`。
@@ -26,9 +26,11 @@
 // C++ 的 `#include "HumanoidModel.h"`（ModelInclude.h:4）在 TS 里就是一条再导出。
 export * from './HumanoidModel.js';
 
-// DEFERRED(Model): #include "ChickenModel.h"  ModelInclude.h:6
-//   鸡。⚠ 它的父类是 **`Model` 而不是 `QuadrupedModel`**（ChickenModel.h:9，实测过），
-//   所以不依赖下面那 4 只四足兽。G9 移植 —— 那是本任务单里**第一个看得见的生物**。
+// 已落地（G9）：鸡 —— 本任务单里**第一个画面上看得见的生物**。
+// ⚠ 它的父类是 **`Model` 而不是 `QuadrupedModel`**（ChickenModel.h:9，实测过），
+//   所以不依赖下面那 4 只四足兽，也就能先于它们落地。
+// C++ 的 `#include "ChickenModel.h"`（ModelInclude.h:6）在 TS 里就是这条再导出。
+export * from './ChickenModel.js';
 // OMIT(Entity): #include "CowModel.h"  ModelInclude.h:7
 //   牛。TS 里没有 `Cow` 实体类（`packages/world/src/entity/` 全 30 个文件实测只有
 //   `Chicken` 一个生物），`MobFactory::CreateMob` 整条 OMIT —— 模型搬过来没人能渲染。
@@ -49,7 +51,7 @@ export * from './HumanoidModel.js';
 //   `LevelRenderer.ts:913` 那条 `DEFERRED(TileEntityRender)` 就是它的调用点。
 //   等方块实体渲染器落地时一起搬。
 
-// 9 条 include 里已落地 1 条（`HumanoidModel`，G7），还剩 `ChickenModel`（G9）一条要搬、
+// 9 条 include 里已落地 2 条（`HumanoidModel` G7、`ChickenModel` G9），还剩
 // 6 条 `OMIT(Entity)`、1 条 `DEFERRED(TileEntityRender)`。空 `export {}` 留着是为了让
 // 这个文件**成为一个模块** —— 否则 `tsc` 会说 "is not a module"，`index.ts` 那边
 // `export * from './model/ModelInclude.js'` 就编不过。

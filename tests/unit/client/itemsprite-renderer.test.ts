@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { GLES1, glSetContext } from '@mcpe/client';
 import { EntityRendererId, Item, initItems } from '@mcpe/world';
 import {
   EntityRenderer,
@@ -19,6 +20,9 @@ import { createFlatLevel } from '../../helpers/headlessLevel';
 let erd: EntityRenderDispatcher;
 
 beforeAll(() => {
+  // ⚠ G9 起分派器的构造函数还会 `new ChickenModel()`（`ModelPart` 的构造要 GL 上下文，
+  // gles.ts 会抛），所以先铺一个 headless GL —— 真机里 GL 上下文本就早于分派器。不改断言。
+  glSetContext(new GLES1(null));
   createFlatLevel(); // initHeadless
   initItems();
 });

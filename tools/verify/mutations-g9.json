@@ -1,0 +1,116 @@
+[
+  {
+    "label": "M1 头的 xRot 负号丢了（鸡会朝反方向低头）",
+    "file": "packages/client/src/model/ChickenModel.ts",
+    "from": "this.head.xRot = f(-(xRot / Mth.RADDEG));",
+    "to": "this.head.xRot = f(xRot / Mth.RADDEG);"
+  },
+  {
+    "label": "M2 喙不跟随头（beak.xRot 清零）",
+    "file": "packages/client/src/model/ChickenModel.ts",
+    "from": "this.beak.xRot = this.head.xRot;",
+    "to": "this.beak.xRot = 0;"
+  },
+  {
+    "label": "M3 冠不跟随头（redThing.yRot 清零）",
+    "file": "packages/client/src/model/ChickenModel.ts",
+    "from": "this.redThing.yRot = this.head.yRot;",
+    "to": "this.redThing.yRot = 0;"
+  },
+  {
+    "label": "M4 身体 90° 抄成 180°",
+    "file": "packages/client/src/model/ChickenModel.ts",
+    "from": "this.body.xRot = f(90 / Mth.RADDEG);",
+    "to": "this.body.xRot = f(180 / Mth.RADDEG);"
+  },
+  {
+    "label": "M5 两条腿同号（少了 -pend 的负号）",
+    "file": "packages/client/src/model/ChickenModel.ts",
+    "from": "this.leg1.xRot = f(-pend);",
+    "to": "this.leg1.xRot = pend;"
+  },
+  {
+    "label": "M6 两只翅膀同号（少了 -bob 的负号）",
+    "file": "packages/client/src/model/ChickenModel.ts",
+    "from": "this.wing1.zRot = f(-bob);",
+    "to": "this.wing1.zRot = bob;"
+  },
+  {
+    "label": "M7 yo 16 抄成 15（全体部件矮 1）",
+    "file": "packages/client/src/model/ChickenModel.ts",
+    "from": "const yo = 16;",
+    "to": "const yo = 15;"
+  },
+  {
+    "label": "M8 腿的不对称抄成对称（leg0 的 x 从 -2 改成 2）",
+    "file": "packages/client/src/model/ChickenModel.ts",
+    "from": "this.leg0.setPos(-2, f(3 + yo), 1);",
+    "to": "this.leg0.setPos(2, f(3 + yo), 1);"
+  },
+  {
+    "label": "M9 幼年整体缩放抄反（1/ss 改成 ss）",
+    "file": "packages/client/src/model/ChickenModel.ts",
+    "from": "glScalef2(f(1 / ss), f(1 / ss), f(1 / ss));",
+    "to": "glScalef2(f(ss), f(ss), f(ss));"
+  },
+  {
+    "label": "M10 幼年头那一组漏了喙",
+    "file": "packages/client/src/model/ChickenModel.ts",
+    "from": "      this.head.render(scale);\n      this.beak.render(scale);\n      this.redThing.render(scale);\n      glPopMatrix2();",
+    "to": "      this.head.render(scale);\n      this.redThing.render(scale);\n      glPopMatrix2();"
+  },
+  {
+    "label": "M11 幼年身体那一组漏了 wing1",
+    "file": "packages/client/src/model/ChickenModel.ts",
+    "from": "      this.wing0.render(scale);\n      this.wing1.render(scale);\n      glPopMatrix2();",
+    "to": "      this.wing0.render(scale);\n      glPopMatrix2();"
+  },
+  {
+    "label": "M12 成年分支头/喙顺序对调",
+    "file": "packages/client/src/model/ChickenModel.ts",
+    "from": "      this.head.render(scale);\n      this.beak.render(scale);\n      this.redThing.render(scale);\n      this.body.render(scale);",
+    "to": "      this.beak.render(scale);\n      this.head.render(scale);\n      this.redThing.render(scale);\n      this.body.render(scale);"
+  },
+  {
+    "label": "M13 没用过的 hair 被登记进模型（cubes 变 9 个）",
+    "file": "packages/client/src/model/ChickenModel.ts",
+    "from": "    this.head.setModel(this);",
+    "to": "    this.hair.setModel(this);\n    this.head.setModel(this);"
+  },
+  {
+    "label": "M14 身体盒子深度 6 抄成 5",
+    "file": "packages/client/src/model/ChickenModel.ts",
+    "from": "this.body.addBox(-3, -4, -3, 6, 8, 6, 0);",
+    "to": "this.body.addBox(-3, -4, -3, 6, 8, 5, 0);"
+  },
+  {
+    "label": "M15 getBob 的 flap 不插值（直接用当前值）",
+    "file": "packages/client/src/renderer/entity/ChickenRenderer.ts",
+    "from": "const flap = f(mob.oFlap + f(f(mob.flap - mob.oFlap) * a));",
+    "to": "const flap = f(mob.flap);"
+  },
+  {
+    "label": "M16 getBob 的 flapSpeed 不插值（直接用当前值）",
+    "file": "packages/client/src/renderer/entity/ChickenRenderer.ts",
+    "from": "const flapSpeed = f(mob.oFlapSpeed + f(f(mob.flapSpeed - mob.oFlapSpeed) * a));",
+    "to": "const flapSpeed = f(mob.flapSpeed);"
+  },
+  {
+    "label": "M17 getBob 丢了 (sin+1) 里的 +1（翅膀只在半个周期里动）",
+    "file": "packages/client/src/renderer/entity/ChickenRenderer.ts",
+    "from": "return f(f(Mth.sin(flap) + f(1)) * flapSpeed);",
+    "to": "return f(f(Mth.sin(flap)) * flapSpeed);"
+  },
+  {
+    "label": "M18 注册的 id 抄成别的（ER_CHICKEN → ER_PIG）",
+    "file": "packages/client/src/renderer/entity/EntityRenderDispatcher.ts",
+    "from": "this.assign(EntityRendererId.ER_CHICKEN_RENDERER, new ChickenRenderer(new ChickenModel(), f(0.3)));",
+    "to": "this.assign(EntityRendererId.ER_PIG_RENDERER, new ChickenRenderer(new ChickenModel(), f(0.3)));"
+  },
+  {
+    "label": "M19 注册的阴影半径 0.3f 抄成 0.4f",
+    "file": "packages/client/src/renderer/entity/EntityRenderDispatcher.ts",
+    "from": "new ChickenRenderer(new ChickenModel(), f(0.3))",
+    "to": "new ChickenRenderer(new ChickenModel(), f(0.4))"
+  }
+]

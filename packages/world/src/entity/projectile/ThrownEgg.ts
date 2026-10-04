@@ -13,7 +13,7 @@
  * 两次抽取是**连着**的：先 `nextInt(8) == 0` 决定孵不孵，孵的话再 `nextInt(32) == 0`
  * 决定孵 1 只还是 4 只 —— 顺序不能换，换了下游随机流就错位。
  *
- * ⚠ `ChickenRenderer` 没移植（要模型系统），所以孵出来的鸡在画面上看不见；
+ * 孵出来的鸡从 G9 起**画面上看得见**（`ChickenRenderer` 已注册）；
  * 蛋本身用的是 D9.5 注册的 `ItemSpriteRenderer`（`ER_THROWNEGG_RENDERER`，图标 12）。
  */
 import { Entity } from '../Entity';

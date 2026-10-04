@@ -1,7 +1,8 @@
 /**
  * 1:1 移植自 src/client/renderer/entity/EntityRenderDispatcher.h 与 .cpp（S13 阶段 C，部分移植）。
- * 部分：注册了 ER_ITEM_RENDERER（掉落物）与 ER_FALLINGTILE_RENDERER（下落方块，D2.5 补的）；
- *   人形、动物、TNT、箭、玩家、抛射物、画的渲染器要用模型系统或计划外的实体，留 DEFERRED(EntityRender)。
+ * 部分：注册了 ER_ITEM_RENDERER（掉落物）、ER_FALLINGTILE_RENDERER（下落方块，D2.5）与
+ *   ER_CHICKEN_RENDERER（鸡，G9 —— 第一个用上模型系统的生物）；
+ *   人形、猪牛羊、TNT、玩家、画的渲染器要用模型系统或计划外的实体，留 DEFERRED(EntityRender)。
  *   没有注册的渲染器 getRenderer 返回 null，render 什么都不画（与 C++ 找不到时一样）。
  * R10：render(entity, a) 与 render(entity, x, y, z, rot, a) → 分派入口 render + renderAt；getRenderer(Entity*) / getRenderer(id) → getRenderer + getRendererById。
  * C++ 的 assign 在 `for (… init(this))` 循环**之前**逐条调用，这里照抄那个顺序。
@@ -19,6 +20,10 @@ import { FallingTileRenderer } from './FallingTileRenderer';
 import { ItemRenderer } from './ItemRenderer';
 import { ItemSpriteRenderer } from './ItemSpriteRenderer';
 import { ArrowRenderer } from './ArrowRenderer';
+import { ChickenRenderer } from './ChickenRenderer';
+import { ChickenModel } from '../../model/ChickenModel';
+
+const f = Math.fround;
 
 export class EntityRenderDispatcher {
   static xOff = 0;
@@ -57,7 +62,11 @@ export class EntityRenderDispatcher {
     this.assign(EntityRendererId.ER_FALLINGTILE_RENDERER, new FallingTileRenderer()); // EntityRenderDispatcher.cpp:58
     // D11.5：箭的渲染器（也不依赖模型系统，只画 12 个顶点）
     this.assign(EntityRendererId.ER_ARROW_RENDERER, new ArrowRenderer()); // EntityRenderDispatcher.cpp:53
-    // DEFERRED(EntityRender): ER_HUMANOID、ER_PIG、ER_COW、ER_CHICKEN、ER_SHEEP、ER_SKELETON、ER_ZOMBIE、ER_CREEPER、ER_SPIDER、
+    // G9：鸡 —— 第一个用上模型系统的实体渲染器（也是第一只画面上看得见的生物）。
+    // C++ 里这行在 EntityRenderDispatcher.cpp:46，与 C++ 的调用顺序无关紧要（各 id 互不覆盖）。
+    // ⚠ C++ 字面量 `0.3` 没有 f 后缀，但传进的是 `float shadow` 形参 —— 按 PITFALLS 第 3 条包 f()
+    this.assign(EntityRendererId.ER_CHICKEN_RENDERER, new ChickenRenderer(new ChickenModel(), f(0.3))); // EntityRenderDispatcher.cpp:46
+    // DEFERRED(EntityRender): ER_HUMANOID、ER_PIG、ER_COW、ER_SHEEP、ER_SKELETON、ER_ZOMBIE、ER_CREEPER、ER_SPIDER、
     //   ER_TNT、ER_PLAYER、ER_PAINTING 的渲染器（模型系统与这些实体计划外）
     for (const r of this._renderers.values()) r.init(this);
   }

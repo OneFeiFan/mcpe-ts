@@ -8,8 +8,8 @@
 // ⚠ `h.state` 的 fn 会被 toString 后重新求值，只能写字面量、不能用闭包。
 // ⚠ 蛋的 `onHit` 是 protected，但它只由 `Throwable.tick` 在撞到东西时调用 ——
 //   场景里不去碰它，扔出去让它自己撞地。
-// ⚠ `ChickenRenderer` 没移植，所以孵出来的鸡**在画面上看不见**；这个场景靠状态断言
-//   （不是截图）证明"孵出来了"。截图看的是"蛋在飞"。
+// ⚠ 这个场景靠状态断言（不是截图）证明"孵出来了"；截图看的是"蛋在飞"。
+//   G9 起鸡画得出来了（`ChickenRenderer` 已注册），"鸡长什么样"的验收在 entity-model.mjs。
 
 export default async function (h) {
   h.allowConsole('Missing category for tile');
@@ -122,7 +122,7 @@ export default async function (h) {
     h.expect(landed.chickenHealth.every((hp) => hp === 4), '血量都是 4');
     h.expect(landed.chickenIsBaby.every((b) => b === false), '刚孵出来就是成年（AgableMob 的 -1 → setAge(0)）');
   }
-  await h.shot('01-落地之后（鸡看不见，是渲染器没移植）');
+  await h.shot('01-落地之后（远处可能有 G9 之后看得见的鸡）');
 
   // ---- 再等一会儿，看鸡 tick 得住（Mob.tick → aiStep，AI 是 OMIT 的）----
   await h.wait(2000);

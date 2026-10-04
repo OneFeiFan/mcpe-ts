@@ -58,6 +58,7 @@ export * from './renderer/entity/ItemSpriteRenderer.js';
 export * from './renderer/entity/ArrowRenderer.js';
 export * from './renderer/entity/MobRenderer.js';
 export * from './renderer/entity/HumanoidMobRenderer.js';
+export * from './renderer/entity/ChickenRenderer.js';
 export * from './particle/ParticleTextures.js';
 // C++ 的 ParticleInclude.h：那份"哪些粒子类存在"的清单，10 个类一次转出去
 export * from './particle/ParticleInclude.js';
@@ -78,7 +79,8 @@ export * from './model/Model.js';
 export * from './model/geom/Cube.js';
 export * from './model/geom/ModelPart.js';
 // C++ 的 ModelInclude.h：那份"哪些模型类存在"的清单，9 条 #include。G5 落盘，
-// 现在里面还全是注释（要搬的两个模型 G7/G9 才落地）
+// 要搬的两个模型（G7 的 HumanoidModel、G9 的 ChickenModel）现在都已落地
 export * from './model/ModelInclude.js';
 export * from './model/HumanoidModel.js';
+export * from './model/ChickenModel.js';
 export * from './gui/Font.js';

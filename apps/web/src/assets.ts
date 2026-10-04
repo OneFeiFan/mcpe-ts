@@ -45,6 +45,9 @@ export const PRELOAD: readonly string[] = [
   'particles.png',
   // Gui::renderVignette（漂亮画质 + 暗角选项默认打开）：没有预加载时会沿用上一次绑定的 gui/icons.png，整张画到屏幕上，左上角就出现生命、护甲、气泡图标的残影
   'misc/vignette.png',
+  // G9：鸡的贴图（ChickenRenderer —— 第一个用模型系统画的生物）。
+  //   漏了它不报错，鸡会画成上一张绑定的贴图（PITFALLS 第 25 条）
+  'mob/chicken.png',
 ];
 
 /** 启动时预加载的其他资源文件（AppPlatform::readAssetFile 读取，ADAPTED(Web)）：文件在 public/ 的同名路径下 */

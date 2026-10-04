@@ -39,11 +39,18 @@ import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
 const f = Math.fround;
 
-/** 只记 `setColor` 的假 GL 上下文：用来钉 `glColor4f2(br, br, br, 1)` */
+/**
+ * 只记 `setColor` 的假 GL 上下文：用来钉 `glColor4f2(br, br, br, 1)`。
+ * ⚠ G9 起 `EntityRenderDispatcher` 的构造函数会 `new ChickenModel()` —— `ModelPart._init`
+ * 构造时要 `glGenBuffers`（每个部件一个 VBO，构造时只调这一个 GL 函数），所以这里也得有。
+ */
 class RecordingGL {
   colors: number[][] = [];
   setColor(r: number, g: number, b: number, a: number): void {
     this.colors.push([r, g, b, a]);
+  }
+  genBuffers(_n: number, buffers: { [i: number]: number }): void {
+    buffers[0] = 1; // 一个任意 id，够 `ModelPart` 存进 vboId
   }
 }
 

@@ -13,8 +13,8 @@
  * 【浮点】`flapSpeed += (onGround ? -1 : 4) * 0.3f` 这类都按 PITFALLS 第 3 条逐步 fround，
  * 十进制字面量一律包 `f()`（`0.3f` / `0.9f` / `0.6f` / `0.2f`）。
  *
- * ⚠ `ChickenRenderer` **没移植**（要模型系统），所以这只鸡在画面上看不见 ——
- * 和 D2 的落沙、D9 的雪球是同一类缺口，D12 收尾时一并列出来。
+ * 已接线：G9 落的 `ChickenRenderer` + `ChickenModel` 负责画它（`EntityRenderDispatcher` 里注册的
+ * `ER_CHICKEN_RENDERER`）—— 这只鸡现在是 TS 里**第一只画面上看得见的生物**。
  */
 import { SharedConstants } from '@mcpe/core';
 import type { CompoundTag } from '@mcpe/nbt';

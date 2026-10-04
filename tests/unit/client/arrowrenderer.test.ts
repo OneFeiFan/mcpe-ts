@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { Arrow, EntityRendererId, initItems } from '@mcpe/world';
-import { ArrowRenderer, EntityRenderDispatcher } from '@mcpe/client';
+import { ArrowRenderer, EntityRenderDispatcher, GLES1, glSetContext } from '@mcpe/client';
 import { createFlatLevel } from '../../helpers/headlessLevel';
 
 // D11.5：`ArrowRenderer`（62 行）+ **注册那一行**。
@@ -8,6 +8,10 @@ import { createFlatLevel } from '../../helpers/headlessLevel';
 // 箭在画面上就是隐形的（D11 结束时正是这个现象）。
 
 beforeAll(() => {
+  // ⚠ G9 起构造函数还会 `new ChickenModel()` —— `ModelPart` 的构造要 GL 上下文
+  // （gles.ts 的 glGenBuffers 没上下文会抛），所以先铺一个 headless 的。
+  // 真机里 GL 上下文本就先于分派器存在，这里只是把那个顺序补上，不改断言。
+  glSetContext(new GLES1(null));
   // ⚠ 分派器的构造函数会读 `Item.egg` / `Item.snowBall`（D9.5 那两行 assign），
   // 所以必须先 initItems 再建单例 —— 真机顺序（NinecraftApp.initApp）就是这样。
   createFlatLevel();

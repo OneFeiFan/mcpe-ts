@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { GLES1, glSetContext } from '@mcpe/client';
 import { EntityRendererId, FallingTile, initItems } from '@mcpe/world';
 import {
   EntityRenderer,
@@ -14,6 +15,9 @@ import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 // 所以这条测试钉的是"注册表里真的有它"，不是"这个类能 new 出来"。
 
 beforeAll(() => {
+  // ⚠ G9 起构造函数还会 `new ChickenModel()`（`ModelPart` 的构造要 GL 上下文，gles.ts 会抛），
+  // 所以先铺一个 headless GL —— 真机里 GL 上下文本就早于分派器。不改断言。
+  glSetContext(new GLES1(null));
   // ⚠ D9.5 起，分派器的构造函数里会读 `Item.egg` / `Item.snowBall`（照 C++ 的 assign 那两行），
   // 所以**必须先把物品注册好再建单例** —— 真机顺序就是这样（NinecraftApp.initApp 里
   // initTiles → initItems 都在渲染之前）。这个 beforeAll 是补上那个真实顺序，不是改断言。
