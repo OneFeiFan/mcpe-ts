@@ -1,18 +1,14 @@
-// 1:1 移植自 src/world/item/HangingEntityItem.h 与 HangingEntityItem.cpp（S11 阶段 A，部分移植）。
-// 部分：createEntity 里 new Painting（画，计划外）DEFERRED(Entity)，暂时返回 NULL；useOn 因此走“entity 为空”的分支，返回 true。
+// 1:1 移植自 src/world/item/HangingEntityItem.h 与 HangingEntityItem.cpp（S11 阶段 A；D7 接线完成）。
+// D7：createEntity 里 new Painting 那句接上了，局部那个 `interface HangingEntity` 也换成真类。
 import { Direction } from '../Direction';
-import type { Entity } from '../entity/Entity';
 import { EntityTypes } from '../entity/EntityTypes';
+import type { HangingEntity } from '../entity/HangingEntity';
+import { Painting } from '../entity/Painting';
 import type { Player } from '../entity/player/Player';
 import { Facing } from '../Facing';
 import type { Level } from '../level/Level';
 import { Item } from './Item';
 import type { ItemInstance } from './ItemInstance';
-
-/** FORWARD-DECL(HangingEntity) 的最小形状：只用到 survives() */
-interface HangingEntity extends Entity {
-  survives(): boolean;
-}
 
 export class HangingEntityItem extends Item {
   private entityType: number;
@@ -41,7 +37,7 @@ export class HangingEntityItem extends Item {
     if (entity !== null) {
       if (entity.survives()) {
         if (!level.isClientSide) {
-          // DEFERRED(Entity): level->addEntity(entity);
+          level.addEntity(entity);
         }
         itemInstance.count--;
       }
@@ -50,16 +46,15 @@ export class HangingEntityItem extends Item {
   }
 
   private createEntity(
-    _level: Level,
-    _x: number,
-    _y: number,
-    _z: number,
-    _dir: number,
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    dir: number,
   ): HangingEntity | null {
     switch (this.entityType) {
       case EntityTypes.IdPainting:
-        // DEFERRED(Entity): return new Painting(level, x, y, z, dir);
-        return null;
+        return new Painting(level, x, y, z, dir);
     }
     return null;
   }

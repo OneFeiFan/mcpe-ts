@@ -101,6 +101,8 @@ export * from './level/tile/HeavyTile.js';
 export * from './level/tile/SandTile.js';
 export * from './level/tile/TntTile.js';
 export * from './entity/HangingEntity.js';
+export * from './entity/Motive.js';
+export * from './entity/Painting.js';
 export * from './item/FoodItem.js';
 export * from './item/BowItem.js';
 export * from './item/CameraItem.js';

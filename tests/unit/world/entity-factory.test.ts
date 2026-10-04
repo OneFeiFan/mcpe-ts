@@ -7,6 +7,7 @@ import {
   Item,
   ItemEntity,
   ItemInstance,
+  Painting,
   PrimedTnt,
   type Level,
 } from '@mcpe/world';
@@ -54,13 +55,16 @@ describe('world/EntityFactory', () => {
       expect(EntityFactory.CreateEntity(EntityTypes.IdPrimedTnt, lv())).toBeInstanceOf(PrimedTnt);
     });
 
+    it('IdPainting → Painting（D7 接的线）', () => {
+      expect(EntityFactory.CreateEntity(EntityTypes.IdPainting, lv())).toBeInstanceOf(Painting);
+    });
+
     it('还没移植的那几种返回 null（原地留着 DEFERRED(Entity)）', () => {
-      // Arrow / ThrownEgg / Snowball / Painting
+      // Arrow / ThrownEgg / Snowball
       for (const id of [
         EntityTypes.IdArrow,
         EntityTypes.IdThrownEgg,
         EntityTypes.IdSnowball,
-        EntityTypes.IdPainting,
       ]) {
         expect(EntityFactory.CreateEntity(id, lv()), `id=${id} 应该还没移植`).toBeNull();
       }

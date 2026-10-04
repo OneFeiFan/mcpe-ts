@@ -29,6 +29,7 @@ import { EntityTypes } from './EntityTypes';
 import { ItemEntity } from './item/ItemEntity';
 import { FallingTile } from './item/FallingTile';
 import { PrimedTnt } from './item/PrimedTnt';
+import { Painting } from './Painting';
 import { Item } from '../item/Item';
 
 // OMIT(Entity): static Mob* MobFactory::CreateMob(int mobType, Level* level)  MobFactory.h:2
@@ -55,7 +56,8 @@ export class EntityFactory {
       // DEFERRED(Entity): case EntityTypes::IdArrow:       return new Arrow(level);        EntityFactory.cpp:18
       // DEFERRED(Entity): case EntityTypes::IdThrownEgg:   return new ThrownEgg(level);    EntityFactory.cpp:19
       // DEFERRED(Entity): case EntityTypes::IdSnowball:    return new Snowball(level);     EntityFactory.cpp:20
-      // DEFERRED(Entity): case EntityTypes::IdPainting:    return new Painting(level);     EntityFactory.cpp:21
+      case EntityTypes.IdPainting:
+        return new Painting(level);
       default:
         break;
     }
