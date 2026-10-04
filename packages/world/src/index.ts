@@ -103,6 +103,7 @@ export * from './level/tile/TntTile.js';
 export * from './entity/HangingEntity.js';
 export * from './entity/Motive.js';
 export * from './entity/projectile/Throwable.js';
+export * from './entity/projectile/Snowball.js';
 export * from './entity/Painting.js';
 export * from './item/FoodItem.js';
 export * from './item/BowItem.js';

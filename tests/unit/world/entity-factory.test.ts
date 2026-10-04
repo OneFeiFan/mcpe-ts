@@ -9,6 +9,7 @@ import {
   ItemInstance,
   Painting,
   PrimedTnt,
+  Snowball,
   type Level,
 } from '@mcpe/world';
 import { createFlatLevel } from '../../helpers/headlessLevel';
@@ -59,13 +60,13 @@ describe('world/EntityFactory', () => {
       expect(EntityFactory.CreateEntity(EntityTypes.IdPainting, lv())).toBeInstanceOf(Painting);
     });
 
+    it('IdSnowball → Snowball（D9 接的线）', () => {
+      expect(EntityFactory.CreateEntity(EntityTypes.IdSnowball, lv())).toBeInstanceOf(Snowball);
+    });
+
     it('还没移植的那几种返回 null（原地留着 DEFERRED(Entity)）', () => {
-      // Arrow / ThrownEgg / Snowball
-      for (const id of [
-        EntityTypes.IdArrow,
-        EntityTypes.IdThrownEgg,
-        EntityTypes.IdSnowball,
-      ]) {
+      // Arrow / ThrownEgg
+      for (const id of [EntityTypes.IdArrow, EntityTypes.IdThrownEgg]) {
         expect(EntityFactory.CreateEntity(id, lv()), `id=${id} 应该还没移植`).toBeNull();
       }
     });
