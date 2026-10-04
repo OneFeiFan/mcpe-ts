@@ -1,8 +1,12 @@
 /**
  * 1:1 移植自 src/client/renderer/entity/EntityRenderDispatcher.h 与 .cpp（S13 阶段 C，部分移植）。
- * 部分：注册了 ER_ITEM_RENDERER（掉落物）、ER_FALLINGTILE_RENDERER（下落方块，D2.5）与
- *   ER_CHICKEN_RENDERER（鸡，G9 —— 第一个用上模型系统的生物）；
- *   人形、猪牛羊、TNT、玩家、画的渲染器要用模型系统或计划外的实体，留 DEFERRED(EntityRender)。
+ * 部分：注册了 ER_ITEM_RENDERER（掉落物）、ER_FALLINGTILE_RENDERER（下落方块，D2.5）、
+ *   ER_CHICKEN_RENDERER（鸡，G9 —— 第一个用上模型系统的生物）、ER_TNT_RENDERER 与
+ *   ER_PAINTING_RENDERER（TNT 和画，G10）；
+ *   人形、猪牛羊、玩家的渲染器要用模型系统或计划外的实体，留 DEFERRED(EntityRender)。
+ *   ⚠ 相机渲染器（TripodCameraRenderer）在 C++ 里**从未注册**：EntityRenderDispatcher.h:55 只有一行
+ *   注释掉的成员 `//TripodCameraRenderer tripodCameraRenderer;`，assign 列表里也没有它 ——
+ *   照 C++ 1:1，TS 同样不注册（原版画面上相机实体就是隐形的）。
  *   没有注册的渲染器 getRenderer 返回 null，render 什么都不画（与 C++ 找不到时一样）。
  * R10：render(entity, a) 与 render(entity, x, y, z, rot, a) → 分派入口 render + renderAt；getRenderer(Entity*) / getRenderer(id) → getRenderer + getRendererById。
  * C++ 的 assign 在 `for (… init(this))` 循环**之前**逐条调用，这里照抄那个顺序。
@@ -21,6 +25,8 @@ import { ItemRenderer } from './ItemRenderer';
 import { ItemSpriteRenderer } from './ItemSpriteRenderer';
 import { ArrowRenderer } from './ArrowRenderer';
 import { ChickenRenderer } from './ChickenRenderer';
+import { PaintingRenderer } from './PaintingRenderer';
+import { TntRenderer } from './TntRenderer';
 import { ChickenModel } from '../../model/ChickenModel';
 
 const f = Math.fround;
@@ -66,8 +72,13 @@ export class EntityRenderDispatcher {
     // C++ 里这行在 EntityRenderDispatcher.cpp:46，与 C++ 的调用顺序无关紧要（各 id 互不覆盖）。
     // ⚠ C++ 字面量 `0.3` 没有 f 后缀，但传进的是 `float shadow` 形参 —— 按 PITFALLS 第 3 条包 f()
     this.assign(EntityRendererId.ER_CHICKEN_RENDERER, new ChickenRenderer(new ChickenModel(), f(0.3))); // EntityRenderDispatcher.cpp:46
+    // G10：TNT 和画 —— 都不依赖模型系统（TNT 复用 TileRenderer，画只发顶点）。
+    // ⚠ TntRenderer 构造会 `new TileRenderer()`、TripodCameraRenderer 构造会 `new Tile(0, …)` ——
+    //   TNT 在真机上的构造晚于 initTiles，没影响；相机类不注册（见文件头），构造根本不发生。
+    this.assign(EntityRendererId.ER_TNT_RENDERER, new TntRenderer()); // EntityRenderDispatcher.cpp:52
+    this.assign(EntityRendererId.ER_PAINTING_RENDERER, new PaintingRenderer()); // EntityRenderDispatcher.cpp:57
     // DEFERRED(EntityRender): ER_HUMANOID、ER_PIG、ER_COW、ER_SHEEP、ER_SKELETON、ER_ZOMBIE、ER_CREEPER、ER_SPIDER、
-    //   ER_TNT、ER_PLAYER、ER_PAINTING 的渲染器（模型系统与这些实体计划外）
+    //   ER_PLAYER 的渲染器（模型系统与这些实体计划外）
     for (const r of this._renderers.values()) r.init(this);
   }
 

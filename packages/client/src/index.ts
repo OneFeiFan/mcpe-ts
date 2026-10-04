@@ -59,6 +59,10 @@ export * from './renderer/entity/ArrowRenderer.js';
 export * from './renderer/entity/MobRenderer.js';
 export * from './renderer/entity/HumanoidMobRenderer.js';
 export * from './renderer/entity/ChickenRenderer.js';
+// G10：TNT / 画 / 三脚架相机（相机渲染器写全但照 C++ 不注册，见 TripodCameraRenderer 文件头）
+export * from './renderer/entity/TntRenderer.js';
+export * from './renderer/entity/PaintingRenderer.js';
+export * from './renderer/entity/TripodCameraRenderer.js';
 export * from './particle/ParticleTextures.js';
 // C++ 的 ParticleInclude.h：那份"哪些粒子类存在"的清单，10 个类一次转出去
 export * from './particle/ParticleInclude.js';

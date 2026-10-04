@@ -48,6 +48,11 @@ export const PRELOAD: readonly string[] = [
   // G9：鸡的贴图（ChickenRenderer —— 第一个用模型系统画的生物）。
   //   漏了它不报错，鸡会画成上一张绑定的贴图（PITFALLS 第 25 条）
   'mob/chicken.png',
+  // G10：画的贴图（PaintingRenderer）与相机贴图（TripodCameraRenderer）。
+  //   漏了不报错，会画成上一张绑定的贴图（PITFALLS 第 25 条）。
+  //   PaintingRenderer 只 bind 这一张画集，Motive 的 uo/vo 就是它的格子坐标
+  'art/kz.png',
+  'item/camera.png',
 ];
 
 /** 启动时预加载的其他资源文件（AppPlatform::readAssetFile 读取，ADAPTED(Web)）：文件在 public/ 的同名路径下 */

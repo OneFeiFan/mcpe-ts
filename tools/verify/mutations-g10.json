@@ -1,0 +1,140 @@
+[
+  {
+    "label": "T1 鼓包边界 < 10 抄成 <= 10（life=9 会多鼓一帧）",
+    "file": "packages/client/src/renderer/entity/TntRenderer.ts",
+    "from": "if (tnt.life - a + 1 < 10) {",
+    "to": "if (tnt.life - a + 1 <= 10) {"
+  },
+  {
+    "label": "T2 闪烁条件去掉 & 1（只在 life<5 时闪）",
+    "file": "packages/client/src/renderer/entity/TntRenderer.ts",
+    "from": "if ((Math.trunc(tnt.life / 5) & 1) === 0) {",
+    "to": "if (Math.trunc(tnt.life / 5) === 0) {"
+  },
+  {
+    "label": "T3 闪烁周期 5 抄成 6",
+    "file": "packages/client/src/renderer/entity/TntRenderer.ts",
+    "from": "if ((Math.trunc(tnt.life / 5) & 1) === 0) {",
+    "to": "if ((Math.trunc(tnt.life / 6) & 1) === 0) {"
+  },
+  {
+    "label": "T4 亮度 0.8f 少了 f()（br 差一位）",
+    "file": "packages/client/src/renderer/entity/TntRenderer.ts",
+    "from": "const br = (1 - (tnt.life - a + 1) / 100.0) * f(0.8);",
+    "to": "const br = (1 - (tnt.life - a + 1) / 100.0) * 0.8;"
+  },
+  {
+    "label": "T5 鼓包的 0.3f 少了 f()",
+    "file": "packages/client/src/renderer/entity/TntRenderer.ts",
+    "from": "const s = 1.0 + g * f(0.3);",
+    "to": "const s = 1.0 + g * 0.3;"
+  },
+  {
+    "label": "T6 四次方少乘一次（g*g 只写一遍）",
+    "file": "packages/client/src/renderer/entity/TntRenderer.ts",
+    "from": "      g = g * g;\n      g = g * g;",
+    "to": "      g = g * g;"
+  },
+  {
+    "label": "T7 blendFunc 两个参数对调",
+    "file": "packages/client/src/renderer/entity/TntRenderer.ts",
+    "from": "glBlendFunc2(GL_SRC_ALPHA, GL_DST_ALPHA);",
+    "to": "glBlendFunc2(GL_DST_ALPHA, GL_SRC_ALPHA);"
+  },
+  {
+    "label": "T8 TNT 注册行被注释掉",
+    "file": "packages/client/src/renderer/entity/EntityRenderDispatcher.ts",
+    "from": "this.assign(EntityRendererId.ER_TNT_RENDERER, new TntRenderer()); // EntityRenderDispatcher.cpp:52",
+    "to": "// this.assign(EntityRendererId.ER_TNT_RENDERER, new TntRenderer()); // EntityRenderDispatcher.cpp:52"
+  },
+  {
+    "label": "P1 第一块板的第一个顶点 y1 抄成 y0（正面画反）",
+    "file": "packages/client/src/renderer/entity/PaintingRenderer.ts",
+    "from": "        t.vertexUV(x0, y1, -edgeWidth, fu1, fv0);",
+    "to": "        t.vertexUV(x0, y0, -edgeWidth, fu1, fv0);"
+  },
+  {
+    "label": "P2 背面 UV bu0/bu1 对调（贴图左右反）",
+    "file": "packages/client/src/renderer/entity/PaintingRenderer.ts",
+    "from": "        t.vertexUV(x0, y0, edgeWidth, bu0, bv0);",
+    "to": "        t.vertexUV(x0, y0, edgeWidth, bu1, bv0);"
+  },
+  {
+    "label": "P3 侧面的 uv0 漏抄 0.5/256（写成 0）",
+    "file": "packages/client/src/renderer/entity/PaintingRenderer.ts",
+    "from": "    const uv0 = f(0.5) / 256.0;",
+    "to": "    const uv0 = 0 / 256.0;"
+  },
+  {
+    "label": "P4 整体缩放 1/16 抄成 1/8",
+    "file": "packages/client/src/renderer/entity/PaintingRenderer.ts",
+    "from": "    const s = 1.0 / 16.0;",
+    "to": "    const s = 1.0 / 8.0;"
+  },
+  {
+    "label": "P5 绕 y 轴旋转抄成绕 z 轴",
+    "file": "packages/client/src/renderer/entity/PaintingRenderer.ts",
+    "from": "    glRotatef(rot, 0, 1.0, 0);",
+    "to": "    glRotatef(rot, 0, 0, 1.0);"
+  },
+  {
+    "label": "P6 画的注册行被注释掉",
+    "file": "packages/client/src/renderer/entity/EntityRenderDispatcher.ts",
+    "from": "this.assign(EntityRendererId.ER_PAINTING_RENDERER, new PaintingRenderer()); // EntityRenderDispatcher.cpp:57",
+    "to": "// this.assign(EntityRendererId.ER_PAINTING_RENDERER, new PaintingRenderer()); // EntityRenderDispatcher.cpp:57"
+  },
+  {
+    "label": "C1 相机 id 也被注册上（C++ 里没有这行！）",
+    "file": "packages/client/src/renderer/entity/EntityRenderDispatcher.ts",
+    "from": "this.assign(EntityRendererId.ER_TNT_RENDERER, new TntRenderer()); // EntityRenderDispatcher.cpp:52",
+    "to": "this.assign(EntityRendererId.ER_TNT_RENDERER, new TntRenderer()); // EntityRenderDispatcher.cpp:52\n    this.assign(EntityRendererId.ER_TRIPODCAMERA_RENDERER, new TntRenderer()); // 变异：C++ 里没有"
+  },
+  {
+    "label": "C2 相机朝向少了 xRot/2（f(0.5) 丢了）",
+    "file": "packages/client/src/renderer/entity/TripodCameraRenderer.ts",
+    "from": "Mth.DEGRAD * (180.0 + cam.xRot * f(0.5));",
+    "to": "Mth.DEGRAD * (180.0 + cam.xRot);"
+  },
+  {
+    "label": "C3 yRot 的负号丢了（相机左右转反）",
+    "file": "packages/client/src/renderer/entity/TripodCameraRenderer.ts",
+    "from": "this.cameraCube.yRot = -Mth.DEGRAD * cam.yRot;",
+    "to": "this.cameraCube.yRot = Mth.DEGRAD * cam.yRot;"
+  },
+  {
+    "label": "C4 getFlashTime 的 >= 8 抄成 > 8（life=8 会闪）",
+    "file": "packages/client/src/renderer/entity/TripodCameraRenderer.ts",
+    "from": "if (c.life >= 8) return -1;",
+    "to": "if (c.life > 8) return -1;"
+  },
+  {
+    "label": "C5 闪光用了 Mth.sin（查表）而不是 ::sin（Math.sin）",
+    "file": "packages/client/src/renderer/entity/TripodCameraRenderer.ts",
+    "from": "const flashStrength = Math.sin(flashLife * f(6.283));",
+    "to": "const flashStrength = Mth.sin(flashLife * f(6.283));"
+  },
+  {
+    "label": "C6 拾取比较反了（=== 变 !==）",
+    "file": "packages/client/src/renderer/entity/TripodCameraRenderer.ts",
+    "from": "hitResult.entity === cam;",
+    "to": "hitResult.entity !== cam;"
+  },
+  {
+    "label": "C7 cameraCube.y 11 抄成 10",
+    "file": "packages/client/src/renderer/entity/TripodCameraRenderer.ts",
+    "from": "this.cameraCube.y = 11;",
+    "to": "this.cameraCube.y = 10;"
+  },
+  {
+    "label": "C8 木叉摆位 -0.5 抄成 0（在方块中心）",
+    "file": "packages/client/src/renderer/entity/TripodCameraRenderer.ts",
+    "from": "this.tileRenderer.tesselateCrossTexture(this.tripod, 0, f(-0.5), f(-0.5), f(-0.5));",
+    "to": "this.tileRenderer.tesselateCrossTexture(this.tripod, 0, 0, 0, 0);"
+  },
+  {
+    "label": "C9 高亮支没重置颜色（少了 glColor4f2(1,1,1,1)）",
+    "file": "packages/client/src/renderer/entity/TripodCameraRenderer.ts",
+    "from": "      glColor4f2(1, 1, 1, 1);\n      glDisable2(GL_BLEND);\n      glEnable2(GL_TEXTURE_2D);",
+    "to": "      glDisable2(GL_BLEND);\n      glEnable2(GL_TEXTURE_2D);"
+  }
+]

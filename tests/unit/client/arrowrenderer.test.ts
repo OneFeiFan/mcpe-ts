@@ -42,7 +42,9 @@ describe('ArrowRenderer（D11.5）', () => {
     expect(erd.getRendererById(EntityRendererId.ER_THROWNEGG_RENDERER)).not.toBeNull();
     expect(erd.getRendererById(EntityRendererId.ER_FALLINGTILE_RENDERER)).not.toBeNull();
     expect(erd.getRendererById(EntityRendererId.ER_ITEM_RENDERER)).not.toBeNull();
-    // 对照：还没做的那个仍然是 null（C++ 找不到时也是什么都不画）
-    expect(erd.getRendererById(EntityRendererId.ER_PAINTING_RENDERER)).toBeNull();
+    // 对照：没注册的那个仍然是 null（C++ 找不到时也是什么都不画）。
+    // ⚠ 原来拿 ER_PAINTING_RENDERER 当例子 —— G10 把画补上之后换成相机：
+    //   它是 C++ **永久**不注册的（EntityRenderDispatcher.h:55 是注释行）。**断言没改，只换了例子。**
+    expect(erd.getRendererById(EntityRendererId.ER_TRIPODCAMERA_RENDERER)).toBeNull();
   });
 });

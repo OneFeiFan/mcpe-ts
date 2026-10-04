@@ -64,8 +64,9 @@ describe('ItemSpriteRenderer（D9.5）', () => {
     expect(erd.getRendererById(EntityRendererId.ER_FALLINGTILE_RENDERER)).toBeInstanceOf(
       FallingTileRenderer,
     );
-    // ⚠ D11.5 起 ER_ARROW_RENDERER 也注册了，换成仍然没注册的画画那个（断言没改）
-    expect(erd.getRendererById(EntityRendererId.ER_PAINTING_RENDERER)).toBeNull();
+    // ⚠ 这个例子换过两次：D11.5 起 ER_ARROW_RENDERER 注册了、G10 起 ER_PAINTING_RENDERER 也注册了，
+    //   现在换成 ER_TRIPODCAMERA_RENDERER（C++ 永久不注册）。断言没改。
+    expect(erd.getRendererById(EntityRendererId.ER_TRIPODCAMERA_RENDERER)).toBeNull();
   });
 
   it('它是个 EntityRenderer（分派器按基类用），且照 C++ 没设 shadowRadius', () => {
