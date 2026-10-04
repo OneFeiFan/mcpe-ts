@@ -256,7 +256,7 @@ G1 已经补上了（细节见 G1 那一节）。谁要是以后另外写编译�
 | **G5** | `Model` 基类的默认值单测 + `ModelInclude` | 1 个 ts | — | 单测 |
 | **G6** | `MobRenderer`（含 `renderName` / `renderNameTag` / 护甲层 / 受伤与染色叠加） | 1 个 ts | — | 单测 ✅ |
 | **G7** | `HumanoidModel`（含 64×64 现代皮肤分支、`hair`、`renderHand` 要用的 `arm0`） | 1 个 ts | — | 单测 ✅ |
-| **G8** | `HumanoidMobRenderer`（`additionalRendering`：手持物品 + 披风；`renderHand`） | 1 个 ts | — | 单测 |
+| **G8** | `HumanoidMobRenderer`（`additionalRendering`：手持物品 + 披风；`renderHand`） | 1 个 ts | — | 单测 ✅ |
 | **G9** | **鸡**：`ChickenModel` + `ChickenRenderer` + 注册 → **第一只看得见的生物** | 2 个 ts | `EntityRenderDispatcher.ts` | 浏览器截图 |
 | **G10** | **TNT / 画 / 三脚架相机**三个不用模型的 + 注册 | 3 个 ts | `EntityRenderDispatcher.ts` | 浏览器截图 |
 | **G11** | **玩家**：`PlayerRenderer` + `setModernSkin` 接线 + `ItemInHandRenderer` 空手手臂 | 1 个 ts | `EntityRenderDispatcher.ts`、`ItemInHandRenderer.ts` | 浏览器截图（第三人称） |
@@ -630,6 +630,47 @@ vite 直接 PARSE_ERROR —— 改成逐下标取就对了。）
 - ⚠ 披风第一段 `t.begin()` 之前**没有 `t.color(...)`**，用的是上一次留下的颜色。照抄。
 
 验收：单测（四路手持物品的变换矩阵链条太长，改成断言"调用了 renderItem 且变换调用次数对"）。
+
+**做完的情况（G8）**
+
+新增 `packages/client/src/renderer/entity/HumanoidMobRenderer.ts`（**236 行**）+ `index.ts` 一行 export
++ `tests/unit/client/humanoid-mob-renderer.test.ts`（**16 条**）+ `tools/verify/mutations-g8.json`。
+**一条 DEFERRED 都没有** —— `Player` 的披风 API、`Item.items`、`Tile.tiles`、`Tesselator.tex`、
+`ModelPart.translateTo` 在 TS 里都齐。
+
+台账 **233 → 233**（没有新增标记）。唯一动过的标记是 `ItemInHandRenderer.ts` 空手分支那条
+`DEFERRED(PlayerRender)` —— G8 之前它写的理由是"缺玩家模型"，G8 落地后已过时，实测
+`ItemInHandRenderer.cpp:425-432` 真正缺的是 `PlayerRenderer` 与 `EntityRenderDispatcher.setModernSkin`
+（两条都在 G11），理由改正、**条数不变**。
+
+验收比任务单要求的更严一点：任务单说"断言调用了 `renderItem` 且变换调用次数对"，实际用 `SpyGL`
+把每一步 `push/pop/translate/rotate/scale/enable/disable` 记成字符串**逐条对**（四路各 8~9 条），
+所以 `-20` 抄成 `20`、`(s,-s,s)` 抄成 `(s,s,s)` 这种都跑不掉。披风的 **24 个顶点也全列出来逐条对**
+（手抄 UV 表最容易错一个）。
+
+单测覆盖：构造函数（模型是同一个对象 / 两个披风角度从 0 起）、`renderHand`（`attackTime` 清零、
+`setupAnim` 的六个参数、只画 `arm0`、两组开关的顺序）、四路手持物品（含 `count = 0` 不画）、
+披风（非玩家不画 / 空贴图不画 / 第一帧平滑到 `(6-0)*0.3` / **角度有记忆**（第二帧从上一次的值再往 6 靠，
+两帧值不等）/ `lift` 上下限 / `forward` 负值夹 0 / 24 顶点走 `tex`+`vertex` 不走 `vertexUV`、
+`begin` 之前没有 `color`）、`render` 的标志生命周期（拿东西时画的那一瞬间是 true、画完清回 false；
+没拿东西时**不重置**遗留值）。
+
+**踩到的坑：`t.draw()` 自己会开关两组客户端数组。** 披风那条测试第一版挂了 —— 期望的 op 数组里
+少了 4 条 `enable:32888, enable:32884, disable:32884, disable:32888`。这 4 条不是披风代码发的，
+是 `Tesselator.draw()`（`drawArrayVTN`）自己发的。已写进注释。
+
+⚠ 两处多留了心的地方：披风那段 C++ 是 **double/float 混着**的（`capeX/px/dx` 是 double 不包 `f()`，
+`bodyYaw/forward/lift/walk/capeXRot` 是 float 要包），文件头写明了；`render()` 里清
+`holdingRightHand` 那句 C++ **无条件**执行，照抄（单测特意做了"连续两次 render"来钉这件事 ——
+只测一次的话，"不设置"和"总是设置"分不出来）。
+
+没做的一件事：**没有**在 `EntityRenderDispatcher` 里注册 `ER_HUMANOID` —— TS 里目前没有任何实体用这个
+渲染器（猪/牛/僵尸实体都还没移植），注册给谁用不知道；等 G9/G11 有真调用方时再按 C++ 的位置补。
+
+**反向验证：15 个变异 15 个全红**（含"少判一次 `count > 0`""手心 y 偏移符号反""披风第 3 个顶点 x 符号反"
+"`renderHand` 两个 enable 顺序反""结尾清了反"）。
+
+台账：**233 → 233**。`pnpm typecheck` 0；`pnpm test` **103 文件 / 1183 条全过**。
 
 ### G9 — 鸡（第一个看得见的）
 

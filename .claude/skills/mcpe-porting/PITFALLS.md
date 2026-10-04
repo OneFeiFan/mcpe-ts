@@ -137,6 +137,10 @@
   显式初始化点是 `NinecraftApp::init` 的第一行。写单测忘了调的症状很怪：`-cos(0)*5` 算出 `-0`、
   `bcos` 从 0.1f 变成 0.05f，看着像浮点精度问题，其实是整张表都是 0（G7 挂了 5 条）。
   凡是待测代码里出现 `Mth.sin` / `Mth.cos`，测试的 `beforeAll` 先来一句 `Mth.initMth()`。
+- **`Tesselator.draw()` 自己会发 4 条客户端数组开关**（`drawArrayVTN`：`enable VERTEX / enable TEXTURE_COORD /
+  disable VERTEX / disable TEXTURE_COORD`）。用 spy 记 GL 调用链的测试（G8 的 `SpyGL`）会把它们记进去 ——
+  期望数组里漏掉这 4 条，测试就挂；更糟的是**它们看起来像被待测代码多发的**，容易改错地方。
+  记调用链时把 `draw()` 这两对开关当成它的一部分，写进期望里。
 - **数台账标记要用 `tools/ledger.mjs` 里那条严格正则**（`//\s*(DEFERRED|OMIT|ADAPTED|FORWARD-DECL)\(系统\)`），
   不要用宽松的 `grep "OMIT(x)"` —— 正文里提到"标 `OMIT(x)`"的说明文字会被算进去
   （数错过两次：231 那次数成 12/8，Sound 那次数成 15 而实际是 11）。
