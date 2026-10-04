@@ -10,6 +10,7 @@ import {
   Painting,
   PrimedTnt,
   Snowball,
+  ThrownEgg,
   type Level,
 } from '@mcpe/world';
 import { createFlatLevel } from '../../helpers/headlessLevel';
@@ -64,11 +65,12 @@ describe('world/EntityFactory', () => {
       expect(EntityFactory.CreateEntity(EntityTypes.IdSnowball, lv())).toBeInstanceOf(Snowball);
     });
 
-    it('还没移植的那几种返回 null（原地留着 DEFERRED(Entity)）', () => {
-      // Arrow / ThrownEgg
-      for (const id of [EntityTypes.IdArrow, EntityTypes.IdThrownEgg]) {
-        expect(EntityFactory.CreateEntity(id, lv()), `id=${id} 应该还没移植`).toBeNull();
-      }
+    it('IdThrownEgg → ThrownEgg（D10c 接的线）', () => {
+      expect(EntityFactory.CreateEntity(EntityTypes.IdThrownEgg, lv())).toBeInstanceOf(ThrownEgg);
+    });
+
+    it('只剩 Arrow 还没移植（原地留着 DEFERRED(Entity)）', () => {
+      expect(EntityFactory.CreateEntity(EntityTypes.IdArrow, lv())).toBeNull();
     });
 
     it('认不出的 id 返回 null（C++ 那个 switch 落空后的 return NULL）', () => {
