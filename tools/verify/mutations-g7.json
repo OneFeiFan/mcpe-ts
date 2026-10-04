@@ -1,0 +1,56 @@
+[
+  {
+    "label": "M1 手腿交叉抄反（arm0 该拿 tcos1，改成 tcos0）",
+    "file": "packages/client/src/model/HumanoidModel.ts",
+    "from": "this.arm0.xRot = tcos1;",
+    "to": "this.arm0.xRot = tcos0;"
+  },
+  {
+    "label": "M2 腿的交叉跟着错（leg1 该跟 arm0/tcos1，改成 tcos0）",
+    "file": "packages/client/src/model/HumanoidModel.ts",
+    "from": "this.leg1.xRot = f(tcos1 * f(1.4));",
+    "to": "this.leg1.xRot = f(tcos0 * f(1.4));"
+  },
+  {
+    "label": "M3 hair 的膨胀量丢了 0.5f（`g + 0.5f` 写成 `g`，外壳不再比头大一圈）",
+    "file": "packages/client/src/model/HumanoidModel.ts",
+    "from": "this.hair.addBox(-4, -8, -4, 8, 8, 8, f(g + f(0.5)));",
+    "to": "this.hair.addBox(-4, -8, -4, 8, 8, 8, g);"
+  },
+  {
+    "label": "M4 度数没转弧度（`/ Mth.RADDEG` 写成 `* Mth.RADDEG`）",
+    "file": "packages/client/src/model/HumanoidModel.ts",
+    "from": "this.head.yRot = f(yRot / Mth.RADDEG);",
+    "to": "this.head.yRot = f(yRot * Mth.RADDEG);"
+  },
+  {
+    "label": "M5 拉弓三道门的第一道抄松（`useItemDuration > 0` 改成 `>= 0`）",
+    "file": "packages/client/src/model/HumanoidModel.ts",
+    "from": "if (mob.getUseItemDuration() > 0) {",
+    "to": "if (mob.getUseItemDuration() >= 0) {"
+  },
+  {
+    "label": "M6 挥击块的边界抄松（`> -9990` 改成 `>= -9990`，-9990 时 sqrt 出 NaN）",
+    "file": "packages/client/src/model/HumanoidModel.ts",
+    "from": "if (this.attackTime > -9990) {",
+    "to": "if (this.attackTime >= -9990) {"
+  },
+  {
+    "label": "M7 bcos 少加那个 0.05f（抬手的基础偏移丢了）",
+    "file": "packages/client/src/model/HumanoidModel.ts",
+    "from": "* f(0.05)) + f(0.05));",
+    "to": "* f(0.05)));"
+  },
+  {
+    "label": "M8 renderHorrible 顺手把 hair 也画了（C++ 那行是注释掉的）",
+    "file": "packages/client/src/model/HumanoidModel.ts",
+    "from": "this.leg1.renderHorrible(scale);",
+    "to": "this.leg1.renderHorrible(scale);\n    this.hair.renderHorrible(scale);"
+  },
+  {
+    "label": "M9 arm1 忘了置 mirror（右臂的盒子不再翻转）",
+    "file": "packages/client/src/model/HumanoidModel.ts",
+    "from": "this.arm1.mirror = true;",
+    "to": "this.arm1.mirror = false;"
+  }
+]

@@ -255,7 +255,7 @@ G1 已经补上了（细节见 G1 那一节）。谁要是以后另外写编译�
 | **G4** | `ModelPart` / `Cube` 的**渲染那一半**（`render` `renderRollable` `translateTo` `compile` `draw` `renderHorrible` `drawSlow`） | — | 2 个 ts | 单测（Tesselator 替身） |
 | **G5** | `Model` 基类的默认值单测 + `ModelInclude` | 1 个 ts | — | 单测 |
 | **G6** | `MobRenderer`（含 `renderName` / `renderNameTag` / 护甲层 / 受伤与染色叠加） | 1 个 ts | — | 单测 ✅ |
-| **G7** | `HumanoidModel`（含 64×64 现代皮肤分支、`hair`、`renderHand` 要用的 `arm0`） | 1 个 ts | — | 单测 |
+| **G7** | `HumanoidModel`（含 64×64 现代皮肤分支、`hair`、`renderHand` 要用的 `arm0`） | 1 个 ts | — | 单测 ✅ |
 | **G8** | `HumanoidMobRenderer`（`additionalRendering`：手持物品 + 披风；`renderHand`） | 1 个 ts | — | 单测 |
 | **G9** | **鸡**：`ChickenModel` + `ChickenRenderer` + 注册 → **第一只看得见的生物** | 2 个 ts | `EntityRenderDispatcher.ts` | 浏览器截图 |
 | **G10** | **TNT / 画 / 三脚架相机**三个不用模型的 + 注册 | 3 个 ts | `EntityRenderDispatcher.ts` | 浏览器截图 |
@@ -581,6 +581,37 @@ vite 直接 PARSE_ERROR —— 改成逐下标取就对了。）
 但 `time * 0.6662f` 这种乘法、`tcos0 * 1.4f` 这种都要包。
 
 验收：单测（`setupAnim` 在给定输入下的 7 个部件的角度/位置，逐位比）。
+
+**做完的情况（G7）**
+
+新增 `packages/client/src/model/HumanoidModel.ts`（**291 行**）+ `index.ts` 一行 export
++ `tests/unit/client/humanoid-model.test.ts`（**25 条**）。**一条 DEFERRED 都没有** ——
+`Model` / `ModelPart` / `Mth` / `UseAnim` / `Mob` 在 TS 里都已存在。
+另外把 `model/ModelInclude.ts` 里 `HumanoidModel` 那条 `DEFERRED(Model)` 换成了真再导出
+（台账因此 **234 → 233**）。
+
+三条 `ADAPTED(Cpp)`（都写在文件头）：构造函数里的 `0 + yOffset` 直接写 `yOffset`；
+`* holdingLeftHand` 那个乘数省略（外层判定已经保证它是 1，TS 的 `boolean` 也没法参与乘法）；
+`renderHorrible` 里 `hair` 那一行在 C++ 里本来就是注释掉的（`.cpp:164`），照抄不写。
+
+单测按验收要求逐位比 7 个部件的角度/位置，覆盖：构造函数（顺序 / `mirror` / 位置 /
+那个 `24 + 16` 的 texOffs / 只有 `hair` 多一圈 `g + 0.5f`）、64×64 现代皮肤那一支
+（两层盒子 + **两处 texOffs 的覆盖关系**）、`setupAnim` 的基础姿态（`/ Mth.RADDEG`、
+手腿交叉、`riding`、两个 `holdingXHand` 开关、`sneaking` 全套）、挥击块（含 `> -9990` 的边界）、
+`bowAndArrow` 的三道门与帧末清回、以及四个"调用顺序"怪癖（`render` 先抄 hair 再画、
+`renderHorrible` **不画 hair**、`renderHumanoid` **不抄 `head.zRot`**、`onGraphicsReset` 里 hair 排最后）。
+
+**踩到的坑：`Mth.sin/cos` 没初始化时全是 0。** 第一版 25 条里挂了 5 条，症状很怪 ——
+`-cos(0)*5` 算出 `-0`、`bcos` 从 0.1f 变成 0.05f。根因是 `Mth` 的 65536 项表在模块加载时
+**全零**，必须显式调 `Mth.initMth()`（`NinecraftApp::init` 第一行就是它）——
+`tests/unit/util/mth-preinit.test.ts` 正是在钉"初始化前就是 0"这件事，这个文件忘了调。
+已写进文件头，`beforeAll` 里补上。
+
+**反向验证：9 个变异 9 个全红**（`tools/verify/mutations-g7.json`）—— 手腿交叉抄反、
+腿跟着错、`hair` 的 0.5f、度数没转弧度、拉弓第一道门、`> -9990` 边界、`bcos` 少那个 `+ 0.05f`、
+`renderHorrible` 顺手画 hair、`arm1` 忘了 `mirror`。
+
+台账：**234 → 233**。`pnpm typecheck` 0；`pnpm test` **102 文件 / 1167 条全过**。
 
 ### G8 — `HumanoidMobRenderer`
 

@@ -22,8 +22,10 @@
  * 所以这里也不列；它们跟着自己的渲染器一起走。
  */
 
-// DEFERRED(Model): #include "HumanoidModel.h"  ModelInclude.h:4
-//   玩家、僵尸、骷髅共用的那个人形模型（64×32 与 64×64 两套皮肤）。G7 移植。
+// 已落地（G7）：玩家、僵尸、骷髅共用的人形模型（64×32 与 64×64 两套皮肤）。
+// C++ 的 `#include "HumanoidModel.h"`（ModelInclude.h:4）在 TS 里就是一条再导出。
+export * from './HumanoidModel.js';
+
 // DEFERRED(Model): #include "ChickenModel.h"  ModelInclude.h:6
 //   鸡。⚠ 它的父类是 **`Model` 而不是 `QuadrupedModel`**（ChickenModel.h:9，实测过），
 //   所以不依赖下面那 4 只四足兽。G9 移植 —— 那是本任务单里**第一个看得见的生物**。
@@ -47,7 +49,8 @@
 //   `LevelRenderer.ts:913` 那条 `DEFERRED(TileEntityRender)` 就是它的调用点。
 //   等方块实体渲染器落地时一起搬。
 
-// 此刻 9 条 include 一条都还没落地，所以上面一个 export 都没有。空 `export {}` 是为了让
+// 9 条 include 里已落地 1 条（`HumanoidModel`，G7），还剩 `ChickenModel`（G9）一条要搬、
+// 6 条 `OMIT(Entity)`、1 条 `DEFERRED(TileEntityRender)`。空 `export {}` 留着是为了让
 // 这个文件**成为一个模块** —— 否则 `tsc` 会说 "is not a module"，`index.ts` 那边
-// `export * from './model/ModelInclude.js'` 就编不过（G7 起每落地一个就换成真 export）。
+// `export * from './model/ModelInclude.js'` 就编不过。
 export {};
