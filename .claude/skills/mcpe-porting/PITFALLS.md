@@ -179,6 +179,22 @@
   G10 的 `cameraCube.render`（内部走 `ModelPart` 的 push/translate/pop 一整套）被 spy 后照样真跑，
   往 GL 调用记录里塞进 `t:0,0.6875,0` 这类噪声，ops 断言全对不上。
   要"只记调用、不真跑"就写 `.mockImplementation(() => {})`。
+- **`execFileSync('npx', …)` 在 Windows 上必须带 `shell: true` —— 否则验证工具自己会骗你。**
+  Node 从 CVE-2024-27980 起默认拒绝在不带 shell 时执行 `.cmd`/`.bat`，`execFileSync('npx', …)`
+  立即 ENOENT；`tools/verify/mutate.mjs` 把它当成"测试红了"，于是**每条变异都"立即红"** ——
+  30 个变异 0.3 秒报"全过"，一次测试都没跑（G2–G9 的历史变异验证全部因此存疑，G11 修复后
+  重跑 G10/G11 才是真的）。`check.mjs` 的 `run()` 一开始就带了 `shell`，只有 `mutate.mjs` 中招。
+  教训：**反向验证工具本身也要验** —— 真跑一轮要花几十秒，秒回"全过"就是没跑。
+- **测试里 `EntityRenderDispatcher.getInstance()` 会覆盖静态 `EntityRenderer.entityRenderDispatcher`。**
+  单例构造时挨个 `r.init(this)`，把静态从"带假 textures 的假 erd"指回真分派器（textures 为 null），
+  之后再调 `isModernPlayerSkin` 就崩在 `null.loadTexture`。要"注册实例 + 假 textures"同框：
+  **先** `getInstance()` 造单例，**再** `makeRenderer()` 把静态指到假 erd（G11 的 ERD.setModernSkin 用例）。
+- **给渲染器新增贴图时，把 `bindTexture`/`loadTexture` 用到的每个名字对照
+  `apps/web/src/assets.ts` 的 `PRELOAD` 数一遍。** 漏了**不报错也不算缺口**（脚本全绿、
+  无控制台错误）：`loadTexture` 返回 `InvalidId`（并永久记进 idMap），`loadAndBindTexture`
+  跳过 bind → 沿用上一张贴图 → 画成上一张图的样子。assets.ts 里已有 5 条同类注释
+  （B8d 世界卡片 / E8 粒子 / 暗角 / G9 鸡 / G10 画与相机），G11 玩家皮肤是第 6 次。
+  判据只有截图 —— 形状对、贴图错。
 - **`SpyGL extends GLES1` 的子类要写显式 `constructor() { super(null); }`。**
   `GLES1` 的构造函数有一个参数（真机传 GL 上下文），子类不写超类调用就报
   "Expected 1 arguments, but got 0"（TS2554）—— vitest 不做类型检查，所以只有

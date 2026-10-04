@@ -804,6 +804,40 @@ TNT 注册行注释掉 / 画第一块板第一个顶点 y1→y0 / 背面 UV 对�
 验收：场景里按 F5 切第三人称截一张图（能看到自己的头和身子），
 再切回第一人称、清空手持物品截一张（能看到手臂）。
 
+**做完的情况（G11）**
+
+新增 `packages/client/src/renderer/entity/PlayerRenderer.ts`（**154 行**，0 条 DEFERRED）
++ `packages/client/src/index.ts` 导出 + `tests/unit/client/player-renderer.test.ts`（**21 条**）
++ `tools/verify/mutations-g11.json`（30 条）+ 场景 `tools/verify/scenarios/g11-player.mjs`（85 行）。
+
+接线：`EntityRenderDispatcher` 注册 `ER_PLAYER_RENDERER`（`HumanoidModel(0,0,64,64)` + `f(0.5)`，
+cpp:54）+ `setModernSkin` 由 `OMIT(EntityRender)` 换成真实现（照抄 C++
+`(PlayerRenderer*)getRenderer(player)` 的不安全强转，TS 写成 `as`）；
+`MobRenderer.setArmor` 接上（护甲渲染循环本来就调它，TS 一直是空壳）；
+`ItemInHandRenderer` 那条 `DEFERRED(PlayerRender)` 换成 C++ 那段四句
+（`getRenderer` → `as HumanoidMobRenderer` → `setModernSkin` → `renderHand`）。
+
+**新踩的"画错了图"**：`apps/web/src/assets.ts` 预加载表漏 `mob/char.png` ——
+`loadTexture` 返回 `InvalidId` 并**永久记进 idMap** → `loadAndBindTexture` 见 `InvalidId` 跳过 bind
+→ 上一张贴着的 terrain 图集还绑着 → 玩家按皮肤 UV 采地形图集 = **头顶草地绿、身上羊毛色块**
+（第三人称/第一人称两张截图都复现）。补齐预加载后重跑，两张截图皮肤正常
+（背后：棕发、青色上衣、蓝裤腿；手臂：肤色）。这类坑 assets.ts 里已有 5 条同类注释
+（B8d 世界卡片 / E8 粒子 / 暗角 / G9 鸡 / G10 画与相机），这是第 6 次 —— 已补进 PITFALLS。
+
+**场景 `g11-player.mjs`：6 条断言全过**，2 张截图打开看过 —— 00 第三人称：自己站在草地上，
+头/身/手臂/腿齐全；01 第一人称空手：右臂伸在画面右下角。切第三人称走真实链路
+（`options.toggle(2)` = 按 F5 的那句，LevelRenderer 实时读它跳过/画自己；GameRenderer 把相机
+沿视线反向拉 thirdDistance=4）；手臂支也是：清空物品栏全部槽 → 等 `IIH.tick` 把 `item.id` 清 0
+（约 3 tick）→ 断言 `id===0` 再截图。
+
+**反向验证：30 个变异 30 个全红**（P1–P26 PlayerRenderer / E1–E3 注册与转发 / M1 setArmor）。
+⚠ 这一步顺带发现 `tools/verify/mutate.mjs` 在 Windows 上**全是假阳性**（`execFileSync('npx')`
+没带 `shell` → 立即 ENOENT → 每条变异"立即红"，一次测试都没跑）；修复后（提交 `c923422`）
+G11 真跑 **2m43s**、G10 真跑 **1m58s** 全红 —— **G2–G9 的 10 份清单尚未重跑，"全红"结论存疑**。
+
+台账：**233 → 231**（`OMIT(EntityRender)` 的 setModernSkin + `DEFERRED(PlayerRender)` 都换成了
+真调用）。`pnpm typecheck` 0；`pnpm test` **108 文件 / 1242 条全过**。
+
 ### G12 — 收尾
 
 - 7 只没实体的生物的模型/渲染器：在 `docs/ai/TASK-G-*.md` 和 `ModelInclude.ts` /
