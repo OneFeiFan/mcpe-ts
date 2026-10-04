@@ -250,10 +250,10 @@ G1 已经补上了（细节见 G1 那一节）。谁要是以后另外写编译�
 |---|---|---|---|---|
 | **G0** | 任务单落盘 + `task_plan.md` 指向它 | — | 2 个 md | 无代码 |
 | **G1** | **黄金样本**：`harness_model.cpp` + `fixtures/golden/model.json` + `tests/golden/model.golden.test.ts`（先只有夹具，测试等 G2 有实现再写） | 1 个 cpp + 1 个 json | `build.sh` | `REF=$REF bash tools/golden/build.sh model` 出夹具 |
-| **G2** | `Vertex` + `Polygon`（`VertexPT` `PolygonQuad`） | 2 个 ts | — | 黄金样本 |
-| **G3** | `Cube`（8 顶点 + 6 面 + mirror + 外扩 + `compile`） | 1 个 ts | — | 黄金样本 + 单测 |
-| **G4** | `ModelPart`（`_init` `addBox×3` `setPos` `render` `renderRollable` `translateTo` `compile` `draw` `renderHorrible` `drawSlow` `clear` `assign` `mimic` `texOffs` `setTexSize` `setModel` `addChild` `onGraphicsReset`） | 1 个 ts | — | 单测 |
-| **G5** | `Model` 基类 + `ModelInclude` | 2 个 ts | — | 单测 |
+| **G2** | `Vertex` + `Polygon`（`VertexPT` `PolygonQuad`） | 2 个 ts | — | 单测 ✅ |
+| **G3** | `Model` + `Cube` + `ModelPart` 的**「造形状」那一半** | 3 个 ts | — | **黄金样本整份** |
+| **G4** | `ModelPart` / `Cube` 的**渲染那一半**（`render` `renderRollable` `translateTo` `compile` `draw` `renderHorrible` `drawSlow`） | — | 2 个 ts | 单测（Tesselator 替身） |
+| **G5** | `Model` 基类的默认值单测 + `ModelInclude` | 1 个 ts | — | 单测 |
 | **G6** | `MobRenderer`（含 `renderName` / `renderNameTag` / 护甲层 / 受伤与染色叠加） | 1 个 ts | — | 单测 |
 | **G7** | `HumanoidModel`（含 64×64 现代皮肤分支、`hair`、`renderHand` 要用的 `arm0`） | 1 个 ts | — | 单测 |
 | **G8** | `HumanoidMobRenderer`（`additionalRendering`：手持物品 + 披风；`renderHand`） | 1 个 ts | — | 单测 |
@@ -265,9 +265,32 @@ G1 已经补上了（细节见 G1 那一节）。谁要是以后另外写编译�
 **里程碑**：G9 做完就是一个能交的节点 —— 世界里能看见鸡了。
 G10 让 TNT / 画 / 相机看得见。G11 是玩家自己（要切第三人称）。G12 收尾。
 
-依赖顺序：`Cube` 要 `PolygonQuad`（G3 依赖 G2）；`ModelPart` 要两者（G4 依赖 G3）；
-`MobRenderer` 要 `Model`（G6 依赖 G5）；`HumanoidMobRenderer` 要 `MobRenderer` + `HumanoidModel`
-（G8 依赖 G6、G7）；5 个渲染器都要 `MobRenderer` 或 `ModelPart`（G9~G11 依赖 G4~G8）。
+依赖顺序：`Cube` 要 `PolygonQuad`（G3 依赖 G2）；`ModelPart` 要 `Cube`（G3 自带）；
+`MobRenderer` 要 `Model`（G6 依赖 G3）；`HumanoidMobRenderer` 要 `MobRenderer` + `HumanoidModel`
+（G8 依赖 G6、G7）；5 个渲染器都要 `MobRenderer` 或 `ModelPart`（G9~G11 依赖 G3~G8）。
+
+### ⚠ 计划改过一次：原 G3/G4/G5 的切法拆不动
+
+原计划是「G3 `Cube`」→「G4 `ModelPart`」→「G5 `Model` 基类」，**实际编不过**，因为这三个类
+**互相引用**，单拆哪一半都不成立：
+
+- `Cube` 的构造函数收 `ModelPart*`（要读它的 `mirror` / `xTexSize` / `yTexSize`）；
+- `ModelPart::addBox` 又 `new Cube(this, …)`；
+- `ModelPart::setModel` 收 `Model*`（读 `texWidth` / `texHeight`，往 `model.cubes` 里塞自己）。
+
+改成按**「造形状」/「把形状画出来」**切 —— 这条线是真的能切开的：
+
+- **G3**：`Model` + `Cube` + `ModelPart` 里所有**不碰 GL** 的部分。
+  判据是**黄金样本整份**（33 个 cube 逐位比对）—— 只要「构造 + addBox + setModel」就能生成全部夹具。
+- **G4**：`ModelPart` 的 `render` / `renderRollable` / `translateTo` / `compile` / `draw` /
+  `renderHorrible` / `drawSlow`，以及 `Cube::compile`。这些在 G3 里标 `DEFERRED(Model)`。
+
+顺带两条要照抄的 C++ 写法：
+
+- ⚠ `Cube` 的 `polygons` 在 C++ 里是 `private` + `friend class ModelPart`。TS 没有 friend，
+  按仓库先例（`TouchSelectWorldScreen.ts:82`「被外层用到的就放宽为 public」）**放宽为 public** 并注明。
+  黄金测试读 `vertices` / `bound` 那几项仍然用 `as unknown as {…}` 掏（测试里掏私有有先例）。
+- ⚠ `Cube` 的 `x0..z1` 是 **`const` 成员**，TS 里写 `readonly`；它们只被 C++ 的 `friend` 和夹具读到。
 
 ---
 
@@ -348,12 +371,43 @@ node tools/golden/check-model-fixture.mjs     # 结构自检
 （顺带又栽了一次 PITFALLS 里记过的那条：`vv0` 少写一个 `!`，vitest 全绿而 `tsc` 报错 ——
 **vitest 不做类型检查，两边都要跑**。）
 
-### G3 — `Cube`
+### G3 — `Model` + `Cube` + `ModelPart` 的「造形状」那一半 ✅ 已完成
 
-`packages/client/src/model/geom/Cube.ts`。照抄六个面的 UV 参数表（见坑三），
-`mirror` 的交换在**外扩之后**（坑二），六个面构造完再统一 `mirror()`。
+新建 `packages/client/src/model/Model.ts`、`geom/Cube.ts`、`geom/ModelPart.ts`。
 
-验收：黄金样本全绿；再加单测钉住"成员 x0..z1 是没外扩的值"这条（写出来免得被"修"）。
+**判据 = 黄金样本整份的 `shapes` 一节**（6 个合成形状，逐位比对 bounds / 8 个顶点 / 6 个面 × 4 个角）。
+`fixtures/golden/model.json` 里的 `models` 一节要等 G7 / G9 把 `HumanoidModel` / `ChickenModel`
+写出来才比得上 —— **测试文件头注释里专门标了"别把这一节忘了"**。
+
+**两处 C++ 怪癖都照抄了，夹具把两条都钉住**：
+
+- `Cube` 的成员 `x0..z1` 存**没外扩**的值（形参遮蔽），而顶点用的是外扩过的局部值；
+  那 6 个成员全文无人读。变异 M6（"顺手把成员也加上 g"）被夹具抓住。
+- 六个面的 UV 参数和 Java 版对不上（第 3 行顶面 v 反了、第 6 行 +z 面 u 多跨一格）。
+  变异 **M1 就是"有人把那个看着像笔误的改『对』"—— 黄金样本抓住了它**。
+
+**两条 TS 化的说明**：
+
+- `Cube.polygons` C++ 是 `private` + `friend class ModelPart`，TS 没有 friend，
+  按仓库先例（`TouchSelectWorldScreen.ts:82`）**放宽为 public** 并注明。
+- `ModelPart::operator=` → `assign(rhs)`（`RenderChunk.assign` 那套先例）。
+  变异 M12（忘了 clear）/ M13（深拷 cube）都被抓住。
+
+**`addTexBox` 记 `OMIT(Model)`**：C++ 里**只有声明，实现整段被注释掉了**（`ModelPart.cpp:85-87`），
+零调用方，根本链不上。
+
+验收：`tests/golden/model.golden.test.ts`（7 条：1 条夹具结构自检 + 6 个形状）+
+`tests/unit/client/model-part.test.ts`（19 条，盖住黄金样本盖不到的那一半：
+`setModel` 登记/摘除、`addBox` 三个重载、`mimic`、`clear`、`assign`）。
+
+**反向验证：16 个变异 16 个红**，没有等价变异。
+（`tools/verify/mutate.mjs` 这步扩了一下，支持一次给多个测试文件。）
+
+台账：**224 → 233**（`DEFERRED(Model)` 1 → 9 —— G4 要填的那 8 个渲染函数；
+`OMIT(Model)` 2 → 3）。`pnpm typecheck` 0；`pnpm test` **98 文件 / 1101 条全过**。
+
+（这步又踩了一次语法坑：`const [a,b,c,d] = arr as [A,A,A,A, ...]` 里那个 `...` 不是合法元组语法，
+vite 直接 PARSE_ERROR —— 改成逐下标取就对了。）
 
 ### G4 — `ModelPart`
 

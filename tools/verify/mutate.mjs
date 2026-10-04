@@ -3,7 +3,7 @@
 // 【为什么要它】仓库的规矩是"每个一次过的测试都要反向验证"—— 把源码扰动一处，
 // 确认对应断言真的会红。手改手还原太慢也太容易忘，写成脚本。
 //
-// 用法：node tools/verify/mutate.mjs <测试文件> <变异清单.json>
+// 用法：node tools/verify/mutate.mjs <测试文件[,测试文件…]> <变异清单.json>
 // 清单格式：[{ "file": "…", "from": "…", "to": "…", "label": "…" }, …]
 //
 // 每个变异都必须让 `from` 在文件里**恰好出现一次**（多处就写长一点），否则直接报错 ——
@@ -13,15 +13,17 @@ import { readFileSync, writeFileSync } from 'node:fs';
 
 const [, , testFile, listFile] = process.argv;
 if (!testFile || !listFile) {
-  console.error('用法：node tools/verify/mutate.mjs <测试文件> <变异清单.json>');
+  console.error('用法：node tools/verify/mutate.mjs <测试文件[,测试文件…]> <变异清单.json>');
   process.exit(2);
 }
+
+const testFiles = testFile.split(',');
 
 const mutations = JSON.parse(readFileSync(listFile, 'utf8'));
 
 function runTest() {
   try {
-    execFileSync('npx', ['vitest', 'run', testFile], { stdio: 'pipe' });
+    execFileSync('npx', ['vitest', 'run', ...testFiles], { stdio: 'pipe' });
     return true; // 绿
   } catch {
     return false; // 红

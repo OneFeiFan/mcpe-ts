@@ -68,8 +68,11 @@ export * from './sound/SoundSystem.js';
 export * from './sound/SoundBank.js';
 export * from './sound/SoundEngine.js';
 export * from './sound/SoundBackend.js';
-// G2：模型几何层（对应 C++ 的 src/client/model/geom/）—— 先 Vertex/Polygon，
-// 后面 G3~G5 再加 Cube / ModelPart / Model
+// G2：模型几何层（对应 C++ 的 src/client/model/geom/）
 export * from './model/geom/Vertex.js';
 export * from './model/geom/Polygon.js';
+// G3：Model 基类 + Cube + ModelPart（渲染那一半在 G4）
+export * from './model/Model.js';
+export * from './model/geom/Cube.js';
+export * from './model/geom/ModelPart.js';
 export * from './gui/Font.js';
