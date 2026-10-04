@@ -188,7 +188,7 @@ export class Screen extends GuiComponent {
     for (const button of this.buttons) {
       if (this.clickedButton === button && button.clicked(this.minecraft, x, y)) {
         this.buttonClicked(button);
-        // DEFERRED(Sound): minecraft->soundEngine->playUI("random.click", 1, 1);
+        this.minecraft.soundEngine?.playUI('random.click', 1, 1);
         this.clickedButton.released(x, y);
       }
     }

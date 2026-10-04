@@ -3,7 +3,7 @@
  * 对应 AppPlatform_glfw 从 data/images 读 PNG。解码用 premultiplyAlpha:"none"、colorSpaceConversion:"none"，
  * 再经 2D canvas 取像素（terrain.png 的 alpha 只有 0 与 255，经过 canvas 不会有精度损失）。
  */
-import { TextureData } from '@mcpe/client';
+import { SoundBank, TextureData, type SoundPackEntry } from '@mcpe/client';
 
 /**
  * 启动时预加载的图片：键是 C++ 里传给 Textures::loadTexture 的名字，文件在 public/images/ 的同名路径下。
@@ -86,4 +86,24 @@ export async function preloadAssets(base = '/images/'): Promise<Map<string, Text
     PRELOAD.map(async (name) => [name, await decodeImage(base + name)] as const),
   );
   return new Map(entries);
+}
+
+/**
+ * F4/F6：加载音源包（`public/sounds/sounds.bin` + `sounds.json`），拼成一张
+ * "文件名 → SoundDesc"的表。
+ *
+ * 【为什么在启动时就全下（6.09 MB）】C++ 里那 101 个 `SA_*` 全局是**编译进二进制**、
+ * 进程起来就在内存里的；Android/iOS 也是在 `loadLibrary()` 时一次性就位。
+ * 一次请求换"和 C++ 一样随时可用"，比"第一次放声音卡一下"更贴近原版。
+ */
+export async function loadSoundBank(base = '/sounds/'): Promise<SoundBank> {
+  const [indexRes, binRes] = await Promise.all([
+    fetch(base + 'sounds.json'),
+    fetch(base + 'sounds.bin'),
+  ]);
+  if (!indexRes.ok) throw new Error(`拿不到 ${base}sounds.json（HTTP ${indexRes.status}）`);
+  if (!binRes.ok) throw new Error(`拿不到 ${base}sounds.bin（HTTP ${binRes.status}）`);
+  const index = (await indexRes.json()) as SoundPackEntry[];
+  const bin = new Uint8Array(await binRes.arrayBuffer());
+  return new SoundBank(bin, index);
 }

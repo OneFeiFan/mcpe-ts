@@ -925,8 +925,22 @@ export class LevelRenderer extends LevelListener {
   // OMIT(Sky): renderSky(alpha)  LevelRenderer.cpp:1130
   // OMIT(Clouds): renderClouds(alpha)  LevelRenderer.cpp:1263
   // OMIT(Clouds): renderAdvancedClouds(alpha)  LevelRenderer.cpp:1317
-  // OMIT(Sound): playSound(name, x, y, z, volume, pitch)  LevelRenderer.cpp:1453
-  // OMIT(Sound): playSound(name, x, y, z, volume, pitch)  LevelRenderer.cpp:1453
+  /**
+   * C++ `LevelRenderer::playSound(name, x, y, z, volume, pitch)`（LevelRenderer.cpp:1453）——
+   * `Level.playSound` 在**客户端**的这一端（另外两处 OMIT 是同一条重载的重复记录）。
+   *
+   * ⚠ 这里才是 `SOUND_DISTANCE = 16` 那道**硬剔除**生效的地方（`dd * dd` 和平方距离比）：
+   *   过不去就**根本不调**声音引擎。`SoundEngine::play` 里那句同款代码是复制粘贴的残骸。
+   */
+  override playSound(name: string, x: number, y: number, z: number, volume: number, pitch: number): void {
+    // @todo: deny sounds here if sound is off (rather than waiting 'til SoundEngine)
+    let dd = 16;
+    if (volume > 1) dd *= volume;
+    const player = this.mc?.cameraTargetPlayer ?? null;
+    if (player !== null && player.distanceToSqr(x, y, z) < dd * dd) {
+      this.mc!.soundEngine?.play(name, x, y, z, volume, pitch);
+    }
+  }
   // OMIT(Particle): addParticle(ParticleType::Id, ...)  LevelRenderer.cpp:1509
   //   —— C++ 那个重载**整段在注释里**（`PARTICLETYPE(x)` 宏是逗号表达式，
   //      永远走字符串那条；见下面 addParticle 的说明），所以这里也是死的。

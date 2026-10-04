@@ -64,4 +64,8 @@ export * from './particle/ParticleEngine.js';
 export * from './particle/TakeAnimationParticle.js';
 export * from './sound/SoundDesc.js';
 export * from './sound/SoundRepository.js';
+export * from './sound/SoundSystem.js';
+export * from './sound/SoundBank.js';
+export * from './sound/SoundEngine.js';
+export * from './sound/SoundBackend.js';
 export * from './gui/Font.js';

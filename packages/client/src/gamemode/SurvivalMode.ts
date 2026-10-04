@@ -3,6 +3,8 @@ import { type Abilities, Item, ItemInstance, Tile } from '@mcpe/world';
 import type { Minecraft } from '../Minecraft';
 import { GameMode } from './GameMode';
 
+const f = Math.fround;
+
 export class SurvivalMode extends GameMode {
   private xDestroyBlock = -1;
   private yDestroyBlock = -1;
@@ -57,7 +59,14 @@ export class SurvivalMode extends GameMode {
       this.destroyProgress += tile.getDestroyProgress(this.minecraft.player!);
       if ((++this.destroyTicks & 3) === 1) {
         if (tile !== null) {
-          // DEFERRED(Sound): minecraft->soundEngine->play(tile->soundType->getStepSound(), x + 0.5f, …, (getVolume() + 1) / 8, getPitch() * 0.5f);
+          this.minecraft.soundEngine?.play(
+            tile.soundType.getStepSound(),
+            x + f(0.5),
+            y + f(0.5),
+            z + f(0.5),
+            f(f(tile.soundType.getVolume() + f(1.0)) / f(8.0)),
+            f(tile.soundType.getPitch() * f(0.5)),
+          );
         }
       }
       if (this.destroyProgress >= 1) {

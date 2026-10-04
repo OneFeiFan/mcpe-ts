@@ -20,6 +20,8 @@ import type { Minecraft } from '../Minecraft';
 import { OptionId } from '../Options';
 import { LocalPlayer } from '../player/LocalPlayer';
 
+const f = Math.fround;
+
 export abstract class GameMode {
   oDestroyProgress = 0;
   destroyProgress = 0;
@@ -52,7 +54,14 @@ export abstract class GameMode {
     const data = level.getData(x, y, z);
     const changed = level.setTile(x, y, z, 0);
     if (changed) {
-      // DEFERRED(Sound): minecraft->soundEngine->play(oldTile->soundType->getBreakSound(), x + 0.5f, y + 0.5f, z + 0.5f, (getVolume() + 1) / 2, getPitch() * 0.8f);
+      this.minecraft.soundEngine?.play(
+        oldTile.soundType.getBreakSound(),
+        x + f(0.5),
+        y + f(0.5),
+        z + f(0.5),
+        f(f(oldTile.soundType.getVolume() + f(1.0)) / f(2.0)),
+        f(oldTile.soundType.getPitch() * f(0.8)),
+      );
       oldTile.destroy(level, x, y, z, data);
       if (this.minecraft.options.getBooleanValue(OptionId.OPTIONS_DESTROY_VIBRATION))
         this.minecraft.platform()!.vibrate(24);

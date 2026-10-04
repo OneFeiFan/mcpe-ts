@@ -3,10 +3,11 @@
  * WebGL2（antialias:false、alpha:false）→ GLES1 兼容层 → 预加载图片 → NinecraftApp.init → 按 devicePixelRatio 设尺寸 →
  * requestAnimationFrame 驱动 update()。键鼠由 DomInput 喂给 Keyboard、Mouse；pointer lock 解除时调用 releaseMouse()（A6）。
  */
-import { GLES1, glSetContext, NinecraftApp } from '@mcpe/client';
+import { GLES1, glSetContext, installSoundBackend, NinecraftApp } from '@mcpe/client';
 import { LOGW, VirtualFS, setVfs } from '@mcpe/platform';
 import { AppPlatform_web } from './AppPlatform_web';
-import { preloadAssets, preloadFiles } from './assets';
+import { loadSoundBank, preloadAssets, preloadFiles } from './assets';
+import { WebAudioSoundSystem } from './WebAudioSoundSystem';
 import { DomInput } from './DomInput';
 import { IndexedDbBackend } from './IndexedDbBackend';
 
@@ -56,6 +57,15 @@ async function main(): Promise<void> {
   glSetContext(new GLES1(gl));
   const images = await preloadAssets();
   const platform = new AppPlatform_web(canvas, images, await preloadFiles());
+
+  // F6：音频后端和音源包要在建 app **之前**装好 —— Minecraft 的构造函数里就会
+  //   `new SoundEngine(20.0f)` 并 init（那时要把 100 条名字表登记进仓库）。
+  // ⚠ AudioContext 要**在这里就建**（哪怕还是 suspended）：解锁用的 pointerdown 监听是在
+  //   建 context 的时候挂的。如果拖到第一次 playAt 才建，那次 playAt 已经发生在
+  //   "点开始游戏"之后了 —— 用户得再点一次才听得到声音。
+  const sound = new WebAudioSoundSystem();
+  sound.context();
+  installSoundBackend(sound, await loadSoundBank());
 
   const app = new NinecraftApp();
   const resize = () => {

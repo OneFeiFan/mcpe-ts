@@ -57,6 +57,8 @@ import { MouseTurnInput } from './player/input/MouseTurnInput';
 import type { LocalPlayer } from './player/LocalPlayer';
 import { GameRenderer } from './renderer/GameRenderer';
 import { ParticleEngine } from './particle/ParticleEngine';
+import { SoundEngine } from './sound/SoundEngine';
+import { soundBankOrNull, soundSystemOrDefault } from './sound/SoundBackend';
 import { LevelRenderer } from './renderer/LevelRenderer';
 import {
   FireTexture,
@@ -108,8 +110,8 @@ export class Minecraft extends App {
   levelRenderer: LevelRenderer | null = null;
   gameRenderer: GameRenderer | null = null;
   particleEngine: ParticleEngine | null = null;
-  /** FORWARD-DECL(SoundEngine)：DEFERRED(Sound)，始终为 null */
-  soundEngine: unknown = null;
+  /** C++ `SoundEngine* soundEngine;` —— 构造函数里建，见 F6 的接线 */
+  soundEngine: SoundEngine | null = null;
   gameMode: GameMode | null = null;
   textures: Textures | null = null;
   /** C++ 的成员 ScreenChooser screenChooser（构造函数初始化列表 screenChooser(this)） */
@@ -162,7 +164,12 @@ export class Minecraft extends App {
     this.options = new Options(this);
     this.gui = new Gui(this);
     // DEFERRED(Network): raknetInstance = new RakNetInstance();
-    // DEFERRED(Sound): soundEngine = new SoundEngine(20.0f); soundEngine->init(this, &options);
+    // C++：soundEngine = new SoundEngine(20.0f); soundEngine->init(this, &options);
+    //   maxDistance 就是 20.0f（Minecraft.cpp:199）。
+    //   ⚠ 后端和音源包是运行时注入的（见 sound/SoundBackend.ts）：没装的时候拿到的是
+    //     空实现基类 + 空包 = **原版网页版的行为**（一点声音都没有）。
+    this.soundEngine = new SoundEngine(20.0, soundSystemOrDefault());
+    this.soundEngine.init(this, this.options, soundBankOrNull());
   }
 
   // 析构函数不移植（R3）
@@ -513,7 +520,8 @@ export class Minecraft extends App {
     TIMER_POP();
     if (this.gameMode !== null) this.gameMode.render(this.timer.a);
     TIMER_PUSH('sound');
-    // DEFERRED(Sound): soundEngine->update(player, timer.a);
+    // C++ 这里传的是 Minecraft::update 的形参 player；TS 里对应 this.player
+    this.soundEngine!.update(this.player, this.timer.a);
     TIMER_POP_PUSH('render');
     this.gameRenderer!.render(this.timer.a);
     TIMER_POP();
@@ -930,8 +938,17 @@ export class Minecraft extends App {
   getLevelSource(): LevelStorageSource | null {
     return this.storageSource;
   }
-  // OMIT(Sound): audioEngineOn()  Minecraft.cpp:1622
-  // OMIT(Sound): audioEngineOff()  Minecraft.cpp:1627
+  /** C++ `Minecraft::audioEngineOn()`（Minecraft.cpp:1622）—— 暂停菜单里进游戏时调 */
+  override audioEngineOn(): void {
+    // C++：if (soundEngine) soundEngine->enable(true);
+    if (this.soundEngine !== null) this.soundEngine.enable(true);
+  }
+
+  /** C++ `Minecraft::audioEngineOff()`（Minecraft.cpp:1627） */
+  override audioEngineOff(): void {
+    // C++：if (soundEngine) soundEngine->enable(false);
+    if (this.soundEngine !== null) this.soundEngine.enable(false);
+  }
   setIsCreativeMode(isCreative: boolean): void {
     // CREATORMODE 未定义（网页版构建），走 #else 分支
     if (!this.gameMode || isCreative !== this._isCreativeMode) {

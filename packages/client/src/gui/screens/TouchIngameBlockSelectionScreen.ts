@@ -24,6 +24,8 @@ import { Gui } from '../Gui';
 import { Screen } from '../Screen';
 import { ScreenId } from './ScreenChooser';
 
+const f = Math.fround;
+
 const BorderPixels = 4;
 const BlockPixels = 24;
 const ItemSize = Math.trunc(BlockPixels + 2 * BorderPixels);
@@ -151,7 +153,7 @@ export class TouchIngameBlockSelectionScreen extends Screen implements IInventor
     if (!inventory.getItem(itemId)) return false;
     inventory.moveToSelectionSlot(0, itemId, true);
     inventory.selectSlot(0);
-    // DEFERRED(Sound): minecraft->soundEngine->playUI("random.pop2", 1.0f, 0.3f);
+    this.minecraft.soundEngine?.playUI('random.pop2', f(1.0), f(0.3));
     this.minecraft.gui.flashSlot(inventory.selected);
     return true;
   }

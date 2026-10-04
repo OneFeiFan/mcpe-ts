@@ -62,4 +62,9 @@ export class SoundRepository {
   _variantsForTest(name: string): number {
     return this.map.get(name)?.length ?? 0;
   }
+
+  /** 只给测试看：登记了多少个游戏内名字（C++ 里那个 100 条的表应该是 42 个） */
+  _nameCountForTest(): number {
+    return this.map.size;
+  }
 }
