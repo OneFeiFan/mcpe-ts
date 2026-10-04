@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { EntityRendererId, FallingTile } from '@mcpe/world';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { EntityRendererId, FallingTile, initItems } from '@mcpe/world';
 import {
   EntityRenderer,
   EntityRenderDispatcher,
@@ -12,6 +12,14 @@ import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 // 忘了 assign 的话渲染器类还在、编译也过，但 `EntityRenderDispatcher.renderAt`
 // 拿不到它就跳过，画面上下落的方块又是隐形的（这正是 D2 结束时用户报的现象）。
 // 所以这条测试钉的是"注册表里真的有它"，不是"这个类能 new 出来"。
+
+beforeAll(() => {
+  // ⚠ D9.5 起，分派器的构造函数里会读 `Item.egg` / `Item.snowBall`（照 C++ 的 assign 那两行），
+  // 所以**必须先把物品注册好再建单例** —— 真机顺序就是这样（NinecraftApp.initApp 里
+  // initTiles → initItems 都在渲染之前）。这个 beforeAll 是补上那个真实顺序，不是改断言。
+  createFlatLevel(); // initHeadless：initMaterials → initTestTiles → initBiomes…
+  initItems();
+});
 
 afterEach(() => {
   EntityRenderDispatcher.destroy(); // 单例，别让用例之间互相污染

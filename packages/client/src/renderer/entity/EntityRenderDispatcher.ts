@@ -7,7 +7,7 @@
  * C++ 的 assign 在 `for (… init(this))` 循环**之前**逐条调用，这里照抄那个顺序。
  */
 import { Mth } from '@mcpe/util';
-import { type Entity, EntityRendererId, type Level, type Mob, Tile } from '@mcpe/world';
+import { type Entity, EntityRendererId, Item, type Level, type Mob, Tile } from '@mcpe/world';
 import type { Font } from '../../gui/Font';
 import type { Minecraft } from '../../Minecraft';
 import type { Options } from '../../Options';
@@ -17,6 +17,7 @@ import type { Textures } from '../Textures';
 import type { EntityRenderer } from './EntityRenderer';
 import { FallingTileRenderer } from './FallingTileRenderer';
 import { ItemRenderer } from './ItemRenderer';
+import { ItemSpriteRenderer } from './ItemSpriteRenderer';
 
 export class EntityRenderDispatcher {
   static xOff = 0;
@@ -40,10 +41,21 @@ export class EntityRenderDispatcher {
 
   constructor() {
     this.assign(EntityRendererId.ER_ITEM_RENDERER, new ItemRenderer());
+    // D9.5：雪球和蛋共用同一个"物品图标"渲染器，只是图标格号不同。
+    // ⚠ 这两行读 Item，所以**必须在 initItems() 之后**构造这个单例（真机顺序天然满足）。
+    //   C++ 里它们排在 ER_ITEM(42) 和 ER_FALLINGTILE(58) 之间，照那个相对顺序摆。
+    this.assign(
+      EntityRendererId.ER_THROWNEGG_RENDERER,
+      new ItemSpriteRenderer(Item.egg.getIcon(0)), // EntityRenderDispatcher.cpp:55
+    );
+    this.assign(
+      EntityRendererId.ER_SNOWBALL_RENDERER,
+      new ItemSpriteRenderer(Item.snowBall.getIcon(0)), // EntityRenderDispatcher.cpp:56
+    );
     // D2.5：这个不依赖模型系统，所以能单拎出来先补 —— 补之前下落的方块在画面上是隐形的
     this.assign(EntityRendererId.ER_FALLINGTILE_RENDERER, new FallingTileRenderer()); // EntityRenderDispatcher.cpp:58
     // DEFERRED(EntityRender): ER_HUMANOID、ER_PIG、ER_COW、ER_CHICKEN、ER_SHEEP、ER_SKELETON、ER_ZOMBIE、ER_CREEPER、ER_SPIDER、
-    //   ER_TNT、ER_ARROW、ER_PLAYER、ER_THROWNEGG、ER_SNOWBALL、ER_PAINTING 的渲染器（模型系统与这些实体计划外）
+    //   ER_TNT、ER_ARROW、ER_PLAYER、ER_PAINTING 的渲染器（模型系统与这些实体计划外）
     for (const r of this._renderers.values()) r.init(this);
   }
 
