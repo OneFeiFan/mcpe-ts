@@ -203,12 +203,19 @@ describe('Snowball（D9）', () => {
   });
 
   describe('SnowballItem 接线', () => {
+    // ⚠ 雪球的**物品 id 是 332，不是 76**：C++ `Item::Item(int id) : id(256 + id)`、
+    // `items[this->id] = this`（Item.h:213-225），TS 照抄（Item.ts:247）。注册表里写的是 76
+    // （`Item.snowBall = new SnowballItem(76)`），但构造完之后 `item.id === 332`。
+    // 第一版浏览器场景按 76 去查表拿到 null —— 这条注释就是那次踩坑留下的。
+    const SNOWBALL_ITEM_ID = 76 + 256;
+
     it('服务端 use：造一个 Snowball、owner 是玩家、数量减一', () => {
       const rec = new RecordingListener();
       level.addListener(rec);
       const player = fakePlayer(false);
-      const item = new SnowballItem(83);
-      const inst = new ItemInstance(83 + 256, 3, 0);
+      const item = new SnowballItem(76);
+      expect(item.id, '注册 id 是 76，构造函数加 256').toBe(SNOWBALL_ITEM_ID);
+      const inst = new ItemInstance(SNOWBALL_ITEM_ID, 3, 0);
       const before = level.entities.length;
 
       const ret = item.use(inst, level, player);
@@ -226,8 +233,8 @@ describe('Snowball（D9）', () => {
 
     it('创造模式：数量不减，雪球照扔', () => {
       const player = fakePlayer(true);
-      const item = new SnowballItem(83);
-      const inst = new ItemInstance(83 + 256, 3, 0);
+      const item = new SnowballItem(76);
+      const inst = new ItemInstance(SNOWBALL_ITEM_ID, 3, 0);
       item.use(inst, level, player);
       expect(inst.count).toBe(3);
     });
@@ -237,8 +244,8 @@ describe('Snowball（D9）', () => {
       level.addListener(rec);
       level.isClientSide = true;
       const player = fakePlayer(false);
-      const item = new SnowballItem(83);
-      const inst = new ItemInstance(83 + 256, 3, 0);
+      const item = new SnowballItem(76);
+      const inst = new ItemInstance(SNOWBALL_ITEM_ID, 3, 0);
       const before = level.entities.length;
 
       item.use(inst, level, player);
