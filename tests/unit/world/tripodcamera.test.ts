@@ -172,7 +172,7 @@ describe('TripodCamera（D5）', () => {
       const item = new CameraItem(200);
       const before = level.entities.length;
 
-      const ret = item.use(new ItemInstance(200 + 256, 1), level, owner);
+      const ret = item.use(new ItemInstance(200 + 256, 1, 0), level, owner);
 
       expect(level.entities.length).toBe(before + 1);
       const cam = level.entities[level.entities.length - 1]!;
@@ -187,7 +187,7 @@ describe('TripodCamera（D5）', () => {
       const item = new CameraItem(200);
       level.isClientSide = true;
       const before = level.entities.length;
-      item.use(new ItemInstance(200 + 256, 1), level, owner);
+      item.use(new ItemInstance(200 + 256, 1, 0), level, owner);
       expect(level.entities.length).toBe(before + 1);
     });
   });
