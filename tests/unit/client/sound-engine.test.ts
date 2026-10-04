@@ -126,10 +126,33 @@ describe('SoundBank（F5）', () => {
     expect(toy.has('nope')).toBe(false);
   });
 
+  it('⚠ 每一段是 bin 的**视图**：改 bin 能通过 desc.frames 看到（slice 就看不到）', () => {
+    const index = [
+      { name: 'x', offset: 0, size: 20, channels: 1, byteWidth: 2, frameRate: 8000, numFrames: 2 },
+    ];
+    const bin = packed(1, 2, 8000, 2, (i) => i);
+    const toy = new SoundBank(bin, index);
+    const d = toy.desc('x')!;
+    bin[16] = 42;
+    expect(d.frames[0], 'C++ 是指针；用 slice 就断了这层共享').toBe(42);
+  });
+
   it('size / names 报的是包里的条目', () => {
     const toy = toyBank();
     expect(toy.size).toBe(2);
     expect(toy.names()).toEqual(['cloth1', 'stone1']);
+  });
+
+  it('⚠ 变体数也要对：step.cloth 挂 4 个、random.glass 挂 3 个', () => {
+    // 只数"有多少个不同的名字"抓不住"表里某个文件名写错了" —— 那个名字照样存在，
+    // 只是少了一个变体。这条是变异测试抓出来的空白。
+    const engine = new SoundEngine(20.0, new SpySystem());
+    engine.init({} as never, { getProgressValue: () => 1 } as unknown as Options, bank);
+    const repo = (engine as unknown as { sounds: SoundRepository }).sounds;
+    expect(repo._variantsForTest('step.cloth'), 'cloth1..4').toBe(4);
+    expect(repo._variantsForTest('step.stone'), 'stone1..4').toBe(4);
+    expect(repo._variantsForTest('random.glass'), 'glass1..3').toBe(3);
+    expect(repo._variantsForTest('random.click'), 'click 只有一个').toBe(1);
   });
 
   it('真包：103 个文件，表里用到的 100 个一个都不缺', () => {
@@ -151,6 +174,16 @@ describe('SoundEngine（F5）', () => {
     const e = new SoundEngine(20.0, spy);
     e.init({} as never, options, new SoundBank(new Uint8Array(0), []));
     expect(e._soundCountForTest(), '空包 → 一个都没登记').toBe(0);
+  });
+
+  it('⚠ 记录：`_invMaxDistance` 那个 fround 是**等价变异**，测不出来', () => {
+    // C++ 是 `_invMaxDistance(1.0f / maxDistance)`（float 除法），TS 写 `f(1/maxDistance)`。
+    // 但 maxDistance = 20 时，f(1/20) 和 1/20 的相对差是 1.49e-8，**小于** float32 的相对精度
+    // 5.96e-8 —— 乘上 5/10/15/19 之后 `f()` 都会舍回同一个数。所以"去掉这个 fround"
+    // 任何断言都抓不到（写下来免得以后有人拿它做扰动、得个假绿）。
+    const a = f(f(1.1) - f(5 * f(1 / 20)));
+    const b = f(f(1.1) - f(5 * (1 / 20)));
+    expect(a, '两个写法的结果确实一样').toBe(b);
   });
 
   it('⚠ 脚下是 1 而不是 1.1 —— clamp 的上界就是 1.0', () => {
@@ -182,6 +215,9 @@ describe('SoundEngine（F5）', () => {
   });
 
   it('音量 0 直接早退，不碰后端', () => {
+    // ⚠ 这条**抓不住**"删掉第一个 volume <= 0 早退"那个变异：后面还有第二道
+    //   `if (soundVolume === 0 || volume <= 0) return;`，0 会被它拦下（和 D2 的
+    //   `tid===0` + `tile` 判空两道重叠守卫一个性质）。这里只是把行为钉住。
     engine.play('step.stone', 8, 70, 8, 0, 1);
     expect(spy.calls).toEqual([]);
   });

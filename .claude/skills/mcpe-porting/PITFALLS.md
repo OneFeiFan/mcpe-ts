@@ -87,6 +87,34 @@
    用这个比值而不是直接读 `devicePixelRatio`，画布尺寸不严格按 dpr 算时也不会跑偏。
    ⚠ 这类 bug 在 `deviceScaleFactor: 1` 的无头测试里**完全测不出来** —— 见下面 F 节。
 
+## E2. 素材不只是图片（任务单 F 教我的）
+
+- **`.pcm` / 别的"音频数据"在参考树里可能是 C 源码，不是二进制。**
+  `src/client/sound/data/*.pcm` 长这样：
+  `unsigned char PCM_bow[40156] = { 1,0,0,0,2,0,0,0,… };`
+  —— 前 16 字节是小端 int32×4 的头（channels / byteWidth / frameRate / numFrames），
+  后面是 PCM16。搬之前先 `head -c 32` 看一眼，别照着"裸二进制"的假设写加载器。
+  三个实测踩到的：**数值有十进制也有十六进制两种写法**（103 个文件里 17 个是 `0x…`）；
+  **有的文件 `};` 后面还粘着别的代码**（`pop2.pcm` 尾巴上是 `SoundDesc SA_pop2(...);`），
+  所以只能取第一个 `{` 到第一个 `}`；**解析完要自校验**（数值个数 == 声明长度 ==
+  `16 + ch×bw×nf`），不然脏数据会静默流进去。
+- **大块素材打成"一个包 + 一份索引"**，一次请求拿全；`tools/sound/build.mjs` 是模板
+  （`--check` 只校验不写、`--out` 给测试用）。⚠ **给转换脚本加 `--out`**：默认目标是仓库里
+  已提交的产物，测试跑一遍就会把它覆盖成只含临时样例的包。
+- **浏览器不认识"裸 PCM"**：`decodeAudioData` 只吃容器格式（WAV/MP3/OGG）。
+  裸 PCM16 要自己 `ctx.createBuffer` + 把**交错**样本铺成各声道 Float32
+  （`/32768`，注意跨步要乘 `byteWidth` 而不是写死 2）。这也顺带绕开了各浏览器解码器的差异。
+
+## E3. 音频后端特有的两件事（任务单 F）
+
+- **自动播放策略**：`AudioContext` 一开始是 `suspended`，没有用户手势不出声。
+  要 `resume()` 得挂 `pointerdown`/`keydown` 监听 —— ⚠ **而这个监听是在建 `AudioContext`
+  的时候挂的**。所以 context 必须**在启动时就建**，不能拖到第一次 `playAt`：
+  那时候"点开始游戏"已经过去了，用户得再点一次才听得到。
+- **声音没法截图**：验收手段要换。给后端加一份**可读的播放调用记录**
+  （`plays: [{name,x,y,z,volume,pitch}]`），场景里断言"**调了、参数对**"，
+  而不是"我听见了"。记录要写在碰 `AudioContext` **之前**，这样没手势也能断言。
+
 ## F. 验证时的坑
 
 - 无头浏览器锁定鼠标指针后渲染极慢（每秒约 1 帧），截图会超时。场景里不要点击画面，用 `window.__app` 直接操作（`app.screenChooser.setScreen(id)`、`app.player.xRot = …`）。
@@ -100,6 +128,14 @@
   平时看不出来（下个 tick 就对齐了），但**一旦 `app.pause = true` 把世界按住，就再也没有 tick** ——
   此时改 `xRot` 只被插值走一小截，画面基本没转。表现是"明明对准了却一片空白"，
   很容易误判成渲染没生效（D2.5 就在这里绕了半天）。`yRot` / `yRotO` 同理。
+- **`vitest` 不做类型检查 —— `new 抽象类` 这类错误只有 `pnpm typecheck` 抓得到。**
+  测试全绿、`typecheck` 全红是可能的（E9 的 `new Entity(level)`、SoundDesc 那次都栽过）。
+  跑测试之外**一定单独跑一遍 `pnpm typecheck`**。
+- **数台账标记要用 `tools/ledger.mjs` 里那条严格正则**（`//\s*(DEFERRED|OMIT|ADAPTED|FORWARD-DECL)\(系统\)`），
+  不要用宽松的 `grep "OMIT(x)"` —— 正文里提到"标 `OMIT(x)`"的说明文字会被算进去
+  （数错过两次：231 那次数成 12/8，Sound 那次数成 15 而实际是 11）。
+  同理，**数测试条数要用 vitest 自己的报告**（`--reporter=json` 或汇总行），
+  不要数源码里的 `it(` —— `for` 循环生成的用例数对不上。
 - **想拍"运动中的东西"，用 `app.pause = true` 定格再拍，然后记得放开。**
   `Minecraft.pause` 只挡 `level.tick / tickEntities`，渲染照跑，
   所以按住之后等一两秒让画面追上来就能拍到静止的一帧（无头浏览器只有约 1 帧/秒，不等就是空画面）。

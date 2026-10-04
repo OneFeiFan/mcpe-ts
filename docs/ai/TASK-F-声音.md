@@ -346,3 +346,77 @@ F5 的 `SoundEngine` 要 F1 + F3 都在；F6 要 F5 和 F4 都能跑。
 - **3 个死素材**（`chicken1` / `chickenplop` / `skeletondeath`）：会打进包，但名字表里没有它们，
   所以永远播不到 —— 和 C++ 一致。
 - **`SoundEngine.mm` 的 `_pp(文件名)` 那版**：不移植（那是 iOS 的运行时加载路径）。
+
+---
+
+## 任务单 F 完成（2026-10-04）
+
+**声音在浏览器里响了。** 从 `26e65c5`（F0 任务单）到 `9d9789c`（F3~F7），一共 **4 个提交**。
+
+### 台账（每一步的数字都是刚才用临时 worktree 逐个 checkout 实测的）
+
+| 步 | 提交 | 台账 | 一句话 |
+| --- | --- | --- | --- |
+| 基线 | `61dd1e5` | **231** | 任务单 E 收官后的数 |
+| F0 | `26e65c5` | 231 | 任务单落盘（纯文档） |
+| F1 | `9785ea5` | 231 | `SoundDesc` + `SoundRepository` |
+| F2 | `8200e41` | 231 | `.pcm` → `sounds.bin` + `sounds.json` |
+| F3~F7 | `9d9789c` | **222** | 引擎 / 后端 / 接线 / 场景 |
+| F8 | 本次 | 222 | 完成章节（纯文档） |
+
+**净变化：231 → 222。** 拆开看正好对得上：
+
+- **删掉 6 条 `DEFERRED(Sound)`**（全部换成真调用）；
+- **删掉 4 条 `OMIT(Sound)`**（`audioEngineOn/Off` 两条 + `LevelRenderer.playSound` 两条重复记录）；
+- **新增 1 条 `ADAPTED(Web)`** —— `WebAudioSoundSystem::enable` 是加宽的
+  （C++ 的 `SoundSystem::enable` 是空的；浏览器切后台会自己挂起，这里顺着手动同步）；
+- 剩下 **1 条 `OMIT(Sound)`**：`LevelRenderer.levelEvent(player, type, x, y, z, data)`
+  （`LevelRenderer.cpp:1669`）—— 本来就不在这批范围。
+
+`−10 + 1 = −9` ✓（第一次算只对上了"10"，差 1 条就是这么来的 —— 用 `git diff | grep '^+'`
+按 `// MARKER(x)` 的格式逐条数出来的，不是估的）。
+
+### 每一步的验证方式
+
+- **单测**：任务单 F 新增 **4 个文件 / 59 条**
+  （`sound` 14、`sound-pack` 16、`sound-engine` 24、`web-audio` 5）。全仓库 **95 文件 / 1060 条全过**。
+- **反向验证（扰动源码）**：一共 **34 个变异**，32 个变红、2 个记为等价变异：
+  - F1 11 个全红；F2 9 个全红；F3~F7 14 个里 12 个红；
+  - 两个等价变异：`_invMaxDistance` 那个 fround（`f(1/20)` 和 `1/20` 的相对差
+    1.49e-8 < float32 相对精度 5.96e-8，乘 5/10/15/19 之后都会被舍回同一个数）；
+    `play()` 里第一个 `volume <= 0` 早退（后面还有第二道同款守卫，和 D2 的
+    `tid===0` + `tile` 判空一个性质）。两条都写成了「记录」测试。
+- **被反向验证抓出来的测试空白**（补了断言才变红）：
+  - **变体数**：只数"有多少个不同的名字"抓不住"表里某个文件名写错了" —— 那个名字照样存在，
+    只是少一个变体。补了 `step.cloth` 挂 4 个、`random.glass` 挂 3 个这类断言；
+  - **`SoundBank` 用 `slice` 还是 `subarray`**：原来只断言了值，没断言**共享内存**。
+    补了"改 bin 能通过 `desc.frames` 看到"。
+- **浏览器场景**：`tools/verify/scenarios/sound.mjs`，**19 条断言全过** / 页面错误 0。
+  断言的是**播放调用记录**（声音截不了图）：挖方块出 `step.*`、40 格外被剔除、
+  `playUI` 坐标是 `(0,0,0)`、5 格处音量 = `1.1 - 5×(1/20)`、`AudioContext` 实测 `state=running`。
+- **没有黄金样本** —— 参考 C++ 的网页版根本不出声，没有标准答案可比。
+
+### F0 没算到的三件事
+
+1. **`.pcm` 是 C 源码**，不是二进制（计划里写的是"裸 PCM16 + 16 字节头"）。
+   要写解析器，还要处理十六进制写法（17 个文件）和 `pop2.pcm` 尾巴上的脏数据。
+2. **`SOUND_DISTANCE = 16` 那道硬剔除在 `LevelRenderer::playSound`**，不在 `SoundEngine` ——
+   `SoundEngine::play` 里那两句是复制粘贴的残骸。也就是说「16 格剔除」和「音量衰减」是**两道不同的闸**。
+3. **数据是裸 PCM16、不是容器格式**，`decodeAudioData` 解不了 —— 得自己 `createBuffer` +
+   把交错样本铺成各声道 Float32。顺带完全绕开了各浏览器解码器的差异。
+
+### 录音室里没有的东西（本任务单不做）
+
+- **背景音乐**：C++ 里没有 BGM 播放器（`OPTIONS_MUSIC_VOLUME` 只在 `init` 里被读来
+  判断要不要 `loadLibrary()`）。
+- **`SoundSystemSL`（Android OpenSL ES 后端）**：不移植。
+- **`SoundEngine.mm` 的 `_pp(文件名)`**：那是 iOS 的运行时加载路径，网页版走 `.cpp` 的全局表。
+- **3 个死素材**（`chicken1` / `chickenplop` / `skeletondeath`）：打进包了，但名字表里没有它们，
+  永远播不到 —— 和 C++ 一致。
+- **`LevelRenderer.levelEvent`**：仍是 `OMIT(Sound)`，请看它是不是要单独开一步。
+
+### 一处留给后面注意的
+
+`WebAudioSoundSystem` 的 `playAt` / `AudioContext` 那段**没法单测**（Node 里没有 Web Audio），
+只有 F7 场景能验。所以后端里凡是**纯计算**的部分（`pcm16ToFloatPerChannel`、
+那三个 OpenAL 常数）都单独抽出来测了 —— 以后再加后端逻辑，也照这个办法拆。
