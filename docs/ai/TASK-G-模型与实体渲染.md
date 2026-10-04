@@ -219,6 +219,26 @@ X 和 Y 都乘 −1。所以模型坐标里 "+y 向上"在屏幕上是**向下**
 另外 `MobRenderer` 用的是 `glPushMatrix2` / `glDisable2(GL_CULL_FACE)`，**没有** `glScalef(1,1,-1)`
 之类；和别的渲染器（`ArrowRenderer`、`ItemRenderer`）比一眼能看出差异 —— 别照自己的直觉改。
 
+### 七、`ModelPart::draw()` 走哪条分支，取决于 `OPENGL_ES`（G1 做的时候才发现的）
+
+```cpp
+void ModelPart::draw() {
+#ifdef OPENGL_ES
+	drawArrayVTN_NoState(vboId, cubes.size() * 2 * 3 * 6, 36);
+#else
+	glCallList(list);          // 显示列表
+#endif
+}
+```
+
+`CMakeLists.txt:383` 给网页版定义了 `OPENGL_ES`，所以**真实网页版走的是 VBO 那条**，
+和 TS 已有的 `ItemInHandRenderer` / `Tesselator` 是同一条路。`list` 成员与 `glGenLists`
+那一整段在网页版里是死代码（编译期就被 `#ifndef OPENGL_ES` 排掉了）。
+
+⚠ 顺带一个给 G4 的提醒：**`build.sh` 原来的通用参数里没有 `-DOPENGL_ES`**，
+G1 已经补上了（细节见 G1 那一节）。谁要是以后另外写编译命令，别忘了这个宏 ——
+少了它 `draw()` 就变成显示列表，和网页版行为相反。
+
 ---
 
 ## 拆分（十二小步）
@@ -253,23 +273,44 @@ G10 让 TNT / 画 / 相机看得见。G11 是玩家自己（要切第三人称�
 
 ## 每一步的详细验收
 
-### G1 — 黄金样本（**先做，后面两步都靠它**）
+### G1 — 黄金样本（**先做，后面两步都靠它**）✅ 已完成
 
 新写 `tools/golden/harness_model.cpp`，把 `Cube` 的顶点和 UV 打出来：
 
 - 造几个形状覆盖全部分支：`(0,0,0,8,8,8,g=0)`（人头）、`(0,0,0,4,12,4,g=0.5)`（手臂，带外扩）、
   `mirror = true` 的那一组（`arm1` / `leg1`）、以及 `xTexOffs/yTexOffs` 非 0 的
-  （`arm0(40,16)` 那种）；再把 `HumanoidModel` 与 `ChickenModel` 里每个 `ModelPart` 的
-  全部 cube 也扫一遍 —— **这样模型表本身就是夹具**，谁改错参数立刻红。
-- 每个 cube 输出：8 个 `VertexPT` 的 `x/y/z/u/v`（float，按 C++ 打印精度），
-  以及 6 个 `PolygonQuad` 的 4 个角各自的 `x/y/z/u/v`。
-- 链接：`Cube.cpp` + `Polygon.cpp` + `ModelPart.cpp`（`ModelPart` 的构造会调 `glGenBuffers2`，
-  用 `build_with_stubs` 那套自动生成 trap 桩即可，不用手写）。
-- `build.sh` 里加一节 `model`（`ALL_SECTIONS` 数组 + 一段 `if want model`）。
-  给节名时**必须能只跑这一节**（别每次重编 150 个文件）。
+  （`arm0(40,16)` 那种）；再把 `HumanoidModel`（64×32 与 64×64 各一遍）与 `ChickenModel` 里
+  每个 `ModelPart` 的全部 cube 也扫一遍 —— **这样模型表本身就是夹具**，谁改错参数立刻红。
+- 每个 cube 输出：6 个成员 `x0..z1`、8 个 `VertexPT` 的 `x/y/z/u/v`，
+  以及 6 个 `PolygonQuad` 的 4 个角各自的 `x/y/z/u/v`（外带 `_flipNormal`）。
 
-验收：`REF=$REF bash tools/golden/build.sh model` 出 `fixtures/golden/model.json`；
-**连跑两次逐字节一样**（夹具可复现）；`git status` 只有这三个文件。
+**做这步时挖出来的三件事（都已处理）**：
+
+1. ⚠ **`build.sh` 的通用参数少了一个 `-DOPENGL_ES`。** `CMakeLists.txt:383` 写着
+   `target_compile_definitions(... PUBLIC "OPENGL_ES" "NO_EGL" ${PLATFORM})` —— 网页版**是**定义它的。
+   少这个宏，`ModelPart::draw()` 会走 `#else glCallList(list)` 那条**显示列表**分支
+   （`ModelPart.cpp:203-209`），和网页版真实行为相反。已补进 `CF`，并在注释里写清
+   为什么**不能**同时补 `__EMSCRIPTEN__`（会让 `gles.h` 去 `#import <GLES/gl.h>`，Linux 上没有）。
+   补之前查过影响面：全树带 `OPENGL_ES` 分支的只有 9 个文件，**没有一个被已有的节编译**；
+   实测重生成 `mth` 节，工作树无变化。
+2. `stub/glad/glad.h` 原来只声明了 5 个 GL 函数，模型文件要 `glRotatef`（`ModelPart::render`）
+   与 `glScalef`（`ChickenModel::render`）。已补声明（只声明不定义 —— harness 只构造模型、不渲染）。
+3. `harness_model.cpp` 自己给了一个 `anGenBuffers` 的空实现（只会发号）：`ModelPart::_init`
+   构造时就会调它，不给自己会踩上陷阱桩的 `ud2`。
+
+**夹具**：`fixtures/golden/model.json`，**42,611 字节**，6 个合成形状 + 3 个模型（33 个 cube）。
+自检脚本 `tools/golden/check-model-fixture.mjs`（人工看一眼用，不进测试套件）。
+
+怎么验证：
+
+```bash
+REF=$REF bash tools/golden/build.sh model     # 出夹具
+node tools/golden/check-model-fixture.mjs     # 结构自检
+```
+
+**实测结果**：连跑两遍**逐字节相同**；`arm_inflated` 的成员 `[-3,-2,-2,1,10,2]`（没外扩）
+对顶点 `[-3.5,-2.5,-2.5,…]`（外扩过）—— 坑二那条形参遮蔽在夹具里看得见；
+`arm_mirror` 的顶点从 `x=3` 起、不镜像的从 `x=-3.5` 起 —— mirror 交换生效。
 
 ### G2 — `Vertex` + `Polygon`
 

@@ -10,3 +10,7 @@ void glColor4f(...);
 void glPushMatrix(...);
 void glTranslatef(...);
 void glPopMatrix(...);
+/* 模型那一节（harness_model.cpp）要用：ModelPart::render 里有 glRotatef、ChickenModel::render 里有 glScalef。
+   都只在 render 路径上，harness 只构造模型、不渲染，所以有声明就够、不需要定义。 */
+void glRotatef(...);
+void glScalef(...);

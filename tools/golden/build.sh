@@ -25,7 +25,7 @@ CXX="${CXX:-g++}"
 JOBS="${JOBS:-$(nproc 2>/dev/null || echo 4)}"
 
 # ---- 选择性生成：不给节名就全生成，给了就只生成这几节 ----
-ALL_SECTIONS=(random mth util s4 synth biomesource optionsfile registry nbt i18n inventory entity collision explosion font regionfile leveldata playerdata saveleveldata chunk entities randomlevelsource)
+ALL_SECTIONS=(random mth util s4 synth biomesource optionsfile registry nbt i18n inventory entity collision explosion font regionfile leveldata playerdata saveleveldata chunk entities randomlevelsource model)
 SECTIONS=("$@")
 if [ "${#SECTIONS[@]}" -gt 0 ] && [ "${SECTIONS[0]}" = "--list" ]; then
     printf '%s\n' "${ALL_SECTIONS[@]}"
@@ -54,7 +54,18 @@ any_want() {
 }
 
 # 参考源码的通用编译参数。client 头文件要的 GL 类型由 stub/glad/glad.h 提供。
-CF=(-O0 -std=c++17 -w -fpermissive -DPLATFORM_WEB -DNO_EGL -I"$REF/src" -I"$ROOT/tools/golden/stub")
+#
+# 【-DOPENGL_ES 是网页版构建的真实定义，别去掉】CMakeLists.txt:383 写着
+# `target_compile_definitions(... PUBLIC "OPENGL_ES" "NO_EGL" ${PLATFORM})`，
+# 而 CMakeLists.txt:379 给 emscripten 另加 `__EMSCRIPTEN__ NO_SOUND NO_NETWORK`。
+# 这里只补 OPENGL_ES 与 NO_EGL：`__EMSCRIPTEN__` **不能**定义，否则 gles.h 的
+# include 链会走 `#import <GLES/gl.h>`（Linux 上没有这个头），就用不上 stub 了。
+#
+# 加它之前先查过影响面：全树带 `OPENGL_ES` 分支的只有 9 个文件
+# （ModelPart.cpp、LevelRenderer.cpp、gles.cpp/h、main_{android,glfw,rpi,win32}.h、EglConfigPrinter.h），
+# 其中**没有任何一个被已有的节编译**，所以补上是零风险的；不加的话
+# ModelPart::draw 会走 glCallList 那条（显示列表）分支，和网页版真实行为相反。
+CF=(-O0 -std=c++17 -w -fpermissive -DPLATFORM_WEB -DOPENGL_ES -DNO_EGL -I"$REF/src" -I"$ROOT/tools/golden/stub")
 
 # ---- 并行编译 ----
 # 单文件编译脚本。写成独立文件而不是用 export -f：$CF 是数组，没法跟着函数导出；
@@ -121,7 +132,7 @@ fi
 
 # 诊断用：撞到 ud2 陷阱桩时打印地址。放在 $TMP 而不是 $REG —— 因为 collision 与 leveldata
 # 只需要这一个文件，不需要 $REG 那 30 个方块/物品类，放 $REG 会白编一大堆。
-if any_want registry nbt i18n inventory entity collision explosion font leveldata playerdata saveleveldata chunk entities randomlevelsource; then
+if any_want registry nbt i18n inventory entity collision explosion font leveldata playerdata saveleveldata chunk entities randomlevelsource model; then
     "$CXX" -c "$ROOT/tools/golden/stub/sigill_diag.cpp" -o "$TMP/sigill_diag.oo"
 fi
 
@@ -331,6 +342,28 @@ if want randomlevelsource; then
     "$CXX" -c "$LVL/rls.stubs.s" -o "$LVL/rls.stubs.oo"
     "$CXX" -no-pie -o "$LVL/harness_randomlevelsource" "$LVL/harness_rls.oo" "$LVL"/*.o "$LVL/rls.stubs.oo" "$TMP/sigill_diag.oo"
     "$LVL/harness_randomlevelsource" "$OUT/randomlevelsource.json"
+fi
+
+# ---- S13-G1：模型几何（Cube 的顶点与 UV）。
+#
+# 自成一节、只编 5 个模型源文件 —— 别塞进 $REG（那组是 30 个方块/物品类，白编）。
+# harness 只构造模型、不渲染，所以除了 `anGenBuffers`（harness 自己给了个发号的定义）
+# 之外的 GL 调用全都用不着；真需要的符号由这里的陷阱桩兜底。
+if want model; then
+    MDL="$TMP/mdl"; mkdir -p "$MDL"
+    compile_many "$MDL" \
+        client/model/geom/Cube.cpp Cube \
+        client/model/geom/Polygon.cpp Polygon \
+        client/model/geom/ModelPart.cpp ModelPart \
+        client/model/ChickenModel.cpp ChickenModel \
+        client/model/HumanoidModel.cpp HumanoidModel
+    "$CXX" "${CF[@]}" -c "$ROOT/tools/golden/harness_model.cpp" -o "$MDL/harness_model.oo"
+    { "$CXX" -o /dev/null "$MDL/harness_model.oo" "$MDL"/*.o -Wl,--no-demangle 2>&1 || true; } | grep -oE "undefined reference to \`[^']+'" \
+      | sed "s/undefined reference to \`//; s/'$//" | sort -u \
+      | awk 'BEGIN{print ".section .note.GNU-stack,\"\",@progbits"; print ".text"} {b = ($0 ~ /RakNet/) ? "ret" : "ud2"; printf ".globl %s\n.type %s,@function\n%s:\n  %s\n", $0, $0, $0, b}' > "$MDL/mdl.stubs.s"
+    "$CXX" -c "$MDL/mdl.stubs.s" -o "$MDL/mdl.stubs.oo"
+    "$CXX" -no-pie -o "$MDL/harness_model" "$MDL/harness_model.oo" "$MDL"/*.o "$MDL/mdl.stubs.oo" "$TMP/sigill_diag.oo"
+    "$MDL/harness_model" "$OUT/model.json"
 fi
 
 if [ "${#SECTIONS[@]}" -eq 0 ]; then
