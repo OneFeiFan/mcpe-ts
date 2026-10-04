@@ -23,7 +23,13 @@ const mutations = JSON.parse(readFileSync(listFile, 'utf8'));
 
 function runTest() {
   try {
-    execFileSync('npx', ['vitest', 'run', ...testFiles], { stdio: 'pipe' });
+    execFileSync('npx', ['vitest', 'run', ...testFiles], {
+      stdio: 'pipe',
+      // ⚠ Windows 上必须带 shell：Node 从 CVE-2024-27980 起默认拒绝在不带 shell 时执行
+      //   npx.cmd/.bat，execFileSync 会立即 ENOENT —— 那样每条变异都会"立即红"（假阳性，
+      //   全套跑完只要零点几秒）。check.mjs 的 run() 同款处理。
+      shell: process.platform === 'win32',
+    });
     return true; // 绿
   } catch {
     return false; // 红
