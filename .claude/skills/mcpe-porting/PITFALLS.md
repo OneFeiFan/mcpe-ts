@@ -131,6 +131,12 @@
 - **`vitest` 不做类型检查 —— `new 抽象类` 这类错误只有 `pnpm typecheck` 抓得到。**
   测试全绿、`typecheck` 全红是可能的（E9 的 `new Entity(level)`、SoundDesc 那次都栽过）。
   跑测试之外**一定单独跑一遍 `pnpm typecheck`**。
+
+- **`Mth` 的三角函数表要先初始化 —— 不调 `Mth.initMth()` 时 `sin`/`cos` 一律返回 0。**
+  表在模块加载时是零初始化的（`tests/unit/util/mth-preinit.test.ts` 专门钉着这件事），
+  显式初始化点是 `NinecraftApp::init` 的第一行。写单测忘了调的症状很怪：`-cos(0)*5` 算出 `-0`、
+  `bcos` 从 0.1f 变成 0.05f，看着像浮点精度问题，其实是整张表都是 0（G7 挂了 5 条）。
+  凡是待测代码里出现 `Mth.sin` / `Mth.cos`，测试的 `beforeAll` 先来一句 `Mth.initMth()`。
 - **数台账标记要用 `tools/ledger.mjs` 里那条严格正则**（`//\s*(DEFERRED|OMIT|ADAPTED|FORWARD-DECL)\(系统\)`），
   不要用宽松的 `grep "OMIT(x)"` —— 正文里提到"标 `OMIT(x)`"的说明文字会被算进去
   （数错过两次：231 那次数成 12/8，Sound 那次数成 15 而实际是 11）。
