@@ -66,10 +66,10 @@
     "to": "      model.cubes.push(this);"
   },
   {
-    "label": "M12 ModelPart: assign 忘了 clear",
+    "label": "M12 ModelPart: assign 不拷 mirror（恒 false）",
     "file": "packages/client/src/model/geom/ModelPart.ts",
-    "from": "  assign(rhs: ModelPart): ModelPart {\n    this.clear();",
-    "to": "  assign(rhs: ModelPart): ModelPart {\n    // this.clear();"
+    "from": "    this.compiled = false;\n    this.mirror = rhs.mirror;",
+    "to": "    this.compiled = false;\n    this.mirror = false;"
   },
   {
     "label": "M13 ModelPart: assign 深拷 cube（该是浅拷指针）",

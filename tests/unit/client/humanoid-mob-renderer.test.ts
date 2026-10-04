@@ -341,6 +341,14 @@ describe('G8 additionalRendering：披风', () => {
     expect(gl.ops).toContain(`r:${f((f(6.0) - 0) * f(0.3))},1,0,0`);
   });
 
+  it('⚠ forward 在 (-1, 0) 之间也夹到 0（C++ 是 `< 0`，不是 <= -1 —— 变异验证补的）', () => {
+    const { r } = makeRenderer();
+    // bodyYaw=0 → cosYaw=-1；披风在 +z 方向 0.005 格 → forward = f(f(0.005 * -1) * 100) = -0.5
+    // 正确实现夹到 0（目标角还是 6）；<= -1 的写法会留下 -0.5（目标角 5.75 → 第一帧 1.725）
+    r.additionalRendering(fakePlayer({ cape: [0, 0, 0.005], pos: [0, 0, 0] }), 0.5);
+    expect(gl.ops).toContain(`r:${f((f(6.0) - 0) * f(0.3))},1,0,0`);
+  });
+
   it('披风 24 个顶点：tex+vertex 成对手写（不用 vertexUV），begin 前没有 color', () => {
     const { r, model } = makeRenderer();
     model.body.compile(f(1 / f(16.0))); // 先烘掉，免得 compile 自己写的顶点混进来

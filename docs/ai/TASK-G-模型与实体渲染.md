@@ -837,6 +837,22 @@ G11 真跑 **2m43s**、G10 真跑 **1m58s** 全红 —— **G2–G9 的 10 份�
 
 台账：**233 → 231**（`OMIT(EntityRender)` 的 setModernSkin + `DEFERRED(PlayerRender)` 都换成了
 真调用）。`pnpm typecheck` 0；`pnpm test` **108 文件 / 1242 条全过**。
+### 补跑：G2–G9 的变异清单（2026-10-04）
+
+`mutate.mjs` 的 Windows 假阳性修掉后（提交 `c923422`），把 G2–G9 的 10 份清单**第一次真跑**（每条约 5–6 秒）。
+结果 **102/102 全红**；过程中挖出四条没抓住的，逐条定性后补掉：
+
+- g2 M1「us 少包一层 fround」= **等价变异**（差 ~1e-12 被后续 `f()` 吸收，4097 个采样点零差异）
+  → 换成「缝合偏移 -0.002 抄成 -0.02」。
+- g3 M12「assign 忘了 clear」= **等价变异**（`clear()` 的两件事被后面两句重做一遍）
+  → 换成「assign 不拷 mirror（恒 false）」。
+- g4 M7「旋转分支不递归子部件」= **真盲区**（拿整份 `tests/unit/client` 跑仍绿）
+  → `model-part-render.test.ts` 补一条「父部件有旋转时子部件也要画」。
+- g8 M8「forward 夹下限 `< 0` 改成 `<= -1`」= **真盲区**（原测试只测了 -1000）
+  → `humanoid-mob-renderer.test.ts` 补一条「forward 在 (-1, 0) 之间也夹到 0」。
+
+重跑四份：g2 10/10 · g3 16/16 · g4 15/15 · g8 15/15。日志在 `%LOCALAPPDATA%/Temp/mcpe-g2g9/`。
+
 
 ### G12 — 收尾
 

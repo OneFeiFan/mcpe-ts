@@ -114,6 +114,16 @@ describe('ModelPart.render 的三个分支（G4）', () => {
     expect(gl.draws.length, '父子各画一次').toBe(2);
     expect(gl.ops, '子部件那次平移').toContain('t:5,0,0');
   });
+
+  it('⚠ 父部件有旋转时子部件也要画（旋转分支里也有一份递归 —— 变异验证补的）', () => {
+    const parent = part();
+    parent.xRot = 1; // 走"有旋转"那个分支（唯一 push/pop 的分支）
+    const child = part();
+    parent.addChild(child);
+    parent.render(1);
+    expect(gl.draws.length, '父子各画一次').toBe(2);
+    expect(gl.ops[gl.ops.length - 1], '子部件是在 pop 之前画的').toBe('pop');
+  });
 });
 
 describe('render 的两个早退（G4）', () => {

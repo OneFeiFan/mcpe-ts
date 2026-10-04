@@ -1,9 +1,9 @@
 [
   {
-    "label": "M1 Polygon: us 少包一层 fround",
+    "label": "M1 Polygon: us 的缝合偏移 -0.002 抄成 -0.02",
     "file": "packages/client/src/model/geom/Polygon.ts",
     "from": "const us = f(f(-0.002) / texW);",
-    "to": "const us = f(-0.002) / texW;"
+    "to": "const us = f(f(-0.02) / texW);"
   },
   {
     "label": "M2 Polygon: 第 0 个角该拿 uu1 却拿 uu0",
