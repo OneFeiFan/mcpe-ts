@@ -48,7 +48,7 @@ export abstract class GameMode {
         return false;
       }
     }
-    // DEFERRED(Particle): minecraft->particleEngine->destroy(x, y, z);
+    this.minecraft.particleEngine?.destroy(x, y, z);
     const data = level.getData(x, y, z);
     const changed = level.setTile(x, y, z, 0);
     if (changed) {
