@@ -254,7 +254,7 @@ G1 已经补上了（细节见 G1 那一节）。谁要是以后另外写编译�
 | **G3** | `Model` + `Cube` + `ModelPart` 的**「造形状」那一半** | 3 个 ts | — | **黄金样本整份** |
 | **G4** | `ModelPart` / `Cube` 的**渲染那一半**（`render` `renderRollable` `translateTo` `compile` `draw` `renderHorrible` `drawSlow`） | — | 2 个 ts | 单测（Tesselator 替身） |
 | **G5** | `Model` 基类的默认值单测 + `ModelInclude` | 1 个 ts | — | 单测 |
-| **G6** | `MobRenderer`（含 `renderName` / `renderNameTag` / 护甲层 / 受伤与染色叠加） | 1 个 ts | — | 单测 |
+| **G6** | `MobRenderer`（含 `renderName` / `renderNameTag` / 护甲层 / 受伤与染色叠加） | 1 个 ts | — | 单测 ✅ |
 | **G7** | `HumanoidModel`（含 64×64 现代皮肤分支、`hair`、`renderHand` 要用的 `arm0`） | 1 个 ts | — | 单测 |
 | **G8** | `HumanoidMobRenderer`（`additionalRendering`：手持物品 + 披风；`renderHand`） | 1 个 ts | — | 单测 |
 | **G9** | **鸡**：`ChickenModel` + `ChickenRenderer` + 注册 → **第一只看得见的生物** | 2 个 ts | `EntityRenderDispatcher.ts` | 浏览器截图 |
@@ -501,7 +501,7 @@ vite 直接 PARSE_ERROR —— 改成逐下标取就对了。）
 台账：**225 → 234**（`DEFERRED(Model)` 1→3、`DEFERRED(TileEntityRender)` 4→5、
 `OMIT(Entity)` 2→8）。`pnpm typecheck` 0；`pnpm test` **100 文件 / 1129 条全过**。
 
-### G6 — `MobRenderer`
+### G6 — `MobRenderer` ✅ 已完成
 
 `packages/client/src/renderer/entity/MobRenderer.ts`。301 行 C++，是这批里最大的一块。要点：
 
@@ -523,6 +523,44 @@ vite 直接 PARSE_ERROR —— 改成逐下标取就对了。）
   ⚠ `0x20ffffff` 那个颜色是**半透明**的（`>>> 0` 别搞成负数）。
 
 验收：单测（`setupRotations` 的死亡翻滚角度、`getBob`、`renderNameTag` 的远近剔除）。
+
+**做完的情况（G6）**
+
+新增 `packages/client/src/renderer/entity/MobRenderer.ts`（**268 行**）+ `index.ts` 里一行 export
++ `tests/unit/client/mob-renderer.test.ts`（236 行 / **13 条**）。**一条 DEFERRED 都没有** ——
+用到的 GL 函数、`Model`、`Font`、`Tesselator`、`OptionId` 在 TS 里都已存在。
+
+三条 `ADAPTED(Cpp)`（都写在文件头）：析构里的 `delete model` 不写（TS 有 GC）；
+`onGraphicsReset` 里的 `if (model)` 判空去掉（TS 的字段是必填）；
+`renderNameTag` 的 `(float)x + 0` / `(float)z` 是无意义的强转，直接写 `x` / `z`。
+
+单测钉了任务单点名的三项（死亡翻滚角度 / `getBob` / 远近剔除），另外顺手钉住四处**容易抄错、
+一眼又看不出来**的地方：
+
+- **两处除法不是同一种**：底板宽度 `int w = font->width(name) / 2` 是整数除法（字宽 9 → w=4，
+  顶点 ±5），而文字位置 `(float)font->width(name) / -2` 是浮点除法（−4.5）。两个数在同一个
+  用例里同时断言，抄混一个就红。
+- **封顶在乘之前**：`√((deathTime+a-1)/20 × 1.6)` 先 `min(…, 1)` 再乘 `getFlipDegrees()`；
+  `deathTime=20` 是 90 度而不是 113.8 度。乘数本身是虚函数，另用一个 `getFlipDegrees()=180`
+  的子类证明它真的被调到了。
+- **早退发生在取字体之前**（C++ 里那句 `return` 在 `Font* font = getFont();` 上两行）——
+  被剔除的用例里 `getFont` 一次都不该被调到。
+- **边界上不剔**：`dist` 正好等于 `maxDist²` 时**不**返回（C++ 是 `>` 不是 `>=`）。
+
+**踩到的两个坑**
+
+1. `vitest` 不做类型检查（`PITFALLS.md` F 节那条）：13 条测试先全绿，`pnpm typecheck` 却报
+   **6 处** —— 全是 `noUncheckedIndexedAccess` 下的 `gl.ops[1]` / `font.draws[0]`
+   （类型是 `string | undefined`）。
+2. 测试里 `class StubModel extends Model` 要**值**导入 `Model`；写成 `import type { Model }`
+   是 `PITFALLS.md` #17 那个坑，运行时报 `ReferenceError: Model is not defined`
+   （`vitest` 只做转译，不做类型检查，所以这个错也是跑起来才暴露）。
+
+**反向验证：7 个变异 7 个全红**（`tools/verify/mutations-g6.json`）—— `>=` 边界、封顶数值、
+`getBob` 少一层 fround、整数除法、写死 90 度、两个抬高分支对调、y 旋转漏掉取负。
+
+台账：**234 → 234**（这一步不新增也不消标记）。`pnpm typecheck` 0；
+`pnpm test` **101 文件 / 1142 条全过**。
 
 ### G7 — `HumanoidModel`
 

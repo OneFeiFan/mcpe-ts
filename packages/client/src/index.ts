@@ -56,6 +56,7 @@ export * from './renderer/entity/ItemRenderer.js';
 export * from './renderer/entity/FallingTileRenderer.js';
 export * from './renderer/entity/ItemSpriteRenderer.js';
 export * from './renderer/entity/ArrowRenderer.js';
+export * from './renderer/entity/MobRenderer.js';
 export * from './particle/ParticleTextures.js';
 // C++ 的 ParticleInclude.h：那份"哪些粒子类存在"的清单，10 个类一次转出去
 export * from './particle/ParticleInclude.js';
