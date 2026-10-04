@@ -198,6 +198,34 @@ JS 的 `this.tick()` 行为一致，**照写即可**。
 （**不是 `render(entity, a)`** —— 那个会自己做插值，参数语义不同）；`e.item.count = 1`；
 `glColor4f2(br, br, br, 1)` 照抄。做不动就 `OMIT(Particle)` + 说明，**它不是任何东西的阻塞项**。
 
+#### E9 完成记录（2026-10-04）
+
+做成了，没有降级成 `OMIT`。落地：
+
+| 文件 | 做了什么 |
+| --- | --- |
+| `packages/client/src/particle/TakeAnimationParticle.ts` | 新类（C++ 头文件 63 行） |
+| `packages/client/src/player/LocalPlayer.ts:322-334` | 换掉 `DEFERRED(Particle)`，真接上 |
+| `packages/client/src/index.ts` | 导出 |
+| `tests/unit/client/particle-take.test.ts` | 24 条单测 |
+| `tools/verify/scenarios/particles.mjs` | 新增第 7 节（4 条断言 + 1 张截图） |
+
+**台账 229 → 228**（`DEFERRED(Particle)` 全清；`OMIT(Particle)` 3 条留着，是 E10/E11 的死代码标记）。
+
+反向验证跑了 **13 个源码变异，13 个全部变红**。两个**等价变异**（测不出来，写在测试里当记录）：
+`this.e.x` ↔ `this.x`（两边永远相等，因为 `tick()` 不动任何一方）、`life === lifeTime` ↔ `life >= lifeTime`。
+
+**踩到的两个坑**（都不是移植 bug，是测试/场景自己挖的）：
+
+1. **`Entity` 是抽象类**，测试里不能 `new Entity(level)` 当"飞向的目标"。vitest 不做类型检查，
+   所以测试照样全绿，只有 `pnpm typecheck` 会红 —— 补了个 `PlainEntity extends Entity` 最小子类。
+2. **场景里那颗粒子一度"看不见"**：我把掉落物摁在了玩家**眼睛高度**上，于是
+   起点 = 终点 = 相机原点，整颗卡在近裁剪面里 —— 脚本全绿、截图啥也没有。
+   隔离验证（`_dbg-pickup.mjs` 把起点人为挪到前方 3 格，立刻显形）证明**渲染路径是好的**；
+   改成摁在**脚下一格**（`Player.tick` 的拾取盒 `bb.grow(1, 0, 1)` 竖直方向不放大，
+   玩家碰撞盒占 `y-1.62 … y+0.18`，照样捡得起来）之后就正常了。
+   教训：**"看不见"先怀疑测试设定，再怀疑渲染**；而且必须用隔离实验把两者分开。
+
 ---
 
 ## 怎么验证（三层里这批用两层）

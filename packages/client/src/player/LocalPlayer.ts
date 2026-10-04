@@ -14,6 +14,7 @@ import {
   type Entity,
   type FurnaceTileEntity,
   Item,
+  type ItemEntity,
   ItemInstance,
   type Level,
   Material,
@@ -26,6 +27,7 @@ import {
 } from '@mcpe/world';
 import type { Minecraft } from '../Minecraft';
 import { OptionId } from '../Options';
+import { TakeAnimationParticle } from '../particle/TakeAnimationParticle';
 import type { IMoveInput } from './input/IMoveInput';
 
 /** LocalPlayer.cpp 的自由函数 isJumpable */
@@ -321,7 +323,15 @@ export class LocalPlayer extends Player {
 
   override take(e: Entity, orgCount: number): void {
     if (e.isItemEntity()) {
-      // DEFERRED(Particle): minecraft->particleEngine->add(new TakeAnimationParticle(minecraft->level, e, this, -0.5f));
+      // C++：minecraft->particleEngine->add(new TakeAnimationParticle(minecraft->level, e, this, -0.5f));
+      //   C++ 在这两处都不判空（单机时一定都有值）；TS 的类型是 `| null`，所以挡一下。
+      const minecraft = this.minecraft;
+      if (minecraft.particleEngine !== null && minecraft.level !== null) {
+        minecraft.particleEngine.add(
+          // -0.5f（float32 里能精确表示，包一层只是照规矩标出它是 float 字面量）
+          new TakeAnimationParticle(minecraft.level, e as ItemEntity, this, Math.fround(-0.5)),
+        );
+      }
     }
     void orgCount;
   }

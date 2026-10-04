@@ -68,4 +68,5 @@ export * from './particle/LavaParticle.js';
 export * from './particle/TerrainParticle.js';
 export * from './particle/BreakingItemParticle.js';
 export * from './particle/ParticleEngine.js';
+export * from './particle/TakeAnimationParticle.js';
 export * from './gui/Font.js';

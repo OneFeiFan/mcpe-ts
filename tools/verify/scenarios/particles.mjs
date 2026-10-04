@@ -138,7 +138,96 @@ export default async function (h) {
   );
   await h.shot('02-过了一会儿，粒子少了');
 
-  // ---- 7) F3 的 P: 数字是真的了 ----
+  // ---- 7) E9：捡起掉落物 → 那件物品飞向玩家 ----
+  //
+  // 【为什么不数"场上还有几颗"】TakeAnimationParticle 的 lifeTime 只有 **3 tick**
+  // （约 0.15 秒，C++ 就是 3），而无头浏览器里一次 h.wait 就是几百毫秒 —— 采样时刻
+  // 纯靠运气（实测第一次等 2 秒拿到的是 0，看日志才发现物品其实**已经被捡走**了）。
+  // 改法：在页面上给 `particleEngine.add` 包一层，记下"引擎收到过什么"。
+  // 这是**观测手段**，只读不改游戏代码，也不依赖采样时刻。
+  const hook = await h.state('挂上"引擎收到过什么"的记录', (a) => {
+    const pe = a.particleEngine;
+    if (!a.__added) {
+      a.__added = [];
+      const orig = pe.add.bind(pe);
+      pe.add = (p) => {
+        a.__added.push([p.constructor.name, p.getParticleTexture()]);
+        return orig(p);
+      };
+    }
+    a.__added.length = 0;
+    return { ok: typeof pe.add === 'function' };
+  });
+  h.expect(hook.ok, '拿到了 particleEngine.add');
+
+  const drop = await h.state('扔一颗物品出去，再把它摁到脚下', (a) => {
+    a.pause = false;
+    // 物品栏里有什么用什么（demo 世界给了 9 格，每格 5 个）
+    const src = a.player.inventory.getItem(0);
+    if (!src) return { ok: false, why: '格子 0 是空的' };
+    a.player.drop(src, false);
+    const items = a.level
+      .getEntities(a.player, a.player.bb.grow(6, 6, 6))
+      .filter((e) => e.isItemEntity());
+    if (items.length === 0) return { ok: false, why: '世界里没找到掉落物' };
+    const it = items[items.length - 1];
+    // 扔出去的那份 throwTime = 40 tick（这段时间玩家捡不回来），清零 + 摁到脚下，
+    // 让它下一个 tick 就被 Player.tick → touch → playerTouch → LocalPlayer.take 收走。
+    it.throwTime = 0;
+    it.xd = 0;
+    it.yd = 0;
+    it.zd = 0;
+    // ⚠ 摁在**脚下一格**，不是眼睛高度。`Player.tick` 的拾取盒是 `bb.grow(1, 0, 1)`
+    //   （y 方向不放大），玩家碰撞盒竖直占 y-1.62 … y+0.18，所以 y-1 处照样能捡起来。
+    //   摁在眼睛高度的话，粒子起点=终点=相机原点，整颗卡在近裁剪面里 —— 实测过，
+    //   脚本全绿但画面上什么都没有（_dbg-pickup.mjs 里把起点挪到前方 3 格就立刻显形了，
+    //   说明渲染路径没问题，是测试设定自己把它藏起来了）。
+    it.setPos(a.player.x, a.player.y - 1.0, a.player.z);
+    return { ok: true, itemId: src.id, count: src.count };
+  });
+  h.expect(drop.ok, `掉落物已摁到脚下（${JSON.stringify(drop)}）`);
+
+  // 一边等一边盯着收件记录：**一看到就按暂停**（pause 只挡 level.tick，渲染照跑），
+  // 把那 3 tick 的粒子冻住，好让下面这张截图里真的有它。
+  let tookNames = [];
+  for (let i = 0; i < 40; i++) {
+    await h.wait(60);
+    const s = await h.state(`盯着收件记录（第 ${i + 1} 次）`, (a) => {
+      const added = a.__added.slice();
+      if (added.length > 0) a.pause = true;
+      return {
+        added,
+        itemsLeft: a.level
+          .getEntities(a.player, a.player.bb.grow(6, 6, 6))
+          .filter((e) => e.isItemEntity()).length,
+      };
+    });
+    if (s.added.length > 0) {
+      tookNames = s.added;
+      h.expect(s.itemsLeft === 0, `捡起那一刻掉落物已经没了（还剩 ${s.itemsLeft} 个）`);
+      break;
+    }
+  }
+
+  h.expect(
+    tookNames.some(([name]) => name === 'TakeAnimationParticle'),
+    `捡起时引擎收到一颗 TakeAnimationParticle（实测收到 ${JSON.stringify(tookNames)}）`,
+  );
+  h.expect(
+    tookNames.every(([name, bucket]) => name !== 'TakeAnimationParticle' || bucket === 3),
+    '它的档位是 3（ENTITY_PARTICLE_TEXTURE，归 renderLit 画）',
+  );
+  // ⚠ 拍照前先低头。那颗粒子从"掉落物躺的地方"（脚边）飞向"玩家的胸口"——
+  //   两头都在相机下方半格左右，平视时它正好压在画面最下沿。低头 70° 把它挪到画面中间。
+  await h.state('低头看脚下，好让那颗粒子进画面', (a) => {
+    a.player.xRot = 70;
+    a.player.xRotO = 70;
+    return { particles: Number(a.particleEngine.countParticles()) };
+  });
+  await h.wait(700);
+  await h.shot('03-E9-捡东西时物品飞向玩家');
+
+  // ---- 8) F3 的 P: 数字是真的了 ----
   const stats = await h.state('gatherStats3 的 P: 不是写死的 0', (a) => {
     return { s: a.gatherStats3() };
   });
