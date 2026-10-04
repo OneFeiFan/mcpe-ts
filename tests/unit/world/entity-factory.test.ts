@@ -7,6 +7,7 @@ import {
   Item,
   ItemEntity,
   ItemInstance,
+  PrimedTnt,
   type Level,
 } from '@mcpe/world';
 import { createFlatLevel } from '../../helpers/headlessLevel';
@@ -49,10 +50,13 @@ describe('world/EntityFactory', () => {
       expect(EntityFactory.CreateEntity(EntityTypes.IdFallingTile, lv())).toBeInstanceOf(FallingTile);
     });
 
+    it('IdPrimedTnt → PrimedTnt（D4 接的线）', () => {
+      expect(EntityFactory.CreateEntity(EntityTypes.IdPrimedTnt, lv())).toBeInstanceOf(PrimedTnt);
+    });
+
     it('还没移植的那几种返回 null（原地留着 DEFERRED(Entity)）', () => {
-      // PrimedTnt / Arrow / ThrownEgg / Snowball / Painting
+      // Arrow / ThrownEgg / Snowball / Painting
       for (const id of [
-        EntityTypes.IdPrimedTnt,
         EntityTypes.IdArrow,
         EntityTypes.IdThrownEgg,
         EntityTypes.IdSnowball,

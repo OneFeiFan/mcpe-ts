@@ -5,12 +5,12 @@
  * 按标签里的 `id` 造实体再把标签读进去。**只有 `loadEntity` 有人调用**（存档的 loadEntities）；
  * `CreateEntity` 的另一个调用方是网络包处理（`ClientSideNetworkHandler.cpp:235`），没移植。
  *
- * 【本轮的移植范围：只有掉落物 + 落沙】`CreateEntity` 那张 switch 里七种实体，TS 里
- * **ItemEntity 与 FallingTile 是真的**。所以五个 case 原地留 `DEFERRED(Entity)`，
+ * 【本轮的移植范围：掉落物 + 落沙 + 点着的 TNT】`CreateEntity` 那张 switch 里七种实体，TS 里
+ * **ItemEntity / FallingTile / PrimedTnt 是真的**。所以四个 case 原地留 `DEFERRED(Entity)`，
  * `id < 64` 那条（生物）整条走不了。
  *
- * 【任务单 D 正在一个个补上】D1 把 `FallingTile` 写成真类，D2 把这个 switch 的 case 接上。
- * 其余五个（PrimedTnt / Arrow / ThrownEgg / Snowball / Painting）仍无对应文件；
+ * 【任务单 D 正在一个个补上】D1 把 `FallingTile` 写成真类，D2 把这个 switch 的 case 接上；
+ * D4 接上 `PrimedTnt`。其余四个（Arrow / ThrownEgg / Snowball / Painting）仍无对应文件；
  * TripodCamera 还是 FORWARD-DECL（它本来就不在这张表里，只由 CameraItem 生成）。
  *
  * 【行号说明】下面 DEFERRED 里的 `EntityFactory.cpp:N` 是**原始文件的行号**（D2 用
@@ -28,6 +28,7 @@ import type { Entity } from './Entity';
 import { EntityTypes } from './EntityTypes';
 import { ItemEntity } from './item/ItemEntity';
 import { FallingTile } from './item/FallingTile';
+import { PrimedTnt } from './item/PrimedTnt';
 import { Item } from '../item/Item';
 
 // OMIT(Entity): static Mob* MobFactory::CreateMob(int mobType, Level* level)  MobFactory.h:2
@@ -49,7 +50,8 @@ export class EntityFactory {
         return new ItemEntity(level);
       case EntityTypes.IdFallingTile:
         return new FallingTile(level);
-      // DEFERRED(Entity): case EntityTypes::IdPrimedTnt:   return new PrimedTnt(level);    EntityFactory.cpp:17
+      case EntityTypes.IdPrimedTnt:
+        return new PrimedTnt(level);
       // DEFERRED(Entity): case EntityTypes::IdArrow:       return new Arrow(level);        EntityFactory.cpp:18
       // DEFERRED(Entity): case EntityTypes::IdThrownEgg:   return new ThrownEgg(level);    EntityFactory.cpp:19
       // DEFERRED(Entity): case EntityTypes::IdSnowball:    return new Snowball(level);     EntityFactory.cpp:20

@@ -112,6 +112,7 @@ export * from './entity/Mob.js';
 export * from './entity/player/Inventory.js';
 export type { EntityTile } from './level/tile/EntityTile.js';
 export * from './entity/item/FallingTile.js';
+export * from './entity/item/PrimedTnt.js';
 export * from './item/ItemInclude.js';
 export * from './item/ArmorItem.js';
 export * from './item/BowlFoodItem.js';
