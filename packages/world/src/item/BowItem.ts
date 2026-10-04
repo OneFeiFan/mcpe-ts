@@ -1,6 +1,9 @@
-// 1:1 移植自 src/world/item/BowItem.h（S11 阶段 A，部分移植）。部分：生成箭实体（Arrow，计划外）的语句 DEFERRED(Entity)。
+// 1:1 移植自 src/world/item/BowItem.h（S11 阶段 A；D11b 接线完成）。
+// D11b：拉满弓射箭那句接上了，全类已无 DEFERRED。
+// 播放声音时的 Item::random 调用照常保留。
 import type { Player } from '../entity/player/Player';
 import type { Level } from '../level/Level';
+import { Arrow } from '../entity/projectile/Arrow';
 import { Item } from './Item';
 import type { ItemInstance } from './ItemInstance';
 import { UseAnim } from './UseAnim';
@@ -34,7 +37,10 @@ export class BowItem extends Item {
     );
     player.inventory.removeResource(Item.arrow.id);
     if (!level.isClientSide) {
-      // DEFERRED(Entity): Arrow* arrow = new Arrow(level, player, pow * 2.0f); if (pow == 1) arrow->critArrow = true; level->addEntity(arrow);
+      // `pow * 2.0f` 里的 2.0f 是带 f 后缀的字面量 → 过 f()
+      const arrow = new Arrow(level, player, Math.fround(pow * Math.fround(2.0)));
+      if (pow === 1) arrow.critArrow = true;
+      level.addEntity(arrow);
     }
   }
 

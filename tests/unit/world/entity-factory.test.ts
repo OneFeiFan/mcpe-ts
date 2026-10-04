@@ -9,6 +9,7 @@ import {
   ItemInstance,
   Painting,
   PrimedTnt,
+  Arrow,
   Snowball,
   ThrownEgg,
   type Level,
@@ -69,8 +70,12 @@ describe('world/EntityFactory', () => {
       expect(EntityFactory.CreateEntity(EntityTypes.IdThrownEgg, lv())).toBeInstanceOf(ThrownEgg);
     });
 
-    it('只剩 Arrow 还没移植（原地留着 DEFERRED(Entity)）', () => {
-      expect(EntityFactory.CreateEntity(EntityTypes.IdArrow, lv())).toBeNull();
+    it('IdArrow → Arrow（D11b 接的线）—— 七种实体全接完了', () => {
+      expect(EntityFactory.CreateEntity(EntityTypes.IdArrow, lv())).toBeInstanceOf(Arrow);
+    });
+
+    it('认不出的 id 才返回 null（C++ 那个 switch 落空后的 return NULL）', () => {
+      expect(EntityFactory.CreateEntity(EntityTypes.IdItemEntity - 1, lv()), 'id 比最小的还小').toBeNull();
     });
 
     it('认不出的 id 返回 null（C++ 那个 switch 落空后的 return NULL）', () => {
