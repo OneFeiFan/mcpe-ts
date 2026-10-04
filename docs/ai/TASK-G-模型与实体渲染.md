@@ -312,7 +312,7 @@ node tools/golden/check-model-fixture.mjs     # 结构自检
 对顶点 `[-3.5,-2.5,-2.5,…]`（外扩过）—— 坑二那条形参遮蔽在夹具里看得见；
 `arm_mirror` 的顶点从 `x=3` 起、不镜像的从 `x=-3.5` 起 —— mirror 交换生效。
 
-### G2 — `Vertex` + `Polygon`
+### G2 — `Vertex` + `Polygon` ✅ 已完成
 
 新建 `packages/client/src/model/geom/Vertex.ts`、`Polygon.ts`。
 `VertexPT.remap(u, v)` 是**返回新对象**（C++ 是值返回），别写成改自己。
@@ -321,7 +321,32 @@ node tools/golden/check-model-fixture.mjs     # 结构自检
 ⚠ `PolygonQuad::render` 里的法线是 `v1.cross(v0).normalized()`（**v1 叉 v0，不是 v0 叉 v1**），
 顺序错了整个模型的光照就反了。`Vec3.cross/normalized` 用 `@mcpe/world` 现成的。
 
-验收：`tests/golden/model.golden.test.ts` 逐位比对 G1 的夹具；`pnpm test` 绿。
+**做这步时定的两条（和原计划的差别）**：
+
+1. **判据改了**：原计划 G2 就用黄金样本，实际改成本步用**单测**（期望值从夹具里抄），
+   完整的黄金样本比对放到 G3 —— 因为夹具面那 6 个面的 `(uu0,vv0,uu1,vv1)` 是从
+   `Cube` 的盒子参数推出来的，没有 `Cube` 就没法按夹具喂输入。G3 里一起做才是完整的。
+2. ⚠ **这一类不适用「第三档渲染代码不逐步 fround」那条豁免**，`Polygon.ts` 头注释里写明了理由：
+   它的输出被夹具**逐位**钉住，而 `us = -0.002f / texW` 不是 float32 能精确表示的数 ——
+   少包一层 `f()`，`0.375031263` 就变样了。**这不是理论担忧**：G1 生成夹具时，
+   head 那个面的 UV 正是因为这个才定在 `0.375031263`。
+
+**浮点怎么比对**：夹具里是 `%.9g` 打印的十进制，读回来要**先 `fround`** 才是原来那个 float32
+（9 位有效数字正好是 float32 的往返精度）。`expect(u).toBe(f(0.375031263))`；
+直接 `toBe(0.375031263)` 会红 —— 那个字面量是 double，和 float32 差一点点。
+
+**两处 C++ 死代码记了 `OMIT(Model)`**（都是零调用方，且在 TS 里只差参数类型、无法用重载区分）：
+`VertexPT(const Vec3&, float, float)`（`Vertex.h:33`）、
+`PolygonQuad(v0..v3, float u0,v0,u1,v1)`（`Polygon.h:15`）。
+
+验收：`tests/unit/client/model-geom.test.ts`（15 条）；
+新增工具 `tools/verify/mutate.mjs`（改坏源码 → 跑测试 → 看是否变红 → 还原）；
+**10 个变异 10 个红**，没有等价变异要记。
+
+台账：**222 → 224**（+2 条 `OMIT(Model)`）。`pnpm typecheck` 0；`pnpm test` **96 文件 / 1075 条全过**。
+
+（顺带又栽了一次 PITFALLS 里记过的那条：`vv0` 少写一个 `!`，vitest 全绿而 `tsc` 报错 ——
+**vitest 不做类型检查，两边都要跑**。）
 
 ### G3 — `Cube`
 
