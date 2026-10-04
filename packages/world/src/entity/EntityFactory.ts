@@ -10,9 +10,9 @@
  * ThrownEgg / Arrow）—— D11b 把最后一个 Arrow 也接上了，这张 switch 里再没有 DEFERRED。
  * 只剩 `id < 64` 那条（生物）整条走不了（MobFactory 没移植）。
  *
- * 【任务单 D 正在一个个补上】D1 把 `FallingTile` 写成真类，D2 把这个 switch 的 case 接上；
- * D4 接上 `PrimedTnt`。其余四个（Arrow / ThrownEgg / Snowball / Painting）仍无对应文件；
- * TripodCamera 还是 FORWARD-DECL（它本来就不在这张表里，只由 CameraItem 生成）。
+ * 【任务单 D 已经全补上了】D1～D11 把七种实体一个个写成真类并接到这张 switch 上
+ * （`FallingTile` / `PrimedTnt` / `Painting` / `Snowball` / `ThrownEgg` / `Arrow`）。
+ * `TripodCamera` 是真类（D5），但它本来就不在这张表里，只由 `CameraItem` 生成。
  *
  * 【行号说明】下面 DEFERRED 里的 `EntityFactory.cpp:N` 是**原始文件的行号**（D2 用
  * `rg -n` 实测的）。之前写的那批（9..14 / 36）对不上任何一个版本 —— 实测 `IdFallingTile`

@@ -222,3 +222,71 @@
 - [ ] `pnpm typecheck`、`pnpm test` 通过
 - [ ] 有画面的：跑了场景，**打开截图看过**
 - [ ] `pnpm ledger` 条数对得上（这一步该降几条）
+
+---
+
+## 任务单 D 完成（2026-10-04）
+
+**第三类「堵在独立的小实体类」8 条全部做完**（`Sheep` 那条除外 —— 它是 `Mob`，归第四类）。
+提交从 `ed57aaa`（D0 任务单）到 `151fd26`（D11.5），一共 **19 个提交**。
+
+### 台账（每个数字都是在对应提交上用临时 worktree 实测的）
+
+| 步 | 提交 | 台账 | 一句话 |
+| --- | --- | --- | --- |
+| D0 | `ed57aaa` | **252** | 任务单落盘 |
+| D1 | `5a5ebff` | 251 | `FallingTile` 从 6 行空接口换成真类 |
+| D2 | `a9b7345` | **245** | 接上线（HeavyTile / SandTile / EntityFactory） |
+| D2.5 | `4a9eca6` | 246 | `FallingTileRenderer`（用户报"下落时看不见"） |
+| D3 | `f3f0df8` | 245 | `Explosion` + `Level.explode`（**唯一带黄金样本的一步**） |
+| D4 | `3b3fcdc` | 238 | `PrimedTnt` + `TntTile`（会连锁） |
+| D5 | `d3f13a5` | 235 | `TripodCamera` + `Level.takePicture` |
+| D6 | `18de1f6` | 235 | `HangingEntity` 基类 |
+| D7 | `6dd9db8` | 232 | `Motive` + `Painting` + 接线 |
+| D8 | `effaec8` | 232 | `Throwable` 基类 |
+| D9 | `1b15d18` | 230 | `Snowball` + 接线 |
+| D9.5 | `b5669ec` | 230 | `ItemSpriteRenderer`（雪球/蛋看得见了） |
+| D10a | `7c51828` | **240** | ⚠ `PathfinderMob` + `AgableMob`（D0 漏算的两级基类，+10 条标记） |
+| D10b | `cded881` | 240 | `Animal` + `Chicken` |
+| D10c | `96bd7e3` | 238 | `ThrownEgg` + 接线（扔蛋孵鸡） |
+| D11a | `6b02836` | 238 | `Arrow` 类本身（346 行，这批最大） |
+| D11b | `22e4d0d` | **236** | 接线（`BowItem` / `EntityFactory`） |
+| D11.5 | `151fd26` | 236 | `ArrowRenderer`（箭看得见了） |
+
+**净变化：252 → 236。** `DEFERRED(Entity)` 从 8 条降到 **2 条**：
+`EntityFactory` 里那句 `e = MobFactory::CreateMob(id, level)`（生物工厂，第四类）和
+`DyePowderItem` 里那条 `Sheep` 分支（同上）。
+
+### D0 没算到的三件事（都记在 progress.md 和代码注释里）
+
+1. **`Chicken` 的基链比估的多两级**：`Chicken → Animal → AgableMob → PathfinderMob → Mob`，
+   而 TS 里当时只有 `Mob`。`PathfinderMob.cpp` 248 行里大半是 AI（`Sensing`/`PathNavigation`/
+   `Path`/`findPath`）。按"一步 ≤300 行、≤5 文件"的规矩把 D10 拆成 a/b/c 三小步，
+   AI 那半按 `Mob.ts` 的老办法标 `OMIT(MobAI)`/`DEFERRED(MobAI)`（净 +10 条标记）。
+2. **三个渲染器缺口**：实体逻辑做完之后画面上看不见（`EntityRenderDispatcher` 拿不到渲染器就跳过）。
+   补了 `FallingTileRenderer`（D2.5）、`ItemSpriteRenderer`（D9.5，雪球+蛋共用）、
+   `ArrowRenderer`（D11.5）—— 三个都不依赖模型系统。
+3. **D8 的"两个 Throwable"对照**：`Arrow` 继承的是 `Entity` 不是 `Throwable`，
+   所以 `shoot`/`lerpMotion`/`tick` 是两份相似但**有差异**的代码（除零保护、落地存活、
+   重力、`clip` 的重载都不一样），差异全部原样保留并在两边都写了对照表。
+
+### 已知缺口（没做，留给后面的任务单）
+
+- **`ChickenRenderer` 没移植**（要模型系统）→ 鸡逻辑全对但画面上看不见。
+  同一批还缺：猪、牛、羊、僵尸、骷髅、蜘蛛、苦力怕、玩家、人形、TNT、画的渲染器。
+- **`PathfinderMob.updateAi` 整条 OMIT**（AI 大系统）→ 生物"没有 AI"，站着不动。
+  `Mob` 那 15 条 `DEFERRED(MobAI)` 也还在。
+- **`Sheep` / `DyePowderItem`** 那条没解开（依赖 MobAI）。
+
+### 每一步的验证方式（19 步全都走了一遍）
+
+- 单测（`tests/unit/world/`、`tests/unit/client/`）：`git log -p ed57aaa..HEAD -- tests/` 里新增的
+  `it(` 行 **233 条**（含后来改写的行，所以实际新增略少）
+- 反向扰动：**每一步都做**。被扰动抓出来的测试空白都补了、并在注释里留了记号 ——
+  `grep -rn 扰动 tests/` 现在能查到 **9 个文件、11 处**，其中本批新抓到的包括：
+  D7 两条（只拿正方形画测尺寸、没断言 `entityRendererId`）、D8 一条（没测到 `baseTick`）、
+  D10a 一条（构造里 `age = -1` 本来就观测不到）、D11a 两条（暴击伤害只断言区间、
+  水的阻力阈值比较被 float32 绕过 —— 后者是**我的测试写错了**，不是实现错）
+- 浏览器场景：`falling.mjs` / `tnt.mjs` / `snowball.mjs` / `egg.mjs` / `arrow.mjs`，
+  **截图逐张打开看过**
+- 唯一用黄金样本的是 D3（`fixtures/golden/explosion.json`，一档逐位比较）
