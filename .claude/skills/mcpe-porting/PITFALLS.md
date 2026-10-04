@@ -139,3 +139,12 @@
 - **想拍"运动中的东西"，用 `app.pause = true` 定格再拍，然后记得放开。**
   `Minecraft.pause` 只挡 `level.tick / tickEntities`，渲染照跑，
   所以按住之后等一两秒让画面追上来就能拍到静止的一帧（无头浏览器只有约 1 帧/秒，不等就是空画面）。
+- **`clean.py` 会把 `#include` 整行删掉 —— 它的输出不能用来判断"这个文件有什么"。**
+  G0 读 `ModelInclude.h` 时输出里只剩一行 `##### ModelInclude.h`，于是断言"这文件在 C++ 里是空的"，
+  写进了任务单。G5 一实测：`wc -c` = 407 字节、`grep -c include` = **9**。
+  要看一个头文件的构成，直接 `cat` / `grep -n`，别只看 `clean.py`。
+  （同类：`clean.py` 也会按网页版构建展开 `#ifdef`，所以它删掉的行不代表"源码里没有"。）
+- **`prettier --write` 之前先对**基线**跑一次 `--check`。**
+  G5 里我给 `index.ts` 加了三行注释，顺手 `--write` 了一下 —— 它把**整个文件**的行尾符改了，
+  出来是全文件 diff。回头 `git show HEAD:<file> | prettier --check` 才发现**这文件本来就不通过**。
+  分不清"自己弄坏的"和"本来就坏的"就会白改一遍；顺手格式化整个文件也属于改了不必要的地方。

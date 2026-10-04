@@ -1,0 +1,68 @@
+[
+  {
+    "label": "M1 young 默认值抄成 false（C++ 是 young(true)）",
+    "file": "packages/client/src/model/Model.ts",
+    "from": "  young = true;",
+    "to": "  young = false;"
+  },
+  {
+    "label": "M2 texWidth 默认值抄成 32",
+    "file": "packages/client/src/model/Model.ts",
+    "from": "  texWidth = 64;",
+    "to": "  texWidth = 32;"
+  },
+  {
+    "label": "M3 texHeight 默认值抄成 64",
+    "file": "packages/client/src/model/Model.ts",
+    "from": "  texHeight = 32;",
+    "to": "  texHeight = 64;"
+  },
+  {
+    "label": "M4 attackTime 默认值抄成 1",
+    "file": "packages/client/src/model/Model.ts",
+    "from": "  attackTime = 0;",
+    "to": "  attackTime = 1;"
+  },
+  {
+    "label": "M5 riding 默认值抄成 true",
+    "file": "packages/client/src/model/Model.ts",
+    "from": "  riding = false;",
+    "to": "  riding = true;"
+  },
+  {
+    "label": "M6 cubes 变成所有实例共享的一份",
+    "file": "packages/client/src/model/Model.ts",
+    "from": "  cubes: ModelPart[] = [];",
+    "to": "  cubes: ModelPart[] = ((Model as unknown as { S?: ModelPart[] }).S ??= []);"
+  },
+  {
+    "label": "M7 onGraphicsReset 只遍历第一个部件",
+    "file": "packages/client/src/model/Model.ts",
+    "from": "    for (const c of this.cubes) c.onGraphicsReset();",
+    "to": "    if (this.cubes.length > 0) this.cubes[0]!.onGraphicsReset();"
+  },
+  {
+    "label": "M8 onGraphicsReset 转发错方法（转发成 render）",
+    "file": "packages/client/src/model/Model.ts",
+    "from": "    for (const c of this.cubes) c.onGraphicsReset();",
+    "to": "    for (const c of this.cubes) c.render(1);"
+  },
+  {
+    "label": "M9 onGraphicsReset 顺手清空了 cubes",
+    "file": "packages/client/src/model/Model.ts",
+    "from": "    for (const c of this.cubes) c.onGraphicsReset();",
+    "to": "    for (const c of this.cubes) c.onGraphicsReset();\n    this.cubes.length = 0;"
+  },
+  {
+    "label": "M10 基类的 render 不再是空的（顺手改了 young）",
+    "file": "packages/client/src/model/Model.ts",
+    "from": "  render(\n    _e: Entity | null,\n    _time: number,\n    _r: number,\n    _bob: number,\n    _yRot: number,\n    _xRot: number,\n    _scale: number,\n  ): void {}",
+    "to": "  render(\n    _e: Entity | null,\n    _time: number,\n    _r: number,\n    _bob: number,\n    _yRot: number,\n    _xRot: number,\n    _scale: number,\n  ): void {\n    this.young = false;\n  }"
+  },
+  {
+    "label": "M11 基类的 setupAnim 不再是空的（顺手改了 attackTime）",
+    "file": "packages/client/src/model/Model.ts",
+    "from": "  setupAnim(\n    _time: number,\n    _r: number,\n    _bob: number,\n    _yRot: number,\n    _xRot: number,\n    _scale: number,\n  ): void {}",
+    "to": "  setupAnim(\n    _time: number,\n    _r: number,\n    _bob: number,\n    _yRot: number,\n    _xRot: number,\n    _scale: number,\n  ): void {\n    this.attackTime = 1;\n  }"
+  }
+]

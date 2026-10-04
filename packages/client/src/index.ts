@@ -75,4 +75,7 @@ export * from './model/geom/Polygon.js';
 export * from './model/Model.js';
 export * from './model/geom/Cube.js';
 export * from './model/geom/ModelPart.js';
+// C++ 的 ModelInclude.h：那份"哪些模型类存在"的清单，9 条 #include。G5 落盘，
+// 现在里面还全是注释（要搬的两个模型 G7/G9 才落地）
+export * from './model/ModelInclude.js';
 export * from './gui/Font.js';

@@ -450,16 +450,56 @@ vite 直接 PARSE_ERROR —— 改成逐下标取就对了。）
 `f(180/f(PI))`，差最后一位；还把方向说反了（它把**弧度转成度**，`glRotatef` 要的就是度）。
 **期望值不要重算，直接用被测的那个常量。**）
 
-### G5 — `Model` + `ModelInclude`
+### G5 — `Model` + `ModelInclude` ✅ 已完成
 
 `Model` 基类：5 个虚方法（`onGraphicsReset` `render` `renderHorrible` `setupAnim` `prepareMobModel`）
 + 5 个字段（`attackTime` `riding` `texWidth` `texHeight` `cubes` `young`，默认 0/false/64/32/[]/**true**）。
 ⚠ `young` 默认是 **`true`**（C++ 的初始化列表写的是 `young(true)`）—— 不设的话幼体分支会走错。
 
-`ModelInclude.h` 在 C++ 里是**空的**（只有文件头）。TS 侧建一个 `ModelInclude.ts`
-只放"哪些模型类存在"的 re-export（照 `ParticleInclude.ts` 的先例），把 5 只没移植的记 `OMIT(Entity)`。
+⚠️ **"`ModelInclude.h` 在 C++ 里是空的"这句是错的**（G0 写下的，G5 实测推翻）：
+`wc -c` = 407 字节，`grep -c include` = **9 条** `#include`。当初之所以看着像空的，是因为用
+`clean.py` 读的 —— 它会把 `#include` 这类预处理行整行删掉，输出里就只剩一行 `##### ModelInclude.h` 标题。
+（见 `PITFALLS.md` 新条目；**clean.py 的输出不能用来判断"这个文件有什么"**。）
+
+9 条 include 的去向：2 条要搬（`HumanoidModel` G7、`ChickenModel` G9），
+6 条**不搬**（牛/猪/羊/羊毛/僵尸/骷髅 —— 实体类不存在，记 `OMIT(Entity)`），
+1 条**挡住**（`SignModel` —— 唯一的用户是方块实体渲染器，记 `DEFERRED(TileEntityRender)`）。
+⚠ 另外实测 `ChickenModel` 的父类是 **`Model` 而不是 `QuadrupedModel`**（`ChickenModel.h:9`），
+所以 G9 不依赖那 4 只没搬的四足兽。
 
 验收：单测（默认值那几条）。
+
+**做完的情况（G5）**
+
+`Model.ts` 本身**一行没改** —— G3 落盘时那 6 个字段和 5 个虚函数就抄对了，本步是**补测试把它钉住**。
+
+- 新增 `tests/unit/client/model.test.ts`（7 条）：5 个字段默认值逐条对着 `Model.h:15-21` 核、
+  ⚠ `young` 默认 `true`、`cubes` 每实例各一份、四个虚函数真的是空的（不改字段也不画东西）、
+  `onGraphicsReset` 遍历**全部**部件（不是只看第一个）、不清空 `cubes`、
+  以及**转发真的把部件打回未编译**（这条要等 G4 的 `compile` 落地才可观察，现在补上）。
+  `ModelPart` 的 `onGraphicsReset` 效果靠 `Tesselator.begin` 的调用次数看：render 一次编译 1 次、
+  再 render 不编译、`model.onGraphicsReset()` 之后又编译 1 次 —— 3 次调用钉死这条转发链。
+- 新增 `packages/client/src/model/ModelInclude.ts`（**这个文件此刻没有真 export**，9 条
+  `#include` 全是注释）：2 条 `DEFERRED(Model)`（G7/G9 落地时换成真 export）、
+  6 条 `OMIT(Entity)`、1 条 `DEFERRED(TileEntityRender)`。
+
+**踩到的两个坑**
+
+1. `ModelInclude.ts` 一开始被 `tsc` 判 `error TS2306: File ... is not a module` —— 一个
+   **既没有 import 也没有 export** 的 `.ts` 是"脚本"不是"模块"，`index.ts` 的
+   `export * from` 就编不过。加一句空 `export {};` 解决（已在文件里写明为什么）。
+2. 我顺手 `prettier --write` 了 `index.ts`，它把**整个文件**的行尾符改了 —— 全文件 diff。
+   逐行一看才想起先核基线：`git show HEAD:packages/client/src/index.ts` 拿去 `prettier --check`
+   **本来就不通过**（行尾符问题，与本次改动无关）。所以**回滚、不动它**：
+   顺手格式化整个文件属于"改了完成任务必需之外的地方"。
+   （教训：`--write` 之前先 `--check` 一遍**基线**，否则分不清是自己弄坏的还是本来就坏的。）
+
+**反向验证：11 个变异 11 个红**（`tools/verify/mutations-g5.json`）——
+5 个字段默认值各一个、`cubes` 变成实例共享的一份、`onGraphicsReset` 只遍历第一个 /
+转发错方法 / 顺手清空 `cubes`、基类 `render` 和 `setupAnim` 不再是空的。
+
+台账：**225 → 234**（`DEFERRED(Model)` 1→3、`DEFERRED(TileEntityRender)` 4→5、
+`OMIT(Entity)` 2→8）。`pnpm typecheck` 0；`pnpm test` **100 文件 / 1129 条全过**。
 
 ### G6 — `MobRenderer`
 
