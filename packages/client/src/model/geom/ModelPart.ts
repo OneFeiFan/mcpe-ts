@@ -14,8 +14,16 @@
  *   注意第三个 `ModelPart(Model*, int, int)` **不会**把自己塞进 `model->cubes` ——
  *   只有 `setModel` 会。C++ 就是这样，`SheepModel` 那边正因此漏登记（照抄）。
  */
-import { Util } from '@mcpe/util';
-import { glGenBuffers2 } from '../../renderer/gles';
+import { Mth, Util } from '@mcpe/util';
+import {
+  drawArrayVTN_NoState,
+  glGenBuffers2,
+  glPopMatrix2,
+  glPushMatrix2,
+  glRotatef2,
+  glTranslatef2,
+} from '../../renderer/gles';
+import { Tesselator } from '../../renderer/Tesselator';
 import { Cube } from './Cube';
 import type { Model } from '../Model';
 
@@ -168,14 +176,156 @@ export class ModelPart {
     this.compiled = false;
   }
 
-  // ---- 渲染那一半，留到 G4 ----
-  // DEFERRED(Model): void render(float scale)  ModelPart.cpp:97
-  // DEFERRED(Model): void renderRollable(float scale)  ModelPart.cpp:136
-  // DEFERRED(Model): void translateTo(float scale)  ModelPart.cpp:158
-  // DEFERRED(Model): void compile(float scale)  ModelPart.cpp:183
-  // DEFERRED(Model): void draw()  ModelPart.cpp:202
-  // DEFERRED(Model): void renderHorrible(float scale)  ModelPart.cpp:234
-  // DEFERRED(Model): void drawSlow(float scale)  ModelPart.cpp:264
+  // ---- 渲染那一半（G4）----
+  //
+  // 【三档浮点】这一半是**每帧都跑**的画面代码，按 PITFALLS 第三档处理：
+  // 变换算式不逐步 fround（`x * scale` 这种乘的是 ±2 的幂或整块矩阵，差不出可见效果），
+  // 真正要紧的是**调用顺序**和**哪些分支 push/pop** —— 下面逐个标了。
+
+  /** C++ `void render(float scale)` —— 画自己 + 递归画子部件 */
+  render(scale: number): void {
+    if (this.neverRender) return;
+    if (!this.visible) return;
+    if (!this.compiled) this.compile(scale);
+    if (this.xRot !== 0 || this.yRot !== 0 || this.zRot !== 0) {
+      // ⚠ 只有**这个**分支 push/pop；下面两个分支是"平移过去再平移回来"
+      glPushMatrix2();
+      glTranslatef2(this.x * scale, this.y * scale, this.z * scale);
+      const c = Mth.RADDEG;
+      // ⚠ 旋转顺序是 z → y → x（和 renderRollable 的 y → x → z **不一样**，别统一）
+      if (this.zRot !== 0) glRotatef2(this.zRot * c, 0, 0, 1);
+      if (this.yRot !== 0) glRotatef2(this.yRot * c, 0, 1, 0);
+      if (this.xRot !== 0) glRotatef2(this.xRot * c, 1, 0, 0);
+      this.draw();
+      if (this.children.length > 0) {
+        for (const child of this.children) child.render(scale);
+      }
+      glPopMatrix2();
+    } else if (this.x !== 0 || this.y !== 0 || this.z !== 0) {
+      glTranslatef2(this.x * scale, this.y * scale, this.z * scale);
+      this.draw();
+      if (this.children.length > 0) {
+        for (const child of this.children) child.render(scale);
+      }
+      glTranslatef2(-this.x * scale, -this.y * scale, -this.z * scale);
+    } else {
+      this.draw();
+      if (this.children.length > 0) {
+        for (const child of this.children) child.render(scale);
+      }
+    }
+  }
+
+  /**
+   * C++ `void renderRollable(float scale)`。
+   * ⚠ 与 `render` 三处不同：旋转顺序是 **y → x → z**；**不递归子部件**；**无条件** push/pop。
+   * 全参考源码**零调用方**，照抄。
+   */
+  renderRollable(scale: number): void {
+    if (this.neverRender) return;
+    if (!this.visible) return;
+    if (!this.compiled) this.compile(scale);
+    glPushMatrix2();
+    glTranslatef2(this.x * scale, this.y * scale, this.z * scale);
+    const c = Mth.RADDEG;
+    if (this.yRot !== 0) glRotatef2(this.yRot * c, 0, 1, 0);
+    if (this.xRot !== 0) glRotatef2(this.xRot * c, 1, 0, 0);
+    if (this.zRot !== 0) glRotatef2(this.zRot * c, 0, 0, 1);
+    this.draw();
+    glPopMatrix2();
+  }
+
+  /**
+   * C++ `void translateTo(float scale)` —— 只把"这个部件在哪、朝哪"压进矩阵，**不画**。
+   * `HumanoidMobRenderer` 靠它把手持物品/披风摆到手臂/身体的位置上。
+   * ⚠ **不 push/pop**（调用方自己 push 过了），而且末尾那个空 `else {}` 是原样的。
+   */
+  translateTo(scale: number): void {
+    if (this.neverRender) return;
+    if (!this.visible) return;
+    if (!this.compiled) this.compile(scale);
+    if (this.xRot !== 0 || this.yRot !== 0 || this.zRot !== 0) {
+      const c = Mth.RADDEG;
+      glTranslatef2(this.x * scale, this.y * scale, this.z * scale);
+      if (this.zRot !== 0) glRotatef2(this.zRot * c, 0, 0, 1);
+      if (this.yRot !== 0) glRotatef2(this.yRot * c, 0, 1, 0);
+      if (this.xRot !== 0) glRotatef2(this.xRot * c, 1, 0, 0);
+    } else if (this.x !== 0 || this.y !== 0 || this.z !== 0) {
+      glTranslatef2(this.x * scale, this.y * scale, this.z * scale);
+    } else {
+      // C++ 这里就是一个空的 else，原样保留
+    }
+  }
+
+  /**
+   * C++ `void compile(float scale)` —— 把整个部件烘进自己那个 VBO。
+   *
+   * ⚠⚠ 外面这层跑 **6 遍**的循环是 C++ 原样：内层的 `unsigned int i` 把外层的 `int i` 遮蔽了，
+   *   所以每个 cube 被编译 6 次（白干 5 倍活）。而 `draw()` 按 `cubes.length * 2 * 3 * 6`
+   *   个顶点画 —— 正好等于"第 1 遍的全部 + 后面重复的一部分"，**画面结果是对的**。
+   *   别"优化"成跑 1 遍：那样 `draw()` 的顶点数也得跟着改，就不是 1:1 了。
+   */
+  compile(scale: number): void {
+    const t = Tesselator.instance;
+    t.begin();
+    // ⚠ C++ 写的是 `t.color(255, 255, 255, 255)`，重载决议选中的是 **int 重载**
+    //   `color(int r, int g, int b, int a)`。TS 的 `color(a,b,c,d)` 四参形式是**浮点**版
+    //   （内部 `(int)(x * 255)`），所以这里必须用 `colorInt` —— 写 `color(255,...)` 会变成
+    //   255*255 再被钳回 255，看着也对，纯属侥幸。
+    t.colorInt(255, 255, 255, 255);
+    for (let i = 0; i < 6; i++) {
+      for (const cube of this.cubes) cube.compile(t, scale);
+    }
+    t.end(true, this.vboId);
+    this.compiled = true;
+  }
+
+  /**
+   * C++ `void draw()`。
+   * ⚠ 顶点数是**硬编码**的 `cubes.size() * 2 * 3 * 6`（每个 cube 36 个），不是编译时记下来的实际数量 ——
+   * 见 `compile` 那条注释，两者靠那层 6 遍循环对上。
+   */
+  draw(): void {
+    drawArrayVTN_NoState(this.vboId, this.cubes.length * 2 * 3 * 6, 36);
+  }
+
+  /**
+   * C++ `void renderHorrible(float scale)` —— 不走 VBO 的"慢速渲染"。
+   * ⚠ 三处和 `render` 不同：**没有** `if (!compiled) compile(scale)`（它根本不吃 VBO）、
+   *   画的是 `drawSlow`、以及**不递归子部件**。
+   * 目前只有 `TripodCameraRenderer` 用它（画被选中的照相机）。
+   */
+  renderHorrible(scale: number): void {
+    if (this.neverRender) return;
+    if (!this.visible) return;
+    if (this.xRot !== 0 || this.yRot !== 0 || this.zRot !== 0) {
+      glPushMatrix2();
+      glTranslatef2(this.x * scale, this.y * scale, this.z * scale);
+      if (this.zRot !== 0) glRotatef2(this.zRot * Mth.RADDEG, 0, 0, 1);
+      if (this.yRot !== 0) glRotatef2(this.yRot * Mth.RADDEG, 0, 1, 0);
+      if (this.xRot !== 0) glRotatef2(this.xRot * Mth.RADDEG, 1, 0, 0);
+      this.drawSlow(scale);
+      glPopMatrix2();
+    } else if (this.x !== 0 || this.y !== 0 || this.z !== 0) {
+      glTranslatef2(this.x * scale, this.y * scale, this.z * scale);
+      this.drawSlow(scale);
+      glTranslatef2(-this.x * scale, -this.y * scale, -this.z * scale);
+    } else {
+      this.drawSlow(scale);
+    }
+  }
+
+  /** C++ `void drawSlow(float scale)` —— 现场把 6 个面重新 tessellate 一遍（不吃 VBO） */
+  drawSlow(scale: number): void {
+    const t = Tesselator.instance;
+    t.begin();
+    for (const c of this.cubes) {
+      for (let i = 0; i < 6; i++) {
+        c.polygons[i]!.render(t, scale, this.vboId);
+      }
+    }
+    t.draw();
+  }
 
   /** C++ `void clear()` —— 删掉自己的 cube、并从 model 里摘掉自己 */
   clear(): void {

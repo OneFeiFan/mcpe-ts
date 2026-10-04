@@ -19,6 +19,7 @@
  */
 import { PolygonQuad } from './Polygon';
 import { VertexPT } from './Vertex';
+import type { Tesselator } from '../../renderer/Tesselator';
 import type { ModelPart } from './ModelPart';
 
 const f = Math.fround;
@@ -140,6 +141,13 @@ export class Cube {
     return this;
   }
 
-  // DEFERRED(Model): void Cube::compile(Tesselator& t, float scale)  Cube.cpp:60
-  //   就是 `for (i<6) polygons[i].render(t, scale);`，等 G4 把渲染那一半接上时一起补。
+  /**
+   * C++ `void Cube::compile(Tesselator& t, float scale)` —— 把 6 个面写进 tesselator。
+   * 调用方是 `ModelPart::compile`（那里外面还套着一层跑 6 遍的循环，见那边的注释）。
+   */
+  compile(t: Tesselator, scale: number): void {
+    for (let i = 0; i < 6; i++) {
+      this.polygons[i]!.render(t, scale);
+    }
+  }
 }

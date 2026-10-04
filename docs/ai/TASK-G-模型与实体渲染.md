@@ -409,20 +409,46 @@ node tools/golden/check-model-fixture.mjs     # 结构自检
 （这步又踩了一次语法坑：`const [a,b,c,d] = arr as [A,A,A,A, ...]` 里那个 `...` 不是合法元组语法，
 vite 直接 PARSE_ERROR —— 改成逐下标取就对了。）
 
-### G4 — `ModelPart`
+### G4 — `ModelPart` / `Cube` 的渲染那一半 ✅ 已完成
 
-`packages/client/src/model/geom/ModelPart.ts`。要点：
+把 G3 里标 `DEFERRED(Model)` 的 8 个函数填上：`ModelPart` 的
+`render` / `renderRollable` / `translateTo` / `compile` / `draw` / `renderHorrible` / `drawSlow`，
+以及 `Cube::compile`。
 
-- `_init` 里 `glGenBuffers2(1, &vboId)` —— 每个部件一个 VBO，**构造时就分配**。
-  TS 里 `glGenBuffers2(1, ids)` 的签名是 `(n, buffers: {[i: number]: number})`（照 `Gui.ts:117` 的用法）。
-- `compile()` 的 6 次空转 + `draw()` 的硬编码顶点数：**原样保留**（坑一）。
-- `render()` 的三个分支（有旋转 / 只有位移 / 都没有）里，
-  **只有第一个分支用了 `glPushMatrix2` + `glPopMatrix2`**，另两个用 `glTranslatef` 再平移回去。
-  照抄，别统一成 push/pop。
-- `operator=` → `assign(rhs)`（坑五）。
-- `neverRender` / `visible` 是**两个不同的早退**。
+**判据 = `tests/unit/client/model-part-render.test.ts`（21 条）**。这一半没有黄金样本可用，
+所以换了个观察办法 —— 无头环境下有两层可观察的东西：
 
-验收：单测（下面"怎么验证"里列的那几条）。
+1. **`GLES1` 的矩阵操作**：写个 `SpyGL extends GLES1` 把 `push/pop/translate/rotate` 记下来，
+   再 `glSetContext` 换成它。于是"哪个分支 push/pop、旋转是什么顺序"都能逐条断言。
+2. **`Tesselator.instance` 的方法 + `GLES1.drawCalls`**（用 `vi.spyOn` 数次数）。
+   顶点数是这里最硬的判据：`compile` 里那层跑 6 遍的循环会让每个面被写 6 次 ——
+   1 个 cube 就是 `6 × 6 × 4 = 144` 个顶点，而 `draw()` 报的是 36 个。
+
+**几条照抄下来、但很容易被"顺手统一"的差异**（都写进注释了）：
+
+| 函数 | 和别人的不同 |
+|---|---|
+| `render` | 旋转顺序 **z → y → x**；只有旋转分支 push/pop，位移分支是"平移过去再平移回来" |
+| `renderRollable` | 旋转顺序 **y → x → z**（反的）；**不递归子部件**；**无条件** push/pop。零调用方，照抄 |
+| `translateTo` | **不 push/pop**（调用方自己 push 过了）；末尾是个空 `else {}` |
+| `renderHorrible` | **没有** `if (!compiled) compile(scale)`；走 `drawSlow`；不递归子部件 |
+| `compile` | 外面那层 **6 遍**的循环（见坑一） |
+| `draw` | 顶点数**硬编码** `cubes.length * 2 * 3 * 6` |
+
+⚠ **`t.color(255, 255, 255, 255)` 那个坑**：C++ 写的是 4 个 int，重载决议选中的是
+`color(int r, int g, int b, int a)`；而 TS 的 `Tesselator.color(a,b,c,d)` 四参形式是**浮点**版
+（内部 `(int)(x * 255)`）。照字面抄成 `t.color(255,…)` 会算出 `255*255` 再被钳回 255 ——
+**看着也对，纯属侥幸**。这里必须写 `colorInt`。变异 M1 就是这一条。
+
+**反向验证：15 个变异 15 个红。** 第一次跑时有 4 条被**跳过** —— `from` 在文件里出现了 2 次，
+`mutate.mjs` 的守卫拦下了（改成带上下文的长串才唯一）。这道守卫是有用的，不是摆设。
+
+台账：**233 → 225**（`DEFERRED(Model)` 9 → 1，剩的那条是 `ItemInHandRenderer.ts:358`
+的空手手臂，属 G11）。`pnpm typecheck` 0；`pnpm test` **99 文件 / 1122 条全过**。
+
+（又是同一个教训：写测试时我把 `Mth.RADDEG` 自己重算成 `f(180/Math.PI)` —— 而它是
+`f(180/f(PI))`，差最后一位；还把方向说反了（它把**弧度转成度**，`glRotatef` 要的就是度）。
+**期望值不要重算，直接用被测的那个常量。**）
 
 ### G5 — `Model` + `ModelInclude`
 
