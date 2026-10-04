@@ -861,6 +861,30 @@ G11 真跑 **2m43s**、G10 真跑 **1m58s** 全红 —— **G2–G9 的 10 份�
 - `PITFALLS.md` 补节：模型几何的坑（六次空转、成员遮蔽、UV 与 Java 版不同、assign 而非换对象）。
 - 台账、完成章节、`task_plan.md` / `progress.md`。
 
+**做完的情况（G12）**
+
+7 只生物的渲染器注册在 `EntityRenderDispatcher.ts` 构造函数末尾逐条记录：C++ 第 43–51 行
+挨着排的九行 `assign`，除第 46 行（鸡，G9 已做）以外的八行全部拦在实体侧，理由统一是
+"实体类未移植，等 MobFactory/MobAI"：
+
+- `ER_HUMANOID_RENDERER`（cpp:43）记 `DEFERRED(Entity)` —— 侦察时实测它不是死代码：
+  `Monster.cpp:15` 把它当基类的默认渲染器；零件（`HumanoidMobRenderer` + `HumanoidModel`）
+  TS 里已经齐了，等 `Monster` 那条链落地时注册；
+- 猪 / 牛 / 羊 / 骷髅 / 僵尸 / 苦力怕 / 蜘蛛（cpp:44/45/47/48/49/50/51）各一条 `OMIT(Entity)`，
+  带 C++ 原句与行号；苦力怕、蜘蛛的模型不在 `ModelInclude.h` 里（各自的渲染器直接 include），
+  所以这两条只记在 `EntityRenderDispatcher.ts`。
+
+`ModelInclude.ts` 里 6 条模型侧的 `OMIT(Entity)`（牛/猪/羊/羊毛/僵尸/骷髅）G5 就已记下，
+本轮 rg 复核仍是 6 条 + `SignModel` 的 1 条 `DEFERRED(TileEntityRender)`（归后面的箱子/告示牌那摊）。
+
+`PITFALLS.md` 补一节 `## G. 模型几何（任务单 G 教我的）`：`compile` 六次空转照抄、
+`Cube` 成员遮蔽（成员=没外扩的、顶点=外扩后的）、UV 与 Java 版 `ModelBox` 不同、
+`assign` 是"拷进现有对象"而非"换对象"。
+
+台账 **231 → 238（+7）**：删掉 1 条笼统的 `DEFERRED(EntityRender)`（原来 cpp:43–51 八行挤在
+一行里），新增 8 条逐条记录（1 条 `DEFERRED(Entity)` + 7 条 `OMIT(Entity)`），净 +7。
+`pnpm check` 当场实测：类型 ✓ / 测试 108 文件 1244 条 ✓ / 台账 238 ✓。
+
 ---
 
 ## 怎么验证（三层里这批用两层，但层数和别人不一样）
