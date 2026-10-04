@@ -93,7 +93,7 @@ export * from './level/levelgen/LargeCaveFeature.js';
 export * from './level/levelgen/CanyonFeature.js';
 export * from './level/dimension/FlatDimension.js';
 export * from './level/tile/entity/TileEntity.js';
-export type { TripodCamera } from './entity/item/TripodCamera.js';
+export * from './entity/item/TripodCamera.js';
 export * from './level/tile/entity/TileEntityRendererId.js';
 export * from './level/tile/entity/SignTileEntity.js';
 export * from './level/tile/entity/TileEntityInclude.js';

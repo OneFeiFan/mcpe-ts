@@ -20,6 +20,7 @@ import { Mth, Random, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH, Util } from '@mcpe/
 import type { Entity } from '../entity/Entity';
 import { MobTypes, type ParticleType } from '../entity/EntityTypes';
 import type { Player } from '../entity/player/Player';
+import type { TripodCamera } from '../entity/item/TripodCamera';
 import { Facing } from '../Facing';
 import type { AABB } from '../phys/AABB';
 import { HitResult } from '../phys/HitResult';
@@ -1794,7 +1795,10 @@ export class Level implements LevelSource {
     return this.levelData;
   }
 
-  // OMIT(Entity): takePicture(cam, e)  Level.cpp:2150
+  /** C++ `void Level::takePicture(TripodCamera* cam, Entity* e)` —— 转发给所有 listener */
+  takePicture(cam: TripodCamera, e: Entity): void {
+    for (let i = 0; i < this._listeners.length; i++) this._listeners[i]!.takePicture(cam, e);
+  }
   dispatchEntityData(e: Entity): void {
     if (this.isClientSide) return;
     if (!this._pendingEntityData.has(e.entityId)) this._pendingEntityData.set(e.entityId, e); // std::map::insert 不覆盖
