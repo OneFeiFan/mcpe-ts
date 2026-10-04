@@ -105,6 +105,7 @@ export * from './entity/Motive.js';
 export * from './entity/projectile/Throwable.js';
 export * from './entity/projectile/Snowball.js';
 export * from './entity/projectile/ThrownEgg.js';
+export * from './entity/projectile/Arrow.js';
 export * from './entity/Painting.js';
 export * from './item/FoodItem.js';
 export * from './item/BowItem.js';
