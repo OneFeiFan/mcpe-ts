@@ -55,4 +55,5 @@ export * from './renderer/entity/EntityRenderDispatcher.js';
 export * from './renderer/entity/ItemRenderer.js';
 export * from './renderer/entity/FallingTileRenderer.js';
 export * from './renderer/entity/ItemSpriteRenderer.js';
+export * from './renderer/entity/ArrowRenderer.js';
 export * from './gui/Font.js';

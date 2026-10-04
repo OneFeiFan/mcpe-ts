@@ -48,8 +48,10 @@ describe('FallingTileRenderer（D2.5）', () => {
     const erd = EntityRenderDispatcher.getInstance();
     expect(erd.getRenderer(e)).toBeInstanceOf(FallingTileRenderer);
 
-    // 对照：箭还没做渲染器，取出来必须是 null（C++ 找不到时也是什么都不画）
-    e.entityRendererId = EntityRendererId.ER_ARROW_RENDERER;
+    // 对照：取一个**还没做渲染器**的 id，必须是 null（C++ 找不到时也是什么都不画）。
+    // ⚠ 原来拿 ER_ARROW_RENDERER 当例子 —— D11.5 把箭的渲染器补上之后它不再是 null 了，
+    //   换成仍然没注册的 ER_PAINTING_RENDERER。**断言本身没改，只换了例子。**
+    e.entityRendererId = EntityRendererId.ER_PAINTING_RENDERER;
     expect(erd.getRenderer(e)).toBeNull();
   });
 

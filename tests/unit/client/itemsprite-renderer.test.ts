@@ -60,7 +60,8 @@ describe('ItemSpriteRenderer（D9.5）', () => {
     expect(erd.getRendererById(EntityRendererId.ER_FALLINGTILE_RENDERER)).toBeInstanceOf(
       FallingTileRenderer,
     );
-    expect(erd.getRendererById(EntityRendererId.ER_ARROW_RENDERER)).toBeNull();
+    // ⚠ D11.5 起 ER_ARROW_RENDERER 也注册了，换成仍然没注册的画画那个（断言没改）
+    expect(erd.getRendererById(EntityRendererId.ER_PAINTING_RENDERER)).toBeNull();
   });
 
   it('它是个 EntityRenderer（分派器按基类用），且照 C++ 没设 shadowRadius', () => {

@@ -18,6 +18,7 @@ import type { EntityRenderer } from './EntityRenderer';
 import { FallingTileRenderer } from './FallingTileRenderer';
 import { ItemRenderer } from './ItemRenderer';
 import { ItemSpriteRenderer } from './ItemSpriteRenderer';
+import { ArrowRenderer } from './ArrowRenderer';
 
 export class EntityRenderDispatcher {
   static xOff = 0;
@@ -54,8 +55,10 @@ export class EntityRenderDispatcher {
     );
     // D2.5：这个不依赖模型系统，所以能单拎出来先补 —— 补之前下落的方块在画面上是隐形的
     this.assign(EntityRendererId.ER_FALLINGTILE_RENDERER, new FallingTileRenderer()); // EntityRenderDispatcher.cpp:58
+    // D11.5：箭的渲染器（也不依赖模型系统，只画 12 个顶点）
+    this.assign(EntityRendererId.ER_ARROW_RENDERER, new ArrowRenderer()); // EntityRenderDispatcher.cpp:53
     // DEFERRED(EntityRender): ER_HUMANOID、ER_PIG、ER_COW、ER_CHICKEN、ER_SHEEP、ER_SKELETON、ER_ZOMBIE、ER_CREEPER、ER_SPIDER、
-    //   ER_TNT、ER_ARROW、ER_PLAYER、ER_PAINTING 的渲染器（模型系统与这些实体计划外）
+    //   ER_TNT、ER_PLAYER、ER_PAINTING 的渲染器（模型系统与这些实体计划外）
     for (const r of this._renderers.values()) r.init(this);
   }
 

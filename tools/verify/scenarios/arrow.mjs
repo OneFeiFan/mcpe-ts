@@ -8,7 +8,7 @@
 // 拉满（timeHeld ≥ 20）时 pow = 1 → **critArrow = true**。
 //
 // ⚠ 物品 id 带 +256（弓是 5 → 261，箭是 6 → 262）。
-// ⚠ 箭的渲染器（ArrowRenderer）没移植 → **箭在画面上看不见**，靠状态断言。
+// ⚠ 箭的渲染器是 D11.5 补的（ArrowRenderer，贴图 item/arrows.png）—— 截图里能看到那支箭。
 // ⚠ `h.state` 的 fn 只能写字面量。
 
 export default async function (h) {
@@ -126,7 +126,7 @@ export default async function (h) {
   h.expect(stuck.inGround === true, 'inGround = true（撞墙那条路）');
   h.expect(stuck.shakeTime !== undefined && stuck.shakeTime <= 7, `shakeTime 是 7 或已经递减（实测 ${stuck.shakeTime}）`);
   h.expect(stuck.z < stuck.wallZ + 1, `没穿进墙里（z=${stuck.z?.toFixed(2)}，墙在 ${stuck.wallZ}）`);
-  await h.shot('02-箭插在墙上（看不见，渲染器没移植）');
+  await h.shot('02-箭插在墙上');
 
   // ---- 再跑一会儿：插着的箭不该乱跑 ----
   await h.wait(1500);

@@ -38,6 +38,8 @@ export const PRELOAD: readonly string[] = [
   // S13：掉落物的阴影、水下覆盖层
   'misc/shadow.png',
   'misc/water.png',
+  // D11.5：箭的贴图（ArrowRenderer）
+  'item/arrows.png',
   // Gui::renderVignette（漂亮画质 + 暗角选项默认打开）：没有预加载时会沿用上一次绑定的 gui/icons.png，整张画到屏幕上，左上角就出现生命、护甲、气泡图标的残影
   'misc/vignette.png',
 ];
