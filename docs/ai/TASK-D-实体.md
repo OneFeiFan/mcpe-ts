@@ -111,7 +111,9 @@
 | **D7** | `Motive` + `Painting` + 接线 | 场景：挂上一幅画 |
 | **D8** | `Throwable` 基类 | 单测：最小子类飞行 + 落地 |
 | **D9** | `Snowball` + 接线 | 场景：扔出去、飞、消失 |
-| **D10** | `Chicken` + `ThrownEgg` + 接线 | 场景：扔蛋孵出鸡 |
+| **D10a** | （D10 执行时拆出来的）`PathfinderMob` + `AgableMob` 两个中间基类 | 单测：`canSpawn` 看草方块、`setAge` 的同步标志、NBT 往返 |
+| **D10b** | `Animal` + `Chicken` | 单测：血量/尺寸/`eggTime`/`aiStep` 的 flap + 场景：鸡下蛋 |
+| **D10c** | `ThrownEgg` + 接线（EggItem / EntityFactory） | 场景：扔蛋 → 飞 → 命中消失；多扔几次孵出鸡 |
 | **D11** | `Arrow` + 接线 | 场景：射出去、插住 |
 | **D12** | 收尾：台账、手册、文档 | — |
 
@@ -153,6 +155,29 @@
   落地存活是 `life == 20*60`（硬编码，**不乘 `TicksPerSecond`**）；Arrow 那边是 `60*TicksPerSecond`。
 - **D9/D10**：`ThrownEgg::onHit` 是 **protected**、`Snowball::onHit` 是 **public** ——
   同一个虚函数、可见性不一致，原样保留。
+- **D10a/b/c**（2026-10-04 执行 D10 时拆的 —— **D0 的估计错了**）：
+  D0 当时写的是"`Chicken`（113）+ `Animal`（92）= 205 行，只需要 Mob 的骨架"。
+  真去读源码才发现 `Animal` 的基链是
+  **`Chicken → Animal → AgableMob → PathfinderMob → Mob`**（外加一个空的 `Creature` 接口），
+  而 TS 里只有 `Mob` —— 也就是**中间还少两级**。
+  `PathfinderMob.cpp` 248 行里大半是 AI（`Sensing` / `PathNavigation` / `Path` /
+  `level->findPath` / `updateAi`），那正是第四类"大系统"里的 MobAI。
+  `Animal::hurt` 要写的 `fleeTime` / `attackTargetId` 两个字段**就声明在 `PathfinderMob` 里**，
+  所以绕不过去。按"一步 ≤300 行、≤5 文件"的规矩拆成三小步：
+  - **D10a**：`PathfinderMob` + `AgableMob`。非 AI 的部分照抄（字段、
+    `canSpawn` / `getWalkTargetValue` / `findAttackTarget` / `checkCantSeeTarget` /
+    `getWalkingSpeedModifier` / `getNoActionTime`、age 与同步标志、NBT）；
+    AI 的部分按仓库既有做法标 `OMIT(MobAI)` / `DEFERRED(MobAI)`（`Mob.ts` 就是这么处理的），
+    不自己发明实现。判据：单测（`canSpawn` 的草方块 + 亮度判断、`setAge` 翻转 isBaby 标志、
+    `Age` 的 NBT 往返、`getWalkingSpeedModifier` 在 fleeTime>0 时 ×2）。
+  - **D10b**：`Animal` + `Chicken`。判据：单测（4 血、0.3×0.7、`eggTime` 落在
+    `[5*60*20, 10*60*20)`、`aiStep` 的 flap/flapping 数值、计时到点 `spawnAtLocation(egg)`）
+    + 场景（世界里造一只鸡，跑够刻数看它下蛋 —— 注意是**随机**的，要跑够）。
+  - **D10c**：`ThrownEgg` + 接线。⚠ `onHit` 里孵鸡用的是 **`sharedRandom`**（不是 level.random），
+    而且 `sharedRandom.nextInt(8) == 0` 才孵、`nextInt(32) == 0` 时孵 4 只 —— 场景里要循环扔。
+    判据：场景（扔蛋 → 飞 → 命中消失；循环扔到孵出鸡）。
+  - `ChickenRenderer` **不移植**（要模型系统）—— 所以 D10b 结束时鸡在画面上还是看不见的，
+    和 D2/D9 那两个渲染器缺口同一类；D12 收尾时一并列进"已知缺口"。
 - **D11**：`tick()` 调 `super.tick()`；`int dmg = (int)ceil(pow * 2.0f)`；
   插地存活是 `++life == 60*TicksPerSecond` 的**等于**判断；三个构造里只有一个不设 `heightOffset`。
 

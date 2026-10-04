@@ -114,6 +114,8 @@ export * from './item/HangingEntityItem.js';
 export * from './item/DyePowderItem.js';
 export * from './item/ItemInstance.js';
 export * from './entity/Mob.js';
+export * from './entity/PathfinderMob.js';
+export * from './entity/AgableMob.js';
 export * from './entity/player/Inventory.js';
 export type { EntityTile } from './level/tile/EntityTile.js';
 export * from './entity/item/FallingTile.js';
