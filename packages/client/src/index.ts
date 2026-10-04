@@ -58,4 +58,7 @@ export * from './renderer/entity/ItemSpriteRenderer.js';
 export * from './renderer/entity/ArrowRenderer.js';
 export * from './particle/ParticleTextures.js';
 export * from './particle/Particle.js';
+export * from './particle/SmokeParticle.js';
+export * from './particle/ExplodeParticle.js';
+export * from './particle/RedDustParticle.js';
 export * from './gui/Font.js';

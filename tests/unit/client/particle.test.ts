@@ -54,7 +54,15 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** 固定 `Mth.random()`（= Math.random）造一颗粒子 */
+/**
+ * 固定 `Mth.random()`（= Math.random）造一颗粒子。
+ *
+ * ⚠ **别把 rnd 取成 0.5**：那时抖动 `(rnd*2-1)*0.4f` 恰好是 0，
+ * 三个方向的速度全为 0 → `dd = 0` → `mul = 0.4f*speed/0 = Infinity` → `0 * Infinity = NaN`，
+ * 于是 xd/yd/zd 全是 **NaN**（C++ 同样如此，除法没有保护）。
+ * NaN 之间用 `toBe`（Object.is）**是相等的**，断言会静默变成"什么都没测"
+ * —— 写 E2 时就是这么栽的：一条"漏掉 *0.1f"的变异没让测试变红。
+ */
 function make(rnd: number, xa = 0, ya = 0, za = 0): Particle {
   vi.spyOn(Math, 'random').mockReturnValue(rnd);
   return new Particle(level, 8.5, 70.5, 8.5, xa, ya, za);
