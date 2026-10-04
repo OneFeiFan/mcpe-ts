@@ -1,0 +1,464 @@
+# 任务单 G：模型系统与实体渲染
+
+把 `src/client/model/`（含 `geom/`）搬过来，再补上 5 个实体渲染器 ——
+让**鸡、TNT、画、三脚架相机、玩家**从"逻辑全对但画面上什么都没有"变成看得见。
+
+> **这一份和任务单 D/E/F 的区别：这批东西是纯几何，没有游戏状态可以比对。**
+> 粒子能断言"生成了几个、颜色多少"，声音能断言"播放调用记录"，
+> 模型只有一个东西能验：**顶点和 UV**。所以这批**必须**有一节黄金样本
+> （`fixtures/golden/model.json`，用户 2026-10-04 拍板），
+> 否则"对不对"就只能靠肉眼看截图，而 UV 抄歪一点点是看不出错的。
+
+---
+
+## G0 范围（用户 2026-10-04 拍板）
+
+### 两个已定的事
+
+1. **范围只做"画面上真看得见的 5 个"** —— 猪 / 牛 / 羊 / 僵尸 / 骷髅 / 蜘蛛 / 苦力怕这 7 只
+   **实体类本身还没移植**（见下），做出来也永远看不到，记 `OMIT(Entity)` 留给后面。
+2. **模型几何要写黄金样本** —— 新开一节 `model`，从参考 C++ 生成夹具。
+
+### 做什么
+
+| 层 | 内容 |
+|---|---|
+| 几何层 | `Model`、`ModelPart`、`Cube`、`PolygonQuad`、`VertexPT`、`ModelInclude` |
+| 渲染器基类 | `MobRenderer`、`HumanoidMobRenderer` |
+| 模型 | `HumanoidModel`、`ChickenModel` |
+| 渲染器 | `ChickenRenderer`、`TntRenderer`、`PaintingRenderer`、`TripodCameraRenderer`、`PlayerRenderer` |
+| 接线 | `EntityRenderDispatcher` 那 8 行 `assign` + `setModernSkin`、`ItemInHandRenderer` 的空手手臂 |
+| 夹具 | `tools/golden/harness_model.cpp` + `fixtures/golden/model.json` |
+
+### 不做什么（明确留下，不是忘了）
+
+| 不做 | 为什么 |
+|---|---|
+| 猪 / 牛 / 羊 / 僵尸 / 骷髅 / 蜘蛛 / 苦力怕 的模型与渲染器 | **它们的实体类没有移植**（`packages/world/src/entity/` 里只有 `Chicken` 一个动物）。实体的创建走 `MobFactory::CreateMob`，那条整条 `OMIT(Entity)`（`EntityFactory.ts:39`）。做了**三个判据一个都用不上**：C++ 里能跑但 TS 里没有实体、黄金样本只覆盖几何、浏览器里看不见。等 MobFactory / MobAI 落地时一起补 |
+| `SignModel` / `ChestModel` | 只被 `renderer/tileentity/`（告示牌、箱子）用，那是另一个系统（`DEFERRED(TileEntityRender)`，4 条），不在这批 |
+| 僵尸猪人 / 水生物 / 飞行生物 | 同上，实体类不存在 |
+| `EntityTileRenderer` | 方块的"实体形态"（箱子），属 TileEntity 那一摊 |
+
+---
+
+## G0.5 依赖清单（实测，不是估的）
+
+### C++ 侧规模（`wc -l` 实测）
+
+| 目录 | 行数 |
+|---|---|
+| `src/client/model/` 全部（6 个头 + 6 个 cpp + `geom/` 5 个文件） | **1890** |
+| `src/client/renderer/entity/` 缺的那 11 个渲染器 | **1256** |
+| 合计 | **约 3146** |
+
+缺的渲染器逐个（`wc -l`）：
+
+| 文件 | 行数 | 本任务单做不做 |
+|---|---|---|
+| `MobRenderer` | 301 | ✅ |
+| `HumanoidMobRenderer` | 254 | ✅ |
+| `PlayerRenderer` | 160 | ✅ |
+| `PaintingRenderer` | 109 | ✅ |
+| `TripodCameraRenderer` | 104 | ✅ |
+| `CreeperRenderer` | 94 | ❌ 实体没有 |
+| `TntRenderer` | 65 | ✅ |
+| `SheepRenderer` | 49 | ❌ 实体没有 |
+| `SpiderRenderer` | 46 | ❌ 实体没有 |
+| `ChickenRenderer` | 45 | ✅ |
+| `PigRenderer` | 29 | ❌ 实体没有 |
+
+模型侧（`wc -l`）：`HumanoidModel` 322、`ModelPart` 377、`QuadrupedModel` 150、
+`ChickenModel` 124、`CreeperModel` 82、`Cube` 103、`SpiderModel` 168、
+`SheepModel`+`SheepFurModel` 128、`ZombieModel`+`SkeletonModel` 83、
+`PigModel`+`CowModel` 68、`Model` 48、`Polygon` 96、`Vertex` 40、`ModelInclude` 17。
+**本任务单只做 `HumanoidModel` + `ChickenModel`**，其余 5 只的模型也一起记 `OMIT`。
+
+### 谁在等这批东西（接线点，都是现成的 `DEFERRED` 行）
+
+| 位置 | 现在写的是什么 |
+|---|---|
+| `EntityRenderDispatcher.ts:60` | `DEFERRED(EntityRender)`：11 个渲染器的注册 |
+| `EntityRenderDispatcher.ts:156` | `OMIT(EntityRender)`：`setModernSkin` |
+| `ItemInHandRenderer.ts:358` | `DEFERRED(Model)`：空手时画玩家手臂 |
+
+台账基线（`pnpm ledger` 实测）：**222 条**。其中
+`DEFERRED(EntityRender)` **2**、`OMIT(EntityRender)` **2**、`DEFERRED(Model)` **1**。
+（`FallingTileRenderer.ts:32` 那条 `OMIT(EntityRender)` 是析构函数，本任务单不会动它。）
+
+### 已经在等粒子的那 5 个实体（实测 `packages/world/src/entity/` 全 30 个文件）
+
+| 实体 | 类 | `entityRendererId` | 缺的渲染器 |
+|---|---|---|---|
+| `Chicken` | ✅ `animal/Chicken.ts` | `ER_CHICKEN_RENDERER` | `ChickenRenderer` + `ChickenModel` + `MobRenderer` |
+| `PrimedTnt` | ✅ `item/PrimedTnt.ts` | `ER_TNT_RENDERER` | `TntRenderer` |
+| `Painting` | ✅ `Painting.ts` | `ER_PAINTING_RENDERER` | `PaintingRenderer` |
+| `TripodCamera` | ✅ `item/TripodCamera.ts` | `ER_TRIPODCAMERA_RENDERER` | `TripodCameraRenderer`（要 `ModelPart`） |
+| `Player` | ✅ `player/Player.ts` | `ER_PLAYER_RENDERER` | `PlayerRenderer` + `HumanoidMobRenderer` + `HumanoidModel` |
+
+### 地基全都现成（逐条实测过）
+
+| 要用的东西 | 状态 |
+|---|---|
+| VBO 层：`glGenBuffers2` / `Tesselator.end(useMine, bufferId)` / `drawArrayVTN_NoState` / `RenderChunk` | ✅ `ItemInHandRenderer`、`Gui`、`LevelRenderer` 已经在用 |
+| `Mob`：`isBaby` `getTexture` `getAttackAnim` `walkAnimSpeed(O)` `walkAnimPos` `heightOffset` `yBodyRot(O)` `isSneaking` `getCarriedItem` `getUseItemDuration` `getCapeTexture` `getCapeX/Y/Z` `getCapePrevX/Y/Z`（后 6 个在 `Mob.ts:145-168`） | ✅ 全在 |
+| `EntityRenderer`：`renderShadow` `renderTileShadow` `renderFlame` `postRender` `getFont` `getLevel` `onGraphicsReset` | ✅ S13 阶段 C 已移植 |
+| `Motive`（画的内容表） | ✅ D7 移的 |
+| `TileRenderer.renderTile / canRender / tesselateCrossTexture` | ✅ S13 阶段 A/B |
+| `Font.width / draw`、`Textures.loadAndBindTexture / loadTexture / getTemporaryTextureData / isTextureIdValid` | ✅ |
+| `Material.plant`、`Tile` 的 `(id, tex, material)` 构造函数 | ✅ |
+| `ItemInstance.isArmorItem`、`ArmorItem.modelIndex` | ✅ |
+| 贴图：`mob/chicken.png`、`char.png`、`art/kz.png`、`item/camera.png`、`misc/shadow.png`、`armor/*_1/_2.png` | ✅ 全在 `imageManifest.ts`（全表 54 条） |
+| 黄金样本 harness 的"陷阱替身"机制（`build_with_stubs`） | ✅ `build.sh` 里有，未定义符号自动生成 ud2 桩 |
+
+---
+
+## ⚠ 规划时实测出来的六个坑（决定了怎么写）
+
+### 一、`ModelPart::compile` 白干 6 倍活，而 `draw()` 的顶点数正好抵消
+
+```cpp
+void ModelPart::compile(float scale) {
+  t.begin();
+  for (int i = 0; i < 6; i++) {              // ← 外面这层跑 6 遍
+    for (unsigned int i = 0; i < cubes.size(); ++i)   // ← 内层 i 把外层 i 遮蔽了
+      cubes[i]->compile(t, scale);
+  }
+  t.end(true, vboId);
+}
+void ModelPart::draw() {
+  drawArrayVTN_NoState(vboId, cubes.size() * 2 * 3 * 6, 36);   // ← 硬编码 36×N
+}
+```
+
+每个 `Cube::compile` 画 **6 个面 = 24 个顶点**，所以缓冲里其实有 `6 遍 × 6 面 × N 个方块`
+= 144N 个顶点；而 `draw()` 只画 **36N** 个 = `9N` 个面 = **第 1 遍的全部（6N）+ 第 2 遍的前一半**。
+第 2 遍画的是一模一样的东西，所以**画面结果是对的**，只是白干了 6 倍活。
+
+**这个原样保留**，注释里写明"是原样的怪癖，不是 bug 修复点"。谁要是"优化"成跑 1 遍，
+`draw()` 的顶点数就要跟着改成 `cubes.size() * 6 * 4`，那就不是 1:1 了。
+
+### 二、`Cube` 构造函数里成员被形参遮蔽 —— 那 6 个成员存进去之后就没人读了
+
+```cpp
+Cube::Cube(ModelPart* modelPart, ..., float x0, float y0, float z0, int w, int h, int d, float g)
+: x0(x0), y0(y0), z0(z0), x1(x0 + w), y1(y0 + h), z1(z0 + d)   // ← 成员 = 没外扩的
+{
+    float x1 = this->x1;    // ← 局部变量，把成员遮住
+    x0 -= g; y0 -= g; z0 -= g;   // ← 改的是**形参**
+    ...
+    if (modelPart->mirror) { swap(x1, x0); }   // ← 改的是**局部**
+    vertices[0] = VertexPT(x0, y0, z0, 0, 0);  // ← 用的是局部（加了 g 的）
+```
+
+所以：成员的 `x0..z1` 是**没外扩 `g` 的值**，而且全文没有一处读它们（`Cube` 只有 `vertices` 和
+`polygons` 被外面用）。TS 里照抄：**成员留着（照抄），但注明"写入后无人读"**。
+
+⚠ 还有一点：`mirror` 的交换发生在**外扩之后**，顺序不能挪。
+
+### 三、`Cube` 六个面的 UV 参数和 Java 版**不一样** —— 原样保留
+
+`PolygonQuad` 用的是 R10 那种"四个角 + u0v0u1v1"的构造。六个面的参数抄下来是：
+
+| # | 面 | 四个角 | u/v 参数 |
+|---|---|---|---|
+| 0 | +x | l1,u1,u2,l2 | `d+w, d, d+w+d, d+h` |
+| 1 | −x | u0,l0,l3,u3 | `0, d, d, d+h` |
+| 2 | −y | l1,l0,u0,u1 | `d, 0, d+w, d` |
+| 3 | +y | u2,u3,l3,l2 | `d+w, d, d+w+w, **0**` |
+| 4 | −z | u1,u0,u3,u2 | `d, d, d+w, d+h` |
+| 5 | +z | l0,l1,l2,l3 | `d+w+d, d, d+w+d+w, d+h` |
+
+（`d/w/h` 都是**整数**，和 `xTexOffs/yTexOffs` 一样是 int，`/texW` 才是浮点。）
+
+第 3 行（顶面）和第 6 行（+z 面）和 Java 的 `ModelBox` 对不上：Java 的顶面是
+`(texU+d+w, texV+0, texU+d+w+w, texV+d)`，这里第 3 行把 v 写反了；第 6 行 u 从 `d+w+d`
+开始，比 Java 的标准盒布局多跨了。
+
+**这看着像笔误，但必须原样抄。** 这正是要黄金样本的原因 —— 夹具会把这 16 个 uv 数字钉死，
+以后谁"顺手修一下"都会红。
+
+### 四、`PolygonQuad` 的 UV 是**反着给**的，还有一点点内缩
+
+```cpp
+const float us = -0.002f / texW;     // 负的
+const float vs = -0.002f / texH;
+vertices[0] = v0->remap(uu1 / texW - us, vv0 / texH + vs);   // 第 0 个角拿的是 uu1
+vertices[1] = v1->remap(uu0 / texW + us, vv0 / texH + vs);
+vertices[2] = v2->remap(uu0 / texW + us, vv1 / texH - vs);
+vertices[3] = v3->remap(uu1 / texW - us, vv1 / texH - vs);
+```
+
+`− us` = `+0.002/texW`（往里缩），`+ vs` = `−0.002/texH`（往另一个方向缩）。
+**四行的符号不一样，抄错一个就是贴图边缘漏一条缝**。继续交给黄金样本。
+
+### 五、`ModelPart` 的拷贝赋值 —— TS 里要用 `assign()`，不能换对象
+
+三处构造里都有 `head = ModelPart(0, 0);`（`CowModel` / `SheepModel` / `SheepFurModel`）和
+`arm0 = ModelPart(24 + 16, 16);`（`SkeletonModel`）。C++ 的 `operator=` 是**拷进现有对象**，
+所以别的地方（`model->cubes` 里那个指针、`head` 这个名字）都还指着同一个东西。
+
+TS 里直接写 `this.head = new ModelPart(0, 0)` 是**错的** —— 旧对象还留在 `model.cubes` 里，
+新的又没登记。仓库已有先例：`RenderChunk.assign(rhs)`（"C++ 的拷贝赋值"）。照那个写
+`head.assign(new ModelPart(0, 0))`。
+
+`operator=` 的语义照抄：`clear()`（清 cubes + `setModel(null)` 把自己从旧 model 里摘掉）
+→ 拷 id / texOffs / mirror → `setModel(rhs.model)` → `cubes.assign(...)` → `mimic(&rhs)`。
+
+### 六、模型是**整个镜像**着画的 —— 排查画面问题时先想到这条
+
+`MobRenderer::render` 里有：
+
+```cpp
+glScalef2(-1, -1, 1);
+scale(mob, a);
+glTranslatef2(0, -24 * ascale - 0.125f / 16.0f, 0);   // ascale = 1/16
+```
+
+X 和 Y 都乘 −1。所以模型坐标里 "+y 向上"在屏幕上是**向下**，
+`QuadrupedModel` 的幼体分支那个 `glTranslatef(0, yHeadOffs * scale, ...)` 也是**往下**挪。
+另外 `MobRenderer` 用的是 `glPushMatrix2` / `glDisable2(GL_CULL_FACE)`，**没有** `glScalef(1,1,-1)`
+之类；和别的渲染器（`ArrowRenderer`、`ItemRenderer`）比一眼能看出差异 —— 别照自己的直觉改。
+
+---
+
+## 拆分（十二小步）
+
+拆法：**几何层自下而上（G1→G4），渲染器由基类到子类（G5→G7），
+然后每个"看得见的东西"一步（G8→G10）**。每步都稳在 300 行 / 5 文件以内。
+
+| 步 | 交付 | 新文件 | 改文件 | 判据 |
+|---|---|---|---|---|
+| **G0** | 任务单落盘 + `task_plan.md` 指向它 | — | 2 个 md | 无代码 |
+| **G1** | **黄金样本**：`harness_model.cpp` + `fixtures/golden/model.json` + `tests/golden/model.golden.test.ts`（先只有夹具，测试等 G2 有实现再写） | 1 个 cpp + 1 个 json | `build.sh` | `REF=$REF bash tools/golden/build.sh model` 出夹具 |
+| **G2** | `Vertex` + `Polygon`（`VertexPT` `PolygonQuad`） | 2 个 ts | — | 黄金样本 |
+| **G3** | `Cube`（8 顶点 + 6 面 + mirror + 外扩 + `compile`） | 1 个 ts | — | 黄金样本 + 单测 |
+| **G4** | `ModelPart`（`_init` `addBox×3` `setPos` `render` `renderRollable` `translateTo` `compile` `draw` `renderHorrible` `drawSlow` `clear` `assign` `mimic` `texOffs` `setTexSize` `setModel` `addChild` `onGraphicsReset`） | 1 个 ts | — | 单测 |
+| **G5** | `Model` 基类 + `ModelInclude` | 2 个 ts | — | 单测 |
+| **G6** | `MobRenderer`（含 `renderName` / `renderNameTag` / 护甲层 / 受伤与染色叠加） | 1 个 ts | — | 单测 |
+| **G7** | `HumanoidModel`（含 64×64 现代皮肤分支、`hair`、`renderHand` 要用的 `arm0`） | 1 个 ts | — | 单测 |
+| **G8** | `HumanoidMobRenderer`（`additionalRendering`：手持物品 + 披风；`renderHand`） | 1 个 ts | — | 单测 |
+| **G9** | **鸡**：`ChickenModel` + `ChickenRenderer` + 注册 → **第一只看得见的生物** | 2 个 ts | `EntityRenderDispatcher.ts` | 浏览器截图 |
+| **G10** | **TNT / 画 / 三脚架相机**三个不用模型的 + 注册 | 3 个 ts | `EntityRenderDispatcher.ts` | 浏览器截图 |
+| **G11** | **玩家**：`PlayerRenderer` + `setModernSkin` 接线 + `ItemInHandRenderer` 空手手臂 | 1 个 ts | `EntityRenderDispatcher.ts`、`ItemInHandRenderer.ts` | 浏览器截图（第三人称） |
+| **G12** | 收尾：台账、手册、完成章节、7 只生物的 `OMIT(Entity)` 记录 | — | 文档 | `pnpm ledger` |
+
+**里程碑**：G9 做完就是一个能交的节点 —— 世界里能看见鸡了。
+G10 让 TNT / 画 / 相机看得见。G11 是玩家自己（要切第三人称）。G12 收尾。
+
+依赖顺序：`Cube` 要 `PolygonQuad`（G3 依赖 G2）；`ModelPart` 要两者（G4 依赖 G3）；
+`MobRenderer` 要 `Model`（G6 依赖 G5）；`HumanoidMobRenderer` 要 `MobRenderer` + `HumanoidModel`
+（G8 依赖 G6、G7）；5 个渲染器都要 `MobRenderer` 或 `ModelPart`（G9~G11 依赖 G4~G8）。
+
+---
+
+## 每一步的详细验收
+
+### G1 — 黄金样本（**先做，后面两步都靠它**）
+
+新写 `tools/golden/harness_model.cpp`，把 `Cube` 的顶点和 UV 打出来：
+
+- 造几个形状覆盖全部分支：`(0,0,0,8,8,8,g=0)`（人头）、`(0,0,0,4,12,4,g=0.5)`（手臂，带外扩）、
+  `mirror = true` 的那一组（`arm1` / `leg1`）、以及 `xTexOffs/yTexOffs` 非 0 的
+  （`arm0(40,16)` 那种）；再把 `HumanoidModel` 与 `ChickenModel` 里每个 `ModelPart` 的
+  全部 cube 也扫一遍 —— **这样模型表本身就是夹具**，谁改错参数立刻红。
+- 每个 cube 输出：8 个 `VertexPT` 的 `x/y/z/u/v`（float，按 C++ 打印精度），
+  以及 6 个 `PolygonQuad` 的 4 个角各自的 `x/y/z/u/v`。
+- 链接：`Cube.cpp` + `Polygon.cpp` + `ModelPart.cpp`（`ModelPart` 的构造会调 `glGenBuffers2`，
+  用 `build_with_stubs` 那套自动生成 trap 桩即可，不用手写）。
+- `build.sh` 里加一节 `model`（`ALL_SECTIONS` 数组 + 一段 `if want model`）。
+  给节名时**必须能只跑这一节**（别每次重编 150 个文件）。
+
+验收：`REF=$REF bash tools/golden/build.sh model` 出 `fixtures/golden/model.json`；
+**连跑两次逐字节一样**（夹具可复现）；`git status` 只有这三个文件。
+
+### G2 — `Vertex` + `Polygon`
+
+新建 `packages/client/src/model/geom/Vertex.ts`、`Polygon.ts`。
+`VertexPT.remap(u, v)` 是**返回新对象**（C++ 是值返回），别写成改自己。
+`PolygonQuad` 三个构造函数（4 角、带纹理参数的 int 版、float 版）+ `mirror()` + `render()` + `flipNormal()`。
+
+⚠ `PolygonQuad::render` 里的法线是 `v1.cross(v0).normalized()`（**v1 叉 v0，不是 v0 叉 v1**），
+顺序错了整个模型的光照就反了。`Vec3.cross/normalized` 用 `@mcpe/world` 现成的。
+
+验收：`tests/golden/model.golden.test.ts` 逐位比对 G1 的夹具；`pnpm test` 绿。
+
+### G3 — `Cube`
+
+`packages/client/src/model/geom/Cube.ts`。照抄六个面的 UV 参数表（见坑三），
+`mirror` 的交换在**外扩之后**（坑二），六个面构造完再统一 `mirror()`。
+
+验收：黄金样本全绿；再加单测钉住"成员 x0..z1 是没外扩的值"这条（写出来免得被"修"）。
+
+### G4 — `ModelPart`
+
+`packages/client/src/model/geom/ModelPart.ts`。要点：
+
+- `_init` 里 `glGenBuffers2(1, &vboId)` —— 每个部件一个 VBO，**构造时就分配**。
+  TS 里 `glGenBuffers2(1, ids)` 的签名是 `(n, buffers: {[i: number]: number})`（照 `Gui.ts:117` 的用法）。
+- `compile()` 的 6 次空转 + `draw()` 的硬编码顶点数：**原样保留**（坑一）。
+- `render()` 的三个分支（有旋转 / 只有位移 / 都没有）里，
+  **只有第一个分支用了 `glPushMatrix2` + `glPopMatrix2`**，另两个用 `glTranslatef` 再平移回去。
+  照抄，别统一成 push/pop。
+- `operator=` → `assign(rhs)`（坑五）。
+- `neverRender` / `visible` 是**两个不同的早退**。
+
+验收：单测（下面"怎么验证"里列的那几条）。
+
+### G5 — `Model` + `ModelInclude`
+
+`Model` 基类：5 个虚方法（`onGraphicsReset` `render` `renderHorrible` `setupAnim` `prepareMobModel`）
++ 5 个字段（`attackTime` `riding` `texWidth` `texHeight` `cubes` `young`，默认 0/false/64/32/[]/**true**）。
+⚠ `young` 默认是 **`true`**（C++ 的初始化列表写的是 `young(true)`）—— 不设的话幼体分支会走错。
+
+`ModelInclude.h` 在 C++ 里是**空的**（只有文件头）。TS 侧建一个 `ModelInclude.ts`
+只放"哪些模型类存在"的 re-export（照 `ParticleInclude.ts` 的先例），把 5 只没移植的记 `OMIT(Entity)`。
+
+验收：单测（默认值那几条）。
+
+### G6 — `MobRenderer`
+
+`packages/client/src/renderer/entity/MobRenderer.ts`。301 行 C++，是这批里最大的一块。要点：
+
+- `render` 的顺序：`glPushMatrix2` → `glDisable2(GL_CULL_FACE)` → 设 `model` 的
+  `attackTime/riding/young` → 算 `bodyRot/headRot/headRotx` → `setupPosition` →
+  `getBob` → `setupRotations` → `glScalef2(-1,-1,1)` → `scale` → `glTranslatef2(0, -24*ascale - 0.125/16, 0)`
+  → `bindTexture(mob.getTexture())` → `prepareMobModel` → `render` → 护甲循环 → `additionalRendering`
+  → 受伤/染色叠加 → `glEnable2(GL_CULL_FACE)` → `glPopMatrix2` → `postRender` → `renderName`。
+- ⚠ `wp = mob.walkAnimPos - mob.walkAnimSpeed * (1 - a)`，幼体时 `wp *= 3.0f`，然后 `if (ws > 1) ws = 1`
+  —— **只夹 ws，不夹 wp**。
+- ⚠ `float ascale = 1 / 16.0f` 是 float 除法（`f(1/16)`），但 `-24 * ascale - 0.125f/16.0f`
+  里 `24` 是 int、`ascale` 是 float → **float 乘法**。三档数值规则按 float 走。
+- `getOverlayColor` / `prepareArmor` / `getFlipDegrees` / `scale` / `additionalRendering` 全是**空实现**
+  （基类返回 −1 / 0 / 90 / 什么都不做）。
+- `renderName` 里 `ss << mob->entityId` 是 **stringstream 输出 int**，TS 里 `String(mob.entityId)`。
+  只在 `OPTIONS_RENDER_DEBUG` 开着时调 `renderNameTag`。
+- `renderNameTag` 里的 `glTranslatef2(x, y + (isPlayer() ? 1.0 : 2.3), z)`、`glScalef2(-s,-s,s)`、
+  两次 `font.draw`（一次带 `glDepthMask(false)` 做阴影）—— 照抄。
+  ⚠ `0x20ffffff` 那个颜色是**半透明**的（`>>> 0` 别搞成负数）。
+
+验收：单测（`setupRotations` 的死亡翻滚角度、`getBob`、`renderNameTag` 的远近剔除）。
+
+### G7 — `HumanoidModel`
+
+`packages/client/src/model/HumanoidModel.ts`，322 行 C++。要点：
+
+- 7 个 `ModelPart`：`head(0,0)` `hair(32,0)` `body(16,16)` `arm0(40,16)` `arm1(40,16)` `leg0(0,16)` `leg1(0,16)`。
+  ⚠ `arm0`/`arm1` 的 texOffs 是 `24 + 16`（**写成表达式，不是 40** —— 原样抄）。
+- `modernSkin = (texWidth == 64 && texHeight == 64)` 为真时：`arm1.texOffs(32,48)`、`leg1.texOffs(16,48)`，
+  并且**再 addBox 一遍**（多一层 `g + 0.5` 的外壳），还改 `body/arm0/arm1/leg0/leg1` 的 texOffs。
+- `render(Entity*, …)` 里那段"拿弓就举手"的判断：`mob.getUseItemDuration() > 0` 且
+  `item.getUseAnimation() == UseAnim.bow` 才置 `bowAndArrow = true`；**方法末尾无条件清回 false**。
+- `setupAnim` 里 `attackTime > -9990` 那一大段（挥手动画）、`sneaking` 分支（`leg.y` 9↔12、`head.y` 1↔0）、
+  `bcos/bsin` 的呼吸抖动 —— 一串浮点，**每个运算都要 fround**。
+- `render(HumanoidModel*, scale)` 这个重载**全参考源码零调用方**（死代码，照抄，注释写明）。
+- `renderHorrible` 同样（死代码）。
+
+⚠ 这里最容易出问题的是 fround 的密度 —— `Mth.sin/cos` 是查表的，返回的已经是 float，
+但 `time * 0.6662f` 这种乘法、`tcos0 * 1.4f` 这种都要包。
+
+验收：单测（`setupAnim` 在给定输入下的 7 个部件的角度/位置，逐位比）。
+
+### G8 — `HumanoidMobRenderer`
+
+`packages/client/src/renderer/entity/HumanoidMobRenderer.ts`，254 行 C++。要点：
+
+- `render`：先按 `mob.getCarriedItem() != null` 设 `humanoidModel.holdingRightHand`，
+  再设 `sneaking`，调 `super.render`，**最后把 `holdingRightHand` 清回 false**。
+- `renderHand()`：`attackTime = 0` → `setupAnim(0,0,0,0,0,1/16)` → 开 `GL_VERTEX_ARRAY`/`GL_TEXTURE_COORD_ARRAY`
+  → `arm0.render(1/16)` → 关掉。**只画一条手臂**。
+- `additionalRendering` 的三段：**(1) 手持物品**（按 方块 / 弓 / 手持有型物品 / 其它 四路走不同的
+  `glTranslate + glRotate + glScale`，最后 `itemInHandRenderer.renderItem(mob, item)`）；
+  **(2) 披风**（`Player::asPlayer(mob)` 拿到才画，一长串披风摆动公式 + 24 个顶点的手写 UV 四边形）；
+  **(3) 没了**。
+- ⚠ 披风那 24 个顶点用的是 `t.tex(u,v)` + `t.vertex(x,y,z)`（**不是 `vertexUV`**），
+  和 `Particle.render` 是同一套写法 —— `Tesselator.tex` 在 TS 里有（`Tesselator.ts:160`）。
+- ⚠ 披风第一段 `t.begin()` 之前**没有 `t.color(...)`**，用的是上一次留下的颜色。照抄。
+
+验收：单测（四路手持物品的变换矩阵链条太长，改成断言"调用了 renderItem 且变换调用次数对"）。
+
+### G9 — 鸡（第一个看得见的）
+
+`ChickenModel`（124 行）+ `ChickenRenderer`（45 行）+ `EntityRenderDispatcher` 注册。
+
+- `ChickenModel`：8 个部件，`yo = 16` 那个局部变量；`setupAnim` 里 `head.xRot` 是**负的**
+  （`-(xRot / (180/PI))`，和别的模型反号）；`wing0.zRot = bob`、`wing1.zRot = -bob`。
+- `ChickenRenderer.getBob`：`(Mth.sin(flap) + 1) * flapSpeed`，flap/flapSpeed 都要插值。
+  ✅ 实测 `Chicken.ts:31-35`（字段）+ `:42-46`（初始化）已经有 `flap` / `oFlap` /
+  `flapSpeed` / `oFlapSpeed` / `flapping` 五个字段，本步不用动实体。
+- 注册那一行照 C++ 的位置摆：`assign(ER_CHICKEN_RENDERER, new ChickenRenderer(new ChickenModel(), 0.3))`。
+
+验收：**浏览器场景** `tools/verify/scenarios/entity-model.mjs` —— 在玩家脚下 3 格放一只鸡
+（`level.addEntity(new Chicken(...))` 或走 `EntityFactory`），截图**必须打开看**：
+能看到白色鸡身 + 橙色喙。再截一张"模型转 90°"的（改 `yRot`）确认不是碰巧。
+
+### G10 — TNT / 画 / 三脚架相机
+
+三个都不依赖模型系统（相机只用一个 `ModelPart`）：
+
+- `TntRenderer`：`life` 最后 10 tick 的膨胀（`g` 平方两次）、`(life/5)&1 == 0` 时的加色闪烁，
+  用 `tileRenderer.renderTile(Tile.tnt, 0)`。
+- `PaintingRenderer`：`motive.w/h/uo/vo`，按 16×16 分块，每块 24 个顶点（正面 + 背面 + 4 个侧面），
+  `glEnable(GL_RESCALE_NORMAL)`。
+- `TripodCameraRenderer`：**构造一个 `Tile` 实例**（`new Tile(0, 15*16+3, Material.plant)`）+
+  一个 `ModelPart cameraCube`（`addBox(-4,-4,-6,8,8,10)`，`y = 11`），
+  ⚠ `cameraCube` 没有 `setModel` —— 它不属于任何 Model，所以 `onGraphicsReset` 传不到它。
+  还要 `Mth.DEGRAD`（TS 有）。
+
+验收：浏览器截图三张（摆一个 TNT 点燃、挂一幅画、放一个相机）。
+
+### G11 — 玩家 + 空手手臂
+
+- `PlayerRenderer`：4 个 `HumanoidModel`（`playerModel64` / `playerModel32` / `armorParts1(g=1.0)` /
+  `armorParts2(g=0.5)`），构造末尾把 `model` 和 `humanoidModel` **都换成 `playerModel32`**。
+  `isModernPlayerSkin` 走 `textures.loadTexture` + `getTemporaryTextureData` 判 64×64。
+  `prepareArmor` 里 `armorFilenames[modelIndex*2 + (layer==2 ? 1 : 0)]`。
+- ⚠ `PlayerRenderer::render` 里先 `setModernSkin(mob)` 再调父类；
+  `EntityRenderDispatcher.setModernSkin` 是**把 `getRenderer(player)` 硬转成 `PlayerRenderer`**
+  —— 只在玩家身上调，照抄那个不安全转换（TS 里要显式判类型，写成 `as`）。
+- `ItemInHandRenderer.ts:358` 那条 `DEFERRED(Model)` 换成真的调用：
+  C++ 那段是 `getRenderer(mc->player)` → 转 `HumanoidMobRenderer` → `setModernSkin(player)` → `renderHand()`。
+
+验收：场景里按 F5 切第三人称截一张图（能看到自己的头和身子），
+再切回第一人称、清空手持物品截一张（能看到手臂）。
+
+### G12 — 收尾
+
+- 7 只没实体的生物的模型/渲染器：在 `docs/ai/TASK-G-*.md` 和 `ModelInclude.ts` /
+  `EntityRenderDispatcher.ts` 里各记一条 `OMIT(Entity)` + 理由（**"实体类未移植，等 MobFactory/MobAI"**）。
+- `PITFALLS.md` 补节：模型几何的坑（六次空转、成员遮蔽、UV 与 Java 版不同、assign 而非换对象）。
+- 台账、完成章节、`task_plan.md` / `progress.md`。
+
+---
+
+## 怎么验证（三层里这批用两层，但层数和别人不一样）
+
+| 层 | 这批怎么用 |
+|---|---|
+| `pnpm typecheck` + `pnpm test` | 每步都跑，**不解释** |
+| **黄金样本** | G1 生成夹具，G2/G3 起逐位比对。这是这批**唯一的硬判据** |
+| **浏览器实测** | G9 起每步截图。**截图必须用图片查看工具打开看**，不能只看 `ok: true` |
+| fround 反向验证 | `Model.setupAnim` / `MobRenderer.render` 里的每个乘法都要扰动一遍 |
+
+`tests/golden/model.golden.test.ts` 要比对的（逐位相等，不是近似）：
+每个 cube 的 8 个顶点 `x/y/z`、8 个顶点的 `u/v`、6 个面 × 4 个角的 `u/v`。
+
+---
+
+## 每一步提交前的自检
+
+1. `pnpm typecheck` 0；`pnpm test` 全绿；
+2. `pnpm ledger` 条数**当场看**，和任务单里写的一致（记忆条目：写进产物的数字都要实测）；
+3. 改动的文件数 ≤5、行数 ≤300；超了就停下拆步写回任务单；
+4. 新写的每段浮点都过一遍 fround（`const f = Math.fround`）；
+5. **反向验证**：把实现改坏一处，确认对应测试变红；改不红的写成"记录"测试；
+6. 提交说明写清"移植了什么、暂缓了什么"。
+
+---
+
+## 已知缺口（本任务单不做，留给后面）
+
+1. **7 只生物的模型与渲染器** —— 拦在实体的前面（`MobFactory` 整条 OMIT）。
+2. **`renderer/tileentity/`**（箱子、告示牌）—— 另一摊，`DEFERRED(TileEntityRender)` 4 条。
+3. **`EntityTileRenderer`** —— 方块的"实体形态"，`TileRenderer.ts:1731` 那条。
+4. **`MobRenderer` 的护甲层在鸡/玩家以外没人调** —— 本任务单只有 `PlayerRenderer.prepareArmor` 是真的。
+5. **`ModelPart` 的 `addTexBox`**（`ModelPart.h:46`）—— 全参考源码零调用方，照抄但要注明。
