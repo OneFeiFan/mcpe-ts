@@ -257,3 +257,79 @@ JS 的 `this.tick()` 行为一致，**照写即可**。
    但"发出"端有一批方块自己还没移植。做那些方块时粒子会自动出现。
 2. `misc/explosion.png` 没有 → `HugeExplosion*` 永远做不了（要补图 + manifest + PRELOAD 三处）。
 3. 方向性/遮挡：C++ 粒子不透明度不随距离变，也没做遮挡剔除 —— 照抄，没优化。
+
+---
+
+## 任务单 E 完成（2026-10-04）
+
+粒子系统整个搬过来了：10 个粒子类 + `ParticleEngine` + `LevelRenderer.addParticle` 的字符串分派
++ 客户端接线。提交从 `320d35e`（E0 任务单）到 `84eb926`（E9），一共 **9 个提交**。
+
+规模：`packages/client/src/particle/` 现在 **1344 行 TS**（对应 C++ 侧 1176 行）；
+任务单 E 全程 `1ddcf9d..84eb926` 是 32 文件 / +4252 行（其中一半是测试）。
+
+### 台账（每个数字都是刚才用临时 worktree 逐个 checkout 实测的）
+
+| 步 | 提交 | 台账 | 一句话 |
+| --- | --- | --- | --- |
+| 基线 | `1ddcf9d` | **236** | 任务单 D 收官后的数 |
+| E0 | `320d35e` | 236 | 任务单落盘（纯文档） |
+| E1 | `30f1369` | 236 | `Particle` 基类 |
+| E2 | `ef460ab` | 236 | Smoke / Explode / RedDust |
+| E3 | `3f61fbb` | 236 | Flame / Bubble / Crit |
+| E4 | `53c27b2` | 236 | Lava / Terrain / BreakingItem |
+| E5 | `03f6eb8` | **238** | `ParticleEngine`（+2 条 `OMIT(Particle)`：`textureIds[4]`、析构函数） |
+| E6+E7 | `bbb6bd5` | **230** | `addParticle` 分派 + 客户端 7 处接线（−8） |
+| E8 | `b0401b5` | **229** | `destroy` 接线 + 素材 + 场景（−1） |
+| E9 | `84eb926` | **228** | `TakeAnimationParticle`（−1，`DEFERRED(Particle)` 清零） |
+| E10 | 本次 | **231** | 三条死代码 `OMIT(Particle)` 落档（+3） |
+
+**净变化：236 → 231。** `DEFERRED(Particle)` 从 **10 条降到 0 条**；
+`OMIT(Particle)` 从 **2 条变成 6 条**，每一条都写了为什么（不是漏掉）。
+（这两个数是按台账的同一条正则 `//\s*(DEFERRED|OMIT|…)(系统):` 数出来的，
+不是随手 `grep` 字符串 —— 用宽松 grep 会把正文里提到"标 OMIT(Particle)"的地方也算进去，第一次就数错成 12 和 8。）
+
+### E10 为什么台账会 +3
+
+`ParticleInclude.h`（粒子类的清单头）之前被整个跳过了。补上
+`packages/client/src/particle/ParticleInclude.ts` 之后，三个"明确不搬"的类终于有了落档的地方：
+`HugeExplosionParticle`、`HugeExplosionSeedParticle`、`SplashParticle`。
+**台账涨不是退步** —— 是原来"没记下来的缺口"记下来了。
+
+### 每一步的验证方式
+
+- **单测**：任务单 E 新增 **7 个文件 / 146 条**（`particle` 23、`particle-anim` 18、
+  `particle-misc` 19、`particle-terrain` 18、`particle-engine` 23、`levelrenderer-particle` 21、
+  `particle-take` 24）。全仓库 **91 文件 / 1001 条全过**。
+- **反向验证（扰动源码）**：一共 **95 个变异**（E1 10、E2 13、E3 17、E4 14、E5 18、E6+E7 10、E9 13），
+  最终全部变红。其中 **9 个一开始没红 —— 全是我测试的漏洞**，逐个补了断言：
+  E2 一条（`Math.random` 定成 0.5 会让所有速度变成 NaN，而 NaN 之间 `toBe` 相等 →
+  断言静默失效）、E3 两条（速度为 0 时阻力变异不可见）、E5 四条（没有第 4 档的测试、
+  `setPower`/`scale` 从没断言、`crack` 的面向分支从没断言）、E6 一条（用雪球 id 当 data，
+  `Item.items[data]` 和 `Item.snowBall` 恰好是同一个对象）、E9 一条（挑的 `yy` 没跨过整数边界）。
+- **浏览器场景**：`tools/verify/scenarios/particles.mjs`，**19 条断言全过 / 页面错误 0**，
+  4 张截图逐张打开看过。隔离调试场景 `_dbg-particles.mjs`、`_dbg-pickup.mjs` 保留。
+- **没有黄金样本** —— 粒子是画面类，第三档（不比较数值，只做截图核对）。
+
+### E0 没算到的三件事
+
+1. **`ParticleInclude.h` 被整个跳过了** —— 计划里只想到"写粒子类"，没想到 C++ 还有一份
+   "哪些粒子类存在"的清单头。它是记死代码 `OMIT` 的天然位置，E10 补上。
+2. **`LocalPlayer.take` 的接线必须用相对路径深引用才测得到** —— `LocalPlayer` 在
+   `@mcpe/client` 的桶里是 `export type`（只有类型，运行时不导出），
+   单测要拿构造函数只能 `import from '../../../packages/client/src/player/LocalPlayer'`
+   （和 `confirm-screen.test.ts` 一个做法）。
+3. **画面为空 ≠ 代码错** —— E8 结束时"粒子看不见"，我先怀疑了渲染链路，实际是
+   无头截图/定格的时序 + 测试设定（把掉落物摁在眼睛高度）两个原因叠出来的。
+   E9 用隔离实验（把起点人为挪到前方 3 格）把"设定问题"和"代码问题"分开了，
+   这个手法值得留到下批。
+
+### 已知缺口（没做，留给后面）
+
+- **`HugeExplosionParticle` / `HugeExplosionSeedParticle`**：C++ 里唯一的 `new` 点被注释掉，
+  且缺 `misc/explosion.png` 素材 → `OMIT(Particle)`，已落档在 `ParticleInclude.ts`。
+- **`SplashParticle`**：基类 `WaterDropParticle.h` 在参考树里根本不存在 → `OMIT(Particle)`。
+- **`misc/explosion.png` 没补**：`ParticleEngine.renderLit` 自己不 bind 纹理，
+  唯一会请求这张图的就是上面那两个已 OMIT 的类 → 不补也不会花屏（已实测截图确认）。
+- **51 处 `level->addParticle` 里还没移植的调用方**：本任务单只管"接住"，不管"谁来发"。
+  少数方块的 tick（比如火把冒烟那类）等它们各自的方块类移植时自然接上。

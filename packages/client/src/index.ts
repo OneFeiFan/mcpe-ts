@@ -57,15 +57,8 @@ export * from './renderer/entity/FallingTileRenderer.js';
 export * from './renderer/entity/ItemSpriteRenderer.js';
 export * from './renderer/entity/ArrowRenderer.js';
 export * from './particle/ParticleTextures.js';
-export * from './particle/Particle.js';
-export * from './particle/SmokeParticle.js';
-export * from './particle/ExplodeParticle.js';
-export * from './particle/RedDustParticle.js';
-export * from './particle/FlameParticle.js';
-export * from './particle/BubbleParticle.js';
-export * from './particle/CritParticle2.js';
-export * from './particle/LavaParticle.js';
-export * from './particle/TerrainParticle.js';
+// C++ 的 ParticleInclude.h：那份"哪些粒子类存在"的清单，10 个类一次转出去
+export * from './particle/ParticleInclude.js';
 export * from './particle/BreakingItemParticle.js';
 export * from './particle/ParticleEngine.js';
 export * from './particle/TakeAnimationParticle.js';
