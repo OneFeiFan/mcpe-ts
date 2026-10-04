@@ -158,3 +158,12 @@
   G5 里我给 `index.ts` 加了三行注释，顺手 `--write` 了一下 —— 它把**整个文件**的行尾符改了，
   出来是全文件 diff。回头 `git show HEAD:<file> | prettier --check` 才发现**这文件本来就不通过**。
   分不清"自己弄坏的"和"本来就坏的"就会白改一遍；顺手格式化整个文件也属于改了不必要的地方。
+- **测试里 `new EntityRenderDispatcher()`（以及任何 `new 模型()`）之前要先铺 GL 上下文。**
+  G9 起分派器的构造函数会 `new ChickenModel()`，而 `ModelPart` 的构造里唯一一次 GL 调用
+  `glGenBuffers` 没有上下文会直接抛（`gles.ts:153`）—— 一次连带伤了 21 条旧测试。
+  真机里 GL 上下文一定先于分派器，所以补的是**测试环境**：`beforeAll` 里
+  `glSetContext(new GLES1(null))`；手写的假 GL（`RecordingGL` 这类）则要补一个
+  `genBuffers(_n, buffers)` 把 `buffers[0]` 填个任意 id（分派器构造只用得到这一个 GL 函数）。
+- **`initItems()` 之前必须先 `initTiles`** —— `initItems` 会读 `Tile.grass.id`，
+  方块没注册时访问 `.id` 直接抛；真机的初始化顺序就是 `initTiles → initItems`，
+  测试里 `createFlatLevel()`（= initHeadless 链）就是补这个顺序。

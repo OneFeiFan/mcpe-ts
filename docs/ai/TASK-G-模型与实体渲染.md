@@ -687,6 +687,50 @@ vite 直接 PARSE_ERROR —— 改成逐下标取就对了。）
 （`level.addEntity(new Chicken(...))` 或走 `EntityFactory`），截图**必须打开看**：
 能看到白色鸡身 + 橙色喙。再截一张"模型转 90°"的（改 `yRot`）确认不是碰巧。
 
+**做完的情况（G9）**
+
+新增 `packages/client/src/model/ChickenModel.ts`（**149 行**）与
+`packages/client/src/renderer/entity/ChickenRenderer.ts`（**39 行**）+ `index.ts` 两行 export
++ `tests/unit/client/chicken-model.test.ts`（**14 条**）+ `tools/verify/mutations-g9.json`
++ 场景 `tools/verify/scenarios/entity-model.mjs`。**一条 DEFERRED 都没有**。
+
+接线四处：`EntityRenderDispatcher` 注册 `ER_CHICKEN_RENDERER`（`f(0.3)`，见 PITFALLS 第 3 条）；
+`ModelInclude.ts` 里 `ChickenModel` 那条 `DEFERRED(Model)` 换成真再导出；
+`apps/web/src/assets.ts` 预加载 `mob/chicken.png`（漏了不报错，鸡会画成上一张绑定的贴图）；
+`Chicken.ts` / `ThrownEgg.ts` 文件头"看不见"的旧注释改成"已接线"（纯注释）。
+
+台账 **233 → 233**（净零）：消化 `DEFERRED(Model)` 一条 = −1，`ChickenModel.ts:75` 新增一条
+`ADAPTED(Cpp)`（`0 + (float)yo` 的冗余加法直接写 `yo`）= +1。用 `git stash -u` 对 HEAD 与
+工作区各跑一次 `pnpm ledger` 实测核对过。
+
+**场景没走任务单建议的 `level.addEntity(new Chicken(...))`** —— 场景脚本跑在页面里，
+`Chicken` 类不在 `window` 上，`MobFactory::CreateMob` 又整条 `OMIT(Entity)`，没有"造鸡后门"。
+改走**真实链路**：一帧扔 160 个蛋，每个 1/8 概率孵一只（`(7/8)^160 ≈ 5e-10` 一只都不孵，
+可忽略）；孵化后把一只 `moveTo` 到镜头前约 3.5 格、正对镜头（`yRot=180`），定格前把
+`xo/yo/zo、yRotO、xRotO、yBodyRot、yBodyRotO` 全同步成当前值（渲染读的是插值字段，见 F 节
+"改 `xRot` 之后要连 `xRotO` 一起改"）。**11 条断言全过**；两张截图都打开看过：
+00 白色鸡身 + 橙色喙 + 红冠 + 黄腿正对镜头（远处一群孵出来的鸡也画出来了），
+01 原地转 90° 后侧身、喙转向一侧。
+
+**踩到的两个新坑（都补进 PITFALLS F 节）**：
+1. **测试里建 `EntityRenderDispatcher` 之前要先铺 GL 上下文** —— G9 起它的构造函数会
+   `new ChickenModel()`，而 `ModelPart` 的构造要 `glGenBuffers`（无上下文时 `gles.ts:153` 抛）。
+   一次连带伤了 21 条旧测试（3 个 SpyGL 文件 9 条 + `particle-take` 的假 GL 12 条）。
+   修的是**测试环境**：3 个文件 `beforeAll` 补 `glSetContext(new GLES1(null))`、
+   `RecordingGL` 补一个 `genBuffers`；**断言一个没动**。真机里 GL 上下文一定先于分派器存在，
+   没有为迁就测试动生产代码。
+2. **`initItems()` 之前必须先注册方块（`initTiles`）** —— `initItems` 会读 `Tile.grass.id`
+   （未注册时访问 `.id` 直接抛），真机初始化顺序就是 `initTiles → initItems`；
+   新测试文件的 `beforeAll` 用 `createFlatLevel()`（= initHeadless 链）补这个顺序。
+
+**反向验证：19 个变异 19 个全红**（`tools/verify/mutations-g9.json`）—— 头 `xRot` 负号丢 /
+嘴 `xRot` 清零 / 冠 `yRot` 清零 / 身体 90°→180° / 两条腿同号 / 两只翅膀同号 / `yo` 16→15 /
+腿 x 位置 -2→2 / 幼年 `1/ss`→`ss` / 幼年头组漏 `beak` / 幼年身组漏 `wing1` / 成年头喙对调 /
+`hair` 登记进 `cubes` / 身体盒深 6→5 / `getBob` 的 flap 不插值 / flapSpeed 不插值 /
+丢 `(sin+1)` 的 `+1` / 注册 id 换成猪 / shadow 0.3→0.4。
+
+台账：**233 → 233**。`pnpm typecheck` 0；`pnpm test` **104 文件 / 1197 条全过**。
+
 ### G10 — TNT / 画 / 三脚架相机
 
 三个都不依赖模型系统（相机只用一个 `ModelPart`）：
