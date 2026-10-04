@@ -2,8 +2,8 @@
  * 1:1 移植自 src/client/renderer/entity/EntityRenderDispatcher.h 与 .cpp（S13 阶段 C，部分移植）。
  * 部分：注册了 ER_ITEM_RENDERER（掉落物）、ER_FALLINGTILE_RENDERER（下落方块，D2.5）、
  *   ER_CHICKEN_RENDERER（鸡，G9 —— 第一个用上模型系统的生物）、ER_TNT_RENDERER 与
- *   ER_PAINTING_RENDERER（TNT 和画，G10）；
- *   人形、猪牛羊、玩家的渲染器要用模型系统或计划外的实体，留 DEFERRED(EntityRender)。
+ *   ER_PAINTING_RENDERER（TNT 和画，G10）、ER_PLAYER_RENDERER（玩家，G11）；
+ *   其余人形生物（猪牛羊骷髅僵尸苦力怕蜘蛛等）的渲染器还在等各自的实体/模型，留 DEFERRED(EntityRender)。
  *   ⚠ 相机渲染器（TripodCameraRenderer）在 C++ 里**从未注册**：EntityRenderDispatcher.h:55 只有一行
  *   注释掉的成员 `//TripodCameraRenderer tripodCameraRenderer;`，assign 列表里也没有它 ——
  *   照 C++ 1:1，TS 同样不注册（原版画面上相机实体就是隐形的）。
@@ -28,6 +28,8 @@ import { ChickenRenderer } from './ChickenRenderer';
 import { PaintingRenderer } from './PaintingRenderer';
 import { TntRenderer } from './TntRenderer';
 import { ChickenModel } from '../../model/ChickenModel';
+import { HumanoidModel } from '../../model/HumanoidModel';
+import { PlayerRenderer } from './PlayerRenderer';
 
 const f = Math.fround;
 
@@ -77,8 +79,15 @@ export class EntityRenderDispatcher {
     //   TNT 在真机上的构造晚于 initTiles，没影响；相机类不注册（见文件头），构造根本不发生。
     this.assign(EntityRendererId.ER_TNT_RENDERER, new TntRenderer()); // EntityRenderDispatcher.cpp:52
     this.assign(EntityRendererId.ER_PAINTING_RENDERER, new PaintingRenderer()); // EntityRenderDispatcher.cpp:57
-    // DEFERRED(EntityRender): ER_HUMANOID、ER_PIG、ER_COW、ER_SHEEP、ER_SKELETON、ER_ZOMBIE、ER_CREEPER、ER_SPIDER、
-    //   ER_PLAYER 的渲染器（模型系统与这些实体计划外）
+    // G11：玩家 —— 两套皮肤模型（64×32 / 64×64）与四件盔甲模型都在 PlayerRenderer 里；
+    // 第一人称的手臂（ItemInHandRenderer）和第三人称画面里的自己都靠它画。
+    // ⚠ C++ 字面量 `0.5` 传进 `float shadow` 形参 —— 按 PITFALLS 第 3 条包 f()
+    this.assign(
+      EntityRendererId.ER_PLAYER_RENDERER,
+      new PlayerRenderer(new HumanoidModel(0, 0, 64, 64), f(0.5)), // EntityRenderDispatcher.cpp:54
+    );
+    // DEFERRED(EntityRender): ER_HUMANOID、ER_PIG、ER_COW、ER_SHEEP、ER_SKELETON、ER_ZOMBIE、ER_CREEPER、ER_SPIDER
+    //   的渲染器（那些生物实体本身也还没移植）
     for (const r of this._renderers.values()) r.init(this);
   }
 
@@ -173,7 +182,13 @@ export class EntityRenderDispatcher {
     for (const r of this._renderers.values()) r.onGraphicsReset();
   }
 
-  // OMIT(EntityRender): setModernSkin(player)（PlayerRenderer，模型系统计划外）
+  /* EntityRenderDispatcher.cpp:140 */
+  setModernSkin(player: Entity): void {
+    // C++ 的 `(PlayerRenderer*)getRenderer(player)` 不安全强转：只在玩家实体上调用
+    //（玩家恒映射到 PlayerRenderer），照抄这个"假定类型正确"的写法
+    const rend = this.getRenderer(player) as PlayerRenderer;
+    rend.setModernSkin(player as Mob);
+  }
 
   private assign(id: number, renderer: EntityRenderer): void {
     if (!this._renderers.has(id)) this._renderers.set(id, renderer); // std::map::insert 不覆盖

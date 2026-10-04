@@ -53,6 +53,11 @@ export const PRELOAD: readonly string[] = [
   //   PaintingRenderer 只 bind 这一张画集，Motive 的 uo/vo 就是它的格子坐标
   'art/kz.png',
   'item/camera.png',
+  // G11：玩家皮肤（PlayerRenderer 与第一人称空手手臂都用它）。
+  //   漏了它不报错，但 loadTexture 返回 InvalidId → bind 跳过 → 沿用上一张绑定的
+  //   terrain 图集，玩家全身会画成地形图集的样子（头顶草地绿、身上羊毛色块）。
+  //   和 B8d 那条、PITFALLS 第 25 条是同一种"画错了图"。
+  'mob/char.png',
 ];
 
 /** 启动时预加载的其他资源文件（AppPlatform::readAssetFile 读取，ADAPTED(Web)）：文件在 public/ 的同名路径下 */

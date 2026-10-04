@@ -1,0 +1,182 @@
+[
+  {
+    "label": "P1 皮肤判定：宽 64 抄成 32",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "return texData !== null && texData.w === 64 && texData.h === 64;",
+    "to": "return texData !== null && texData.w === 32 && texData.h === 64;"
+  },
+  {
+    "label": "P2 皮肤判定：高 64 抄成 32",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "return texData !== null && texData.w === 64 && texData.h === 64;",
+    "to": "return texData !== null && texData.w === 64 && texData.h === 32;"
+  },
+  {
+    "label": "P3 皮肤判定：去掉 texData 判空（无效贴图会崩）",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "return texData !== null && texData.w === 64 && texData.h === 64;",
+    "to": "return texData.w === 64 && texData.h === 64;"
+  },
+  {
+    "label": "P4 皮肤判定：不再检查纹理 id 有效性",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "if (!Textures.isTextureIdValid(texId)) return false;",
+    "to": "if (Textures.isTextureIdValid(texId) && texId === -2) return false;"
+  },
+  {
+    "label": "P5 setModernSkin：现代与旧皮肤选反",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "const desired = this.isModernPlayerSkin(mob) ? this.playerModel64 : this.playerModel32;",
+    "to": "const desired = this.isModernPlayerSkin(mob) ? this.playerModel32 : this.playerModel64;"
+  },
+  {
+    "label": "P6 setModernSkin：只换 model 不换 humanoidModel",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "this.humanoidModel = desired;",
+    "to": "this.humanoidModel = this.playerModel32;"
+  },
+  {
+    "label": "P7 构造：model 默认指向 64 皮肤（原版是 32）",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "this.model = this.playerModel32;",
+    "to": "this.model = this.playerModel64;"
+  },
+  {
+    "label": "P8 构造：humanoidModel 默认指向 64 皮肤（原版是 32）",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "this.humanoidModel = this.playerModel32;",
+    "to": "this.humanoidModel = this.playerModel64;"
+  },
+  {
+    "label": "P9 armorParts1 外扩系数 1.0 抄成 0.5",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "this.armorParts1 = new HumanoidModel(1.0, 0, 64, 32);",
+    "to": "this.armorParts1 = new HumanoidModel(0.5, 0, 64, 32);"
+  },
+  {
+    "label": "P10 armorParts2 外扩系数 0.5 抄成 0",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "this.armorParts2 = new HumanoidModel(0.5, 0, 64, 32);",
+    "to": "this.armorParts2 = new HumanoidModel(0, 0, 64, 32);"
+  },
+  {
+    "label": "P11 护甲贴图下标：layer==2 的 +1 挪给了非 2 层",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "const fnIndex = armorItem.modelIndex + armorItem.modelIndex + (layer === 2 ? 1 : 0);",
+    "to": "const fnIndex = armorItem.modelIndex + armorItem.modelIndex + (layer === 2 ? 0 : 1);"
+  },
+  {
+    "label": "P12 护甲模型：armorParts1/2 选反",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "const armor = layer === 2 ? this.armorParts2 : this.armorParts1;",
+    "to": "const armor = layer === 2 ? this.armorParts1 : this.armorParts2;"
+  },
+  {
+    "label": "P13 护甲可见性：头出现在 layer=1 而不是 layer=0",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "armor.head.visible = layer === 0;",
+    "to": "armor.head.visible = layer === 1;"
+  },
+  {
+    "label": "P14 护甲可见性：躯干漏掉 layer=2",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "armor.body.visible = layer === 1 || layer === 2;",
+    "to": "armor.body.visible = layer === 1;"
+  },
+  {
+    "label": "P15 护甲可见性：护腿漏掉 layer=3",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "armor.leg0.visible = layer === 2 || layer === 3;",
+    "to": "armor.leg0.visible = layer === 2;"
+  },
+  {
+    "label": "P16 prepareArmor：没穿护甲也返回 1（让父类拿 null 护甲去画）",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "if (!ItemInstance.isArmorItem(itemInstance)) return -1;",
+    "to": "if (!ItemInstance.isArmorItem(itemInstance)) return 1;"
+  },
+  {
+    "label": "P17 prepareArmor：穿上了却返回 -1（护甲永远画不出来）",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "return 1;",
+    "to": "return -1;"
+  },
+  {
+    "label": "P18 renderName：名字标签距离 32 抄成 64",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "this.renderNameTag(mob, (mob as Player).name, x, y, z, 32);",
+    "to": "this.renderNameTag(mob, (mob as Player).name, x, y, z, 64);"
+  },
+  {
+    "label": "P19 renderName：相机实体判断取反（自己的名字画到自己脸上）",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "if (mob !== erd.cameraEntity && mob.level.adventureSettings.showNameTags) {",
+    "to": "if (mob === erd.cameraEntity && mob.level.adventureSettings.showNameTags) {"
+  },
+  {
+    "label": "P20 renderName：不再看 showNameTags 开关",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "mob !== erd.cameraEntity && mob.level.adventureSettings.showNameTags",
+    "to": "mob !== erd.cameraEntity"
+  },
+  {
+    "label": "P21 setupPosition：睡觉时 x 不加床偏移",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "f(x + player.bedOffsetX),",
+    "to": "f(x + 0),"
+  },
+  {
+    "label": "P22 setupRotations：睡觉时最后一段转 90° 而不是 270°",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "glRotatef2(270, 0, 1, 0);",
+    "to": "glRotatef2(90, 0, 1, 0);"
+  },
+  {
+    "label": "P23 setupRotations：睡觉时翻转角绕错轴",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "glRotatef2(this.getFlipDegrees(player), 0, 0, 1);",
+    "to": "glRotatef2(this.getFlipDegrees(player), 0, 1, 0);"
+  },
+  {
+    "label": "P24 render：画之前不切皮肤模型",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "this.setModernSkin(entity as Mob);",
+    "to": "/* this.setModernSkin(entity as Mob); */"
+  },
+  {
+    "label": "P25 onGraphicsReset：漏掉 armorParts2",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "this.armorParts2.onGraphicsReset();",
+    "to": "this.armorParts1.onGraphicsReset();"
+  },
+  {
+    "label": "P26 onGraphicsReset：不调父类",
+    "file": "packages/client/src/renderer/entity/PlayerRenderer.ts",
+    "from": "super.onGraphicsReset();",
+    "to": "void 0;"
+  },
+  {
+    "label": "E1 注册：玩家模型 64×64 抄成 64×32",
+    "file": "packages/client/src/renderer/entity/EntityRenderDispatcher.ts",
+    "from": "new PlayerRenderer(new HumanoidModel(0, 0, 64, 64), f(0.5)),",
+    "to": "new PlayerRenderer(new HumanoidModel(0, 0, 64, 32), f(0.5)),"
+  },
+  {
+    "label": "E2 注册：阴影半径 0.5 抄成 0.4",
+    "file": "packages/client/src/renderer/entity/EntityRenderDispatcher.ts",
+    "from": "new PlayerRenderer(new HumanoidModel(0, 0, 64, 64), f(0.5)),",
+    "to": "new PlayerRenderer(new HumanoidModel(0, 0, 64, 64), f(0.4)),"
+  },
+  {
+    "label": "E3 ERD.setModernSkin：拿到渲染器却不转发",
+    "file": "packages/client/src/renderer/entity/EntityRenderDispatcher.ts",
+    "from": "rend.setModernSkin(player as Mob);",
+    "to": "void rend;"
+  },
+  {
+    "label": "M1 setArmor：存下来的护甲被丢掉",
+    "file": "packages/client/src/renderer/entity/MobRenderer.ts",
+    "from": "this.armor = armor;",
+    "to": "this.armor = null;"
+  }
+]

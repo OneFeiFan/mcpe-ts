@@ -1,7 +1,7 @@
 /**
  * 1:1 移植自 src/client/renderer/ItemInHandRenderer.h 与 ItemInHandRenderer.cpp（S13 阶段 C，部分移植）。
  * 构建取网页版分支（USE_VBO）。renderItem 把物品的网格缓存进每个物品一个 VBO（renderObjects），掉落物渲染（ItemRenderer）也用它。
- * 部分：空手时画玩家手臂要用玩家模型（HumanoidMobRenderer::renderHand、模型系统计划外）DEFERRED(Model)。
+ * G11 起空手时画玩家手臂（PlayerRenderer + HumanoidMobRenderer::renderHand），不再有待补项。
  */
 import { Mth } from '@mcpe/util';
 import {
@@ -17,11 +17,14 @@ import {
 } from '@mcpe/world';
 import type { Minecraft } from '../Minecraft';
 import { OptionId } from '../Options';
+import { EntityRenderDispatcher } from './entity/EntityRenderDispatcher';
+import type { HumanoidMobRenderer } from './entity/HumanoidMobRenderer';
 import {
   drawArrayVTN_NoState,
   GL_ALPHA_TEST,
   GL_BLEND,
   GL_NORMAL_ARRAY,
+  GL_NORMALIZE,
   GL_ONE_MINUS_SRC_ALPHA,
   GL_RESCALE_NORMAL,
   GL_SRC_ALPHA,
@@ -355,10 +358,47 @@ export class ItemInHandRenderer {
       glDisableClientState2(GL_TEXTURE_COORD_ARRAY);
       glPopMatrix2();
     } else {
-      // DEFERRED(PlayerRender)：空手时画玩家手臂。C++（ItemInHandRenderer.cpp:425-432）是四句：
-      //   `getRenderer(mc->player)` → 强转 `(HumanoidMobRenderer*)` → `setModernSkin(player)` → `renderHand()`。
-      //   `HumanoidMobRenderer` 本体 G8 已落地，缺的是 ER_PLAYER_RENDERER 的 `PlayerRenderer`
-      //   与 `EntityRenderDispatcher.setModernSkin`（两条都在 G11）。
+      glColor4f2(br, br, br, 1);
+
+      glPushMatrix2();
+      const d = 0.8;
+      const swing = player.getAttackAnim(a);
+      const sqrtSwing = Mth.sqrt(swing);
+      const swing3 = Mth.sin(swing * swing * Mth.PI);
+      const swing1 = Mth.sin(swing * Mth.PI);
+      const swing2 = Mth.sin(sqrtSwing * Mth.PI);
+
+      glTranslatef2(
+        -swing2 * 0.3,
+        Mth.sin(Mth.sqrt(swing) * Mth.PI * 2) * 0.4,
+        -swing1 * 0.4,
+      );
+      glTranslatef2(0.8 * d, -0.75 * d - (1 - h) * 0.6, -0.9 * d);
+
+      glRotatef2(45, 0, 1, 0);
+      glEnable(GL_NORMALIZE);
+      glRotatef2(swing2 * 70, 0, 1, 0);
+      glRotatef2(-swing3 * 20, 0, 0, 1);
+      // C++ 里这一带还有两句被注释掉的原句：`// glEnable2(GL_RESCALE_NORMAL);`（.cpp:407）
+      // 与 `// glRotatef2(-swing2 * 80, 1, 0, 0);`（.cpp:417），照抄不写
+
+      mc.textures!.loadAndBindTexture(player.getTexture());
+      glTranslatef2(-1.0, +3.6, +3.5);
+      glRotatef2(120, 0, 0, 1);
+      glRotatef2(180 + 20, 1, 0, 0);
+      glRotatef2(-90 - 45, 0, 1, 0);
+      glScalef2((1.5 / 24.0) * 16, (1.5 / 24.0) * 16, (1.5 / 24.0) * 16);
+      glTranslatef2(5.6, 0, 0);
+
+      // C++：getRenderer(mc->player) → (HumanoidMobRenderer*) 强转 → setModernSkin(player) → renderHand()
+      const playerRenderer = EntityRenderDispatcher.getInstance().getRenderer(
+        player,
+      ) as HumanoidMobRenderer;
+      EntityRenderDispatcher.getInstance().setModernSkin(player);
+      const ss = 1; // C++ 原句的调试残留（`float ss = 1; glScalef2(ss, ss, ss);`），照抄
+      glScalef2(ss, ss, ss);
+      playerRenderer.renderHand();
+      glPopMatrix2();
     }
     glDisable2(GL_RESCALE_NORMAL);
     Lighting.turnOff();

@@ -63,6 +63,11 @@ export class MobRenderer extends EntityRenderer {
     this.shadowRadius = shadow;
   }
 
+  /* MobRenderer.cpp:21 */
+  protected setArmor(armor: Model): void {
+    this.armor = armor;
+  }
+
   /* MobRenderer.cpp:48 */
   override render(e: Entity, x: number, y: number, z: number, rot: number, a: number): void {
     const mob = e as Mob;
