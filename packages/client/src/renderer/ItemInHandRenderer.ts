@@ -355,7 +355,10 @@ export class ItemInHandRenderer {
       glDisableClientState2(GL_TEXTURE_COORD_ARRAY);
       glPopMatrix2();
     } else {
-      // DEFERRED(Model)：空手时画玩家手臂（HumanoidMobRenderer::renderHand，要用玩家模型）
+      // DEFERRED(PlayerRender)：空手时画玩家手臂。C++（ItemInHandRenderer.cpp:425-432）是四句：
+      //   `getRenderer(mc->player)` → 强转 `(HumanoidMobRenderer*)` → `setModernSkin(player)` → `renderHand()`。
+      //   `HumanoidMobRenderer` 本体 G8 已落地，缺的是 ER_PLAYER_RENDERER 的 `PlayerRenderer`
+      //   与 `EntityRenderDispatcher.setModernSkin`（两条都在 G11）。
     }
     glDisable2(GL_RESCALE_NORMAL);
     Lighting.turnOff();

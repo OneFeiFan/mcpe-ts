@@ -1,0 +1,92 @@
+[
+  {
+    "label": "M1 手持物品的门槛抄松（count > 0 改成 >= 0）",
+    "file": "packages/client/src/renderer/entity/HumanoidMobRenderer.ts",
+    "from": "if (item !== null && item.count > 0) {",
+    "to": "if (item !== null && item.count >= 0) {"
+  },
+  {
+    "label": "M2 手心偏移的 y 符号抄反（7/16 改成 -7/16）",
+    "file": "packages/client/src/renderer/entity/HumanoidMobRenderer.ts",
+    "from": "glTranslatef2(f(-1 / f(16.0)), f(7 / f(16.0)), f(1 / f(16.0)));",
+    "to": "glTranslatef2(f(-1 / f(16.0)), f(-7 / f(16.0)), f(1 / f(16.0)));"
+  },
+  {
+    "label": "M3 方块那路的 0.75 缩放丢了（改成 0.25）",
+    "file": "packages/client/src/renderer/entity/HumanoidMobRenderer.ts",
+    "from": "s = f(s * f(0.75));",
+    "to": "s = f(s * f(0.25));"
+  },
+  {
+    "label": "M4 弓的第一转符号抄反（-20 改成 20）",
+    "file": "packages/client/src/renderer/entity/HumanoidMobRenderer.ts",
+    "from": "glRotatef2(-20, 0, 1, 0);",
+    "to": "glRotatef2(20, 0, 1, 0);"
+  },
+  {
+    "label": "M5 手持类物品那路忘了翻转 y（s,-s,s 改成 s,s,s）",
+    "file": "packages/client/src/renderer/entity/HumanoidMobRenderer.ts",
+    "from": "        glTranslatef2(0, f(3 / f(16.0)), 0);\n        glScalef2(s, -s, s);",
+    "to": "        glTranslatef2(0, f(3 / f(16.0)), 0);\n        glScalef2(s, s, s);"
+  },
+  {
+    "label": "M6 其余物品那路的 z 偏移符号抄反（-3/16 改成 3/16）",
+    "file": "packages/client/src/renderer/entity/HumanoidMobRenderer.ts",
+    "from": "glTranslatef2(f(4 / f(16.0)), f(3 / f(16.0)), f(-3 / f(16.0)));",
+    "to": "glTranslatef2(f(4 / f(16.0)), f(3 / f(16.0)), f(3 / f(16.0)));"
+  },
+  {
+    "label": "M7 其余物品那路多加了负号（s,s,s 改成 s,-s,s）",
+    "file": "packages/client/src/renderer/entity/HumanoidMobRenderer.ts",
+    "from": "        glScalef2(s, s, s);",
+    "to": "        glScalef2(s, -s, s);"
+  },
+  {
+    "label": "M8 forward 的下限没夹（< 0 改成 <= -1）",
+    "file": "packages/client/src/renderer/entity/HumanoidMobRenderer.ts",
+    "from": "if (forward < 0) forward = 0;",
+    "to": "if (forward <= -1) forward = 0;"
+  },
+  {
+    "label": "M9 lift 的上限抄错（32 改成 31）",
+    "file": "packages/client/src/renderer/entity/HumanoidMobRenderer.ts",
+    "from": "if (lift > 32) lift = 32;",
+    "to": "if (lift > 31) lift = 31;"
+  },
+  {
+    "label": "M10 披风角度的平滑没做（* smooth 改成 * 1.0）",
+    "file": "packages/client/src/renderer/entity/HumanoidMobRenderer.ts",
+    "from": "capeXRot = f(this.lastCapeXRot + (capeXRot - this.lastCapeXRot) * smooth);",
+    "to": "capeXRot = f(this.lastCapeXRot + (capeXRot - this.lastCapeXRot) * f(1.0));"
+  },
+  {
+    "label": "M11 render 里忘了判空（没拿东西也置 holdingRightHand=true）",
+    "file": "packages/client/src/renderer/entity/HumanoidMobRenderer.ts",
+    "from": "if (carriedItem !== null) this.humanoidModel.holdingRightHand = true;",
+    "to": "this.humanoidModel.holdingRightHand = true;"
+  },
+  {
+    "label": "M12 renderHand 两个 enable 的顺序抄反",
+    "file": "packages/client/src/renderer/entity/HumanoidMobRenderer.ts",
+    "from": "    glEnableClientState2(GL_VERTEX_ARRAY);\n    glEnableClientState2(GL_TEXTURE_COORD_ARRAY);",
+    "to": "    glEnableClientState2(GL_TEXTURE_COORD_ARRAY);\n    glEnableClientState2(GL_VERTEX_ARRAY);"
+  },
+  {
+    "label": "M13 render 结尾那句清了反（false 改成 true）",
+    "file": "packages/client/src/renderer/entity/HumanoidMobRenderer.ts",
+    "from": "this.humanoidModel.holdingRightHand = false;",
+    "to": "this.humanoidModel.holdingRightHand = true;"
+  },
+  {
+    "label": "M14 披风第 3 个顶点 x 抄反（halfW 改成 -halfW）",
+    "file": "packages/client/src/renderer/entity/HumanoidMobRenderer.ts",
+    "from": "          t.tex(u3, vBottom);\n          t.vertex(halfW, height, 0.0);",
+    "to": "          t.tex(u3, vBottom);\n          t.vertex(-halfW, height, 0.0);"
+  },
+  {
+    "label": "M15 披风贴图的空判断抄松（!== '' 改成 !== 'x'）",
+    "file": "packages/client/src/renderer/entity/HumanoidMobRenderer.ts",
+    "from": "if (capeTex !== '') {",
+    "to": "if (capeTex !== 'x') {"
+  }
+]
