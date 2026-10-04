@@ -167,3 +167,19 @@
 - **`initItems()` 之前必须先 `initTiles`** —— `initItems` 会读 `Tile.grass.id`，
   方块没注册时访问 `.id` 直接抛；真机的初始化顺序就是 `initTiles → initItems`，
   测试里 `createFlatLevel()`（= initHeadless 链）就是补这个顺序。
+- **`app.pause = true` 之后才加进世界的实体，`xOld` 停在 0 —— 渲染插值会把它画到"半路"上（画面上看不见）。**
+  渲染插值读的是 `entity.xOld`（`EntityRenderDispatcher.render` 里 `xOld + (x - xOld) * a`，C++ 照抄），
+  而 `xOld` 只在 `_init()`（构造时 = 0）、`moveTo`、存档读取、**每次 `Level::tick(Entity*)`** 里被同步
+  （`Entity.tick()` 只同步 `xo`）。tick 一停，之后再 `addEntity` 的实体一次都没同步过 →
+  画面上就是"墙上一片空"。药方是走原版自己的路径：`level.tickEntity(e, false)`
+  （= C++ `Level::tick(Entity*, actual=false)`，只做同步含入 chunk、不跑实体 tick），
+  或者用 `moveTo` 挪（它自带 xOld/xo 同步）。G10 的画和相机栽在这里 ——
+  **实现与 C++ 完全一致，是场景自己造出的处境**。
+- **`vi.spyOn` 默认调用原实现（call-through）—— 对"自己会发 GL 调用"的方法要显式打桩。**
+  G10 的 `cameraCube.render`（内部走 `ModelPart` 的 push/translate/pop 一整套）被 spy 后照样真跑，
+  往 GL 调用记录里塞进 `t:0,0.6875,0` 这类噪声，ops 断言全对不上。
+  要"只记调用、不真跑"就写 `.mockImplementation(() => {})`。
+- **`SpyGL extends GLES1` 的子类要写显式 `constructor() { super(null); }`。**
+  `GLES1` 的构造函数有一个参数（真机传 GL 上下文），子类不写超类调用就报
+  "Expected 1 arguments, but got 0"（TS2554）—— vitest 不做类型检查，所以只有
+  `pnpm typecheck` 抓得到，和上面"vitest 不做类型检查"那条是同一类。

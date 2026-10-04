@@ -746,6 +746,49 @@ vite 直接 PARSE_ERROR —— 改成逐下标取就对了。）
 
 验收：浏览器截图三张（摆一个 TNT 点燃、挂一幅画、放一个相机）。
 
+**做完的情况（G10）**
+
+新增三个渲染器：`packages/client/src/renderer/entity/TntRenderer.ts`（**81 行**）、
+`PaintingRenderer.ts`（**116 行**）、`TripodCameraRenderer.ts`（**108 行**）
++ `packages/client/src/index.ts` 导出 + 三个测试文件（**24 条**：TNT 9 / 画 6 / 相机 9）
++ `tools/verify/mutations-g10.json`（23 条）+ 场景 `tools/verify/scenarios/g10-renderers.mjs`。
+三个实现文件**一条 DEFERRED 都没有**。
+
+接线：`EntityRenderDispatcher` 注册两行 —— `ER_TNT_RENDERER`（cpp:52）、`ER_PAINTING_RENDERER`（cpp:57）；
+`assets.ts` 预加载 `art/kz.png`（画集）与 `item/camera.png`（相机方块贴图）。
+⚠ **`TripodCameraRenderer` 照 C++ 不注册**：`EntityRenderDispatcher.h:55` 只有一行注释掉的成员
+`//TripodCameraRenderer tripodCameraRenderer;`，assign 列表里没有它 —— 原版画面上相机实体就是
+**隐形**的。单测第一条钉死这件事（`getRendererById(ER_TRIPODCAMERA_RENDERER)` 为 null、
+`getRenderer(cam)` 也为 null）。三个旧测试（`arrowrenderer` / `fallingtile-renderer` /
+`itemsprite-renderer`）里"拿一个没注册的 id 当对照"的例子换成 `ER_TRIPODCAMERA_RENDERER`
+（`toBeNull()` 断言一个没动）。
+
+**场景 `g10-renderers.mjs`：25 条断言全过**，4 张截图都打开看过 ——
+00 打火石点着的 TNT 立在正前方约 6 格（life=75：不闪不鼓的正常态）；
+01 引信拨到 0：明显鼓大一圈（`g = 0.9⁴ ≈ 0.656` → `1 + g*0.3` ≈ 1.2 倍）**加泛白**
+（`(life/5)&1 == 0` 时关纹理、`color(1,1,1,br)` 叠半透明白光）；
+02 石墙正中挂着一幅画（这轮随机到 2×2 的蜘蛛画，正好走多块循环的路径）；
+03 相机实体挪到镜头正前方 4 格（断言 dz=4）、**画面上什么都没有** —— 没注册渲染器的视觉证据。
+点燃走真实链路：打火石（`items[259]`）塞进热键 0 号槽 → `gameMode.useItemOn` →
+`Tile.tiles[46].use` → `destroy(EXPLODE_BIT)` → 生成 `PrimedTnt`（断言 life=80、原方块被清空）。
+
+**踩到的新坑（补进 PITFALLS F 节）**：**`app.pause = true` 之后才加进世界的实体，`xOld` 停在 0** ——
+渲染插值读 `xOld`（`xOld + (x - xOld) * a`，C++ 照抄），而它只在 `_init` / `moveTo` / 存档 /
+**每次 `Level::tick(Entity*)`** 里同步。画与相机是 pause 后 `addEntity` 的，一次 tick 都没跑过 →
+渲染坐标漂在 0 与真实位置之间（画面上就是"墙上一片空"）。**实现与 C++ 完全一致，是场景自己造出的处境**
+（断言 `xoldBefore === 0` 实测坐实根因）；药方是走原版路径 `level.tickEntity(e, false)`
+（= C++ `Level::tick(e, false)`，只同步不 tick）或 `moveTo`（自带同步）。
+
+**反向验证：23 个变异 23 个全红**（T1–T8 / P1–P6 / C1–C9）—— 鼓包边界 `< 10`→`<= 10` /
+闪烁条件去掉 `& 1` / 周期 5→6 / `0.8f` 与 `0.3f` 丢 `f()` / 四次方少乘一次 / blendFunc 参数对调 /
+TNT 注册行注释掉 / 画第一块板第一个顶点 y1→y0 / 背面 UV 对调 / `0.5/256` 写成 0 / `1/16`→`1/8` /
+绕 y 转抄成绕 z / **相机 id 被注册（C++ 里没有这行）** / 朝向少 `xRot/2` / yRot 丢负号 /
+`>= 8`→`> 8` / `Math.sin`→`Mth.sin` / 拾取比较取反 / `cameraCube.y` 11→10 / 木叉 `-0.5`→0 /
+高亮支少颜色重置。
+
+台账：**233 → 233**（三个新文件零标记；分派器那两条老 `DEFERRED(EntityRender)` /
+`OMIT(EntityRender)` 没动）。`pnpm typecheck` 0；`pnpm test` **107 文件 / 1221 条全过**。
+
 ### G11 — 玩家 + 空手手臂
 
 - `PlayerRenderer`：4 个 `HumanoidModel`（`playerModel64` / `playerModel32` / `armorParts1(g=1.0)` /
