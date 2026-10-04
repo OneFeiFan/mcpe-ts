@@ -69,6 +69,7 @@ export * from './level/storage/ExternalFileLevelStorage.js';
 export * from './level/storage/ExternalFileLevelStorageSource.js';
 export * from './level/chunk/EmptyLevelChunk.js';
 export * from './level/TickNextTickData.js';
+export * from './level/Explosion.js';
 export * from './level/LightUpdate.js';
 export * from './level/chunk/ChunkSource.js';
 export * from './level/levelgen/synth/Synth.js';

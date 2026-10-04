@@ -32,6 +32,7 @@ import type { ChunkSource } from './chunk/ChunkSource';
 import type { LevelChunk } from './chunk/LevelChunk';
 import { ChunkPos } from './ChunkPos';
 import { type Dimension, DimensionFactory } from './dimension/Dimension';
+import { Explosion } from './Explosion';
 import { LevelConstants } from './LevelConstants';
 import type { LevelListener } from './LevelListener';
 import type { LevelSettings } from './LevelSettings';
@@ -1366,8 +1367,29 @@ export class Level implements LevelSource {
     return false;
   }
 
-  // OMIT(Explosion): explode(source, x, y, z, r)  Level.cpp:1684
-  // OMIT(Explosion): explode(source, x, y, z, r, fire)  Level.cpp:1689
+  /**
+   * C++ 的两个重载（R10 情形 A：短版本只是以 `fire = false` 转调长版本）：
+   *   explode(source, x, y, z, r)       Level.cpp:1684
+   *   explode(source, x, y, z, r, fire) Level.cpp:1689
+   *
+   * `if (!isClientSide)` 是原句；`ExplodePacket` 那句照旧 DEFERRED(Network)。
+   */
+  explode(
+    source: Entity | null,
+    x: number,
+    y: number,
+    z: number,
+    r: number,
+    fire = false,
+  ): void {
+    if (!this.isClientSide) {
+      const explosion = new Explosion(this, source, x, y, z, r);
+      explosion.fire = fire;
+      explosion.explode();
+      explosion.finalizeExplosion();
+      // DEFERRED(Network): ExplodePacket packet(x, y, z, r, explosion.toBlow); raknetInstance->send(packet);
+    }
+  }
 
   getSeenPercent(center: Vec3, bb: AABB): number {
     const f = Math.fround; // 循环步长按 float 累加，迭代次数与 C++ 一致
