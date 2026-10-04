@@ -65,6 +65,15 @@ import {
   glEnableClientState2,
   glDisableClientState2,
 } from './gles';
+import { Item, ParticleType } from '@mcpe/world';
+import { BreakingItemParticle } from '../particle/BreakingItemParticle';
+import { BubbleParticle } from '../particle/BubbleParticle';
+import { CritParticle2 } from '../particle/CritParticle2';
+import { ExplodeParticle } from '../particle/ExplodeParticle';
+import { FlameParticle } from '../particle/FlameParticle';
+import { LavaParticle } from '../particle/LavaParticle';
+import { RedDustParticle } from '../particle/RedDustParticle';
+import { SmokeParticle } from '../particle/SmokeParticle';
 import { RenderList } from './RenderList';
 import { Tesselator } from './Tesselator';
 import type { Textures } from './Textures';
@@ -75,6 +84,13 @@ export const _t_keepPic = { value: -1 };
 
 const INT_MAX = 2147483647;
 const INT_MIN = -2147483648;
+
+/** `ParticleType` 的反查表：数字 id → C++ 字符串梯子里用的那个名字（见 addParticle 的说明） */
+const PARTICLE_NAME_BY_ID: readonly string[] = (() => {
+  const out: string[] = [];
+  for (const [k, v] of Object.entries(ParticleType)) out[v as number] = k;
+  return out;
+})();
 
 export class LevelRenderer extends LevelListener {
   static readonly CHUNK_SIZE = 16; // 没有定义 GFX_SMALLER_CHUNKS
@@ -910,8 +926,70 @@ export class LevelRenderer extends LevelListener {
   // OMIT(Clouds): renderClouds(alpha)  LevelRenderer.cpp:1263
   // OMIT(Clouds): renderAdvancedClouds(alpha)  LevelRenderer.cpp:1317
   // OMIT(Sound): playSound(name, x, y, z, volume, pitch)  LevelRenderer.cpp:1453
-  // OMIT(Particle): addParticle(name, ...)  LevelRenderer.cpp:1463
+  // OMIT(Sound): playSound(name, x, y, z, volume, pitch)  LevelRenderer.cpp:1453
   // OMIT(Particle): addParticle(ParticleType::Id, ...)  LevelRenderer.cpp:1509
+  //   —— C++ 那个重载**整段在注释里**（`PARTICLETYPE(x)` 宏是逗号表达式，
+  //      永远走字符串那条；见下面 addParticle 的说明），所以这里也是死的。
+  /**
+   * C++ `LevelRenderer::addParticle(const std::string& name, float x6, int data)`
+   * （LevelRenderer.cpp:1463-1505）。
+   *
+   * ⚠ **数字 → 名字的单点归一化（ADAPTED(Cpp)）**：C++ 实际传的**永远是字符串** ——
+   * `PARTICLETYPE(x)` 宏是 `(ParticleType::x, #x)` 这个逗号表达式（EntityTypes.h:74），
+   * 枚举那半被丢弃。但 TS 里已有的调用点混着两种写法（`Snowball.ts` 传数字 10、
+   * `FireTile` 传 `'largesmoke'`），而且**已有四条断言钉的就是数字**
+   * （`snowball.test.ts:167`、`thrownegg.test.ts:147`、`arrow.test.ts:291/388`），
+   * 按仓库规矩不能改。所以这里归一化一次，再走下面**逐字照抄**的字符串梯子。
+   * 这是本文件唯一一处非 1:1 的地方。
+   */
+  override addParticle(
+    name: string | ParticleType.Id,
+    x: number,
+    y: number,
+    z: number,
+    xa: number,
+    ya: number,
+    za: number,
+    data: number,
+  ): void {
+    const id: string = typeof name === 'string' ? name : PARTICLE_NAME_BY_ID[name]!;
+    const mc = this.mc;
+    if (mc.cameraTargetPlayer != null) {
+      const xd = mc.cameraTargetPlayer.x - x;
+      const yd = mc.cameraTargetPlayer.y - y;
+      const zd = mc.cameraTargetPlayer.z - z;
+      const distanceSquared = xd * xd + yd * yd + zd * zd;
+
+      // C++ 里这里还留着一段被注释掉的 hugeexplosion / largeexplode 分支，照抄保留：
+      // Particle* p = NULL;
+      // if (name == "hugeexplosion") p = new HugeExplosionSeedParticle(level, x, y, z, xa, ya, za);
+      // else if (name == "largeexplode") p = new HugeExplosionParticle(textures, level, x, y, z, xa, ya, za);
+      // if (p) { if (distanceSquared < 32 * 32) { mc->particleEngine->add(p); } else { delete p; } return; }
+
+      const particleDistance = 16;
+      if (distanceSquared > particleDistance * particleDistance) return;
+
+      const level = this.level!;
+      const pe = mc.particleEngine!;
+      if (id === 'bubble') pe.add(new BubbleParticle(level, x, y, z, xa, ya, za));
+      else if (id === 'crit') pe.add(new CritParticle2(level, x, y, z, xa, ya, za));
+      else if (id === 'smoke') pe.add(new SmokeParticle(level, x, y, z, xa, ya, za));
+      // else if (name == "note") mc->particleEngine->add(new NoteParticle(level, x, y, z, xa, ya, za));
+      else if (id === 'explode') pe.add(new ExplodeParticle(level, x, y, z, xa, ya, za));
+      else if (id === 'flame') pe.add(new FlameParticle(level, x, y, z, xa, ya, za));
+      else if (id === 'lava') pe.add(new LavaParticle(level, x, y, z));
+      // else if (name == "splash") mc->particleEngine->add(new SplashParticle(level, x, y, z, xa, ya, za));
+      else if (id === 'largesmoke')
+        pe.add(new SmokeParticle(level, x, y, z, xa, ya, za, Math.fround(2.5)));
+      else if (id === 'reddust') pe.add(new RedDustParticle(level, x, y, z, xa, ya, za));
+      else if (id === 'iconcrack')
+        pe.add(new BreakingItemParticle(level, x, y, z, xa, ya, za, Item.items[data]!));
+      else if (id === 'snowballpoof')
+        pe.add(new BreakingItemParticle(level, x, y, z, Item.snowBall));
+      // else if (name == "slime") mc->particleEngine->add(new BreakingItemParticle(level, x, y, z, xa, ya, za, Item::slimeBall));
+      // else if (name == "heart") mc->particleEngine->add(new HeartParticle(level, x, y, z, xa, ya, za));
+    }
+  }
   renderHitSelect(
     player: Player,
     h: HitResult,

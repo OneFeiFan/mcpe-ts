@@ -56,6 +56,7 @@ import { MouseBuildInput } from './player/input/MouseBuildInput';
 import { MouseTurnInput } from './player/input/MouseTurnInput';
 import type { LocalPlayer } from './player/LocalPlayer';
 import { GameRenderer } from './renderer/GameRenderer';
+import { ParticleEngine } from './particle/ParticleEngine';
 import { LevelRenderer } from './renderer/LevelRenderer';
 import {
   FireTexture,
@@ -106,8 +107,7 @@ export class Minecraft extends App {
   pause = false;
   levelRenderer: LevelRenderer | null = null;
   gameRenderer: GameRenderer | null = null;
-  /** FORWARD-DECL(ParticleEngine)：DEFERRED(Particle)，始终为 null */
-  particleEngine: unknown = null;
+  particleEngine: ParticleEngine | null = null;
   /** FORWARD-DECL(SoundEngine)：DEFERRED(Sound)，始终为 null */
   soundEngine: unknown = null;
   gameMode: GameMode | null = null;
@@ -185,7 +185,8 @@ export class Minecraft extends App {
     this.gui.texturesLoaded(this.textures!);
     this.levelRenderer = new LevelRenderer(this);
     this.gameRenderer = new GameRenderer(this);
-    // DEFERRED(Particle): particleEngine = new ParticleEngine(level, textures);
+    // C++ 传的 `level` 是成员变量，此刻还是 NULL —— ParticleEngine 收下、等 setLevel 再换。
+    this.particleEngine = new ParticleEngine(this.level, this.textures!);
     const foliageId = this.textures.loadTexture('misc/foliagecolor.png'); // loading the uh png for foliage color
     const foliagePixels = this.textures.loadTexturePixels(foliageId, 'misc/foliagecolor.png');
     FoliageColor.init(foliagePixels);
@@ -402,7 +403,7 @@ export class Minecraft extends App {
     LOGI('Clearing levels');
     this.cameraTargetPlayer = null;
     if (this.levelRenderer !== null) this.levelRenderer.setLevel(null);
-    // DEFERRED(Particle): particleEngine->setLevel(NULL);
+    if (this.particleEngine !== null) this.particleEngine.setLevel(null);
     LOGI('Erasing callback');
     this.netCallback = null;
     LOGI('Erasing level');
@@ -584,7 +585,7 @@ export class Minecraft extends App {
     }
     TIMER_POP_PUSH('particles');
     if (!this.pause) {
-      // DEFERRED(Particle): particleEngine->tick();
+      if (this.particleEngine !== null) this.particleEngine.tick();
     }
     if (this.screen) {
       this.screenMutex = true;
@@ -771,7 +772,7 @@ export class Minecraft extends App {
         } else {
           gameMode.continueDestroyBlock(x, y, z, this.hitResult.f);
         }
-        // DEFERRED(Particle): particleEngine->crack(x, y, z, hitResult.f);
+        this.particleEngine!.crack(x, y, z, this.hitResult.f);
         player.swing();
       } else {
         const item = player.inventory.getSelected();
@@ -867,7 +868,7 @@ export class Minecraft extends App {
       this.player.input = this.inputHolder!.getMoveInput();
     }
     if (this.levelRenderer !== null) this.levelRenderer.setLevel(level);
-    // DEFERRED(Particle): if (particleEngine != NULL) particleEngine->setLevel(level);
+    if (this.particleEngine !== null) this.particleEngine.setLevel(level);
     this.gameMode!.adjustPlayer(this.player!);
     this.gui.onLevelGenerated();
     level.validateSpawn();
@@ -892,8 +893,7 @@ export class Minecraft extends App {
   }
 
   gatherStats3(): string {
-    // DEFERRED(Particle): particleEngine->countParticles()（粒子计划外，记为 0）
-    return 'P: 0. T: ' + this.level!.gatherStats();
+    return 'P: ' + this.particleEngine!.countParticles() + '. T: ' + this.level!.gatherStats();
   }
 
   gatherStats4(): string {

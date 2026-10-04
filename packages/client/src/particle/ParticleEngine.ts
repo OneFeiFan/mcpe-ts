@@ -45,13 +45,14 @@ export class ParticleEngine {
   static readonly ENTITY_PARTICLE_TEXTURE = ENTITY_PARTICLE_TEXTURE;
   static readonly TEXTURE_COUNT = TEXTURE_COUNT;
 
-  protected level: Level;
+  /** ⚠ C++ 里这个指针在 `Minecraft::init` 时是 **NULL**（`setLevel` 之后才有值），所以类型带上 null */
+  protected level: Level | null;
   private readonly particles: Particle[][] = [[], [], [], []];
   private readonly textures: Textures;
   /** C++ `Random random;` —— `crack` 用的就是它（不是 sharedRandom） */
   private readonly random = new Random();
 
-  constructor(level: Level, textures: Textures) {
+  constructor(level: Level | null, textures: Textures) {
     this.level = level;
     this.textures = textures;
     textures.loadTexture('particles.png');
@@ -64,7 +65,7 @@ export class ParticleEngine {
   }
 
   /** C++ `void setLevel(Level* level)` */
-  setLevel(level: Level): void {
+  setLevel(level: Level | null): void {
     this.level = level;
     this.clear();
   }
@@ -133,9 +134,10 @@ export class ParticleEngine {
 
   /** C++ `void destroy(int x, int y, int z)` —— 撒 3×2×3 = 18 个碎屑 */
   destroy(x: number, y: number, z: number): void {
-    const tid = this.level.getTile(x, y, z);
+    const level = this.level!; // 这两个入口只会在有世界之后被调
+    const tid = level.getTile(x, y, z);
     if (tid === 0) return;
-    const data = this.level.getData(x, y, z);
+    const data = level.getData(x, y, z);
     const tile = Tile.tiles[tid];
     if (!tile) return; // C++ 这里会崩；TS 里报方块号更好查
     const SD = 3;
@@ -147,7 +149,7 @@ export class ParticleEngine {
           const zp = z + f(f(zz + f(0.5)) / SD);
           this.add(
             new TerrainParticle(
-              this.level,
+              level,
               xp,
               yp,
               zp,
@@ -165,9 +167,10 @@ export class ParticleEngine {
 
   /** C++ `void crack(int x, int y, int z, int face)` —— 按住挖掘时每刻撒 1 个 */
   crack(x: number, y: number, z: number, face: number): void {
-    const tid = this.level.getTile(x, y, z);
+    const level = this.level!;
+    const tid = level.getTile(x, y, z);
     if (tid === 0) return;
-    const data = this.level.getData(x, y, z);
+    const data = level.getData(x, y, z);
     const tile = Tile.tiles[tid];
     if (!tile) return;
     const r = f(0.1);
@@ -195,7 +198,7 @@ export class ParticleEngine {
         break;
     }
     this.add(
-      new TerrainParticle(this.level, xp, yp, zp, 0, 0, 0, tile, data)
+      new TerrainParticle(level, xp, yp, zp, 0, 0, 0, tile, data)
         .init(x, y, z)
         .setPower(f(0.2))
         .scale(f(0.6)),

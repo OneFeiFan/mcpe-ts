@@ -280,7 +280,7 @@ export class GameRenderer {
     this.pick(a);
     const cameraEntity = mc.cameraTargetPlayer;
     const levelRenderer = mc.levelRenderer!;
-    // DEFERRED(Particle): ParticleEngine* particleEngine = mc->particleEngine;
+    const particleEngine = mc.particleEngine;
     const xOff = cameraEntity.xOld + (cameraEntity.x - cameraEntity.xOld) * a;
     const yOff = cameraEntity.yOld + (cameraEntity.y - cameraEntity.yOld) * a;
     const zOff = cameraEntity.zOld + (cameraEntity.z - cameraEntity.zOld) * a;
@@ -357,7 +357,9 @@ export class GameRenderer {
       TIMER_POP_PUSH('entities');
       levelRenderer.renderEntities(cameraEntity.getPos(a), frustum, a);
       TIMER_POP_PUSH('particles');
-      // DEFERRED(Particle): particleEngine->render(cameraEntity, a);
+      // ⚠ 位置要紧：C++ 就是紧跟 renderEntities 之后、Lighting.turnOff() 之前 ——
+      //   ParticleEngine.render 自己**不设任何 GL 状态**，吃的是上一步残留的状态。
+      particleEngine!.render(cameraEntity, a);
       Lighting.turnOff();
       glDisable2(GL_BLEND);
       glBlendFunc2(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

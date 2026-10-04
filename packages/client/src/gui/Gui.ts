@@ -4,7 +4,7 @@
  * 整数除法（int / int）一律写成 Math.trunc。
  * 部分：
  *   - 聊天、控制台界面（ChatScreen、ConsoleScreen）未移植：isChatting 恒为 false。
- *   - 粒子统计（gatherStats3 的粒子数）DEFERRED(Particle)。
+ *   - 粒子统计（gatherStats3 的粒子数）—— E7 起是真的（`particleEngine.countParticles()`）。
  * R10：getSlotPos(int slot, int& posX, int& posY) 的引用参数改为返回 [posX, posY]（ADAPTED(Cpp)）。
  */
 import { SharedConstants } from '@mcpe/core';
