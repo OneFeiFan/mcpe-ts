@@ -56,4 +56,6 @@ export * from './renderer/entity/ItemRenderer.js';
 export * from './renderer/entity/FallingTileRenderer.js';
 export * from './renderer/entity/ItemSpriteRenderer.js';
 export * from './renderer/entity/ArrowRenderer.js';
+export * from './particle/ParticleTextures.js';
+export * from './particle/Particle.js';
 export * from './gui/Font.js';
