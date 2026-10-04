@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "ledger": "node tools/ledger.mjs",
+    "check": "node tools/verify/check.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

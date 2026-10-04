@@ -42,6 +42,7 @@ Claude Code 每次启动都会读这个文件。**先读完它，再动手。**
 | 类型检查 / 测试 / 构建        | `pnpm typecheck` / `pnpm test` / `pnpm build`                                                                      |
 | 只跑一个测试文件              | `npx vitest run tests/<路径>`                                                                                      |
 | 台账（DEFERRED、OMIT 统计）   | `pnpm ledger`                                                                                                      |
+| **定型检查**（一步收尾跑这一条） | `pnpm check [测试文件…] [--mutate <测试文件> <变异json>]` —— 类型检查+测试+台账一次跑完，**只打印摘要**，完整日志写临时目录。分开跑是 3~4 次工具调用 = 3~4 次完整上下文重读，实测每次约 $0.15 |
 | 读 C++（展开 #ifdef、去注释） | `python tools/porting/clean.py <文件...>`                                                                          |
 | 打印某几个成员函数            | `python tools/porting/fn.py <file.cpp> <类名> <函数1,函数2>`                                                       |
 | 生成类的 TS 草稿              | 见 `tools/porting/README.md`                                                                                       |
