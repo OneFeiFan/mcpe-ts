@@ -61,4 +61,7 @@ export * from './particle/Particle.js';
 export * from './particle/SmokeParticle.js';
 export * from './particle/ExplodeParticle.js';
 export * from './particle/RedDustParticle.js';
+export * from './particle/FlameParticle.js';
+export * from './particle/BubbleParticle.js';
+export * from './particle/CritParticle2.js';
 export * from './gui/Font.js';
