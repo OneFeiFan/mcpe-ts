@@ -48,11 +48,23 @@ export const PRELOAD: readonly string[] = [
   // G9：鸡的贴图（ChickenRenderer —— 第一个用模型系统画的生物）。
   //   漏了它不报错，鸡会画成上一张绑定的贴图（PITFALLS 第 25 条）
   'mob/chicken.png',
+  // 任务单 H5–H8：其余生物的贴图（漏了会画成上一张绑定的贴图，PITFALLS 第 25 条）
+  'mob/pig.png',
+  'mob/cow.png',
+  'mob/sheep.png',
+  'mob/sheep_fur.png',
+  'mob/zombie.png',
+  'mob/skeleton.png',
+  'mob/creeper.png',
+  'mob/spider.png',
+  'mob/pigzombie.png',
   // G10：画的贴图（PaintingRenderer）与相机贴图（TripodCameraRenderer）。
   //   漏了不报错，会画成上一张绑定的贴图（PITFALLS 第 25 条）。
   //   PaintingRenderer 只 bind 这一张画集，Motive 的 uo/vo 就是它的格子坐标
   'art/kz.png',
   'item/camera.png',
+  // 告示牌的方块实体渲染（SignRenderer 绑定 item/sign.png）。漏了它，牌子会沿用上一次绑定的纹理（地形或字体）
+  'item/sign.png',
   // G11：玩家皮肤（PlayerRenderer 与第一人称空手手臂都用它）。
   //   漏了它不报错，但 loadTexture 返回 InvalidId → bind 跳过 → 沿用上一张绑定的
   //   terrain 图集，玩家全身会画成地形图集的样子（头顶草地绿、身上羊毛色块）。

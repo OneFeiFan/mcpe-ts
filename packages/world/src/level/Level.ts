@@ -2,8 +2,8 @@
  * 1:1 移植自 src/world/level/Level.h 与 Level.cpp（S5）。替换原来的 FORWARD-DECL(Level)。
  *
  * 【PORT-CUT】
- *  - _init：new PathFinder() → DEFERRED(PathFinder)
- *  - tick：MobSpawner 整块 → DEFERRED(MobSpawner)；三处 SetTimePacket 发送与实体数据同步循环 → DEFERRED(Network)
+ *  - _init：new PathFinder()（任务单 H2 起恢复）
+ *  - tick：MobSpawner（任务单 H9 起恢复）；三处 SetTimePacket 发送与实体数据同步循环 → DEFERRED(Network)
  * 【OMIT】实体、玩家、寻路、爆炸、刷怪相关的 32 个函数（见各处标记）；方块实体的 4 个函数在 S11 阶段 A 补上。析构函数不移植（R3）。
  *   C++ 里 addEntities、ensureAdded、removeAllPendingEntityRemovals 整段在注释里，awakenAllPlayers 只有声明没有定义，都不算。
  *
@@ -14,9 +14,16 @@
  * 【三档规则】tickTiles 的随机数（_randValue 的线性同余）按 int 回绕；其余是方块逻辑与渲染用的颜色，按 JS 数值计算。
  * 【C++ 的未初始化字段】difficulty 没有初始化（由 Minecraft 设置），这里取 0。
  */
+import { Difficulty } from '../Difficulty';
+import { MobSpawnerData } from './biome/Biome';
+import type { MobCategory } from '../entity/MobCategory';
+import { PathFinder } from './pathfinder/PathFinder';
+import type { Mob } from '../entity/Mob';
+import { Region } from './Region';
+import type { Path } from './pathfinder/Path';
 import { SharedConstants } from '@mcpe/core';
 import { getTimeS, LOGE, LOGI } from '@mcpe/platform';
-import { Mth, Random, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH, Util } from '@mcpe/util';
+import { Mth, Random, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH, Util, WeighedRandom } from '@mcpe/util';
 import type { Entity } from '../entity/Entity';
 import { MobTypes, type ParticleType } from '../entity/EntityTypes';
 import type { Player } from '../entity/player/Player';
@@ -75,7 +82,13 @@ const pollChunkOffsets: readonly number[] = [
 /** Level.cpp 的文件内静态变量 static int maxLoop（所有 Level 共用） */
 let maxLoop = 0;
 
+/** Level.cpp 函数内的 static 局部变量 */
+const levelStatics = { mobSpawnTick: 0 };
+
 export class Level implements LevelSource {
+  /** ADAPTED(ESM)：MobSpawner.tick 由 MobSpawner 模块加载时注入（Level 不能值导入 MobSpawner：它经 MobFactory 引入各种生物类，会形成加载循环） */
+  static mobSpawnerTick: ((level: Level, spawnEnemies: boolean, spawnFriendlies: boolean) => number) | null = null;
+
   private static readonly MAX_TICK_TILES_PER_TICK = 100; // was 1000
   static readonly MAX_LEVEL_SIZE = 32000000;
   static readonly DEPTH = LevelConstants.LEVEL_HEIGHT;
@@ -133,7 +146,7 @@ export class Level implements LevelSource {
   private _maxRecurse = 0;
   private _isNew = false;
   private _nightMode = false;
-  private _pathFinder: unknown = null; // 对应 _init 里那句延后的 new PathFinder()
+  private _pathFinder: PathFinder | null = null;
   private _lastSavedPlayerTime = 0; // @attn: @time: clock starts on 0 now, change if not
   private _pendingPlayerRemovals: PRInfo[] = [];
 
@@ -172,7 +185,7 @@ export class Level implements LevelSource {
     }
     this.dimension.init(this);
     this._chunkSource = this.createChunkSource();
-    // DEFERRED(PathFinder): _pathFinder = new PathFinder();
+    this._pathFinder = new PathFinder();
     this._nightMode = false;
     this.updateSkyBrightness();
   }
@@ -246,7 +259,15 @@ export class Level implements LevelSource {
   }
 
   tick(): void {
-    // DEFERRED(MobSpawner): if (!isClientSide && levelData.getSpawnMobs()) { static int _mobSpawnTick = 0; const int MobSpawnInterval = 2; if (++_mobSpawnTick >= MobSpawnInterval) { _mobSpawnTick = 0; TIMER_PUSH("mobSpawner"); MobSpawner::tick(this, _spawnEnemies && difficulty > Difficulty::PEACEFUL, _spawnFriendlies && (levelData.getTime() % 400) < MobSpawnInterval); TIMER_POP(); } }
+    if (!this.isClientSide && this.levelData.getSpawnMobs()) {
+      const MobSpawnInterval = 2;
+      if (++levelStatics.mobSpawnTick >= MobSpawnInterval) { // C++ 的 static int _mobSpawnTick（函数内静态，所有 Level 共用）
+        levelStatics.mobSpawnTick = 0;
+        TIMER_PUSH('mobSpawner');
+        Level.mobSpawnerTick!(this, this._spawnEnemies && this.difficulty > Difficulty.PEACEFUL, this._spawnFriendlies && this.levelData.getTime() % 400 < MobSpawnInterval);
+        TIMER_POP();
+      }
+    }
     TIMER_PUSH('chunkSource');
     this._chunkSource.tick();
 
@@ -370,8 +391,37 @@ export class Level implements LevelSource {
       if (doAddPlayer) this.addEntity(player);
     }
   }
-  // OMIT(PathFinder): findPath(path, from, to, maxDist, canOpenDoors, avoidWater)  Level.cpp:381
-  // OMIT(PathFinder): findPath(path, from, xBest, yBest, zBest, maxDist, canOpenDoors, avoidWater)  Level.cpp:404
+  /** C++ findPath(Path*, Entity* from, Entity* to, float maxDist, bool canOpenDoors, bool avoidWater)（Level.cpp:381；R10 情形 B） */
+  findPathToEntity(path: Path, from: Entity, to: Entity, maxDist: number, canOpenDoors: boolean, avoidWater: boolean): boolean {
+    TIMER_PUSH('pathfind');
+    const x = Mth.floor(from.x);
+    const y = Mth.floor(from.y);
+    const z = Mth.floor(from.z);
+    const r = Math.trunc(maxDist + 16);
+    const region = new Region(this, x - r, y - r, z - r, x + r, y + r, z + r);
+    this._pathFinder!.setLevelSource(region);
+    this._pathFinder!.canOpenDoors = canOpenDoors;
+    this._pathFinder!.avoidWater = avoidWater;
+    this._pathFinder!.findPathToEntity(path, from, to, maxDist);
+    TIMER_POP();
+    return true;
+  }
+
+  /** C++ findPath(Path*, Entity* from, int xBest, int yBest, int zBest, float maxDist, bool canOpenDoors, bool avoidWater)（Level.cpp:404） */
+  findPathToTile(path: Path, from: Entity, xBest: number, yBest: number, zBest: number, maxDist: number, canOpenDoors: boolean, avoidWater: boolean): boolean {
+    TIMER_PUSH('pathfind');
+    const x = Mth.floor(from.x);
+    const y = Mth.floor(from.y);
+    const z = Mth.floor(from.z);
+    const r = Math.trunc(maxDist + 8);
+    const region = new Region(this, x - r, y - r, z - r, x + r, y + r, z + r);
+    this._pathFinder!.setLevelSource(region);
+    this._pathFinder!.canOpenDoors = canOpenDoors;
+    this._pathFinder!.avoidWater = avoidWater;
+    this._pathFinder!.findPathToTile(path, from, xBest, yBest, zBest, maxDist);
+    TIMER_POP();
+    return true;
+  }
 
   /**
    * Sets the initial spawn, created this method so we could do a special
@@ -935,7 +985,11 @@ export class Level implements LevelSource {
     }
   }
 
-  // OMIT(Mob): getMob(entityId)  Level.cpp:1064（dynamic_cast<Mob*>，Mob 在 S12 阶段 C）
+  /** C++ `Mob* Level::getMob(int entityId)`（任务单 H4） */
+  getMob(entityId: number): Mob | null {
+    const entity = this.getEntity(entityId);
+    return entity && entity.isMob() ? (entity as Mob) : null;
+  }
 
   removeEntity(e: Entity): void {
     e.remove();
@@ -951,7 +1005,14 @@ export class Level implements LevelSource {
       this._listeners[i]!.tileEntityChanged(x, y, z, te);
     }
   }
-  // OMIT(MobSpawner): getRandomMobSpawnAt(mobCategory, x, y, z)  Level.cpp:1103
+  /** C++ `Biome::MobSpawnerData Level::getRandomMobSpawnAt(const MobCategory&, int, int, int)`（按值返回，这里返回副本） */
+  getRandomMobSpawnAt(mobCategory: MobCategory, x: number, y: number, z: number): MobSpawnerData {
+    const mobList = this._chunkSource.getMobsAt(mobCategory, x, y, z);
+    if (mobList.length === 0) return new MobSpawnerData();
+    const data = WeighedRandom.getRandomItem(this.random, mobList);
+    if (!data) return new MobSpawnerData();
+    return new MobSpawnerData(data.mobClassId, data.randomWeight, data.minCount, data.maxCount);
+  }
 
   addListener(listener: LevelListener): void {
     this._listeners.push(listener);
@@ -1137,13 +1198,17 @@ export class Level implements LevelSource {
     TIMER_PUSH('entities');
     TIMER_PUSH('remove');
     const pendingRemovedEntities: Entity[] = [];
-    // DEFERRED(Mob): std::vector<Zombie*> zombies;（僵尸 AI，计划外）
+    const zombies: { setUseNewAi(use: boolean): void }[] = []; // std::vector<Zombie*> zombies（只交给被注释掉的 setZombieAi）
     TIMER_POP_PUSH('regular');
     for (let i = 0; i < this.entities.length; i++) {
       const e = this.entities[i]!;
       if (!e.removed) {
         this.tickEntity(e);
-        // DEFERRED(Mob): if (e->getEntityTypeId() == MobTypes::Zombie) { zombies.push_back((Zombie*)e); ((Zombie*)e)->setUseNewAi(false); }
+        if (e.getEntityTypeId() === MobTypes.Zombie) {
+          const zombie = e as unknown as { setUseNewAi(use: boolean): void };
+          zombies.push(zombie);
+          zombie.setUseNewAi(false);
+        }
       }
       TIMER_PUSH('remove');
       if (e.removed && (!e.isPlayer() || e.reallyRemoveIfPlayer)) {
@@ -1225,7 +1290,27 @@ export class Level implements LevelSource {
     TIMER_POP();
   }
 
-  // OMIT(Mob): setZombieAi(zombies)  Level.cpp:1507（同文件的 DistanceEntitySorter 只给它用，一并不移植）
+  /**
+   * C++ `void Level::setZombieAi(std::vector<Zombie*>& zombies)`（Level.cpp:1507，任务单 H11）。
+   * 原样保留：唯一的调用点（tickEntities 里的 `//setZombieAi(zombies);`，Level.cpp:1429）被注释掉了；
+   *   NumSmartZombiesPerPlayer 是 0——即便被调用，也只有“没有僵尸”时进入第一个分支，第二段循环一次都不执行。
+   *   std::nth_element + DistanceEntitySorter（按到玩家的距离）在这里用一次排序代替：j < 0 的循环不读结果，等价。
+   */
+  setZombieAi(zombies: { setUseNewAi(use: boolean): void; distanceToSqr(e: Entity): number; x: number; y: number; z: number }[]): void {
+    const size = zombies.length;
+    const NumSmartZombiesPerPlayer = 0;
+    if (size <= NumSmartZombiesPerPlayer) {
+      for (let i = 0; i < size; ++i) zombies[i]!.setUseNewAi(true);
+      return;
+    }
+    for (let i = 0; i < this.players.length; ++i) {
+      const p = this.players[i]!;
+      const d2 = (z: { x: number; y: number; z: number }): number => (z.x - p.x) * (z.x - p.x) + (z.y - p.y) * (z.y - p.y) + (z.z - p.z) * (z.z - p.z);
+      zombies.sort((a, b) => d2(a) - d2(b));
+      for (let j = 0; j < NumSmartZombiesPerPlayer; ++j)
+        if (zombies[j]!.distanceToSqr(p) < 32 * 32) zombies[j]!.setUseNewAi(true);
+    }
+  }
 
   /**
    * C++ 的 tick(Entity*) 与 tick(Entity*, bool actual)（前者以 actual = true 转调后者）。它们和无参的 Level::tick()（世界的 tick）同名，
@@ -1282,7 +1367,7 @@ export class Level implements LevelSource {
     }
     return true;
   }
-  // OMIT(Mob): setZombieAi(zombies)  Level.cpp:1507（同文件的 DistanceEntitySorter 只给它用，一并不移植）
+  // （setZombieAi 见上方；这里原是同一条 OMIT 记录的重复）
 
   containsAnyLiquid(box: AABB): boolean {
     let x0 = Mth.floor(box.x0);

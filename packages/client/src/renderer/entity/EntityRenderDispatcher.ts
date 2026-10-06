@@ -31,6 +31,18 @@ import { TntRenderer } from './TntRenderer';
 import { ChickenModel } from '../../model/ChickenModel';
 import { HumanoidModel } from '../../model/HumanoidModel';
 import { PlayerRenderer } from './PlayerRenderer';
+import { HumanoidMobRenderer } from './HumanoidMobRenderer';
+import { MobRenderer } from './MobRenderer';
+import { PigRenderer } from './PigRenderer';
+import { SheepRenderer } from './SheepRenderer';
+import { CreeperRenderer } from './CreeperRenderer';
+import { SpiderRenderer } from './SpiderRenderer';
+import { SkeletonModel } from '../../model/SkeletonModel';
+import { ZombieModel } from '../../model/ZombieModel';
+import { SheepFurModel } from '../../model/SheepFurModel';
+import { SheepModel } from '../../model/SheepModel';
+import { CowModel } from '../../model/CowModel';
+import { PigModel } from '../../model/PigModel';
 
 const f = Math.fround;
 
@@ -87,27 +99,16 @@ export class EntityRenderDispatcher {
       EntityRendererId.ER_PLAYER_RENDERER,
       new PlayerRenderer(new HumanoidModel(0, 0, 64, 64), f(0.5)), // EntityRenderDispatcher.cpp:54
     );
-    // 下面 8 行是 C++ 第 43–51 行挨着的 assign，全部拦在实体侧：TS 的
-    // `packages/world/src/entity/` 里一个 Mob 都还没有（只有 Chicken），
-    // `MobFactory::CreateMob` 整条 OMIT(Entity)。等 MobFactory / MobAI 落地时一起补。
-    // DEFERRED(Entity): assign(ER_HUMANOID_RENDERER, new HumanoidMobRenderer(new HumanoidModel(), 0.5));  EntityRenderDispatcher.cpp:43
-    //   `Monster` 基类的默认渲染器（Monster.cpp:15，实测），不属于下面那 7 只 ——
-    //   零件（HumanoidMobRenderer + HumanoidModel）TS 里已经齐了，等实体一起注册。
-    // OMIT(Entity): assign(ER_PIG_RENDERER, new PigRenderer(new PigModel(0.5), NULL/*new PigModel(0.5f)*/, 0.7));  EntityRenderDispatcher.cpp:44
-    //   猪。实体类未移植（MobFactory/MobAI），`PigModel` / `PigRenderer` 也不存在。
-    // OMIT(Entity): assign(ER_COW_RENDERER, new MobRenderer(new CowModel(), 0.7));  EntityRenderDispatcher.cpp:45
-    //   牛。理由同猪（`CowModel` 在 `ModelInclude.ts` 里已记一条）。
-    // OMIT(Entity): assign(ER_SHEEP_RENDERER, new SheepRenderer(new SheepModel(), new SheepFurModel(), 0.7));  EntityRenderDispatcher.cpp:47
-    //   羊（两个模型都已在 `ModelInclude.ts` 记过）。理由同猪。
-    // OMIT(Entity): assign(ER_SKELETON_RENDERER, new HumanoidMobRenderer(new SkeletonModel(), 0.5f));  EntityRenderDispatcher.cpp:48
-    //   骷髅。理由同猪（`SkeletonModel` 已在 `ModelInclude.ts` 记过）。
-    // OMIT(Entity): assign(ER_ZOMBIE_RENDERER, new HumanoidMobRenderer(new ZombieModel(), 0.5f));  EntityRenderDispatcher.cpp:49
-    //   僵尸。理由同猪（`ZombieModel` 已在 `ModelInclude.ts` 记过）。
-    // OMIT(Entity): assign(ER_CREEPER_RENDERER, new CreeperRenderer());  EntityRenderDispatcher.cpp:50
-    //   苦力怕。理由同猪；它的模型 `CreeperModel` 不在 `ModelInclude.h` 里
-    //   （渲染器直接 include，见 `ModelInclude.ts` 文件头），所以一并记在这。
-    // OMIT(Entity): assign(ER_SPIDER_RENDERER, new SpiderRenderer());  EntityRenderDispatcher.cpp:51
-    //   蜘蛛。理由同苦力怕。
+    // C++ 第 43–51 行（任务单 H5–H8 起全部注册）
+    // 任务单 H5 起：Monster 的默认渲染器、猪、牛
+    this.assign(EntityRendererId.ER_HUMANOID_RENDERER, new HumanoidMobRenderer(new HumanoidModel(), 0.5)); // EntityRenderDispatcher.cpp:43
+    this.assign(EntityRendererId.ER_PIG_RENDERER, new PigRenderer(new PigModel(0.5), null, f(0.7))); // :44（第二个模型 C++ 传 NULL）
+    this.assign(EntityRendererId.ER_COW_RENDERER, new MobRenderer(new CowModel(), f(0.7))); // :45
+    this.assign(EntityRendererId.ER_SHEEP_RENDERER, new SheepRenderer(new SheepModel(), new SheepFurModel(), f(0.7))); // :47
+    this.assign(EntityRendererId.ER_SKELETON_RENDERER, new HumanoidMobRenderer(new SkeletonModel(), f(0.5))); // :48
+    this.assign(EntityRendererId.ER_ZOMBIE_RENDERER, new HumanoidMobRenderer(new ZombieModel(), f(0.5))); // :49
+    this.assign(EntityRendererId.ER_CREEPER_RENDERER, new CreeperRenderer()); // :50
+    this.assign(EntityRendererId.ER_SPIDER_RENDERER, new SpiderRenderer()); // :51
     for (const r of this._renderers.values()) r.init(this);
   }
 

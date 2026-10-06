@@ -40,6 +40,7 @@ import { CreativeMode } from './gamemode/CreativeMode';
 import type { GameMode } from './gamemode/GameMode';
 import { Font } from './gui/Font';
 import { EntityRenderDispatcher } from './renderer/entity/EntityRenderDispatcher';
+import { TileEntityRenderDispatcher } from './renderer/tileentity/TileEntityRenderDispatcher';
 import { SurvivalMode } from './gamemode/SurvivalMode';
 import { BuildActionIntention } from './player/input/IBuildInput';
 import { Gui } from './gui/Gui';
@@ -919,7 +920,7 @@ export class Minecraft extends App {
     if (this.levelRenderer) this.levelRenderer.onGraphicsReset();
     if (this.gameRenderer) this.gameRenderer.onGraphicsReset();
     EntityRenderDispatcher.getInstance().onGraphicsReset();
-    // DEFERRED(TileEntityRender): TileEntityRenderDispatcher::getInstance()->onGraphicsReset();
+    TileEntityRenderDispatcher.getInstance().onGraphicsReset();
   }
 
   getProgressStatusId(): number {

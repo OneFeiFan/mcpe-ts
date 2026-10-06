@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockMthRandom } from '../../helpers/mthRandom';
 import { Entity, Item, ParticleType, initItems, type Level } from '@mcpe/world';
 import {
   BreakingItemParticle,
@@ -73,7 +74,7 @@ beforeEach(() => {
   level = createFlatLevel();
   prepareLevel(level);
   Entity.sharedRandom.setSeed(20261004);
-  vi.spyOn(Math, 'random').mockReturnValue(0.75);
+  mockMthRandom(0.75);
   engine = new ParticleEngine(level, new FakeTextures() as unknown as Textures);
   // 相机站在 (8.5, 70.5, 8.5)
   player = new Particle(level, 8.5, 70.5, 8.5, 0, 0, 0);

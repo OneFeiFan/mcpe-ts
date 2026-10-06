@@ -3,7 +3,7 @@
  * OreTile、ClothTileItem 读它的常量，所以先给出。
  * 部分（useOn 里骨粉催熟的分支）：
  *  - 骨粉催熟：树苗、茎（S11 阶段 C）、作物与长草（S12 阶段 C）已全部恢复。
- *  - interactEnemy 给羊染色（Sheep，计划外）整段 DEFERRED(Entity)。
+ *  - interactEnemy 给羊染色（任务单 H6 起恢复）。
  * C++ 的 COLOR_RGB 第 7、8 项相同（0x287697），照原样保留。
  */
 import { Mth } from '@mcpe/util';
@@ -15,6 +15,9 @@ import type { Sapling } from '../level/tile/Sapling';
 import { TallGrass } from '../level/tile/TallGrass';
 import type { StemTile } from '../level/tile/StemTile';
 import { Tile } from '../level/tile/Tile';
+import { ClothTile } from '../level/tile/ClothTile';
+import { MobTypes } from '../entity/EntityTypes';
+import type { Sheep } from '../entity/animal/Sheep';
 import { Item } from './Item';
 import type { ItemInstance } from './ItemInstance';
 
@@ -144,7 +147,14 @@ export class DyePowderItem extends Item {
     return false;
   }
 
-  override interactEnemy(_itemInstance: ItemInstance, _mob: Mob): void {
-    // DEFERRED(Entity): if (mob->getEntityTypeId() == MobTypes::Sheep) { Sheep* sheep = (Sheep*) mob; int newColor = ClothTile::getTileDataForItemAuxValue(itemInstance->getAuxValue()); if (!sheep->isSheared() && sheep->getColor() != newColor) { sheep->setColor(newColor); itemInstance->count--; } }
+  override interactEnemy(itemInstance: ItemInstance, mob: Mob): void {
+    if (mob.getEntityTypeId() === MobTypes.Sheep) {
+      const sheep = mob as Sheep;
+      const newColor = ClothTile.getTileDataForItemAuxValue(itemInstance.getAuxValue());
+      if (!sheep.isSheared() && sheep.getColor() !== newColor) {
+        sheep.setColor(newColor);
+        itemInstance.count--;
+      }
+    }
   }
 }

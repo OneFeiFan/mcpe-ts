@@ -41,6 +41,16 @@
 #include "client/model/geom/ModelPart.h"
 #include "client/model/HumanoidModel.h"
 #include "client/model/ChickenModel.h"
+#include "client/model/ChestModel.h"
+#include "client/model/SignModel.h"
+#include "client/model/PigModel.h"
+#include "client/model/CowModel.h"
+#include "client/model/SheepModel.h"
+#include "client/model/SheepFurModel.h"
+#include "client/model/ZombieModel.h"
+#include "client/model/SkeletonModel.h"
+#include "client/model/CreeperModel.h"
+#include "client/model/SpiderModel.h"
 #undef private
 #undef protected
 
@@ -193,6 +203,57 @@ static void writeChicken(FILE* o, bool first) {
   std::fprintf(o, "]}");
 }
 
+// ---- 方块实体的两个模型（箱子、告示牌）：只有头文件，构造函数里就是全部几何 ----
+static void writeChest(FILE* o, bool first) {
+  ChestModel m;
+  if (!first) std::fprintf(o, ",");
+  std::fprintf(o, "{\"model\":\"ChestModel\",\"texWidth\":%d,\"texHeight\":%d,\"parts\":[", m.texWidth, m.texHeight);
+  pPartCounted(o, "lid", m.lid, true);
+  pPartCounted(o, "bottom", m.bottom, false);
+  pPartCounted(o, "lock", m.lock, false);
+  std::fprintf(o, "]}");
+}
+
+static void writeSign(FILE* o, bool first) {
+  SignModel m;
+  if (!first) std::fprintf(o, ",");
+  std::fprintf(o, "{\"model\":\"SignModel\",\"texWidth\":%d,\"texHeight\":%d,\"parts\":[", m.texWidth, m.texHeight);
+  pPartCounted(o, "cube", m.cube, true);
+  pPartCounted(o, "cube2", m.cube2, false);
+  std::fprintf(o, "]}");
+}
+
+// ---- 任务单 H5–H8：生物模型（几何全在构造函数里）。部件名与 TS 字段名一一对应
+#define PART(m, n, first) pPartCounted(o, #n, m.n, first)
+static void beginModel(FILE* o, const char* name, Model& m, bool first) {
+  if (!first) std::fprintf(o, ",");
+  std::fprintf(o, "{\"model\":\"%s\",\"texWidth\":%d,\"texHeight\":%d,\"parts\":[", name, m.texWidth, m.texHeight);
+}
+template <class Q> static void writeQuad(FILE* o, const char* name, Q& m) {
+  beginModel(o, name, m, false);
+  PART(m, head, true); PART(m, body, false); PART(m, leg0, false); PART(m, leg1, false); PART(m, leg2, false); PART(m, leg3, false);
+  std::fprintf(o, "]}");
+}
+static void writeMobs(FILE* o) {
+  { PigModel m(0.5f); writeQuad(o, "PigModel", m); }
+  { CowModel m; writeQuad(o, "CowModel", m); }
+  { SheepModel m; writeQuad(o, "SheepModel", m); }
+  { SheepFurModel m; writeQuad(o, "SheepFurModel", m); }
+  { ZombieModel m; beginModel(o, "ZombieModel", m, false);
+    PART(m, head, true); PART(m, hair, false); PART(m, body, false); PART(m, arm0, false); PART(m, arm1, false); PART(m, leg0, false); PART(m, leg1, false);
+    std::fprintf(o, "]}"); }
+  { SkeletonModel m; beginModel(o, "SkeletonModel", m, false);
+    PART(m, head, true); PART(m, hair, false); PART(m, body, false); PART(m, arm0, false); PART(m, arm1, false); PART(m, leg0, false); PART(m, leg1, false);
+    std::fprintf(o, "]}"); }
+  { CreeperModel m; beginModel(o, "CreeperModel", m, false);
+    PART(m, head, true); PART(m, body, false); PART(m, leg0, false); PART(m, leg1, false); PART(m, leg2, false); PART(m, leg3, false);
+    std::fprintf(o, "]}"); }
+  { SpiderModel m; beginModel(o, "SpiderModel", m, false);
+    PART(m, head, true); PART(m, body0, false); PART(m, body1, false);
+    PART(m, leg0, false); PART(m, leg1, false); PART(m, leg2, false); PART(m, leg3, false); PART(m, leg4, false); PART(m, leg5, false); PART(m, leg6, false); PART(m, leg7, false);
+    std::fprintf(o, "]}"); }
+}
+
 int main(int argc, char** argv) {
   if (argc < 2) return 1;
   FILE* o = std::fopen(argv[1], "w");
@@ -202,6 +263,9 @@ int main(int argc, char** argv) {
   writeHumanoid(o, "HumanoidModel32", 64, 32, true);
   writeHumanoid(o, "HumanoidModel64", 64, 64, false);
   writeChicken(o, false);
+  writeChest(o, false);
+  writeSign(o, false);
+  writeMobs(o);
   std::fprintf(o, "],\"totalCubes\":%d}\n", g_totalCubes);
 
   std::fclose(o);

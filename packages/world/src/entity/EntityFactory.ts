@@ -8,7 +8,7 @@
  * 【本轮的移植范围】`CreateEntity` 那张 switch 里七种实体，TS 里
  * **七种实体全都是真的了**（ItemEntity / FallingTile / PrimedTnt / Painting / Snowball /
  * ThrownEgg / Arrow）—— D11b 把最后一个 Arrow 也接上了，这张 switch 里再没有 DEFERRED。
- * 只剩 `id < 64` 那条（生物）整条走不了（MobFactory 没移植）。
+ * `id < 64` 那条（生物）走 MobFactory（任务单 H4 起）。
  *
  * 【任务单 D 已经全补上了】D1～D11 把七种实体一个个写成真类并接到这张 switch 上
  * （`FallingTile` / `PrimedTnt` / `Painting` / `Snowball` / `ThrownEgg` / `Arrow`）。
@@ -35,12 +35,7 @@ import { Snowball } from './projectile/Snowball';
 import { ThrownEgg } from './projectile/ThrownEgg';
 import { Arrow } from './projectile/Arrow';
 import { Item } from '../item/Item';
-
-// OMIT(Entity): static Mob* MobFactory::CreateMob(int mobType, Level* level)  MobFactory.h:2
-//   整个函数没移植。它是一张 switch，每个 case 都是 `new Chicken(level)` / `new Cow(level)` / …
-//   —— 那些生物类 TS 里一个都没有（只有抽象基类 Mob）。函数末尾还有一句
-//   `if (mob) mob->health = mob->getMaxHealth();`，同样没移植。
-//   同文件的 clearStaticTestMobs / getStaticTestMob 是压测用的，EntityFactory 不碰它们，也没移植。
+import { MobFactory } from './MobFactory';
 
 export class EntityFactory {
   /**
@@ -89,9 +84,7 @@ export class EntityFactory {
       // C++ 这里打的是 "at MobFactory::loadEntity"（不是 EntityFactory），原文如此
       LOGE(`Negative ItemId: ${id} at MobFactory::loadEntity\n`);
     } else if (id < 64) {
-      // DEFERRED(Entity): e = MobFactory::CreateMob(id, level);  EntityFactory.cpp:37
-      //   MobFactory 整个没移植（见文件头那条 OMIT），所以这里只能给 null —— 也就是"这只生物读不出来"。
-      e = null;
+      e = MobFactory.CreateMob(id, level);
     } else {
       e = EntityFactory.CreateEntity(id, level);
     }

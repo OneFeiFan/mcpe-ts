@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockMthRandom } from '../../helpers/mthRandom';
 import { Random } from '@mcpe/util';
 import { Entity, Item, LevelListener, Tile, initItems, type Level } from '@mcpe/world';
 import {
@@ -72,7 +73,7 @@ beforeEach(() => {
   level = createFlatLevel();
   prepareLevel(level);
   Entity.sharedRandom.setSeed(SEED);
-  vi.spyOn(Math, 'random').mockReturnValue(RND);
+  mockMthRandom(RND);
 });
 
 afterEach(() => {
@@ -124,7 +125,7 @@ describe('LavaParticle（E4）', () => {
     // 这个 r 是搜出来的：double 给 34、float 给 33，能把两种算法分开
     const r = 0.33823528944940673;
     vi.restoreAllMocks();
-    vi.spyOn(Math, 'random').mockReturnValue(r);
+    mockMthRandom(r);
     Entity.sharedRandom.setSeed(SEED);
     const p = new LavaParticle(level, 8.5, 70.5, 8.5);
     const dbl = Math.trunc(16 / (r * 0.8 + 0.2));

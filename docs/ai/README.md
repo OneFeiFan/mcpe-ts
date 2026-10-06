@@ -106,3 +106,16 @@ claude                            # REF 由 .claude/settings.json 提供，不�
 - **Playwright MCP**（交互式看网页、点按钮）：`claude mcp add playwright -- npx @playwright/mcp@latest`。适合排查画面问题；常规验证用 `tools/verify/smoke.mjs` 就够了，结果更可重复。
 - **把审查交给另一个模型**：`port-reviewer` 子代理可以在 frontmatter 里指定别的模型（如果你的接入方式支持），让“写的”和“审的”不是同一个模型。
 - **CI**：在 GitHub Actions 里跑 `pnpm run ci`，防止某次提交把主干弄红。**注意是 `pnpm run ci` 不是 `pnpm ci`** —— 后者是 pnpm 自带的子命令（等于 `install --frozen-lockfile`），会盖过 package.json 里的同名脚本，只装依赖、什么都不检查、永远返回 0。
+
+## 7. 任务单索引
+
+| 任务单 | 内容 | 状态 |
+|---|---|---|
+| TASK-B 存档 | 虚拟文件系统、区域文件、存档、起始菜单与选世界 | 完成 |
+| TASK-C 世界生成 | 地形、洞穴、峡谷 | 完成 |
+| TASK-D 实体 | 落沙、TNT、相机、画、雪球、蛋、箭、鸡 | 完成 |
+| TASK-E 粒子 | 粒子系统 | 完成 |
+| TASK-F 声音 | 声音仓库与 Web Audio | 完成 |
+| TASK-G 模型与实体渲染 | 模型几何、玩家、鸡、TNT、画 | 完成 |
+| （无任务单）方块实体渲染、告示牌编辑 | Claude 直接完成，见 progress.md 2026-10-06 | 完成 |
+| TASK-H 生物与 AI | 寻路、新旧两套 AI、生物工厂、9 种生物、自然刷怪 | 完成（Claude） |

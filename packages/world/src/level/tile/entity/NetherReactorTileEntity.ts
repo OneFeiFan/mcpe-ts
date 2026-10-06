@@ -1,11 +1,13 @@
 /**
  * 1:1 移植自 src/world/level/tile/entity/NetherReactorTileEntity.h 与 .cpp（S12 阶段 C，部分移植）。
- * 部分：生成僵尸猪人（MobFactory、MobSpawner，计划外）DEFERRED(Mob)；生成物品、建造与风化下界穹顶照常执行。
+ * 生成僵尸猪人（任务单 H9 起恢复：MobFactory + MobSpawner.addMob）、生成物品、建造与风化下界穹顶。
  * 由 C++ 类转写脚本生成初稿后人工核对。
  */
 import { SharedConstants } from '@mcpe/core';
 import { CompoundTag } from '@mcpe/nbt';
 import { Mth } from '@mcpe/util';
+import { MobFactory } from '../../../entity/MobFactory';
+import { MobSpawner } from '../../MobSpawner';
 import { Difficulty } from '../../../Difficulty';
 import { createItemEntity } from '../../../entity/Entity';
 import { MobTypes } from '../../../entity/EntityTypes';
@@ -165,7 +167,7 @@ export class NetherReactorTileEntity extends TileEntity {
   }
 
   spawnEnemy(): void {
-    // DEFERRED(Mob): Mob* mob = MobFactory::CreateMob(MobTypes::PigZombie, level);（僵尸猪人，计划外）
+    const mob = MobFactory.CreateMob(MobTypes.PigZombie, this.level!)!;
     let enemyPosition = this.getSpawnPosition(3, 4, -1);
     while (
       enemyPosition.x < 0 ||
@@ -175,7 +177,7 @@ export class NetherReactorTileEntity extends TileEntity {
     ) {
       enemyPosition = this.getSpawnPosition(3, 4, -1);
     }
-    // DEFERRED(Mob): MobSpawner::addMob(level, mob, enemyPosition.x, enemyPosition.y, enemyPosition.z, 0, 0, true);
+    MobSpawner.addMob(this.level!, mob, enemyPosition.x, enemyPosition.y, enemyPosition.z, 0, 0, true);
   }
 
   spawnItem(): void {

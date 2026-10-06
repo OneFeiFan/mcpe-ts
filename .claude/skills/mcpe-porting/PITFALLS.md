@@ -228,3 +228,24 @@
   别处攥着的 `model.head`、`model.cubes` 里那根指针，用完仍指向同一个对象；写成
   `this.head = new ModelPart(...)` 会把旧对象留在 `model.cubes` 里、新对象又没登记。
   仓库先例：`RenderChunk.assign` 同理。
+
+## H. 生物与 AI（任务单 H 教我的）
+
+29. **随机数要和 C++ 同构，否则做不了行为样本。** `Mth.random()` 原来是 `Math.random()`，`random(n)` 的分布和序列都与 C++ 的
+    `nextInt(n)` 不同。现在走模块级 `_mthRand`（C++ Mth.cpp 的 `static Random _rand`）。测试要定死它用 `tests/helpers/mthRandom.ts`；
+    harness 里 C++ 的 `_rand` 是文件内静态量，用 `objcopy --weaken-symbol` 把 `Mth::random` 变弱、由 harness 给出可设种子的版本（见 build.sh 的 mobai 段）。
+    实体构造函数里用随机数初始化的字段（ambientSoundTime、eggTime、rotA、timeOffs），对照时两边都改成固定值。
+30. **`moveTo` 的 y 是脚底高度。** C++ `Entity::moveTo` 内部会加上 `heightOffset`（玩家 1.62）。测试里写 `moveTo(x, 64 + heightOffset, z)`
+    会让玩家悬空 1.62 格——旧 AI 的近战判断只看 y 方向是否重叠，照样能打到；新 AI 的近战按距离判断，就打不到了。
+31. **会形成加载循环的值导入，用“注入”代替。** Level 需要调 MobSpawner，而 MobSpawner → MobFactory → 各种生物类 → … 又回到 Level，
+    结果是 “Class extends value undefined”。做法：Level 上留一个静态函数槽（`Level.mobSpawnerTick`），由 MobSpawner 模块加载时填上；
+    并且**一定要从包的 index.ts 导出 MobSpawner**，否则它根本不会被加载，槽一直是空的。
+32. **`goto` 跳回循环之前 = 整个循环从头再来。** MobSpawner::tick 的 `goto chunkLoop` 让区块列表从第一个重新轮。
+    TS 用 `chunkLoop: for (;;) { for (…) { … continue chunkLoop; } break; }` 表达，不能写成 `continue`（那是继续下一个区块）。
+33. **方法与字段同名的 C++ 遮蔽。** C++ 子类可以声明一个与基类**字段**同名的**方法**（Spider::makeStepSound），基类代码读的仍是字段，
+    方法从不被调用。TS 里不能同名：方法按 R10 改名并注明“从不被调用”，字段保持原样。
+34. **截图前让生物 tick 一下，或同时设好 yBodyRot。** `moveTo` 只设头的朝向；身体朝向靠 Mob::tick 跟上（夹角 ≤75°）。
+    冻结 tick 再截图，会看到“脸朝后”的假象。
+35. **“死代码”也照移植，但要写清依据。** 这一版的新 AI（goal 系统）因为 `Level::setZombieAi` 的调用被注释掉而永远不运行；
+    箱子的 ChestRenderer 因为 `rendererId = TR_CHEST_RENDERER` 被注释掉而永远不用。移植它们，在文件头写明是哪一行、哪个文件让它们不生效，
+    并用单元测试直接驱动来验证它们本身是对的。

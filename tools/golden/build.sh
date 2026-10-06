@@ -25,7 +25,7 @@ CXX="${CXX:-g++}"
 JOBS="${JOBS:-$(nproc 2>/dev/null || echo 4)}"
 
 # ---- 选择性生成：不给节名就全生成，给了就只生成这几节 ----
-ALL_SECTIONS=(random mth util s4 synth biomesource optionsfile registry nbt i18n inventory entity collision explosion font regionfile leveldata playerdata saveleveldata chunk entities randomlevelsource model)
+ALL_SECTIONS=(random mth util s4 synth biomesource optionsfile registry nbt i18n inventory entity collision explosion font regionfile leveldata playerdata saveleveldata chunk entities randomlevelsource model pathfinder mobai)
 SECTIONS=("$@")
 if [ "${#SECTIONS[@]}" -gt 0 ] && [ "${SECTIONS[0]}" = "--list" ]; then
     printf '%s\n' "${ALL_SECTIONS[@]}"
@@ -132,7 +132,7 @@ fi
 
 # 诊断用：撞到 ud2 陷阱桩时打印地址。放在 $TMP 而不是 $REG —— 因为 collision 与 leveldata
 # 只需要这一个文件，不需要 $REG 那 30 个方块/物品类，放 $REG 会白编一大堆。
-if any_want registry nbt i18n inventory entity collision explosion font leveldata playerdata saveleveldata chunk entities randomlevelsource model; then
+if any_want registry nbt i18n inventory entity collision explosion font leveldata playerdata saveleveldata chunk entities randomlevelsource model pathfinder mobai; then
     "$CXX" -c "$ROOT/tools/golden/stub/sigill_diag.cpp" -o "$TMP/sigill_diag.oo"
 fi
 
@@ -188,7 +188,7 @@ fi
 
 # ---- S12：碰撞轨迹（G12-2）。要用真实的 Level：world、nbt、locale、util 下的全部源码另建一组目标文件
 LVL="$TMP/lvl"
-if any_want collision explosion leveldata playerdata saveleveldata chunk entities randomlevelsource; then
+if any_want collision explosion leveldata playerdata saveleveldata chunk entities randomlevelsource pathfinder mobai; then
     mkdir -p "$LVL"
     lvl_pairs=()
     while IFS= read -r f; do lvl_pairs+=("$f" "${f//\//_}"); done < <(cd "$REF/src" && { find world nbt locale util -name '*.cpp' ! -name 'PerfRenderer.cpp'; echo platform/time.cpp; })
@@ -202,6 +202,32 @@ if want collision; then
     "$CXX" -c "$LVL/stubs.s" -o "$LVL/stubs.oo"
     "$CXX" -no-pie -o "$LVL/harness_collision" "$LVL/harness_collision.oo" "$LVL"/*.o "$LVL/stubs.oo" "$TMP/sigill_diag.oo"
     "$LVL/harness_collision" "$OUT/collision.json" 2>/dev/null
+fi
+
+# ---- 任务单 H2：寻路（G16-1）。和 collision 同一组 $LVL 目标文件
+if want pathfinder; then
+    "$CXX" "${CF[@]}" -c "$ROOT/tools/golden/harness_pathfinder.cpp" -o "$LVL/harness_pathfinder.oo"
+    { "$CXX" -o /dev/null "$LVL/harness_pathfinder.oo" "$LVL"/*.o -Wl,--no-demangle 2>&1 || true; } | grep -oE "undefined reference to \`[^']+'" \
+      | sed "s/undefined reference to \`//; s/'$//" | sort -u \
+      | awk 'BEGIN{print ".section .note.GNU-stack,\"\",@progbits"; print ".text"} {b = ($0 ~ /RakNet/) ? "ret" : "ud2"; printf ".globl %s\n.type %s,@function\n%s:\n  %s\n", $0, $0, $0, b}' > "$LVL/pfstubs.s"
+    "$CXX" -c "$LVL/pfstubs.s" -o "$LVL/pfstubs.oo"
+    "$CXX" -no-pie -o "$LVL/harness_pathfinder" "$LVL/harness_pathfinder.oo" "$LVL"/*.o "$LVL/pfstubs.oo" "$TMP/sigill_diag.oo"
+    "$LVL/harness_pathfinder" "$OUT/pathfinder.json" 2>/dev/null
+fi
+
+# ---- 任务单 H3：旧 AI 的行为轨迹（G16-2）。Mth::random 换成 harness 里可设种子的版本：
+#      把 util_Mth.o 复制一份、用 objcopy 把两个 Mth::random 变成弱符号，harness 的强定义就会生效
+if want mobai; then
+    MAI="$TMP/mai"; mkdir -p "$MAI"
+    for o in "$LVL"/*.o; do cp "$o" "$MAI/"; done
+    objcopy --weaken-symbol=_ZN3Mth6randomEv --weaken-symbol=_ZN3Mth6randomEi "$MAI/util_Mth.o"
+    "$CXX" "${CF[@]}" -c "$ROOT/tools/golden/harness_mobai.cpp" -o "$MAI/harness_mobai.oo"
+    { "$CXX" -o /dev/null "$MAI/harness_mobai.oo" "$MAI"/*.o -Wl,--no-demangle 2>&1 || true; } | grep -oE "undefined reference to \`[^']+'" \
+      | sed "s/undefined reference to \`//; s/'$//" | sort -u \
+      | awk 'BEGIN{print ".section .note.GNU-stack,\"\",@progbits"; print ".text"} {b = ($0 ~ /RakNet/) ? "ret" : "ud2"; printf ".globl %s\n.type %s,@function\n%s:\n  %s\n", $0, $0, $0, b}' > "$MAI/stubs.s"
+    "$CXX" -c "$MAI/stubs.s" -o "$MAI/stubs.oo"
+    "$CXX" -no-pie -o "$MAI/harness_mobai" "$MAI/harness_mobai.oo" "$MAI"/*.o "$MAI/stubs.oo" "$TMP/sigill_diag.oo"
+    "$MAI/harness_mobai" "$OUT/mobai.json" 2>/dev/null
 fi
 
 # ---- S-D3：爆炸。和 collision 同一组 $LVL 目标文件（同样要用真实 Level）
@@ -356,7 +382,12 @@ if want model; then
         client/model/geom/Polygon.cpp Polygon \
         client/model/geom/ModelPart.cpp ModelPart \
         client/model/ChickenModel.cpp ChickenModel \
-        client/model/HumanoidModel.cpp HumanoidModel
+        client/model/HumanoidModel.cpp HumanoidModel \
+        client/model/QuadrupedModel.cpp QuadrupedModel \
+        client/model/PigModel.cpp PigModel \
+        client/model/CowModel.cpp CowModel \
+        client/model/SheepModel.cpp SheepModel \
+        client/model/SheepFurModel.cpp SheepFurModel
     "$CXX" "${CF[@]}" -c "$ROOT/tools/golden/harness_model.cpp" -o "$MDL/harness_model.oo"
     { "$CXX" -o /dev/null "$MDL/harness_model.oo" "$MDL"/*.o -Wl,--no-demangle 2>&1 || true; } | grep -oE "undefined reference to \`[^']+'" \
       | sed "s/undefined reference to \`//; s/'$//" | sort -u \

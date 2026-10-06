@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { mockMthRandom } from '../../helpers/mthRandom';
 import { SoundDesc, SoundRepository } from '@mcpe/client';
 
 // F1：`SoundDesc` + `SoundRepository`（两个都是纯头文件，加起来约 70 行）。
@@ -141,7 +142,7 @@ describe('SoundRepository（F1）', () => {
     r.add('step.stone', b);
     expect(r._variantsForTest('step.stone')).toBe(2);
     // ⚠ 这里必须把随机固定住 —— 不固定的话 `get` 挑到哪个变体是随机的（第一版就断言错了）
-    vi.spyOn(Math, 'random').mockReturnValue(0.0);
+    mockMthRandom(0.0);
     expect(r.get('step.stone')).toBe(a);
   });
 
@@ -154,11 +155,11 @@ describe('SoundRepository（F1）', () => {
     r.add('step.stone', b);
     r.add('step.stone', c);
     // Mth.random(n) = (Math.random() * n) | 0
-    vi.spyOn(Math, 'random').mockReturnValue(0.0);
+    mockMthRandom(0.0);
     expect(r.get('step.stone')).toBe(a);
-    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    mockMthRandom(0.5);
     expect(r.get('step.stone')).toBe(b);
-    vi.spyOn(Math, 'random').mockReturnValue(0.999);
+    mockMthRandom(0.999);
     expect(r.get('step.stone')).toBe(c);
   });
 

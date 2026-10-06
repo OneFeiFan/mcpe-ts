@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockMthRandom } from '../../helpers/mthRandom';
 import { Random } from '@mcpe/util';
 import { Entity, type Level } from '@mcpe/world';
 import {
@@ -53,13 +54,13 @@ afterEach(() => {
 /** 同一组随机数下的**裸 Particle**，当基类结果的参照物 */
 function reference(rnd: number): Particle {
   Entity.sharedRandom.setSeed(SEED);
-  vi.spyOn(Math, 'random').mockReturnValue(rnd);
+  mockMthRandom(rnd);
   return new Particle(level, 8.5, 70.5, 8.5, 0, 0, 0);
 }
 
 function resetRandom(rnd: number): void {
   Entity.sharedRandom.setSeed(SEED);
-  vi.spyOn(Math, 'random').mockReturnValue(rnd);
+  mockMthRandom(rnd);
 }
 
 describe('SmokeParticle（E2）', () => {

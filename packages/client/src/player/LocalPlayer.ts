@@ -3,6 +3,7 @@
  * 部分：网络包（PlayerEquipmentPacket、PlayerArmorEquipmentPacket 等）、界面（容器、合成、告示牌编辑）、统计 DEFERRED。
  * 由 C++ 类转写脚本生成初稿后逐个函数人工核对。
  */
+import { TextEditScreen } from '../gui/screens/TextEditScreen';
 import { Keyboard, LOGI } from '@mcpe/platform';
 import { Mth, SmoothFloat } from '@mcpe/util';
 import { SharedConstants } from '@mcpe/core';
@@ -23,6 +24,7 @@ import {
   Tile,
   type TileEntity,
   TileEntityType,
+  type SignTileEntity,
   Vec3,
 } from '@mcpe/world';
 import type { Minecraft } from '../Minecraft';
@@ -465,7 +467,7 @@ export class LocalPlayer extends Player {
 
   override openTextEdit(tileEntity: TileEntity): void {
     if (tileEntity.type === TileEntityType.Sign) {
-      // DEFERRED(Gui): minecraft->setScreen(new TextEditScreen((SignTileEntity*) tileEntity));
+      this.minecraft.setScreen(new TextEditScreen(tileEntity as SignTileEntity));
     }
   }
 

@@ -30,6 +30,7 @@ import { Minecraft } from '../Minecraft';
 import { OptionId } from '../Options';
 import { Chunk } from './Chunk';
 import { EntityRenderDispatcher } from './entity/EntityRenderDispatcher';
+import { TileEntityRenderDispatcher } from './tileentity/TileEntityRenderDispatcher';
 import type { Culler } from './culling/Culler';
 import { DirtyChunkSorter, sorterComparator } from './DirtyChunkSorter';
 import { DistanceChunkSorter } from './DistanceChunkSorter';
@@ -263,7 +264,7 @@ export class LevelRenderer extends LevelListener {
     this.zOld = -9999;
     EntityRenderDispatcher.getInstance().setLevel(level);
     EntityRenderDispatcher.getInstance().setMinecraft(this.mc);
-    // DEFERRED(TileEntityRender): TileEntityRenderDispatcher::getInstance()->setLevel(level);
+    TileEntityRenderDispatcher.getInstance().setLevel(level);
     this.level = level;
     this.tileRenderer = new TileRenderer(level);
     if (level !== null) {
@@ -869,16 +870,16 @@ export class LevelRenderer extends LevelListener {
     const mc = this.mc;
     const level = this.level!;
     TIMER_PUSH('prepare');
-    // DEFERRED(TileEntityRender): TileEntityRenderDispatcher::getInstance()->prepare(level, textures, mc->font, mc->cameraTargetPlayer, a);
+    TileEntityRenderDispatcher.getInstance().prepare(level, this.textures, mc.font, mc.cameraTargetPlayer!, a);
     const disp = EntityRenderDispatcher.getInstance();
     disp.prepare(level, mc.font, mc.cameraTargetPlayer!, mc.options, a);
     this.totalEntities = 0;
     this.renderedEntities = 0;
     this.culledEntities = 0;
     const player = mc.cameraTargetPlayer!;
-    EntityRenderDispatcher.xOff = player.xOld + (player.x - player.xOld) * a;
-    EntityRenderDispatcher.yOff = player.yOld + (player.y - player.yOld) * a;
-    EntityRenderDispatcher.zOff = player.zOld + (player.z - player.zOld) * a;
+    EntityRenderDispatcher.xOff = TileEntityRenderDispatcher.xOff = player.xOld + (player.x - player.xOld) * a;
+    EntityRenderDispatcher.yOff = TileEntityRenderDispatcher.yOff = player.yOld + (player.y - player.yOld) * a;
+    EntityRenderDispatcher.zOff = TileEntityRenderDispatcher.zOff = player.zOld + (player.z - player.zOld) * a;
     glEnableClientState2(GL_VERTEX_ARRAY);
     glEnableClientState2(GL_TEXTURE_COORD_ARRAY);
     TIMER_POP_PUSH('entities');
@@ -910,7 +911,9 @@ export class LevelRenderer extends LevelListener {
       }
     }
     TIMER_POP_PUSH('tileentities');
-    // DEFERRED(TileEntityRender): for (tileEntities) TileEntityRenderDispatcher::getInstance()->render(level->tileEntities[i], a);（箱子、告示牌）
+    for (let i = 0; i < level.tileEntities.length; i++) {
+      TileEntityRenderDispatcher.getInstance().render(level.tileEntities[i]!, a);
+    }
     glDisableClientState2(GL_VERTEX_ARRAY);
     glDisableClientState2(GL_TEXTURE_COORD_ARRAY);
     TIMER_POP();

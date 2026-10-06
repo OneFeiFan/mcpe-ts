@@ -1,9 +1,14 @@
 /**
  * 1:1 移植自 src/world/entity/Mob.h 与 Mob.cpp（S12 阶段 C，部分移植）。
- * 部分：新版生物 AI（MoveControl、JumpControl、PathNavigation、GoalSelector、Sensing，计划外）的语句 DEFERRED(MobAI)；
+ * 新版生物 AI（MoveControl、JumpControl、PathNavigation、GoalSelector、Sensing）在任务单 H11 移植；只有 useNewAi() 为真时运行（这一版里恒为假，见 docs/ai/TASK-H 的 H0）；
  *   网络包（MoveEntityPacket 等）DEFERRED(Network)；声音、粒子照常调用 Level 的接口。
  * 由 tools 的 C++ 类转写脚本生成初稿后逐个函数人工核对。
  */
+import type { JumpControl } from './ai/control/JumpControl';
+import type { MoveControl } from './ai/control/MoveControl';
+import type { GoalSelector } from './ai/goal/GoalSelector';
+import type { PathNavigation } from './ai/PathNavigation';
+import type { Sensing } from './ai/Sensing';
 import { LOGI } from '@mcpe/platform';
 import { CompoundTag } from '@mcpe/nbt';
 import { Mth, Random, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH } from '@mcpe/util';
@@ -48,7 +53,7 @@ export abstract class Mob extends Entity {
   arrowCount: number = 0;
   removeArrowTime: number = 0;
   random = new Random();
-  sensing: unknown = null; // DEFERRED(MobAI)
+  sensing: Sensing | null = null;
   bypassArmor: boolean = false;
   protected entityData = new SynchedEntityData();
   protected swinging: boolean = false;
@@ -97,11 +102,11 @@ export abstract class Mob extends Entity {
   allowAlpha: boolean = false;
   jumping: boolean = false;
   autoSendPosRot: boolean = false;
-  moveControl: unknown = null; // DEFERRED(MobAI)
-  jumpControl: unknown = null; // DEFERRED(MobAI)
-  navigation: unknown = null; // DEFERRED(MobAI)
-  goalSelector: unknown = null; // DEFERRED(MobAI)
-  targetSelector: unknown = null; // DEFERRED(MobAI)
+  moveControl: MoveControl | null = null;
+  jumpControl: JumpControl | null = null;
+  navigation: PathNavigation | null = null;
+  goalSelector: GoalSelector | null = null;
+  targetSelector: GoalSelector | null = null;
   private lookingAtId: number = 0;
   private ambientSoundTime: number = 0;
   private speed: number = 0;
@@ -357,13 +362,11 @@ export abstract class Mob extends Entity {
     return true;
   }
 
-  getMoveControl(): unknown {
-    // DEFERRED(MobAI)：MoveControl
+  getMoveControl(): MoveControl | null {
     return this.moveControl;
   }
 
-  getJumpControl(): unknown {
-    // DEFERRED(MobAI)：JumpControl
+  getJumpControl(): JumpControl | null {
     return this.jumpControl;
   }
 
@@ -1103,13 +1106,13 @@ export abstract class Mob extends Entity {
     this.yya = 0;
 
     let lookDistance = 8;
-    if (this.random.nextFloat() < 0.02) {
+    if (this.random.nextFloat() < Math.fround(0.02)) { // float 字面量 0.02f（G16-2 抓出的漂移：本函数原来没有 float 截断）
       player = this.level.getNearestPlayer(this, lookDistance);
       if (player !== null) {
         this.lookingAtId = player.entityId;
         this.lookTime = 10 + this.random.nextInt(20);
       } else {
-        this.yRotA = (this.random.nextFloat() - 0.5) * 20;
+        this.yRotA = Math.fround(Math.fround(this.random.nextFloat() - 0.5) * 20);
       }
     }
 
@@ -1129,16 +1132,16 @@ export abstract class Mob extends Entity {
         }
       }
     } else {
-      if (this.random.nextFloat() < 0.05) {
-        this.yRotA = (this.random.nextFloat() - 0.5) * 20;
+      if (this.random.nextFloat() < Math.fround(0.05)) {
+        this.yRotA = Math.fround(Math.fround(this.random.nextFloat() - 0.5) * 20);
       }
-      this.yRot += this.yRotA;
+      this.yRot = Math.fround(this.yRot + this.yRotA);
       this.xRot = this.defaultLookAngle;
     }
 
     let inWater = this.isInWater();
     let inLava = this.isInLava();
-    if (inWater || inLava) this.jumping = this.random.nextFloat() < 0.8;
+    if (inWater || inLava) this.jumping = this.random.nextFloat() < Math.fround(0.8);
   }
 
   protected newServerAiStep(): void {
@@ -1149,24 +1152,24 @@ export abstract class Mob extends Entity {
     this.jumping = false;
 
     TIMER_POP_PUSH('sensing');
-    // DEFERRED(MobAI): if (sensing) sensing->tick();
+    if (this.sensing) this.sensing.tick();
 
     if (this.random.nextInt(5) === 0) {
       TIMER_POP_PUSH('targetSelector');
 
-      // DEFERRED(MobAI): if (targetSelector) targetSelector->tick();
+      if (this.targetSelector) this.targetSelector.tick();
 
       TIMER_POP_PUSH('goalSelector');
 
-      // DEFERRED(MobAI): if (goalSelector) goalSelector->tick();
+      if (this.goalSelector) this.goalSelector.tick();
     }
 
     TIMER_POP_PUSH('navigation');
-    // DEFERRED(MobAI): if (navigation) navigation->tick();
+    if (this.navigation) this.navigation.tick();
 
     TIMER_POP_PUSH('controls');
-    // DEFERRED(MobAI): if (moveControl) moveControl->tick();
-    // DEFERRED(MobAI): if (jumpControl) jumpControl->tick();
+    if (this.moveControl) this.moveControl.tick();
+    if (this.jumpControl) this.jumpControl.tick();
 
     TIMER_POP();
   }

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockMthRandom } from '../../helpers/mthRandom';
 import { Random } from '@mcpe/util';
 import { Entity, Material, type Level } from '@mcpe/world';
 import {
@@ -51,7 +52,7 @@ afterEach(() => {
 
 function resetRandom(rnd = RND): void {
   Entity.sharedRandom.setSeed(SEED);
-  vi.spyOn(Math, 'random').mockReturnValue(rnd);
+  mockMthRandom(rnd);
 }
 
 /**

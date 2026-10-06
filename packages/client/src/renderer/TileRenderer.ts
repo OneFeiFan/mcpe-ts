@@ -9,6 +9,7 @@
  * 渲染用的颜色属于三档规则的“自由处理”，按 JS 数值计算；Tesselator.color(r, g, b) 是 float 版重载（与 C++ 实参一致）。
  * C++ 里 ll000 等成员在构造时没有初始化，这里取 0（第一次读到之前一定会被赋值）。
  */
+import { EntityTileRenderer } from './EntityTileRenderer';
 import {
   BedTile,
   Direction,
@@ -1728,7 +1729,7 @@ export class TileRenderer {
       t.normal(0, -1, 0);
       this.tesselateRowTexture(tile, data, -0.5, -0.5, -0.5);
     } else if (shape === Tile.SHAPE_ENTITYTILE_ANIMATED) {
-      // DEFERRED(EntityRender): EntityTileRenderer::instance->render(tile, data, 1.0f);（箱子的物品形态，S13 阶段 C）
+      EntityTileRenderer.instance.render(tile, data, 1.0);
     } else if (shape === Tile.SHAPE_STAIRS) {
       t.addOffset(-0.5, -0.5, -0.5);
       t.begin();

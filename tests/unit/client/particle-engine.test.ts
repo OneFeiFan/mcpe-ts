@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockMthRandom } from '../../helpers/mthRandom';
 import { Entity, Tile, initItems, type Level } from '@mcpe/world';
 import {
   GLES1,
@@ -64,7 +65,7 @@ beforeEach(() => {
   level = createFlatLevel();
   prepareLevel(level);
   Entity.sharedRandom.setSeed(20261004);
-  vi.spyOn(Math, 'random').mockReturnValue(0.75);
+  mockMthRandom(0.75);
   tex = new FakeTextures();
   engine = new ParticleEngine(level, tex as unknown as Textures);
 });

@@ -1,28 +1,28 @@
 /**
- * 1:1 移植自 src/world/entity/PathfinderMob.h 与 .cpp（248 行 + 头 65 行）—— **部分移植**。
+ * 1:1 移植自 src/world/entity/PathfinderMob.h 与 .cpp（D10 移植字段与非 AI 部分；任务单 H3 补上旧 AI）。
+ * 继承链：`Chicken → Animal → AgableMob → PathfinderMob → Mob`。
  *
- * 它夹在 `Mob` 和"会自己找路走的生物"之间：
- * `Chicken → Animal → AgableMob → PathfinderMob → Mob`。D10 之前 TS 里只有 `Mob`，
- * 而 `Animal::hurt` 要写的 `fleeTime` / `attackTargetId` 两个字段**就声明在这个类里**，绕不过去。
+ * 【旧 AI（H3）】`updateAi`：找攻击目标 → `Level.findPathToEntity` → 沿路径走（每刻最多转 30°）→ 随机闲逛
+ *   （`findRandomStrollLocation` 在周围 13×7×13 里取 10 个随机点，按 `getWalkTargetValue` 挑最好的，再 `findPathToTile`）。
+ *   这一版里**所有生物实际运行的都是这套**：`Mob::aiStep` 只在 `useNewAi()` 为真时走新 AI，而能让它为真的 `Level::setZombieAi`
+ *   在 Level.cpp:1429 被注释掉了（见 docs/ai/TASK-H-生物与AI.md 的 H0）。
+ * 【新 AI 的成员】构造函数里创建 `sensing`、`navigation`（任务单 H11）；它们只在 useNewAi() 为真时被 tick。
  *
- * 【AI 的部分整块没移植】`Sensing` / `PathNavigation` / `Path` / `level->findPath`
- * 属于计划外的 MobAI 大系统（`Level.findPath` 在 TS 里还是一条 `OMIT(PathFinder)`）。
- * 处理办法和 `Mob.ts` 一致：字段留 `// DEFERRED(MobAI)`、整个函数留 `// OMIT(MobAI)`，
- * **不自己发明半成品实现**。
- *
- * ⚠ **`updateAi()` 整个函数是 OMIT 的**：它 130 行里绝大多数语句都在操作 `path` / `findPath`，
- * 掏掉之后剩下的只有"随机数决定要不要散步"这种只在 AI 流程里有意义的片段。
- * 后果：`Mob.tick` 里那句 `this.updateAi()` 走的是 **Mob 的基类实现**
- * （只 `noActionTime++` + `checkDespawnFrom`），等价于"这只生物没有 AI"。
- * 这是**已知缺口**，不是 bug，D12 收尾时列进缺口清单。
- *
- * 【照抄的两处】`getWalkingSpeedModifier()` 里 `fleeTime > 0` 就把速度乘 2（整数 2，不是 2.0f）；
- * `checkCantSeeTarget` 的阈值 `d > 32` 是**距离**不是平方。
+ * 【照抄的几处】`getWalkingSpeedModifier()` 里 `fleeTime > 0` 就把速度乘 2；`checkCantSeeTarget` 的阈值 `d > 32` 是距离；
+ *   `updateAi` 里 `xRot = 0` 每刻都执行；走路径时 `random.nextInt(100) == 0` 会跳过一刻改走基类 updateAi。
+ * 【浮点】朝向计算全是 float：`(float)(Mth::atan2(zd, xd) * 180 / Mth::PI) - 90` 逐步 Math.fround。
+ * C++ 的 `Path path` 是按值成员，`setPath(Path&)` 是默认赋值（浅拷贝）→ `Path.assignFrom`。
  */
-import { Mth } from '@mcpe/util';
+import { SharedConstants } from '@mcpe/core';
+import { Mth, TIMER_POP, TIMER_PUSH } from '@mcpe/util';
+import { Path } from '../level/pathfinder/Path';
+import { PathNavigation } from './ai/PathNavigation';
+import { Sensing } from './ai/Sensing';
 import type { Entity } from './Entity';
 import type { Level } from '../level/Level';
 import { Mob } from './Mob';
+
+const f = Math.fround;
 
 export abstract class PathfinderMob extends Mob {
   /** C++ `static const int MAX_TURN = 30;` —— 只被 OMIT 掉的 `updateAi` 用 */
@@ -35,6 +35,8 @@ export abstract class PathfinderMob extends Mob {
   protected attackTargetId!: number;
   protected holdGround!: boolean;
   protected fleeTime!: number;
+  /** C++ 的按值成员 `Path path;`（private） */
+  private path = new Path();
 
   /** C++ `PathfinderMob(Level* level)` */
   constructor(level: Level) {
@@ -42,13 +44,11 @@ export abstract class PathfinderMob extends Mob {
     this.attackTargetId = 0;
     this.holdGround = false;
     this.fleeTime = 0;
-    // DEFERRED(MobAI): sensing = new Sensing(this);
-    // DEFERRED(MobAI): navigation = new PathNavigation(this, level, 16);
+    this.sensing = new Sensing(this);
+    this.navigation = new PathNavigation(this, level, 16);
   }
 
-  // OMIT(MobAI): PathfinderMob::~PathfinderMob() { delete navigation; delete sensing; }  PathfinderMob.cpp:23
-  //   JS 没有析构函数；且这两个成员本身就没移植。`navigation` / `sensing` 在 Mob.ts 里是
-  //   `unknown = null; // DEFERRED(MobAI)`。
+  // OMIT(MobAI): PathfinderMob::~PathfinderMob() { delete navigation; delete sensing; }  PathfinderMob.cpp:23（JS 没有析构）
 
   /** C++ `bool PathfinderMob::canSpawn()` */
   override canSpawn(): boolean {
@@ -58,8 +58,15 @@ export abstract class PathfinderMob extends Mob {
     );
   }
 
-  // OMIT(MobAI): bool PathfinderMob::isPathFinding() { return !path.isEmpty(); }  PathfinderMob.cpp:33
-  // OMIT(MobAI): void PathfinderMob::setPath(Path& path) { this->path = path; }  PathfinderMob.cpp:38
+  /** C++ `bool PathfinderMob::isPathFinding()` */
+  isPathFinding(): boolean {
+    return !this.path.isEmpty();
+  }
+
+  /** C++ `void PathfinderMob::setPath(Path& path)`：默认赋值（浅拷贝） */
+  setPath(path: Path): void {
+    this.path.assignFrom(path);
+  }
 
   /** C++ `Entity* PathfinderMob::getAttackTarget()` */
   getAttackTarget(): Entity | null {
@@ -77,11 +84,136 @@ export abstract class PathfinderMob extends Mob {
     return false;
   }
 
-  // OMIT(MobAI): void PathfinderMob::updateAi()  PathfinderMob.cpp:59
-  //   整个函数（130 行）是 AI：fleeTime 递减 → findAttackTarget → level->findPath →
-  //   沿 path 走（path.currentPos / path.next / path.destroy）→ findRandomStrollLocation。
-  //   见文件头那条 ⚠。
-  // OMIT(MobAI): void PathfinderMob::findRandomStrollLocation()  PathfinderMob.cpp:187
+  /** C++ `void PathfinderMob::updateAi()`（旧 AI） */
+  protected override updateAi(): void {
+    TIMER_PUSH('ai');
+    if (this.fleeTime > 0) this.fleeTime--;
+    this.holdGround = this.shouldHoldGround();
+    const maxDist = 16;
+    let attackTarget: Entity | null = null;
+    if (this.attackTargetId === 0) {
+      attackTarget = this.findAttackTarget();
+      if (attackTarget !== null) {
+        this.level.findPathToEntity(this.path, this, attackTarget, maxDist, false, false);
+        this.attackTargetId = attackTarget.entityId;
+      }
+    } else {
+      attackTarget = this.level.getEntity(this.attackTargetId);
+      if (!attackTarget || !attackTarget.isAlive()) {
+        this.attackTargetId = 0;
+        attackTarget = null;
+      } else {
+        this.attackTargetId = attackTarget.entityId;
+        const d = attackTarget.distanceTo(this);
+        if (this.canSee(attackTarget)) {
+          this.checkHurtTarget(attackTarget, d);
+        } else {
+          this.checkCantSeeTarget(attackTarget, d);
+        }
+      }
+    }
+    TIMER_POP();
+    let doStroll = false;
+    if (!this.holdGround && attackTarget !== null && (this.path.isEmpty() || this.random.nextInt(20) === 0)) {
+      this.level.findPathToEntity(this.path, this, attackTarget, maxDist, false, false);
+    } else if (!this.holdGround) {
+      if (this.path.isEmpty() && this.random.nextInt(180) === 0) {
+        doStroll = true;
+      } else {
+        if (this.random.nextInt(120) === 0) doStroll = true;
+        else if (this.fleeTime > 0 && (this.fleeTime & 7) === 1) doStroll = true;
+      }
+    }
+    if (doStroll) {
+      if (this.noActionTime < SharedConstants.TicksPerSecond * 5) {
+        this.findRandomStrollLocation();
+      }
+    }
+    const yFloor = Mth.floor(f(this.bb.y0 + f(0.5)));
+    const inWater = this.isInWater();
+    const inLava = this.isInLava();
+    this.xRot = 0;
+    if (this.path.isEmpty() || this.random.nextInt(100) === 0) {
+      super.updateAi();
+      return;
+    }
+    TIMER_PUSH('followpath');
+    let target = this.path.currentPos(this);
+    const r = f(this.bbWidth * 2);
+    let looping = true;
+    while (looping && target.distanceToSqr(this.x, target.y, this.z) < f(r * r)) {
+      this.path.next();
+      if (this.path.isDone()) {
+        looping = false;
+        this.path.destroy();
+      } else target = this.path.currentPos(this);
+    }
+    this.jumping = false;
+    if (looping) {
+      const xd = f(target.x - this.x);
+      const zd = f(target.z - this.z);
+      const yd = f(target.y - yFloor);
+      const yRotD = f(f(f(f(Mth.atan2(zd, xd)) * 180) / f(Mth.PI)) - 90);
+      let rotDiff = f(yRotD - this.yRot);
+      this.yya = this.runSpeed;
+      while (rotDiff < -180) rotDiff = f(rotDiff + 360);
+      while (rotDiff >= 180) rotDiff = f(rotDiff - 360);
+      if (rotDiff > PathfinderMob.MAX_TURN) {
+        rotDiff = PathfinderMob.MAX_TURN;
+      }
+      if (rotDiff < -PathfinderMob.MAX_TURN) {
+        rotDiff = -PathfinderMob.MAX_TURN;
+      }
+      this.yRot = f(this.yRot + rotDiff);
+      if (this.holdGround) {
+        if (attackTarget !== null) {
+          const xd2 = f(attackTarget.x - this.x);
+          const zd2 = f(attackTarget.z - this.z);
+          const oldyRot = this.yRot;
+          this.yRot = f(f(f(f(Mth.atan2(zd2, xd2)) * 180) / f(Mth.PI)) - 90);
+          rotDiff = f(f(f(f(oldyRot - this.yRot) + 90) * f(Mth.PI)) / 180);
+          this.xxa = f(f(-Mth.sin(rotDiff) * this.yya) * 1.0);
+          this.yya = f(f(Mth.cos(rotDiff) * this.yya) * 1.0);
+        }
+      }
+      if (yd > 0) {
+        this.jumping = true;
+      }
+    }
+    if (attackTarget !== null) {
+      this.lookAt(attackTarget, 30, 30);
+    }
+    if (this.horizontalCollision && !this.isPathFinding()) this.jumping = true;
+    if (this.random.nextFloat() < f(0.8) && (inWater || inLava)) this.jumping = true;
+    TIMER_POP();
+  }
+
+  /** C++ `void PathfinderMob::findRandomStrollLocation()` */
+  protected findRandomStrollLocation(): void {
+    TIMER_PUSH('stroll');
+    let hasBest = false;
+    let xBest = -1;
+    let yBest = -1;
+    let zBest = -1;
+    let best = -99999;
+    for (let i = 0; i < 10; i++) {
+      const xt = Mth.floor(this.x + this.random.nextInt(13) - 6);
+      const yt = Mth.floor(this.y + this.random.nextInt(7) - 3);
+      const zt = Mth.floor(this.z + this.random.nextInt(13) - 6);
+      const value = this.getWalkTargetValue(xt, yt, zt);
+      if (value > best) {
+        best = value;
+        xBest = xt;
+        yBest = yt;
+        zBest = zt;
+        hasBest = true;
+      }
+    }
+    if (hasBest) {
+      this.level.findPathToTile(this.path, this, xBest, yBest, zBest, 10, false, false);
+    }
+    TIMER_POP();
+  }
 
   /** C++ `void PathfinderMob::checkHurtTarget(Entity* target, float d)` —— 空函数体，原样 */
   protected checkHurtTarget(_target: Entity, _d: number): void {}
@@ -113,5 +245,8 @@ export abstract class PathfinderMob extends Mob {
     return this.noActionTime;
   }
 
-  // OMIT(MobAI): PathNavigation* PathfinderMob::getNavigation() { return navigation; }  PathfinderMob.cpp:246
+  /** C++ `PathNavigation* PathfinderMob::getNavigation()` */
+  getNavigation(): PathNavigation | null {
+    return this.navigation;
+  }
 }

@@ -12,8 +12,7 @@ import {
   Arrow,
   Snowball,
   ThrownEgg,
-  type Level,
-} from '@mcpe/world';
+  type Level, Pig } from '@mcpe/world';
 import { createFlatLevel } from '../../helpers/headlessLevel';
 
 // EntityFactory（B5c-2）。它有两个消费者：存档的 loadEntities，和网络包（没移植）。
@@ -104,10 +103,26 @@ describe('world/EntityFactory', () => {
       spy.mockRestore();
     });
 
-    it('id < 64（生物那条）→ null，因为 MobFactory 整个没移植', () => {
+    it('id < 64（生物那条）走 MobFactory（任务单 H4）：存下的猪读回来还是猪，位置与生命值一致', () => {
+      const L = lv();
+      const pig = new Pig(L);
+      pig.moveTo(10.5, 70, 40.5, 45, 0); // 坐标要在世界范围内：Entity::load 会把 x、z 夹到 [bbWidth/2+0.001, 256−…]
+      pig.health = 7;
       const tag = new CompoundTag();
-      tag.putInt('id', 12); // MobTypes::Pig
+      expect(pig.save(tag)).toBe(true);
+      expect(tag.getInt('id')).toBe(12); // MobTypes::Pig
+      const e = EntityFactory.loadEntity(tag, L);
+      expect(e).toBeInstanceOf(Pig);
+      expect([e!.x, e!.y, e!.z]).toEqual([pig.x, pig.y, pig.z]);
+      expect((e as Pig).health).toBe(7);
+    });
+
+    it('id < 64 但不是已知生物 → null（MobFactory 打 LOGE）', () => {
+      const tag = new CompoundTag();
+      tag.putInt('id', 40);
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       expect(EntityFactory.loadEntity(tag, lv())).toBeNull();
+      spy.mockRestore();
     });
   });
 

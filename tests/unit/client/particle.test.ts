@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockMthRandom } from '../../helpers/mthRandom';
 import { Random } from '@mcpe/util';
 import { CompoundTag } from '@mcpe/nbt';
 import { Entity, type Level } from '@mcpe/world';
@@ -64,7 +65,7 @@ afterEach(() => {
  * —— 写 E2 时就是这么栽的：一条"漏掉 *0.1f"的变异没让测试变红。
  */
 function make(rnd: number, xa = 0, ya = 0, za = 0): Particle {
-  vi.spyOn(Math, 'random').mockReturnValue(rnd);
+  mockMthRandom(rnd);
   return new Particle(level, 8.5, 70.5, 8.5, xa, ya, za);
 }
 

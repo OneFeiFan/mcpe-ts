@@ -16,10 +16,12 @@
  *   查表和 fround 还保证了所有浏览器算出同样的值。
  *
  * 【放宽】直接用 JS，不再模拟 float 舍入和越界强转：
- *   sqrt、atan、atan2、floor、abs、Min、Max、clamp、lerp、lerpInt、absDecrease、absMax、absMaxSigned、random。
+ *   sqrt、atan、atan2、floor、abs、Min、Max、clamp、lerp、lerpInt、absDecrease、absMax、absMaxSigned。
  *   与 C++ 的差别只在 float 与 double 的末位（约 1e-7），或 |x| ≥ 2^31 这类实际不会出现的输入。
  *   种子链上的代码自己负责按 float 计算，传进来的已经是 float，floor 等结果与 C++ 相同。
- *   random 在 C++ 里用按启动时间播种的 Random，本来就不可复现，这里直接用 Math.random。
+ *   random（任务单 H1 起 1:1）：C++ 是 Mth.cpp 的 `static Random _rand`（种子 getTimeMs()），random() = _rand.nextFloat()、
+ *   random(n) = _rand.nextInt(n)。这里同样用一个模块级 Random（`_mthRand`）。以前用 Math.random，random(n) 的分布与序列都和 C++ 不同，
+ *   做不了生物 AI 的黄金样本。`_mthRand` 导出只为测试与黄金样本对照（setSeed 固定序列、或 vi.spyOn 打桩），游戏代码不要直接用它（ADAPTED(Test)）。
  *
  * 其他说明：
  *  - initMth() 之前 sin、cos 返回 0（C++ 的静态数组零初始化）。NinecraftApp::init 第一行就调用它。
@@ -27,6 +29,11 @@
  *  - 源码里有的地方直接调用 C 库的 sin、cos（洞穴、峡谷、树、昼夜），那些不要改成 Mth.sin。
  */
 import { f2i } from './cpp.js';
+import { getTimeMs } from '@mcpe/platform';
+import { Random } from './Random.js';
+
+/** C++ Mth.cpp 的 `static Random _rand;`（Random() 默认构造以 getTimeMs() 播种） */
+export const _mthRand = new Random(getTimeMs());
 
 const f = Math.fround;
 
@@ -87,7 +94,7 @@ function floor(v: number): number {
 function random(): number;
 function random(n: number): number;
 function random(n?: number): number {
-  return n === undefined ? Math.random() : (Math.random() * n) | 0;
+  return n === undefined ? _mthRand.nextFloat() : _mthRand.nextInt(n);
 }
 
 function clamp(v: number, low: number, high: number): number {

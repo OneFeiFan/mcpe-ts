@@ -13,7 +13,7 @@
  * 【这份清单里 TS 侧目前的对应关系】9 条里：
  *   - 2 条已落地（`HumanoidModel` G7、`ChickenModel` G9 —— 本文件里各有一条再导出）；
  *   - 6 条**不搬**（4 只四足兽 + 僵尸 + 骷髅）：它们要的实体类在 TS 里根本不存在，
- *     见文件末尾的 6 条 `OMIT(Entity)`；
+ *     （任务单 H5–H8 起全部落地）；
  *   - 1 条**挡住**（`SignModel`）：它唯一的用户是方块实体渲染器，见文件末尾的 `DEFERRED`。
  *
  * 【不在这个头文件里的那几个】`QuadrupedModel`（上面 4 只四足兽的父类）、
@@ -31,28 +31,16 @@ export * from './HumanoidModel.js';
 //   所以不依赖下面那 4 只四足兽，也就能先于它们落地。
 // C++ 的 `#include "ChickenModel.h"`（ModelInclude.h:6）在 TS 里就是这条再导出。
 export * from './ChickenModel.js';
-// OMIT(Entity): #include "CowModel.h"  ModelInclude.h:7
-//   牛。TS 里没有 `Cow` 实体类（`packages/world/src/entity/` 全 30 个文件实测只有
-//   `Chicken` 一个生物），`MobFactory::CreateMob` 整条 OMIT —— 模型搬过来没人能渲染。
-//   等 `MobFactory` / `Sheep` 那条链解开时一起补。
-// OMIT(Entity): #include "PigModel.h"  ModelInclude.h:8
-//   猪，理由同牛。
-// OMIT(Entity): #include "SheepModel.h"  ModelInclude.h:9
-//   羊，理由同牛。
-// OMIT(Entity): #include "SheepFurModel.h"  ModelInclude.h:10
-//   羊身上那层毛（`SheepRenderer` 画第二遍用的），理由同牛。
-// OMIT(Entity): #include "ZombieModel.h"  ModelInclude.h:12
-//   僵尸。它父类是 `HumanoidModel`（ZombieModel.h:8），但实体类不存在，理由同牛。
-// OMIT(Entity): #include "SkeletonModel.h"  ModelInclude.h:13
-//   骷髅。它父类是 `ZombieModel`（SkeletonModel.h:9），实体类不存在，理由同牛。
-// DEFERRED(TileEntityRender): #include "SignModel.h"  ModelInclude.h:15
-//   告示牌。它唯一的用户是 `renderer/tileentity/SignRenderer`（`SignRenderer.h:18`
-//   有个 `SignModel signModel` 成员），而方块实体渲染器在 TS 里还没搬 ——
-//   `LevelRenderer.ts:913` 那条 `DEFERRED(TileEntityRender)` 就是它的调用点。
-//   等方块实体渲染器落地时一起搬。
+export * from './CowModel.js'; // #include "CowModel.h"（ModelInclude.h:7，任务单 H5–H8）
+export * from './PigModel.js'; // #include "PigModel.h"（ModelInclude.h:8，任务单 H5–H8）
+export * from './SheepModel.js'; // #include "SheepModel.h"（ModelInclude.h:9，任务单 H5–H8）
+export * from './SheepFurModel.js'; // #include "SheepFurModel.h"（ModelInclude.h:10，任务单 H5–H8）
+export * from './ZombieModel.js'; // #include "ZombieModel.h"（ModelInclude.h:12，任务单 H5–H8）
+export * from './SkeletonModel.js'; // #include "SkeletonModel.h"（ModelInclude.h:13，任务单 H5–H8）
+export * from './SignModel.js'; // C++ 的 #include "SignModel.h"（ModelInclude.h:15）
+//   告示牌。唯一的用户是 `renderer/tileentity/SignRenderer`（方块实体渲染器，已落地）。
 
-// 9 条 include 里已落地 2 条（`HumanoidModel` G7、`ChickenModel` G9），还剩
-// 6 条 `OMIT(Entity)`、1 条 `DEFERRED(TileEntityRender)`。空 `export {}` 留着是为了让
+// 9 条 include 全部落地（任务单 G、H5–H8 与方块实体渲染）。空 `export {}` 留着是为了让
 // 这个文件**成为一个模块** —— 否则 `tsc` 会说 "is not a module"，`index.ts` 那边
 // `export * from './model/ModelInclude.js'` 就编不过。
 export {};
