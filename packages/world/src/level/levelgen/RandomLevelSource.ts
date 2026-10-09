@@ -28,7 +28,7 @@
  * 【构造函数里那句 printf】C++ 有
  *     `Random randomCopy = random; printf("random.get : %d\n", randomCopy.nextInt());`
  * 打印的是**副本**的随机数，不影响 `this->random` 的状态，所以对生成结果零影响。
- * 移植它需要给 Random 加一套"复制状态"的机制，只为了重现一行调试输出 —— 按 R3 记成 OMIT(Debug)。
+ * 2026-10-09 审核：为了让日志与原版逐行一致，给 Random 加了 copy()（C++ 的隐式拷贝构造），这行输出照原样打出来。
  */
 import { LOGI } from '@mcpe/platform';
 import { Random } from '@mcpe/util';
@@ -133,8 +133,8 @@ export class RandomLevelSource extends ChunkSource {
     this.forestNoise = new PerlinNoise(this.random, 8);
     this.spawnMobs = spawnMobs;
     this.buffer = new Float32Array(MAX_BUFFER_SIZE);
-    // OMIT(Debug): Random randomCopy = random; printf("random.get : %d\n", randomCopy.nextInt());  RandomLevelSource.cpp:39-40
-    //   （打的是副本，不影响随机流；理由见文件头）
+    // C++：Random randomCopy = random; printf("random.get : %d\n", randomCopy.nextInt());（打的是副本，不影响随机流）
+    LOGI(`random.get : ${this.random.copy().nextInt()}\n`);
   }
 
   // 析构函数不移植（R3）：C++ 的 ~RandomLevelSource 只是 delete[] 那几个 buffer，TS 交给 GC。

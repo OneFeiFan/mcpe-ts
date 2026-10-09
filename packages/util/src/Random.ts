@@ -31,6 +31,17 @@ export class Random {
   private haveNextNextGaussian: boolean;
   private nextNextGaussian: number;
 
+  /** C++ 的隐式拷贝构造（`Random randomCopy = random;`）：复制全部状态，之后两者互不影响 */
+  copy(): Random {
+    const r = new Random(0);
+    r.mt.set(this.mt);
+    r.mti = this.mti;
+    r._seed = this._seed;
+    r.haveNextNextGaussian = this.haveNextNextGaussian;
+    r.nextNextGaussian = this.nextNextGaussian;
+    return r;
+  }
+
   constructor(seed?: number) {
     this.mt = new Uint32Array(N);
     this.mti = N + 1;

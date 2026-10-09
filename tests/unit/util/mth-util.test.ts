@@ -105,3 +105,16 @@ describe('Util.stringReplace 的安全改写（原 stringutils-safety.test.ts）
     });
   });
 });
+
+describe('Random.copy（C++ 的隐式拷贝构造）', () => {
+  it('副本与原对象接下来的随机序列相同，且互不影响', async () => {
+    const { Random } = await import('@mcpe/util');
+    const r = new Random(12345);
+    r.nextInt();
+    r.nextGaussian();
+    const c = r.copy();
+    const a = [r.nextInt(), r.nextFloat(), r.nextGaussian(), r.nextInt(100)];
+    const b = [c.nextInt(), c.nextFloat(), c.nextGaussian(), c.nextInt(100)];
+    expect(b).toEqual(a);
+  });
+});

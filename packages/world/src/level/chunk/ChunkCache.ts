@@ -1,4 +1,5 @@
 // 1:1 移植自 src/world/level/chunk/ChunkCache.h
+import { LOGI } from '@mcpe/platform';
 import { ChunkSource } from './ChunkSource';
 import { ChunkStorage } from './storage/ChunkStorage';
 import { EmptyLevelChunk } from './EmptyLevelChunk';
@@ -39,7 +40,7 @@ export class ChunkCache extends ChunkSource {
 
     const W = LevelConstants.CHUNK_CACHE_WIDTH;
     this.chunks = new Array<LevelChunk | null>(W * W).fill(null);
-    // LOGI("Chunks allocated.");
+    LOGI('Chunks allocated.');
   }
 
   // C++ ~ChunkCache 会 delete source / emptyChunk / chunks[i]。

@@ -903,6 +903,7 @@ export class ExternalFileLevelStorage extends LevelStorage implements ChunkStora
     levelData: LevelData,
     players: Player[] | null,
   ): boolean {
+    LOGI(`Writing down level seed as: ${levelData.getSeed()}\n`);
     const file = getVfs().open(datFileName, 'wb');
     if (!file) return false;
 
