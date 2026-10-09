@@ -23,6 +23,7 @@ import { MobFactory } from '../entity/MobFactory';
 import { Biome, MobSpawnerData } from './biome/Biome';
 import { ChunkPos } from './ChunkPos';
 import { Level } from './Level';
+import { MobSpawnerHooks } from './MobSpawnerHooks';
 import { LevelConstants } from './LevelConstants';
 import { Material } from './material/Material';
 
@@ -229,3 +230,6 @@ export class MobSpawner {
 
 // ADAPTED(ESM)：把 tick 注入 Level（见 Level.mobSpawnerTick）
 Level.mobSpawnerTick = (level, spawnEnemies, spawnFriendlies) => MobSpawner.tick(level, spawnEnemies, spawnFriendlies);
+// ADAPTED(ESM)：把 postProcessSpawnMobs 注入 RandomLevelSource（见 MobSpawnerHooks）
+MobSpawnerHooks.postProcessSpawnMobs = ((level: Level, biome: Biome, xo: number, zo: number, w: number, h: number, random: Random) =>
+  MobSpawner.postProcessSpawnMobs(level, biome, xo, zo, w, h, random)) as unknown as typeof MobSpawnerHooks.postProcessSpawnMobs;

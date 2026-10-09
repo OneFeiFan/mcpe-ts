@@ -102,11 +102,15 @@ describe('僵尸的新 AI', () => {
   });
 
   it('打开后：选中 16 格内的玩家为目标，追过去并造成伤害', () => {
+    // 平坦 demo 维度永远是白天：僵尸会在阳光下着火、几秒后烧死（死后 isImmobile，AI 不再运行）——设成夜里，并固定随机数让结果可复现
+    const lv = level as unknown as { skyDarken: number };
+    lv.skyDarken = 8; // isDay() = skyDarken < 4
     const p = new TestPlayer(level, false);
     p.moveTo(140.5, 64, 128.5, 0, 0);
     level.addEntity(p);
     const z = new Zombie(level);
     z.moveTo(130.5, 64, 128.5, 0, 0);
+    z.random.setSeed(4242);
     z.setUseNewAi(true);
     const startDist = z.distanceTo(p);
     const hp0 = p.health;
@@ -119,6 +123,7 @@ describe('僵尸的新 AI', () => {
     expect(gotTarget).toBe(true);
     expect(z.distanceTo(p)).toBeLessThan(startDist);
     expect(p.health).toBeLessThan(hp0);
+    lv.skyDarken = 0;
     level.removeEntity(p);
   });
 });

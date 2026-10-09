@@ -148,7 +148,7 @@ export abstract class Entity {
 
   /** C++ Entity::reset() */
   reset(): void {
-    this._init();
+    Entity.prototype._init.call(this); // C++ 的 _init 不是 virtual：Entity::reset 里调的是 Entity::_init 本身（不能派发到子类）
   }
 
   hashCode(): number {

@@ -3,7 +3,7 @@
  * **在此之前这里只是个 7 行的 FORWARD-DECL 空接口**（只作为 `LevelListener.takePicture` 的参数类型）。
  *
  * 相机道具用一次，就在玩家站的地方立起这个三脚架：它继承 `Mob`，但 `tick()` 整体重写、
- * **完全不调 `super.tick()`** —— 所以 Mob 那套 AI 空壳（`DEFERRED(MobAI)` 那 14 条）碰不到它。
+ * **完全不调 `super.tick()`** —— 所以 Mob 的 AI（任务单 H 已移植）对它不起作用，与 C++ 相同。
  * 玩家右键它（`interact`）→ `activated = true` → 引信开始走：`life` 从 80 数下来，
  * **到 8 的那一刻**拍照（`level->takePicture`）+ 冒三团爆炸粒子，到 0 就自己消失。
  *

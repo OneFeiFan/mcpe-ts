@@ -1,9 +1,12 @@
 /**
  * 1:1 移植自 src/client/gui/screens/touch/TouchIngameBlockSelectionScreen.h 与 .cpp（S13 阶段 C）。C++ 的 Touch::IngameBlockSelectionScreen。
  * 默认的菜单风格（OPTIONS_MENU_STYLE = 0）下，ScreenChooser 为物品选择界面创建的就是这个类。
- * 部分：生存模式的“合成”“护甲”按钮打开的 WorkbenchScreen、ArmorScreen 未移植（DEFERRED(Gui)）；
+ * 生存模式的“合成”“护甲”按钮打开 WorkbenchScreen(2×2)、ArmorScreen；
  *   放入快捷栏时的音效 DEFERRED(Sound)。
  */
+import { Recipe } from '@mcpe/world';
+import { ArmorScreen } from './ArmorScreen';
+import { WorkbenchScreen } from './crafting/WorkbenchScreen';
 import { Inventory, type ItemInstance } from '@mcpe/world';
 import {
   GL_BLEND,
@@ -185,10 +188,10 @@ export class TouchIngameBlockSelectionScreen extends Screen implements IInventor
       this.minecraft.screenChooser.setScreen(ScreenId.SCREEN_PAUSE);
     }
     if (button.id === this.bCraft.id) {
-      // DEFERRED(Gui): minecraft->setScreen(new WorkbenchScreen(Recipe::SIZE_2X2));
+      this.minecraft.setScreen(new WorkbenchScreen(Recipe.SIZE_2X2));
     }
     if (button === this.bArmor) {
-      // DEFERRED(Gui): minecraft->setScreen(new ArmorScreen());
+      this.minecraft.setScreen(new ArmorScreen());
     }
   }
 

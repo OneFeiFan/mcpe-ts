@@ -1,6 +1,6 @@
 /**
  * 1:1 移植自 src/client/gui/Screen.h 与 Screen.cpp（S13 阶段 C：界面类的基础）。替换前向声明。
- * 部分：文本框（TextBox）未移植——textBoxes 始终为空，相关循环照写（DEFERRED(TextBox)）；点击按钮的音效 DEFERRED(Sound)。
+ * 文本框（TextBox）已移植（用户名、告示牌编辑、选项里的文本框都用它）；点击按钮的音效 DEFERRED(Sound)。
  * R10：renderBackground() / renderBackground(int vo) 合并为默认参数（情形 A）；toGUICoordinate(int& x, int& y) 改为返回 [x, y]。
  */
 import { Keyboard, Mouse, MouseAction } from '@mcpe/platform';
@@ -12,7 +12,7 @@ import type { IntRectangle } from './components/ImageButton';
 import type { Font } from './Font';
 import { GuiComponent } from './GuiComponent';
 
-/** TextBox 的接口（TextBox 本身未移植，DEFERRED(TextBox)） */
+/** TextBox 的接口（Screen 只依赖这几个方法，具体类见 components/TextBox.ts） */
 export interface TextBoxLike {
   render(minecraft: Minecraft, xm: number, ym: number): void;
   tick(minecraft: Minecraft): void;

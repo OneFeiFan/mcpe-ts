@@ -856,7 +856,7 @@ export class ExternalFileLevelStorage extends LevelStorage {
    * 把这个结构体清 0 再调的，两边一致。
    *
    * 【clamp 用的是这一套，不是 PlayerData.h 里的】x/z 夹到 [0.5, LEVEL_?-0.5]，y < 0 时给 64。
-   * PlayerData.h 的 clampXZ/clampY/clampRot 属于 loadPlayer（那个仍是 OMIT(Player)），
+   * PlayerData.h 的 clampXZ/clampY/clampRot 属于 PlayerData.loadPlayer（2026-10-07 已移植），
    * 这个函数一个都没用。
    */
   static readPlayerData(filename: string, dest: LevelData): boolean {
@@ -896,9 +896,8 @@ export class ExternalFileLevelStorage extends LevelStorage {
   /**
    * 写 level.dat。`players` 传 null 或空数组时写不带玩家数据的标签。
    *
-   * 【注意】`players` 非空时会调 createTagForPlayers，而那里面的 `player->saveWithoutId(tag)`
-   * 还没移植（DEFERRED(Player)）—— 也就是说走这条路写出来的 Player 标签是空的，与参考 C++ 不一致。
-   * 黄金样本 G14-2 因此传 null 走 createTag()。真要用到玩家存档得等 Player 序列化移植完。
+   * `players` 非空时调 createTagForPlayers，里面用 `player->saveWithoutId(tag)` 写出完整的 Player 标签
+   * （读回见 Level.loadPlayer，tests/unit/world/player-restore.test.ts）。黄金样本 G14-2 传 null 走 createTag()，那是当时的做法，保留。
    */
   static writeLevelData(
     datFileName: string,

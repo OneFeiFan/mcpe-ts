@@ -80,11 +80,11 @@ export abstract class GameMode {
 
   render(a: number): void {
     if (this.destroyProgress <= 0) {
-      // DEFERRED(Gui): minecraft->gui.progress = 0;
+      this.minecraft.gui.progress = 0;
       this.minecraft.levelRenderer!.destroyProgress = 0;
     } else {
       const dp = this.oDestroyProgress + (this.destroyProgress - this.oDestroyProgress) * a;
-      // DEFERRED(Gui): minecraft->gui.progress = dp;
+      this.minecraft.gui.progress = dp;
       this.minecraft.levelRenderer!.destroyProgress = dp;
     }
   }

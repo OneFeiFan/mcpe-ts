@@ -385,9 +385,13 @@ export class Level implements LevelSource {
 
   loadPlayer(player: Player | null, doAddPlayer = true): void {
     if (player) {
-      // DEFERRED(NBT): CompoundTag* loadedPlayerTag = levelData.getLoadedPlayerTag();（LevelData 的 NBT 读写在 S16）
-      // DEFERRED(NBT): if (loadedPlayerTag != NULL) { player->load(loadedPlayerTag); levelData.setLoadedPlayerTag(NULL); } else
-      // DEFERRED(Player): levelData.setLoadedPlayerTo(player);
+      const loadedPlayerTag = this.levelData.getLoadedPlayerTag();
+      if (loadedPlayerTag !== null) {
+        player.load(loadedPlayerTag);
+        this.levelData.setLoadedPlayerTag(null);
+      } else {
+        this.levelData.setLoadedPlayerTo(player);
+      }
       if (doAddPlayer) this.addEntity(player);
     }
   }

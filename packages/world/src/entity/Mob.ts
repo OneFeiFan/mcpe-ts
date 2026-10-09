@@ -276,7 +276,7 @@ export abstract class Mob extends Entity {
 
   override reset(): void {
     super.reset();
-    this._init();
+    Mob.prototype._init.call(this); // C++ 的 _init 不是 virtual：Mob::reset 里调的是 Mob::_init 本身（不能派发到子类）
   }
 
   knockback(source: Entity | null, dmg: number, xd: number, zd: number): void {

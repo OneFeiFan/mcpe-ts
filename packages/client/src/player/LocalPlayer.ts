@@ -3,6 +3,12 @@
  * 部分：网络包（PlayerEquipmentPacket、PlayerArmorEquipmentPacket 等）、界面（容器、合成、告示牌编辑）、统计 DEFERRED。
  * 由 C++ 类转写脚本生成初稿后逐个函数人工核对。
  */
+import { InBedScreen } from '../gui/screens/InBedScreen';
+import { ErrorCodes } from '../ErrorCodes';
+import { ChestScreen } from '../gui/screens/ChestScreen';
+import { FurnaceScreen } from '../gui/screens/FurnaceScreen';
+import { WorkbenchScreen } from '../gui/screens/crafting/WorkbenchScreen';
+import { StonecutterScreen } from '../gui/screens/crafting/StonecutterScreen';
 import { TextEditScreen } from '../gui/screens/TextEditScreen';
 import { Keyboard, LOGI } from '@mcpe/platform';
 import { Mth, SmoothFloat } from '@mcpe/util';
@@ -45,6 +51,9 @@ function isJumpable(tileId: number): boolean {
     Tile.tiles[tileId]!.getRenderShape() !== Tile.SHAPE_STAIRS
   );
 }
+
+/** LocalPlayer::tick 里的 static bool hasPostedError */
+const localPlayerStatics = { hasPostedError: false };
 
 export class LocalPlayer extends Player {
   yBob: number = 0;
@@ -159,7 +168,10 @@ export class LocalPlayer extends Player {
     // DEFERRED(Network): if (minecraft->isOnline()) { MovePlayerPacket / PlayerEquipmentPacket …（单机时 isOnline 为假）}
     this.updateArmorTypeHash();
     if (!this.minecraft.screen && this.containerMenu) {
-      // DEFERRED(Gui): static bool hasPostedError; minecraft->gui.postError(ErrorCodes::ContainerRefStillExistsAfterDestruction);
+      if (!localPlayerStatics.hasPostedError) {
+        this.minecraft.gui.postError(ErrorCodes.ContainerRefStillExistsAfterDestruction);
+        localPlayerStatics.hasPostedError = true;
+      }
     }
   }
 
@@ -310,7 +322,7 @@ export class LocalPlayer extends Player {
       // DEFERRED(Network): ContainerClosePacket packet(containerMenu->containerId); minecraft->raknetInstance->send(packet);
     }
     super.closeContainer();
-    // DEFERRED(Gui): minecraft->setScreen(NULL);
+    this.minecraft.setScreen(null);
   }
 
   override drop(item: ItemInstance, randomly: boolean): void {
@@ -339,21 +351,21 @@ export class LocalPlayer extends Player {
   }
 
   override startCrafting(x: number, y: number, z: number, tableSize: number): void {
-    (void x, y, z, tableSize);
-    // DEFERRED(Gui): if (!minecraft->isCreativeMode()) minecraft->setScreen(new WorkbenchScreen(tableSize));
+    void x, void y, void z;
+    if (!this.minecraft.isCreativeMode()) this.minecraft.setScreen(new WorkbenchScreen(tableSize));
   }
 
   override startStonecutting(x: number, y: number, z: number): void {
-    (void x, y, z);
-    // DEFERRED(Gui): minecraft->setScreen(new StonecutterScreen());
+    void x, void y, void z;
+    this.minecraft.setScreen(new StonecutterScreen());
   }
 
-  override openContainer(_container: ChestTileEntity): void {
-    // DEFERRED(Gui): minecraft->setScreen(new ChestScreen(this, container));
+  override openContainer(container: ChestTileEntity): void {
+    this.minecraft.setScreen(new ChestScreen(this, container));
   }
 
-  override openFurnace(_e: FurnaceTileEntity): void {
-    // DEFERRED(Gui): minecraft->setScreen(new FurnaceScreen(this, e));
+  override openFurnace(e: FurnaceTileEntity): void {
+    this.minecraft.setScreen(new FurnaceScreen(this, e));
   }
 
   override isSneaking(): boolean {
@@ -361,7 +373,10 @@ export class LocalPlayer extends Player {
   }
 
   override actuallyHurt(dmg: number): void {
-    // DEFERRED(Gui): if (minecraft->screen && minecraft->screen->closeOnPlayerHurt()) { if (containerMenu) closeContainer(); else minecraft->setScreen(NULL); }
+    if (this.minecraft.screen && this.minecraft.screen.closeOnPlayerHurt()) {
+      if (this.containerMenu) this.closeContainer();
+      else this.minecraft.setScreen(null);
+    }
     super.actuallyHurt(dmg);
   }
 
@@ -400,7 +415,7 @@ export class LocalPlayer extends Player {
   }
 
   override respawn(): void {
-    // DEFERRED(Gui): minecraft->respawnPlayer();（死亡界面在 S13 之后）
+    this.minecraft.respawnPlayer();
   }
 
   getFieldOfViewModifier(): number {
@@ -423,8 +438,7 @@ export class LocalPlayer extends Player {
   }
 
   override displayClientMessage(messageId: string): void {
-    void messageId;
-    // DEFERRED(Gui): minecraft->gui.displayClientMessage(messageId);（S13）
+    this.minecraft.gui.displayClientMessage(messageId);
   }
 
   override causeFallDamage(distance: number): void {
@@ -440,7 +454,7 @@ export class LocalPlayer extends Player {
   override startSleepInBed(x: number, y: number, z: number): number {
     let startSleepInBedReturnValue = super.startSleepInBed(x, y, z);
     if (startSleepInBedReturnValue === BedSleepingResult.OK) {
-      // DEFERRED(Gui): minecraft->setScreen(new InBedScreen());
+      this.minecraft.setScreen(new InBedScreen());
     }
     return startSleepInBedReturnValue;
   }
@@ -453,7 +467,7 @@ export class LocalPlayer extends Player {
     if (this.level.isClientSide) {
       // DEFERRED(Network): PlayerActionPacket packet(PlayerActionPacket::STOP_SLEEPING, 0, 0, 0, 0, entityId); send(packet);
     }
-    // DEFERRED(Gui): minecraft->setScreen(NULL);
+    this.minecraft.setScreen(null);
     super.stopSleepInBed(forcefulWakeUp, updateLevelList, saveRespawnPoint);
   }
 

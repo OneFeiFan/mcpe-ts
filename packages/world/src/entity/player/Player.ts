@@ -3,6 +3,7 @@
  * 部分：容器界面（ContainerMenu、合成、熔炉界面）、网络包、睡觉相关的界面提示 DEFERRED。
  * 由 C++ 类转写脚本生成初稿后逐个函数人工核对。
  */
+import type { BaseContainerMenu } from '../../inventory/BaseContainerMenu';
 import { LOGI } from '@mcpe/platform';
 import { CompoundTag, ListTag, TAG_Compound, TAG_List } from '@mcpe/nbt';
 import { Mth, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH } from '@mcpe/util';
@@ -85,7 +86,7 @@ export abstract class Player extends Mob {
   dimension: number = 0;
   abilities = new Abilities();
   foodData = new SimpleFoodData();
-  containerMenu: unknown = null; // DEFERRED(Gui)：BaseContainerMenu*
+  containerMenu: BaseContainerMenu | null = null;
   owner: unknown = null; // DEFERRED(Network)：RakNet::RakNetGUID
   hasFakeInventory: boolean = false;
   bedPosition = new Pos();
@@ -155,7 +156,7 @@ export abstract class Player extends Mob {
 
   override reset(): void {
     super.reset();
-    this._init();
+    Player.prototype._init.call(this); // C++ 的 _init 不是 virtual：Player::reset 里调的是 Player::_init 本身（不能派发到子类）
   }
 
   override isPlayer(): boolean {
@@ -338,8 +339,11 @@ export abstract class Player extends Mob {
   }
 
   startUsingItem(instance: ItemInstance, duration: number): void {
-    if (instance === this.useItem) return;
-    this.useItem = instance;
+    // C++ 的参数与成员都是按值的 ItemInstance：`instance == useItem` 是 operator==（比较内容），`useItem = instance` 是复制。
+    // 以前这里存的是引用——吃完一口后 stopUsingItem 的 useItem.setNull() 会把背包里的那一叠清成 id 0、数量 0，
+    // 下次右键 getSelected() 拿到它，getItem() 为 null，ItemInstance.use 崩溃（PITFALLS 第 10 条：按值语义）。
+    if (instance.equals(this.useItem)) return;
+    this.useItem = new ItemInstance(instance);
     this.useItemDuration = duration;
     if (!this.level.isClientSide) {
       this.setSharedFlag(SharedFlagsInformation.FLAG_USINGITEM, true);
@@ -577,7 +581,7 @@ export abstract class Player extends Mob {
   tileEntityDestroyed(tileEntityId: number): void {
     if (!this.containerMenu) return;
 
-    // DEFERRED(Gui): if (containerMenu->tileEntityDestroyedIsInvalid(tileEntityId)) closeContainer();
+    if (this.containerMenu.tileEntityDestroyedIsInvalid(tileEntityId)) this.closeContainer();
   }
 
   displayClientMessage(messageId: string): void {}

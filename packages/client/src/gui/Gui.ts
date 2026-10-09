@@ -7,6 +7,8 @@
  *   - 粒子统计（gatherStats3 的粒子数）—— E7 起是真的（`particleEngine.countParticles()`）。
  * R10：getSlotPos(int slot, int& posX, int& posY) 的引用参数改为返回 [posX, posY]（ADAPTED(Cpp)）。
  */
+import { ChatScreen } from './screens/ChatScreen';
+import { ConsoleScreen } from './screens/ConsoleScreen';
 import { SharedConstants } from '@mcpe/core';
 import { getTimeS, Keyboard, Mouse, MouseAction } from '@mcpe/platform';
 import { Mth, Random } from '@mcpe/util';
@@ -54,6 +56,7 @@ import {
   glPushMatrix2,
   glScalef2,
   glTexParameteri2,
+  glScissor,
 } from '../renderer/gles';
 import { RenderChunk } from '../renderer/RenderChunk';
 import { Tesselator } from '../renderer/Tesselator';
@@ -183,9 +186,10 @@ export class Gui extends GuiComponent implements IConfigListener {
     glEnable2(GL_ALPHA_TEST);
   }
 
-  /** C++ 里是 (minecraft->screen && (dynamic_cast<ChatScreen*> || dynamic_cast<ConsoleScreen*>))：这两个界面计划外，恒为 false */
+  /** C++ `minecraft->screen && (dynamic_cast<ChatScreen*>(screen) || dynamic_cast<ConsoleScreen*>(screen))` */
   private isChatting(): boolean {
-    return false; // DEFERRED(Gui)
+    const screen = this.minecraft.screen;
+    return screen !== null && (screen instanceof ChatScreen || screen instanceof ConsoleScreen);
   }
 
   getSlotIdAt(x: number, y: number): number {
@@ -536,7 +540,14 @@ export class Gui extends GuiComponent implements IConfigListener {
     this.addMessage(`Something went wrong! (errcode ${errCode})\n`);
   }
 
-  // OMIT(Gui): setScissorRect(bbox)  Gui.cpp（只被界面类使用）
+  /** C++ `void Gui::setScissorRect(const IntRectangle& bbox)`（箱子界面用）：GLuint 截断 */
+  setScissorRect(bbox: { x: number; y: number; w: number; h: number }): void {
+    const x = Math.trunc(Math.fround(Gui.GuiScale * bbox.x)) >>> 0;
+    const y = (this.minecraft.height - (Math.trunc(Math.fround(Gui.GuiScale * (bbox.y + bbox.h))) >>> 0)) >>> 0;
+    const w = Math.trunc(Math.fround(Gui.GuiScale * bbox.w)) >>> 0;
+    const h = Math.trunc(Math.fround(Gui.GuiScale * bbox.h)) >>> 0;
+    glScissor(x, y, w, h);
+  }
 
   static cubeSmoothStep(percentage: number, _min: number, _max: number): number {
     return percentage * percentage * (3 - 2 * percentage);

@@ -1,7 +1,7 @@
 /**
  * 1:1 移植自 src/client/renderer/GameRenderer.h 与 GameRenderer.cpp（S9）：每帧的相机、雾、清屏与各渲染层的编排。
  *
- * 【OMIT】updateFreeformPickDirection、pick、renderItemInHand、prepareAndRenderClouds（拾取、手持物品、PE 云）。
+ * 【OMIT】updateFreeformPickDirection、pick、renderItemInHand（拾取、手持物品）。prepareAndRenderClouds 在“画面”这一步补上。
  * 【DEFERRED】见各处标记：构造里的 ItemInHandRenderer 与 EntityRenderDispatcher；render 里的 gui.render；renderLevel 里的
  *   pick、粒子、实体、选中框、云、Beta 天空、手持物品；tick 末尾的 itemInHandRenderer->tick()。
  *   （否则 _rotXlast 与 fogBr 永不更新，清屏色与雾一直是黑的）。
@@ -10,6 +10,7 @@
  */
 import { Mouse, Multitouch } from '@mcpe/platform';
 import { Mth, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH } from '@mcpe/util';
+import type { LevelRenderer } from './LevelRenderer';
 import {
   type Entity,
   HitResult,
@@ -326,7 +327,7 @@ export class GameRenderer {
         mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY) &&
         mc.options.getIntValue(OptionId.OPTIONS_VIEW_DISTANCE) < 2
       ) {
-        // DEFERRED(Sky): levelRenderer->renderSky(a);
+        levelRenderer.renderSky(a);
       } else if (!mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY)) {
         glFogf(GL_FOG_START, this.renderDistance * 0.2);
         glFogf(GL_FOG_END, this.renderDistance * 0.75);
@@ -337,7 +338,7 @@ export class GameRenderer {
       this.setupFog(1);
       if (!mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY)) {
         if (mc.options.getBooleanValue(OptionId.OPTIONS_FANCY_GRAPHICS)) {
-          // DEFERRED(Clouds): prepareAndRenderClouds(levelRenderer, a);
+          this.prepareAndRenderClouds(levelRenderer, a);
         }
       }
       this.setupFog(0);
@@ -396,7 +397,7 @@ export class GameRenderer {
       if (mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY)) {
         this.setupFog(0);
         glEnable2(GL_FOG);
-        // DEFERRED(Clouds): levelRenderer->renderClouds(a);
+        levelRenderer.renderClouds(a);
         glDisable2(GL_FOG);
       }
       this.setupFog(1);
@@ -531,7 +532,39 @@ export class GameRenderer {
     }
     if (mc.options.getBooleanValue(OptionId.OPTIONS_VIEW_BOBBING)) this.bobView(a);
   }
-  // OMIT(Clouds): prepareAndRenderClouds(levelRenderer, a)  GameRenderer.cpp:961
+  /**
+   * C++ `void GameRenderer::prepareAndRenderClouds(LevelRenderer*, float a)`（GameRenderer.cpp:961）：
+   * 换一个远裁剪面放大到 renderDistance × 512 的投影，关深度写入，按两段雾距先画天空、再画云，然后恢复。
+   */
+  prepareAndRenderClouds(levelRenderer: LevelRenderer, a: number): void {
+    const mc = this.mc;
+    TIMER_PUSH('clouds');
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix2();
+    glLoadIdentity2();
+    gluPerspective((this._setupCameraFov = this.getFov(a, true)), Math.fround(mc.width / mc.height), 2, this.renderDistance * 512);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix2();
+    this.setupFog(0);
+    glDepthMask(false);
+    glEnable2(GL_FOG);
+    glFogf(GL_FOG_START, Math.fround(this.renderDistance * Math.fround(0.2)));
+    glFogf(GL_FOG_END, Math.fround(this.renderDistance * Math.fround(0.75)));
+    levelRenderer.renderSky(a);
+    glFogf(GL_FOG_START, Math.fround(Math.fround(this.renderDistance * Math.fround(4.2)) * Math.fround(0.6)));
+    glFogf(GL_FOG_END, Math.fround(this.renderDistance * Math.fround(4.2)));
+    levelRenderer.renderClouds(a);
+    glFogf(GL_FOG_START, Math.fround(this.renderDistance * Math.fround(0.6)));
+    glFogf(GL_FOG_END, this.renderDistance);
+    glDisable2(GL_FOG);
+    glDepthMask(true);
+    this.setupFog(1);
+    glPopMatrix2();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix2();
+    glMatrixMode(GL_MODELVIEW);
+    TIMER_POP();
+  }
 
   private tickFov(): void {
     const mc = this.mc;

@@ -1,0 +1,125 @@
+﻿步骤,负责,顺序,单元,C++ 文件,TS 目标,非空行数,注册,需先完成（阶段 A）,部分移植的原因,状态,剩余标记（2026-10-07）
+S11,你,1,DynamicTexture,DynamicTexture.h DynamicTexture.cpp,packages/client/src/renderer/ptexture/DynamicTexture.ts,501,,,,S11 已完成,无
+S11,你,2,ByteTag,ByteTag.h,packages/nbt/src/ByteTag.ts,44,,,,S11 已完成,无
+S11,你,3,DoubleTag,DoubleTag.h,packages/nbt/src/DoubleTag.ts,44,,,,S11 已完成,无
+S11,你,4,EndTag,EndTag.h,packages/nbt/src/EndTag.ts,31,,,,S11 已完成,无
+S11,你,5,FloatTag,FloatTag.h,packages/nbt/src/FloatTag.ts,46,,,,S11 已完成,无
+S11,你,6,IntTag,IntTag.h,packages/nbt/src/IntTag.ts,46,,,,S11 已完成,无
+S11,你,7,ListTag,ListTag.h,packages/nbt/src/ListTag.ts,143,,,,S11 已完成,无
+S11,你,8,LongTag,LongTag.h,packages/nbt/src/LongTag.ts,45,,,,S11 已完成,无
+S11,你,9,ShortTag,ShortTag.h,packages/nbt/src/ShortTag.ts,46,,,,S11 已完成,无
+S11,你,10,StringTag,StringTag.h,packages/nbt/src/StringTag.ts,50,,,,S11 已完成,无
+S11,你,11,DataIO,DataIO.h DataIO.cpp,packages/util/src/DataIO.ts,326,,,,S11 已完成,无
+S11,你,12,Tag,Tag.h Tag.cpp,packages/nbt/src/Tag.ts,167,,,,S11 已完成,无
+S11,你,13,ByteArrayTag,ByteArrayTag.h,packages/nbt/src/ByteArrayTag.ts,64,,,,S11 已完成,无
+S11,你,14,CollectionUtils,CollectionUtils.h,packages/util/src/CollectionUtils.ts,15,,,,S11 已完成,无
+S11,你,15,CompoundTag,CompoundTag.h,packages/nbt/src/CompoundTag.ts,198,,,,S11 已完成,无
+S11,你,16,ItemInstance,ItemInstance.h ItemInstance.cpp,packages/world/src/item/ItemInstance.ts,333,,,,S11 已完成,无
+S11,你,17,I18n,I18n.h I18n.cpp,packages/locale/src/I18n.ts,123,,,,S11 已完成,无
+S11,你,18,NbtIo,NbtIo.h,packages/nbt/src/NbtIo.ts,21,,,,S11 已完成,无
+S11,你,19,ArmorItem,ArmorItem.h ArmorItem.cpp,packages/world/src/item/ArmorItem.ts,111,物品 20 个：298 helmet_cloth … 317 boots_gold,,,S11 已完成,无
+S11,你,20,AuxDataTileItem,AuxDataTileItem.h,packages/world/src/item/AuxDataTileItem.ts,28,,,,S11 已完成,无
+S11,你,21,BowlFoodItem,BowlFoodItem.h,packages/world/src/item/BowlFoodItem.ts,20,物品 282 mushroomStew,FoodItem,,S11 已完成,无
+S11,你,22,ClothTile,ClothTile.h,packages/world/src/level/tile/ClothTile.ts,38,方块 35 cloth,,,S11 已完成,无
+S11,你,23,ClothTileItem,ClothTileItem.h,packages/world/src/item/ClothTileItem.ts,30,,DyePowderItem,,S11 已完成,无
+S11,你,24,CoalItem,CoalItem.h,packages/world/src/item/CoalItem.ts,24,物品 263 coal,,,S11 已完成,无
+S11,你,25,DiggerItem,DiggerItem.h,packages/world/src/item/DiggerItem.ts,68,,,,S11 已完成,无
+S11,你,26,HatchetItem,HatchetItem.h HatchetItem.cpp,packages/world/src/item/HatchetItem.ts,40,物品 5 个：258 hatchet_iron … 286 hatchet_gold,,,S11 已完成,无
+S11,你,27,PickaxeItem,PickaxeItem.h PickaxeItem.cpp,packages/world/src/item/PickaxeItem.ts,66,物品 5 个：257 pickAxe_iron … 285 pickAxe_gold,,,S11 已完成,无
+S11,你,28,SaplingTileItem,SaplingTileItem.h,packages/world/src/item/SaplingTileItem.ts,23,,,,S11 已完成,无
+S11,你,29,SeedItem,SeedItem.h,packages/world/src/item/SeedItem.ts,27,物品 295 seeds_wheat、362 seeds_melon,,,S11 已完成,无
+S11,你,30,ShovelItem,ShovelItem.h ShovelItem.cpp,packages/world/src/item/ShovelItem.ts,36,物品 5 个：256 shovel_iron … 284 shovel_gold,,,S11 已完成,无
+S11,你,31,TreeTileItem,TreeTileItem.h,packages/world/src/item/TreeTileItem.ts,23,,,,S11 已完成,无
+S11,你,32,BookshelfTile,BookshelfTile.h,packages/world/src/level/tile/BookshelfTile.ts,26,方块 47 bookshelf,,,S11 已完成,无
+S11,你,33,Bush,Bush.h,packages/world/src/level/tile/Bush.ts,67,方块 37 flower、38 rose,,,S11 已完成,无
+S11,你,34,CarriedTile,CarriedTile.h,packages/world/src/level/tile/CarriedTile.ts,31,方块 253 grass_carried,,,S11 已完成,无
+S11,你,35,ClayTile,ClayTile.h,packages/world/src/level/tile/ClayTile.ts,19,方块 82 clay,,,S11 已完成,无
+S11,你,36,EntityTile,EntityTile.h EntityTile.cpp,packages/world/src/level/tile/EntityTile.ts,53,,TileEntity,,S11 已完成,无
+S11,你,37,FenceTile,FenceTile.h,packages/world/src/level/tile/FenceTile.ts,98,方块 85 fence,,,S11 已完成,无
+S11,你,38,HalfTransparentTile,HalfTransparentTile.h,packages/world/src/level/tile/HalfTransparentTile.ts,30,,,,S11 已完成,无
+S11,你,39,GlassTile,GlassTile.h,packages/world/src/level/tile/GlassTile.ts,21,方块 20 glass,,,S11 已完成,无
+S11,你,40,GravelTile,GravelTile.h,packages/world/src/level/tile/GravelTile.ts,20,方块 13 gravel,HeavyTile,,S11 已完成,无
+S11,你,41,IceTile,IceTile.h,packages/world/src/level/tile/IceTile.ts,34,方块 79 ice,,,S11 已完成,无
+S11,你,42,LadderTile,LadderTile.h,packages/world/src/level/tile/LadderTile.ts,88,方块 65 ladder,,,S11 已完成,无
+S11,你,43,LightGemTile,LightGemTile.h LightGemTile.cpp,packages/world/src/level/tile/LightGemTile.ts,23,方块 89 lightGem,,,S11 已完成,无
+S11,你,44,MelonTile,MelonTile.h MelonTile.cpp,packages/world/src/level/tile/MelonTile.ts,38,方块 103 melon,,,S11 已完成,无
+S11,你,45,MetalTile,MetalTile.h,packages/world/src/level/tile/MetalTile.ts,18,方块 41 goldBlock、42 ironBlock、57 emeraldBlock,,,S11 已完成,无
+S11,你,46,MultiTextureTile,MultiTextureTile.h,packages/world/src/level/tile/MultiTextureTile.ts,35,方块 98 stoneBrickSmooth,,,S11 已完成,无
+S11,你,47,Mushroom,Mushroom.h Mushroom.cpp,packages/world/src/level/tile/Mushroom.ts,61,方块 39 mushroom1、40 mushroom2,,,S11 已完成,无
+S11,你,48,NetherReactorPattern,NetherReactorPattern.h NetherReactorPattern.cpp,packages/world/src/level/tile/NetherReactorPattern.ts,54,,,,S11 已完成,无
+S11,你,49,ObsidianTile,ObsidianTile.h,packages/world/src/level/tile/ObsidianTile.ts,55,方块 49 obsidian、246 glowingObsidian,,,S11 已完成,无
+S11,你,50,OreTile,OreTile.h,packages/world/src/level/tile/OreTile.ts,33,方块 5 个：14 goldOre … 56 emeraldOre,DyePowderItem,,S11 已完成,无
+S11,你,51,QuartzBlockTile,QuartzBlockTile.h,packages/world/src/level/tile/QuartzBlockTile.ts,52,方块 155 quartzBlock,,,S11 已完成,无
+S11,你,52,RedStoneOreTile,RedStoneOreTile.h,packages/world/src/level/tile/RedStoneOreTile.ts,78,方块 73 redStoneOre、74 redStoneOre_lit,,,S11 已完成,无
+S11,你,53,ReedTile,ReedTile.h,packages/world/src/level/tile/ReedTile.ts,81,方块 83 reeds,,,S11 已完成,无
+S11,你,54,SandStoneTile,SandStoneTile.h,packages/world/src/level/tile/SandStoneTile.ts,30,方块 24 sandStone,,,S11 已完成,无
+S11,你,55,SignTile,SignTile.h,packages/world/src/level/tile/SignTile.ts,94,方块 63 sign、68 wallSign,TileEntity,,S11 已完成,无
+S11,你,56,SnowTile,SnowTile.h,packages/world/src/level/tile/SnowTile.ts,30,方块 80 snow,,,S11 已完成,无
+S11,你,57,StemTile,StemTile.h StemTile.cpp,packages/world/src/level/tile/StemTile.ts,151,方块 105 melonStem,,,S11 已完成,无
+S11,你,58,ThinFenceTile,ThinFenceTile.h,packages/world/src/level/tile/ThinFenceTile.ts,114,方块 102 thinGlass,,,S11 已完成,无
+S11,你,59,TorchTile,TorchTile.h,packages/world/src/level/tile/TorchTile.ts,152,方块 50 torch,,,S11 已完成,无
+S11,你,60,TrapDoorTile,TrapDoorTile.h TrapDoorTile.cpp,packages/world/src/level/tile/TrapDoorTile.ts,158,方块 96 trapdoor,,,S11 已完成,无
+S11,你,61,TreeTile,TreeTile.h,packages/world/src/level/tile/TreeTile.ts,55,方块 17 treeTrunk,,,S11 已完成,无
+S11,Claude,,HeavyTile,HeavyTile.h HeavyTile.cpp,packages/world/src/level/tile/HeavyTile.ts,83,方块 12 sand,,FallingTile,S11 已完成（阶段 A 先行）,无
+S11,Claude,,SandTile,SandTile.h SandTile.cpp,packages/world/src/level/tile/SandTile.ts,67,,,FallingTile,S11 已完成（阶段 A 先行）,无
+S11,Claude,,Sapling,Sapling.h,packages/world/src/level/tile/Sapling.ts,115,方块 6 sapling,,BasicTree、BirchFeature、SpruceFeature、TreeFeature,S11 已完成（阶段 C）,无
+S11,Claude,,TntTile,TntTile.h,packages/world/src/level/tile/TntTile.ts,57,方块 46 tnt,,PrimedTnt、通过 PrimedTnt* 访问成员,S11 已完成（阶段 A 先行）,无
+S11,Claude,,FurnaceTileEntity,FurnaceTileEntity.h FurnaceTileEntity.cpp,packages/world/src/level/tile/entity/FurnaceTileEntity.ts,267,,,Container、FurnaceRecipes,S12 已完成（与 FurnaceTile 一起）,DEFERRED(Tile)×1
+S11,Claude,,NetherReactorTileEntity,NetherReactorTileEntity.h NetherReactorTileEntity.cpp,packages/world/src/level/tile/entity/NetherReactorTileEntity.ts,416,,,MobFactory、MobSpawner,S12 已完成（与 NetherReactor 一起）,无
+S11,Claude,,SignTileEntity,SignTileEntity.h SignTileEntity.cpp,packages/world/src/level/tile/entity/SignTileEntity.ts,76,,,SignUpdatePacket,S11 已完成（阶段 A 先行）,DEFERRED(Network)×2
+S11,Claude,,TileEntity,TileEntity.h TileEntity.cpp,packages/world/src/level/tile/entity/TileEntity.ts,259,,,改由 Claude,S11 已完成,无
+S11,Claude,,TileEntityRendererId,TileEntityRendererId.h,packages/world/src/level/tile/entity/TileEntityRendererId.ts,8,,,改由 Claude,S11 已完成,无
+S11,Claude,,BowItem,BowItem.h,packages/world/src/item/BowItem.ts,53,物品 261 bow,,Arrow、通过 Arrow* 访问成员,S11 已完成（阶段 A 先行）,无
+S11,Claude,,CameraItem,CameraItem.h,packages/world/src/item/CameraItem.ts,21,物品 456 camera,,TripodCamera,S11 已完成（阶段 A 先行）,无
+S11,Claude,,DyePowderItem,DyePowderItem.h DyePowderItem.cpp,packages/world/src/item/DyePowderItem.ts,154,物品 351 dye_powder,,Sheep、通过 Sheep* 访问成员,S11 已完成（阶段 A 先行）,无
+S11,Claude,,EggItem,EggItem.h,packages/world/src/item/EggItem.ts,25,物品 344 egg,,ThrownEgg,S11 已完成（阶段 A 先行）,无
+S11,Claude,,FoodItem,FoodItem.h,packages/world/src/item/FoodItem.ts,80,物品 12 个：260 apple … 366 chicken_cooked,,SetHealthPacket,S11 已完成（阶段 A 先行）,无
+S11,Claude,,HangingEntityItem,HangingEntityItem.h HangingEntityItem.cpp,packages/world/src/item/HangingEntityItem.ts,52,物品 321 painting,,EntityFactory、HangingEntity、Painting、通过 HangingEntity* 访问成员,S11 已完成（阶段 A 先行）,无
+S11,Claude,,SnowballItem,SnowballItem.h,packages/world/src/item/SnowballItem.ts,24,物品 332 snowBall,,Snowball,S11 已完成（阶段 A 先行）,无
+S12,你,1,EntityPos,EntityPos.h,packages/world/src/entity/EntityPos.ts,76,,,,S12 已完成,无
+S12,你,2,EntityRendererId,EntityRendererId.h,packages/world/src/entity/EntityRendererId.ts,26,,,,S12 已完成,无
+S12,你,3,ItemEntity,ItemEntity.h ItemEntity.cpp,packages/world/src/entity/item/ItemEntity.ts,220,,Player,,S12 已完成,无
+S12,你,4,Entity,Entity.h Entity.cpp,packages/world/src/entity/Entity.ts,965,,,,S12 已完成,无
+S12,你,5,EntityEvent,EntityEvent.h,packages/world/src/entity/EntityEvent.ts,17,,,,S12 已完成,无
+S12,你,6,SharedFlags,SharedFlags.h,packages/world/src/entity/SharedFlags.ts,15,,,,S12 已完成,无
+S12,你,7,Abilities,Abilities.h,packages/world/src/entity/player/Abilities.ts,37,,,,S12 已完成,无
+S12,你,8,InventorySlotManager,InventorySlotManager.h,packages/world/src/entity/player/InventorySlotManager.ts,6,,,,S12 已完成,无
+S12,你,9,OldInventory,OldInventory.h,packages/world/src/entity/player/OldInventory.ts,30,,,,S12 已完成,无
+S12,你,10,FoodConstants,FoodConstants.h,packages/world/src/food/FoodConstants.ts,13,,,,S12 已完成,无
+S12,你,11,SimpleFoodData,SimpleFoodData.h SimpleFoodData.cpp,packages/world/src/food/SimpleFoodData.ts,45,,Player,,S12 已完成,无
+S12,你,12,BedItem,BedItem.h BedItem.cpp,packages/world/src/item/BedItem.ts,44,物品 355 bed,Player,,S12 已完成,无
+S12,你,13,DoorItem,DoorItem.h,packages/world/src/item/DoorItem.ts,59,物品 324 door_wood、330 door_iron,Player,,S12 已完成,无
+S12,你,14,FlintAndSteelItem,FlintAndSteelItem.h,packages/world/src/item/FlintAndSteelItem.ts,34,物品 259 flintAndSteel,Player,,S12 已完成,无
+S12,你,15,HoeItem,HoeItem.h HoeItem.cpp,packages/world/src/item/HoeItem.ts,48,物品 5 个：290 hoe_wood … 294 hoe_gold,,,S12 已完成,无
+S12,你,16,ShearsItem,ShearsItem.h,packages/world/src/item/ShearsItem.ts,41,,Mob,,S12 已完成,无
+S12,你,17,SignItem,SignItem.h,packages/world/src/item/SignItem.ts,40,物品 323 sign,Player,,S12 已完成,无
+S12,你,18,TilePlanterItem,TilePlanterItem.h,packages/world/src/item/TilePlanterItem.ts,45,物品 338 reeds、354 cake、356 diode,Player,,S12 已完成,无
+S12,你,19,WeaponItem,WeaponItem.h,packages/world/src/item/WeaponItem.ts,67,物品 5 个：267 sword_iron … 283 sword_gold,Mob、Player,,S12 已完成,无
+S12,你,20,CactusTile,CactusTile.h,packages/world/src/level/tile/CactusTile.ts,92,方块 81 cactus,,,S12 已完成,无
+S12,你,21,ChestTile,ChestTile.h ChestTile.cpp,packages/world/src/level/tile/ChestTile.ts,306,方块 54 chest,ChestTileEntity,,S12 已完成,无
+S12,你,22,CropTile,CropTile.h CropTile.cpp,packages/world/src/level/tile/CropTile.ts,115,方块 59 crops,,,S12 已完成,无
+S12,你,23,DoorTile,DoorTile.h DoorTile.cpp,packages/world/src/level/tile/DoorTile.ts,255,方块 64 door_wood、71 door_iron,Player,,S12 已完成,无
+S12,你,24,FenceGateTile,FenceGateTile.h,packages/world/src/level/tile/FenceGateTile.ts,83,方块 107 fenceGate,Mob、Player,,S12 已完成,无
+S12,你,25,FurnaceTile,FurnaceTile.h FurnaceTile.cpp,packages/world/src/level/tile/FurnaceTile.ts,177,方块 61 furnace、62 furnace_lit,Mob、Player,,S12 已完成,无
+S12,你,26,StairTile,StairTile.h StairTile.cpp,packages/world/src/level/tile/StairTile.ts,394,方块 7 个：53 stairs_wood … 156 stairs_quartz,Mob,,S12 已完成,无
+S12,你,27,StonecutterTile,StonecutterTile.h,packages/world/src/level/tile/StonecutterTile.ts,27,方块 245 stonecutterBench,Player,,S12 已完成,无
+S12,你,28,TallGrass,TallGrass.h TallGrass.cpp,packages/world/src/level/tile/TallGrass.ts,91,方块 31 tallgrass,Player,,S12 已完成,无
+S12,你,29,WebTile,WebTile.h,packages/world/src/level/tile/WebTile.ts,47,方块 30 web,,,S12 已完成,无
+S12,你,30,WorkbenchTile,WorkbenchTile.h,packages/world/src/level/tile/WorkbenchTile.ts,28,方块 58 workBench,Player,,S12 已完成,无
+S12,Claude,,NetherReactor,NetherReactor.h NetherReactor.cpp,packages/world/src/level/tile/NetherReactor.ts,83,方块 247 netherReactor,,改由 Claude,S12 已完成,无
+S12,Claude,,ChestTileEntity,ChestTileEntity.h ChestTileEntity.cpp,packages/world/src/level/tile/entity/ChestTileEntity.ts,255,,,改由 Claude,S12 已完成,无
+S12,Claude,,Mob,Mob.h Mob.cpp,packages/world/src/entity/Mob.ts,1213,,,GoalSelector、JumpControl、MoveControl、MoveEntityPacket、PathNavigation、RakNetInstance、Sensing、SetEntityMotionPacket,S12 已完成,DEFERRED(Network)×3
+S12,Claude,,SynchedEntityData,SynchedEntityData.h SynchedEntityData.cpp,packages/world/src/entity/SynchedEntityData.ts,439,,,Packet,S12 已完成,无
+S12,Claude,,Inventory,Inventory.h Inventory.cpp,packages/world/src/entity/player/Inventory.ts,369,,,Recipe,S12 已完成,无
+S12,Claude,,Player,Player.h Player.cpp,packages/world/src/entity/player/Player.ts,945,,,AnimatePacket、BaseContainerMenu、FurnaceMenu、RakNetInstance、Recipe,S12 已完成,DEFERRED(Network)×1
+S12,Claude,,FillingContainer,FillingContainer.h FillingContainer.cpp,packages/world/src/inventory/FillingContainer.ts,620,,,Container、Recipe,S12 已完成,无
+S12,Claude,,LocalPlayer,LocalPlayer.h LocalPlayer.cpp,packages/client/src/player/LocalPlayer.ts,828,,,AnimatePacket、BaseContainerMenu、CThread、ChestScreen、ContainerClosePacket、DropItemPacket、EntityEventPacket、ErrorCodes、FurnaceScreen、HttpClient、InBedScreen、MovePlayerPacket、PlayerActionPacket、PlayerArmorEquipmentPacket、PlayerEquipmentPacket、RakNetInstance、Screen、SendInventoryPacket、SetHealthPacket、SmoothFloat、StonecutterScreen、TakeAnimationParticle、TextEditScreen、WorkbenchScreen,S12 已完成,DEFERRED(Network)×10；DEFERRED(Stats)×1
+S12,Claude,,CreativeMode,CreativeMode.h CreativeMode.cpp,packages/client/src/gamemode/CreativeMode.ts,65,,,ParticleEngine、RemoveBlockPacket、SoundEngine,S12 已完成,无
+S12,Claude,,CreatorMode,CreatorMode.h CreatorMode.cpp,packages/client/src/gamemode/CreatorMode.ts,186,,,ParticleEngine、PosTranslator、RemoveBlockPacket、SoundEngine,不移植：C++ 只在 #ifdef CREATORMODE 时编译（这一版的构建不开）,
+S12,Claude,,GameMode,GameMode.h GameMode.cpp,packages/client/src/gamemode/GameMode.ts,205,,,ParticleEngine、PlayerActionPacket、RakNetInstance、RemoveBlockPacket、SoundEngine、UseItemPacket,S12 已完成,DEFERRED(Network)×4
+S12,Claude,,SurvivalMode,SurvivalMode.h SurvivalMode.cpp,packages/client/src/gamemode/SurvivalMode.ts,109,,,ParticleEngine、SoundEngine,S12 已完成,DEFERRED(Sound)×1
+S13,你,1,Font,Font.h Font.cpp,packages/client/src/gui/Font.ts,366,,,,S13 已完成,无
+S13,你,2,GuiComponent,GuiComponent.h GuiComponent.cpp,packages/client/src/gui/GuiComponent.ts,164,,,,S13 已完成,无
+S13,Claude,,Gui,Gui.h Gui.cpp,packages/client/src/gui/Gui.ts,1157,,,ChatScreen、ConsoleScreen、IngameBlockSelectionScreen、PosTranslator、TouchAreaModel,S13 已完成,DEFERRED(Gui)×1
+S13,Claude,,EntityRenderer,EntityRenderer.h EntityRenderer.cpp,packages/client/src/renderer/entity/EntityRenderer.ts,317,,,EntityRenderDispatcher、HumanoidModel,S13 已完成,无
+S13,Claude,,ItemRenderer,ItemRenderer.h ItemRenderer.cpp,packages/client/src/renderer/entity/ItemRenderer.ts,346,,,EntityRenderDispatcher、ItemInHandRenderer,S13 已完成,无

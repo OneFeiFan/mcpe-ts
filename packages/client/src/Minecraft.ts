@@ -6,6 +6,12 @@
  *   玩家与实体、存储（options.load/save 在 Options 内部 DEFERRED）。
  * 【OMIT】多人游戏、存档选择、暂停、重生、音频开关、截图、统计、创造模式切换等（见文件末尾的标记）。
  */
+import { CommandManager } from './commands/CommandManager';
+import { ChatScreen } from './gui/screens/ChatScreen';
+import { ConsoleScreen } from './gui/screens/ConsoleScreen';
+import { PerfRenderer } from './util/PerfRenderer';
+import type { Player, Pos } from '@mcpe/world';
+import { DeathScreen } from './gui/screens/DeathScreen';
 import {
   getTimeMs,
   Keyboard,
@@ -86,6 +92,15 @@ function resetPlayerPos(player: LocalPlayer, clearMore: boolean): void {
 /** Minecraft::tickInput 里的 static bool prevMouseDownLeft、static int buildHoldTicks（只被 DEFERRED 的建造代码使用） */
 
 export class Minecraft extends App {
+  /** C++ CommandManager m_commandManager（按值成员） */
+  private m_commandManager = new CommandManager();
+
+  /** C++ `CommandManager& commandManager()` */
+  commandManager(): CommandManager {
+    return this.m_commandManager;
+  }
+  /** C++ PerfRenderer* _perfRenderer（init 里创建） */
+  private _perfRenderer: PerfRenderer | null = null;
   static useAmbientOcclusion = false;
   static customDebugId = 0; // = Minecraft::CDI_NONE
   static readonly CDI_NONE = 0;
@@ -207,7 +222,7 @@ export class Minecraft extends App {
     const sideTint = this.options.getBooleanValue(OptionId.OPTIONS_TINTED_SIDE);
     TileRenderer.setUseTint(sideTint);
     this.font = new Font(this.options, 'font/default8.png', this.textures!);
-    // DEFERRED(Gui): _perfRenderer = new PerfRenderer(this, font);
+    this._perfRenderer = new PerfRenderer(this, this.font);
     checkGlError('Init complete');
     this.options.load();
     this.setIsCreativeMode(false); // false means it's Survival Mode
@@ -534,7 +549,7 @@ export class Minecraft extends App {
         PerfTimer.reset();
         PerfTimer.enabled = true;
       }
-      // DEFERRED(Gui): _perfRenderer->renderFpsMeter(1);
+      this._perfRenderer!.renderFpsMeter(1);
       checkGlError('render debug');
     } else {
       PerfTimer.enabled = false;
@@ -545,7 +560,7 @@ export class Minecraft extends App {
     if (this.missTime > 0) this.missTime--;
     if (!this.screen && this.player) {
       if (this.player.hasDied()) {
-        // DEFERRED(Gui): setScreen(new DeathScreen());
+        this.setScreen(new DeathScreen());
       }
     }
     TIMER_PUSH('gameMode');
@@ -643,12 +658,16 @@ export class Minecraft extends App {
           this.gui.handleClick(MouseAction.ACTION_LEFT, Mouse.getX(), Mouse.getY());
         }
         if (e.action === MouseAction.ACTION_WHEEL) {
-          // 聊天、控制台界面计划外（DEFERRED(Gui)），只走切换物品栏格子的分支
-          const v = this.player.inventory;
-          let numSlots = this.gui.getNumSlots();
-          if (!this.useTouchscreen()) numSlots--;
-          const slot = (v.selected - e.dy + numSlots) % numSlots;
-          v.selectSlot(slot);
+          // 聊天或控制台开着时，滚轮翻聊天记录；否则切换物品栏格子
+          if (this.screen && (this.screen instanceof ChatScreen || this.screen instanceof ConsoleScreen)) {
+            this.gui.scrollChat(e.dy);
+          } else {
+            const v = this.player.inventory;
+            let numSlots = this.gui.getNumSlots();
+            if (!this.useTouchscreen()) numSlots--;
+            const slot = (v.selected - e.dy + numSlots) % numSlots;
+            v.selectSlot(slot);
+          }
         }
       }
       TIMER_POP_PUSH('keyboard');
@@ -669,7 +688,9 @@ export class Minecraft extends App {
           if (key === Keyboard.KEY_E) {
             this.screenChooser.setScreen(ScreenId.SCREEN_BLOCKSELECTION);
           }
-          // DEFERRED(Gui): if (!screen && key == KEY_T && level) setScreen(new ConsoleScreen());（控制台界面未移植）
+          if (!this.screen && key === Keyboard.KEY_T && this.level) {
+            this.setScreen(new ConsoleScreen());
+          }
           if (key === Keyboard.KEY_F3) {
             this.options.toggle(OptionId.OPTIONS_RENDER_DEBUG);
           }
@@ -683,7 +704,11 @@ export class Minecraft extends App {
             const dst = this.options.getIntValue(OptionId.OPTIONS_VIEW_DISTANCE);
             this.options.set(OptionId.OPTIONS_VIEW_DISTANCE, (dst + 1) % 4);
           }
-          // DEFERRED(Gui): if (options.getBooleanValue(OPTIONS_RENDER_DEBUG) && '0'..'9') _perfRenderer->debugFpsMeterKeyPress(key - '0');
+          if (this.options.getBooleanValue(OptionId.OPTIONS_RENDER_DEBUG)) {
+            if (key >= 0x30 && key <= 0x39) {
+              this._perfRenderer!.debugFpsMeterKeyPress(key - 0x30); // key - '0'
+            }
+          }
           if (key === Keyboard.KEY_ESCAPE) {
             this.pauseGame(false);
           }
@@ -908,9 +933,39 @@ export class Minecraft extends App {
   gatherStats4(): string {
     return this.level!.gatherChunkSourceStats();
   }
-  // OMIT(Player): respawnPlayer(playerId)  Minecraft.cpp:1538
-  // OMIT(Player): resetPlayer(player)  Minecraft.cpp:1548
-  // OMIT(Player): respawnPlayer()  Minecraft.cpp:1566
+  /** C++ `Player* Minecraft::respawnPlayer(int playerId)`（R10：与无参版同名 → respawnPlayerById） */
+  respawnPlayerById(playerId: number): Player | null {
+    const level = this.level!;
+    for (const p of level.players) {
+      if (p.entityId === playerId) {
+        this.resetPlayer(p);
+        return p;
+      }
+    }
+    return null;
+  }
+
+  /** C++ `void Minecraft::respawnPlayer()` */
+  respawnPlayer(): void {
+    this.resetPlayer(this.player!);
+    // DEFERRED(Network): RespawnPacket packet(player); raknetInstance->send(packet);
+  }
+
+  /** C++ `void Minecraft::resetPlayer(Player* player)`：回到床边的重生点（没有就回世界出生点），恢复满血、清掉死亡状态 */
+  resetPlayer(player: Player): void {
+    const level = this.level!;
+    level.validateSpawn();
+    player.reset();
+    let p: Pos;
+    if (player.hasRespawnPosition()) {
+      p = player.getRespawnPosition();
+    } else {
+      p = level.getSharedSpawnPos();
+    }
+    player.setPos(Math.fround(p.x + 0.5), Math.fround(p.y + 1.0), Math.fround(p.z + 0.5));
+    (player as unknown as { resetPos(clearMore: boolean): void }).resetPos(true);
+    if (this.isCreativeMode()) player.inventory.clearInventoryWithDefault();
+  }
 
   /** C++ 的 void onGraphicsReset()（覆盖 App 的 protected 纯虚函数） */
   protected onAppGraphicsReset(): void {

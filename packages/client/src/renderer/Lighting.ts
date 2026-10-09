@@ -1,4 +1,4 @@
-// 1:1 移植自 src/client/renderer/Lighting.h 与 Lighting.cpp：只设置 GL 光照状态；着色器里的光照计算 DEFERRED(GLLighting)（见 gles.ts）。
+// 1:1 移植自 src/client/renderer/Lighting.h 与 Lighting.cpp：设置 GL 光照状态；光照由 GLES1 的着色器计算（见 gl/GLES1.ts）。
 import type { Minecraft } from '../Minecraft';
 import { OptionId } from '../Options';
 import {

@@ -1,4 +1,6 @@
 // 1:1 移植自 src/world/level/tile/BedTile.h 与 BedTile.cpp（S3）
+import { BedSleepingResult, type Player } from '../../entity/player/Player';
+import { Mth } from '@mcpe/util';
 import { ItemInstance } from '../../item/ItemInstance';
 import type { Random } from '@mcpe/util';
 import { Direction } from '../../Direction';
@@ -26,7 +28,77 @@ export class BedTile extends DirectionalTile {
     this.setShape();
   }
 
-  // OMIT(Player): use(level, x, y, z, player)  BedTile.cpp:19
+  /**
+   * C++ `bool BedTile::use(Level*, int x, int y, int z, Player* player)`：右键床。
+   * 正在睡这张床就起床；找到床头那一格；不能重生的维度（下界）里用床会把床炸掉；床被别人占着就提示；
+   * 否则 startSleepInBed，按结果提示“只能在夜里睡觉”“附近有怪物”。
+   * 原样保留：炸床那段算了床的中心 xc/yc/zc 却不用，爆炸位置用的是另一半床的坐标；y 加的是 HEAD_DIRECTION_OFFSETS 的第二个分量（本应是 z）。
+   */
+  override use(level: Level, x: number, y: number, z: number, player: Player): boolean {
+    if (player.isSleeping()) {
+      let dimensionsMatch = player.bedPosition.x === x ? 1 : 0;
+      dimensionsMatch += player.bedPosition.y === y ? 1 : 0;
+      dimensionsMatch += player.bedPosition.z === z ? 1 : 0;
+      let maxDistance = Mth.abs(player.bedPosition.x - x);
+      maxDistance = Mth.Max(maxDistance, Mth.abs(player.bedPosition.y - y));
+      maxDistance = Mth.Max(maxDistance, Mth.abs(player.bedPosition.z - z));
+      if (dimensionsMatch >= 2 && maxDistance < 3) {
+        player.stopSleepInBed(false, true, true);
+        return true;
+      }
+    }
+    if (level.isClientSide) return true;
+    let data = level.getData(x, y, z);
+    if (!BedTile.isHeadPiece(data)) {
+      const direction = DirectionalTile.getDirection(data);
+      x += BedTile.HEAD_DIRECTION_OFFSETS[direction]![0];
+      z += BedTile.HEAD_DIRECTION_OFFSETS[direction]![1];
+      if (level.getTile(x, y, z) !== this.id) {
+        return true;
+      }
+      data = level.getData(x, y, z);
+    }
+    if (!level.dimension!.mayRespawn()) {
+      level.setTile(x, y, z, 0);
+      const direction = DirectionalTile.getDirection(data);
+      x += BedTile.HEAD_DIRECTION_OFFSETS[direction]![0];
+      y += BedTile.HEAD_DIRECTION_OFFSETS[direction]![1];
+      if (level.getTile(x, y, z) === this.id) {
+        level.setTile(x, y, z, 0);
+      }
+      level.explode(null, Math.fround(x + 0.5), Math.fround(y + 0.5), Math.fround(z + 0.5), 5, true);
+      return true;
+    }
+    if (BedTile.isOccupied(data)) {
+      let sleepingPlayer: Player | null = null;
+      for (const p of level.players) {
+        if (p.isSleeping()) {
+          const pos = p.bedPosition;
+          if (pos.x === x && pos.y === y && pos.z === z) {
+            sleepingPlayer = p;
+            break;
+          }
+        }
+      }
+      if (sleepingPlayer === null) {
+        BedTile.setOccupied(level, x, y, z, false);
+      } else {
+        sleepingPlayer.displayClientMessage('This bed is occupied');
+        return true;
+      }
+    }
+    const result = player.startSleepInBed(x, y, z);
+    if (result === BedSleepingResult.OK) {
+      BedTile.setOccupied(level, x, y, z, true);
+      return true;
+    }
+    if (result === BedSleepingResult.NOT_POSSIBLE_NOW) {
+      player.displayClientMessage('You can only sleep at night');
+    } else if (result === BedSleepingResult.NOT_SAFE) {
+      player.displayClientMessage('You may not rest now, there are monsters nearby');
+    }
+    return true;
+  }
 
   static setOccupied(level: Level, x: number, y: number, z: number, occupied: boolean): void {
     let data = level.getData(x, y, z);

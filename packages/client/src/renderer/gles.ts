@@ -217,11 +217,11 @@ export const glFogfv = (pname: number, params: ArrayLike<number>): void =>
   C().setFog(pname, params);
 /** GLES 的 glFogx 收 GLfixed；分支只用它设 GL_FOG_MODE（枚举值原样传入），与 glFogf 相同 */
 export const glFogx = (pname: number, param: number): void => C().setFog(pname, param);
-// DEFERRED(GLLighting): 光照只保存状态，不参与着色（区块渲染不开光照）
+// 光照由 GLES1 的着色器逐顶点计算（见 gl/GLES1.ts 文件头）
 export const glLightfv = (light: number, pname: number, params: ArrayLike<number>): void =>
-  void C().lightState.set(`${light}:${pname}`, new Float32Array(params));
+  C().setLight(light, pname, params);
 export const glLightModelfv = (pname: number, params: ArrayLike<number>): void =>
-  void C().lightState.set(`model:${pname}`, new Float32Array(params));
+  C().setLightModel(pname, params);
 
 export const glEnableClientState = (array: number): void => C().enableClientState(array);
 export const glDisableClientState = (array: number): void => C().disableClientState(array);

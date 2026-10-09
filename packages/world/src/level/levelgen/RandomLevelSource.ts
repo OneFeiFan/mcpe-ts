@@ -42,6 +42,18 @@ import type { Level } from '../Level';
 import { Tile } from '../tile/Tile';
 import { CanyonFeature } from './CanyonFeature';
 import { LargeCaveFeature } from './LargeCaveFeature';
+import { TallGrass } from '../tile/TallGrass';
+import { Material } from '../material/Material';
+import { Biome as BiomeClass } from '../biome/Biome';
+import { LakeFeature } from './feature/LakeFeature';
+import { ClayFeature } from './feature/ClayFeature';
+import { OreFeature } from './feature/OreFeature';
+import { FlowerFeature } from './feature/FlowerFeature';
+import { TallgrassFeature } from './feature/TallgrassFeature';
+import { ReedsFeature } from './feature/ReedsFeature';
+import { CactusFeature } from './feature/CactusFeature';
+import { SpringFeature } from './feature/SpringFeature';
+import { MobSpawnerHooks } from '../MobSpawnerHooks';
 import { PerlinNoise } from './synth/PerlinNoise';
 
 const f = Math.fround;
@@ -385,16 +397,175 @@ export class RandomLevelSource extends ChunkSource {
    * 而且它在 `Dimension.createRandomLevelSource` 那条 throw 后面才轮到，
    * 之前一直没被走到，是因为前一句先炸了。
    *
+   * （地物生成已移植——下面是当时空实现阶段的记录，留作历史：存档里那批老区块确实没有地物，需要删掉重建。）
    * 【空实现的后果已写进 task_plan】`ChunkCache.postProcess` 会先把
    * `chunk.terrainPopulated = true` 再调这里 —— 那是 C++ 自己的顺序，不能为了这个去改。
    * 所以这一轮生成的世界**带着"地物已生成"的标记存下去，实际上一棵草都没有**；
    * 以后补地物时这些老区块不会追溯补上，得删掉重新生成。
    */
-  postProcess(_parent: ChunkSource, _xt: number, _zt: number): void {
-    // DEFERRED(LevelgenFeature): 整段 postProcess（.cpp:220-534，315 行：湖/矿/树/花草/泉/雪）
-    //   连开头的 `level->isGeneratingTerrain = true; HeavyTile::instaFall = true;`
-    //   与结尾把这两个置回 false 也一并 DEFERRED —— 那对开关是给地物用的
-    //   （生成期间沙子砾石不许往下掉）。地物没做，就没有"生成期间"可言。
+  postProcess(_parent: ChunkSource, xt: number, zt: number): void {
+    const level = this.level;
+    level.isGeneratingTerrain = true;
+    heavyTileClass().instaFall = true;
+    const xo = xt * 16;
+    const zo = zt * 16;
+    const biome = level.getBiomeSource()!.getBiome(xo + 16, zo + 16)!;
+    const random = this.random;
+    random.setSeed(level.getSeed());
+    // int 运算：`nextInt() / 2 * 2 + 1` 是整数除法（截断），乘积按 int 溢出（-fwrapv），`^ getSeed()` 后 setSeed 只用低 32 位
+    const xScale = (Math.trunc(random.nextInt() / 2) * 2 + 1) | 0;
+    const zScale = (Math.trunc(random.nextInt() / 2) * 2 + 1) | 0;
+    random.setSeed(((Math.imul(xt, xScale) + Math.imul(zt, zScale)) | 0) ^ level.getSeed());
+    if (random.nextInt(4) === 0) {
+      const x = xo + random.nextInt(16) + 8;
+      const y = random.nextInt(128);
+      const z = zo + random.nextInt(16) + 8;
+      new LakeFeature(Tile.calmWater.id).place(level, random, x, y, z);
+    }
+    if (random.nextInt(8) === 0) {
+      const x = xo + random.nextInt(16) + 8;
+      const y = random.nextInt(random.nextInt(120) + 8);
+      const z = zo + random.nextInt(16) + 8;
+      if (y < 64 || random.nextInt(10) === 0) {
+        new LakeFeature(Tile.calmLava.id).place(level, random, x, y, z);
+      }
+    }
+    // C++ 这里有 static float totalTime 与 getTimeS() 计时（只用于统计），省略
+    for (let i = 0; i < 10; i++) {
+      const x = xo + random.nextInt(16);
+      const y = random.nextInt(128);
+      const z = zo + random.nextInt(16);
+      new ClayFeature(32).place(level, random, x, y, z);
+    }
+    const ores: [number, number, number, (r: typeof random) => number][] = [
+      [20, Tile.dirt.id, 32, (r) => r.nextInt(128)],
+      [10, Tile.gravel.id, 32, (r) => r.nextInt(128)],
+      [16, Tile.coalOre.id, 14, (r) => r.nextInt(128)],
+      [14, Tile.ironOre.id, 10, (r) => r.nextInt(64)],
+      [2, Tile.goldOre.id, 9, (r) => r.nextInt(32)],
+      [6, Tile.redStoneOre.id, 8, (r) => r.nextInt(16)],
+      [3, Tile.emeraldOre.id, 6, (r) => r.nextInt(16)],
+      [1, Tile.lapisOre.id, 6, (r) => r.nextInt(16) + r.nextInt(16)],
+    ];
+    for (const [times, tile, count, yOf] of ores) {
+      for (let i = 0; i < times; i++) {
+        const x = xo + random.nextInt(16);
+        const y = yOf(random); // C++ 的 x、y、z 按书写顺序依次取随机数
+        const z = zo + random.nextInt(16);
+        new OreFeature(tile, count).place(level, random, x, y, z);
+      }
+    }
+    const ss = f(0.5);
+    const oFor = Math.trunc(f(f(f(f(this.forestNoise.getValue(f(xo * ss), f(zo * ss))) / 8) + f(random.nextFloat() * 4) + 4) / 3));
+    let forests = 0;
+    if (random.nextInt(10) === 0) forests += 1;
+    if (biome === BiomeClass.forest) forests += oFor + 2;
+    if (biome === BiomeClass.rainForest) forests += oFor + 2;
+    if (biome === BiomeClass.seasonalForest) forests += oFor + 1;
+    if (biome === BiomeClass.taiga) {
+      forests += oFor + 1;
+    }
+    if (biome === BiomeClass.desert) forests -= 20;
+    if (biome === BiomeClass.tundra) forests -= 20;
+    if (biome === BiomeClass.plains) forests -= 20;
+    for (let i = 0; i < forests; i++) {
+      const x = xo + random.nextInt(16) + 8;
+      const z = zo + random.nextInt(16) + 8;
+      const y = level.getHeightmap(x, z);
+      const tree = biome.getTreeFeature(random);
+      if (tree) {
+        tree.init(1, 1, 1);
+        tree.place(level, random, x, y, z);
+      }
+    }
+    for (let i = 0; i < 2; i++) {
+      const x = xo + random.nextInt(16) + 8;
+      const y = random.nextInt(128);
+      const z = zo + random.nextInt(16) + 8;
+      new FlowerFeature(Tile.flower.id).place(level, random, x, y, z);
+    }
+    if (random.nextInt(2) === 0) {
+      const x = xo + random.nextInt(16) + 8;
+      const y = random.nextInt(128);
+      const z = zo + random.nextInt(16) + 8;
+      new FlowerFeature(Tile.rose.id).place(level, random, x, y, z);
+    }
+    if (random.nextInt(4) === 0) {
+      const x = xo + random.nextInt(16) + 8;
+      const y = random.nextInt(128);
+      const z = zo + random.nextInt(16) + 8;
+      new FlowerFeature(Tile.mushroom1.id).place(level, random, x, y, z);
+    }
+    if (random.nextInt(8) === 0) {
+      const x = xo + random.nextInt(16) + 8;
+      const y = random.nextInt(128);
+      const z = zo + random.nextInt(16) + 8;
+      new FlowerFeature(Tile.mushroom2.id).place(level, random, x, y, z);
+    }
+    let grassCount = 0;
+    if (biome === BiomeClass.forest) {
+      grassCount = 2;
+    } else if (biome === BiomeClass.rainForest) {
+      grassCount = 10;
+    } else if (biome === BiomeClass.seasonalForest) {
+      grassCount = 2;
+    } else if (biome === BiomeClass.taiga) {
+      grassCount = 1;
+    } else if (biome === BiomeClass.plains) {
+      grassCount = 10;
+    }
+    for (let i = 0; i < grassCount; i++) {
+      let grassMetadata = TallGrass.TALL_GRASS;
+      if (biome === BiomeClass.rainForest && random.nextInt(3) !== 0) {
+        grassMetadata = TallGrass.FERN;
+      }
+      const x = xo + random.nextInt(16) + 8;
+      const z = zo + random.nextInt(16) + 8;
+      const y = level.getHeightmap(x, z);
+      new TallgrassFeature(Tile.tallgrass.id, grassMetadata).place(level, random, x, y, z);
+    }
+    for (let i = 0; i < 10; i++) {
+      const x = xo + random.nextInt(16) + 8;
+      const y = random.nextInt(128);
+      const z = zo + random.nextInt(16) + 8;
+      new ReedsFeature().place(level, random, x, y, z);
+    }
+    let cacti = 0;
+    if (biome === BiomeClass.desert) cacti += 5;
+    for (let i = 0; i < cacti; i++) {
+      const x = xo + random.nextInt(16) + 8;
+      const y = random.nextInt(128);
+      const z = zo + random.nextInt(16) + 8;
+      new CactusFeature().place(level, random, x, y, z);
+    }
+    for (let i = 0; i < 50; i++) {
+      const x = xo + random.nextInt(16) + 8;
+      const y = random.nextInt(random.nextInt(120) + 8);
+      const z = zo + random.nextInt(16) + 8;
+      new SpringFeature(Tile.water.id).place(level, random, x, y, z);
+    }
+    for (let i = 0; i < 20; i++) {
+      const x = xo + random.nextInt(16) + 8;
+      const y = random.nextInt(random.nextInt(random.nextInt(112) + 8) + 8);
+      const z = zo + random.nextInt(16) + 8;
+      new SpringFeature(Tile.lava.id).place(level, random, x, y, z);
+    }
+    if (this.spawnMobs && !level.isClientSide) (MobSpawnerHooks.postProcessSpawnMobs as unknown as (l: Level, b: Biome, xo: number, zo: number, w: number, h: number, r: Random) => void)(level, biome, xo + 8, zo + 8, 16, 16, random) // 由 MobSpawner 注入（ADAPTED(ESM)）;
+    const temperatures = level.getBiomeSource()!.getTemperatureBlock(null, xo + 8, zo + 8, 16, 16);
+    for (let x = xo + 8; x < xo + 8 + 16; x++)
+      for (let z = zo + 8; z < zo + 8 + 16; z++) {
+        const xp = x - (xo + 8);
+        const zp = z - (zo + 8);
+        const y = level.getTopSolidBlock(x, z);
+        const temp = f(temperatures[xp * 16 + zp]! - f(f(f(y - 64) / f(64.0)) * RandomLevelSource.SNOW_SCALE));
+        if (temp < RandomLevelSource.SNOW_CUTOFF) {
+          if (y > 0 && y < 128 && level.isEmptyTile(x, y, z) && level.getMaterial(x, y - 1, z).blocksMotion()) {
+            if (level.getMaterial(x, y - 1, z) !== Material.ice) level.setTile(x, y, z, Tile.topSnow.id);
+          }
+        }
+      }
+    heavyTileClass().instaFall = false;
+    level.isGeneratingTerrain = false;
   }
 
   tick(): boolean {
@@ -541,3 +712,12 @@ export class RandomLevelSource extends ChunkSource {
 //   `.cpp` 里唯一那处 `return new PerformanceTestChunkSource(level);` 是被注释掉的。
 //   （`FlatChunkSource::create` 的注释里提到过它：那个 create 的写法就是照抄它。）
 //   按 TASK-C 的清单不移植。
+
+/**
+ * HeavyTile::instaFall（静态）。不能值导入 HeavyTile：HeavyTile → FallingTile extends Entity，而 RandomLevelSource 正处在
+ * Entity 的加载链里（Entity → … → Level → Dimension → RandomLevelSource），会得到“Class extends value undefined”。
+ * Tile.sand 就是 HeavyTile 的实例（Tile.cpp:173），经它的构造函数读写同一个静态字段（ADAPTED(ESM)）。
+ */
+function heavyTileClass(): { instaFall: boolean } {
+  return Tile.sand.constructor as unknown as { instaFall: boolean };
+}

@@ -1,4 +1,5 @@
 // 1:1 移植自 src/client/player/input/KeyboardInput.h 与 KeyboardInput.cpp：按选项里的键位把按键映射成移动输入
+import { Recipe } from '@mcpe/world';
 import type { Player } from '@mcpe/world';
 import { OptionId, type Options } from '../../Options';
 import { IMoveInput } from './IMoveInput';
@@ -44,7 +45,7 @@ export class KeyboardInput extends IMoveInput {
     this.wantUp = this.wantDown = false;
   }
 
-  override tick(_player: Player | null): void {
+  override tick(player: Player | null): void {
     this.xa = 0;
     this.ya = 0;
     if (this.keys[KeyboardInput.KEY_UP]) this.ya++;
@@ -60,8 +61,8 @@ export class KeyboardInput extends IMoveInput {
     this.wantUp = this.jumping;
     this.wantDown = this.sneaking;
     if (this.keys[KeyboardInput.KEY_CRAFT]) {
-      // DEFERRED(Crafting): player->startCrafting((int)player->x, (int)player->y, (int)player->z, Recipe::SIZE_2X2);
-      // （setKey 从不设置 KEY_CRAFT，这句实际走不到）
+      player!.startCrafting(Math.trunc(player!.x), Math.trunc(player!.y), Math.trunc(player!.z), Recipe.SIZE_2X2);
+      // 原样：setKey 从不设置 KEY_CRAFT，这句实际走不到
     }
   }
 }

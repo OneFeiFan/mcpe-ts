@@ -5,7 +5,7 @@
  * 【B4b 补齐】原先 OMIT(NBT) 的 10 个函数已按 C++ 移植：LevelData(CompoundTag*)、createTag×2、
  *   setTagData、getTagData、setPlayerTag、getLoadedPlayerTag、setLoadedPlayerTag、
  *   v1_write/v1_read（TS 名 v1Write/v1Read，与方法命名惯例一致）。
- *   仍 OMIT 的只剩 setLoadedPlayerTo(Player)，它依赖 PlayerData::loadPlayer，后者本身是 OMIT(Player)。
+ *   setLoadedPlayerTo(Player) 与 PlayerData::loadPlayer 在“读档恢复玩家”这一步补上。
  *
  * 【ADAPTED(Cpp)】C++ 的拷贝构造写成构造函数的一个重载 new LevelData(rhs)，operator= 写成 assign(rhs)。
  *   重载的 createTag(const std::vector<Player*>&) 按 R10 命名成 createTagForPlayers。
@@ -220,7 +220,10 @@ export class LevelData {
     this.loadedPlayerTag = playerTag;
   }
 
-  // OMIT(Player): setLoadedPlayerTo(p)  LevelData.cpp:257 —— 依赖 PlayerData::loadPlayer，后者是 OMIT(Player)
+  /** C++ `void LevelData::setLoadedPlayerTo(Player* p)`：只有旧版（v1）存档才用 PlayerData 恢复玩家 */
+  setLoadedPlayerTo(p: Player): void {
+    if (this.playerDataVersion === 1) this.playerData.loadPlayer(p);
+  }
 
   // ---- 取值 ----
 

@@ -7,9 +7,14 @@
  *   按 C++ 的 float 语义逐位计算：参数与中间结果 fround，比较用 float 常量（例如 0.95f 比 0.95 略小，
  *   直接和 double 比较会在边界上选错群系）。天空颜色、草色只影响画面，按 JS 数值计算。
  *
- * 【OMIT】getTreeFeature、getGrassFeature（地物系统未移植），子类里的重写一并 OMIT。
+ * getTreeFeature、getGrassFeature 与子类的重写在“地物生成”这一步移植。
  * 【DEFERRED】recalc 里把沙漠、冰原的地表换成沙子的两行：sand 未注册。移植 HeavyTile（沙子）时恢复。
  */
+import type { Random } from '@mcpe/util';
+import { TallGrass } from '../tile/TallGrass';
+import type { Feature } from '../levelgen/feature/Feature';
+import { TreeFeature } from '../levelgen/feature/TreeFeature';
+import { TallgrassFeature } from '../levelgen/feature/TallgrassFeature';
 import { LOGE } from '@mcpe/platform';
 import { Color, f2i, Mth, WeighedRandomItem } from '@mcpe/util';
 import { MobTypes } from '../../entity/EntityTypes';
@@ -197,8 +202,18 @@ export class Biome {
       Biome[name] = unregistered<Biome>('Biome', name);
   }
 
-  // OMIT(LevelgenFeature): getTreeFeature(random)  Biome.cpp:144
-  // OMIT(LevelgenFeature): getGrassFeature(random)  Biome.cpp:151
+  /** C++ `Feature* Biome::getTreeFeature(Random*)`：原样保留——先取一次 nextInt(10)（原来返回 BasicTree 的分支被注释掉，成了空的 if） */
+  getTreeFeature(random: Random): Feature | null {
+    if (random.nextInt(10) === 0) {
+      // return new BasicTree(false); // temporarily disabled（C++ 原注释）
+    }
+    return new TreeFeature(false);
+  }
+
+  /** C++ `Feature* Biome::getGrassFeature(Random*)` */
+  getGrassFeature(_random: Random): Feature | null {
+    return new TallgrassFeature(Tile.tallgrass.id, TallGrass.TALL_GRASS);
+  }
 
   static getBiome(temperature: number, downfall: number): Biome {
     const a = f2i(f(f(temperature) * 63));

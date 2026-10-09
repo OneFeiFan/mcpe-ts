@@ -16,6 +16,10 @@ export const PRELOAD: readonly string[] = [
   'terrain.png',
   'misc/grasscolor.png',
   'misc/foliagecolor.png',
+  // 天空与云（LevelRenderer.renderSky / renderClouds）
+  'environment/clouds.png',
+  'terrain/sun.png',
+  'terrain/moon.png',
   // S13：Gui 与 Font
   'gui/gui.png',
   'gui/icons.png',

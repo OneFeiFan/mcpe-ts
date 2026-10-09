@@ -25,7 +25,7 @@ CXX="${CXX:-g++}"
 JOBS="${JOBS:-$(nproc 2>/dev/null || echo 4)}"
 
 # ---- 选择性生成：不给节名就全生成，给了就只生成这几节 ----
-ALL_SECTIONS=(random mth util s4 synth biomesource optionsfile registry nbt i18n inventory entity collision explosion font regionfile leveldata playerdata saveleveldata chunk entities randomlevelsource model pathfinder mobai)
+ALL_SECTIONS=(random mth util s4 synth biomesource optionsfile registry nbt i18n inventory entity collision explosion font regionfile leveldata playerdata saveleveldata chunk entities randomlevelsource model pathfinder mobai features recipes basictree)
 SECTIONS=("$@")
 if [ "${#SECTIONS[@]}" -gt 0 ] && [ "${SECTIONS[0]}" = "--list" ]; then
     printf '%s\n' "${ALL_SECTIONS[@]}"
@@ -132,7 +132,7 @@ fi
 
 # 诊断用：撞到 ud2 陷阱桩时打印地址。放在 $TMP 而不是 $REG —— 因为 collision 与 leveldata
 # 只需要这一个文件，不需要 $REG 那 30 个方块/物品类，放 $REG 会白编一大堆。
-if any_want registry nbt i18n inventory entity collision explosion font leveldata playerdata saveleveldata chunk entities randomlevelsource model pathfinder mobai; then
+if any_want registry nbt i18n inventory entity collision explosion font leveldata playerdata saveleveldata chunk entities randomlevelsource model pathfinder mobai features recipes basictree; then
     "$CXX" -c "$ROOT/tools/golden/stub/sigill_diag.cpp" -o "$TMP/sigill_diag.oo"
 fi
 
@@ -141,12 +141,12 @@ fi
 # 链接前先收集未定义符号，生成"陷阱替身"：被调用就执行 ud2（SIGILL），从而暴露真正需要的依赖；
 # RakNet 的构造函数在静态初始化里被调用，替身直接返回。
 REG="$TMP/reg"
-if any_want registry nbt i18n inventory entity font; then
+if any_want registry nbt i18n inventory entity font recipes; then
     mkdir -p "$REG"
     RSRC=(world/level/material/Material.cpp world/level/tile/*.cpp world/item/*.cpp locale/I18n.cpp nbt/Tag.cpp util/Mth.cpp util/StringUtils.cpp
           util/DataIO.cpp world/Direction.cpp world/level/LightLayer.cpp world/level/GrassColor.cpp world/level/FoliageColor.cpp
           world/level/LevelConstants.cpp world/phys/HitResult.cpp platform/time.cpp world/inventory/FillingContainer.cpp
-          world/entity/player/Inventory.cpp world/item/crafting/Recipe.cpp world/entity/Entity.cpp world/entity/item/ItemEntity.cpp)
+          world/entity/player/Inventory.cpp world/item/crafting/*.cpp world/entity/Entity.cpp world/entity/item/ItemEntity.cpp)
     # 通配符要在 $REF/src 里展开（所以这里不能给 ${RSRC[@]} 加引号）；
     # $REG 的目标名用 basename，保持与串行版本一致，免得改动链接顺序。
     rsrc_pairs=()
@@ -166,6 +166,10 @@ if want registry; then
     "$REG/harness_registry" "$TMP/registry_a.json" 2>/dev/null
     MALLOC_PERTURB_=165 "$REG/harness_registry" "$TMP/registry_b.json" 2>/dev/null
     node "$ROOT/tools/golden/merge-uninit.mjs" "$TMP/registry_a.json" "$TMP/registry_b.json" "$OUT/registry.json"
+fi
+if want recipes; then
+    build_with_stubs harness_recipes
+    "$REG/harness_recipes" "$OUT/recipes.json" 2>/dev/null
 fi
 if want nbt; then
     build_with_stubs harness_nbt
@@ -188,7 +192,7 @@ fi
 
 # ---- S12：碰撞轨迹（G12-2）。要用真实的 Level：world、nbt、locale、util 下的全部源码另建一组目标文件
 LVL="$TMP/lvl"
-if any_want collision explosion leveldata playerdata saveleveldata chunk entities randomlevelsource pathfinder mobai; then
+if any_want collision explosion leveldata playerdata saveleveldata chunk entities randomlevelsource pathfinder mobai features basictree; then
     mkdir -p "$LVL"
     lvl_pairs=()
     while IFS= read -r f; do lvl_pairs+=("$f" "${f//\//_}"); done < <(cd "$REF/src" && { find world nbt locale util -name '*.cpp' ! -name 'PerfRenderer.cpp'; echo platform/time.cpp; })
@@ -228,6 +232,26 @@ if want mobai; then
     "$CXX" -c "$MAI/stubs.s" -o "$MAI/stubs.oo"
     "$CXX" -no-pie -o "$MAI/harness_mobai" "$MAI/harness_mobai.oo" "$MAI"/*.o "$MAI/stubs.oo" "$TMP/sigill_diag.oo"
     "$MAI/harness_mobai" "$OUT/mobai.json" 2>/dev/null
+fi
+
+# ---- 地物生成（G17-1）：RandomLevelSource::postProcess，经真实 Level 的 ChunkCache 触发。和 collision 同一组 $LVL 目标文件
+if want features; then
+    "$CXX" "${CF[@]}" -c "$ROOT/tools/golden/harness_features.cpp" -o "$LVL/harness_features.oo"
+    { "$CXX" -o /dev/null "$LVL/harness_features.oo" "$LVL"/*.o -Wl,--no-demangle 2>&1 || true; } | grep -oE "undefined reference to \`[^']+'" \
+      | sed "s/undefined reference to \`//; s/'$//" | sort -u \
+      | awk 'BEGIN{print ".section .note.GNU-stack,\"\",@progbits"; print ".text"} {b = ($0 ~ /RakNet/) ? "ret" : "ud2"; printf ".globl %s\n.type %s,@function\n%s:\n  %s\n", $0, $0, $0, b}' > "$LVL/featstubs.s"
+    "$CXX" -c "$LVL/featstubs.s" -o "$LVL/featstubs.oo"
+    "$CXX" -no-pie -o "$LVL/harness_features" "$LVL/harness_features.oo" "$LVL"/*.o "$LVL/featstubs.oo" "$TMP/sigill_diag.oo"
+    "$LVL/harness_features" "$OUT/features.json" 2>/dev/null
+fi
+if want basictree; then
+    "$CXX" "${CF[@]}" -c "$ROOT/tools/golden/harness_basictree.cpp" -o "$LVL/harness_basictree.oo"
+    { "$CXX" -o /dev/null "$LVL/harness_basictree.oo" "$LVL"/*.o -Wl,--no-demangle 2>&1 || true; } | grep -oE "undefined reference to \`[^']+'" \
+      | sed "s/undefined reference to \`//; s/'$//" | sort -u \
+      | awk 'BEGIN{print ".section .note.GNU-stack,\"\",@progbits"; print ".text"} {b = ($0 ~ /RakNet/) ? "ret" : "ud2"; printf ".globl %s\n.type %s,@function\n%s:\n  %s\n", $0, $0, $0, b}' > "$LVL/btstubs.s"
+    "$CXX" -c "$LVL/btstubs.s" -o "$LVL/btstubs.oo"
+    "$CXX" -no-pie -o "$LVL/harness_basictree" "$LVL/harness_basictree.oo" "$LVL"/*.o "$LVL/btstubs.oo" "$TMP/sigill_diag.oo"
+    "$LVL/harness_basictree" "$OUT/basictree.json" 2>/dev/null
 fi
 
 # ---- S-D3：爆炸。和 collision 同一组 $LVL 目标文件（同样要用真实 Level）

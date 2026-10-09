@@ -249,3 +249,21 @@
 35. **“死代码”也照移植，但要写清依据。** 这一版的新 AI（goal 系统）因为 `Level::setZombieAi` 的调用被注释掉而永远不运行；
     箱子的 ChestRenderer 因为 `rendererId = TR_CHEST_RENDERER` 被注释掉而永远不用。移植它们，在文件头写明是哪一行、哪个文件让它们不生效，
     并用单元测试直接驱动来验证它们本身是对的。
+
+## I. 地物生成（教训）
+
+36. **harness 里要先 `Mth::initMth()`。** C++ 的 `Mth::sin/cos` 查一张 65536 项的表，只有 NinecraftApp::init 会填它；harness 不调用时表全是 0，
+    `Mth::sin` 恒为 0——生成的是“假世界”。地物黄金样本第一次对不上就是这个原因（TS 的测试辅助会调 Mth.initMth，两边不一致）。
+    同一个地物里 C 库的 `sin`（double）和 `Mth::sin`（查表 float）可能混用（ClayFeature 用前者、OreFeature 用后者），照原样区分。
+37. **静态字段跨类时，避开会形成加载循环的值导入。** RandomLevelSource 要设 `HeavyTile::instaFall`，但值导入 HeavyTile → FallingTile extends Entity，
+    而 RandomLevelSource 正处在 Entity 的加载链里。经实例的构造函数访问静态字段（`Tile.sand.constructor`，sand 就是 HeavyTile 实例）。
+38. **随机数的取用顺序就是 C++ 的书写顺序。** postProcess 里每个地物都是 `x = …nextInt; y = …nextInt; z = …nextInt;` 再 place；
+    合并循环时也要保持这个顺序，否则后面所有地物都会错位（G17-1 用整片区块的哈希兜底）。
+
+## J. 非虚函数（重生 bug 教我的）
+
+39. **C++ 的非虚成员函数，在 TS 里不能靠“同名覆盖”表达。** `Entity::_init`、`Mob::_init`、`Player::_init` 在 C++ 里都**不是 virtual**：
+    `Entity::reset()` 里的 `_init()` 静态绑定到 `Entity::_init`。TS 里写成同名方法就自动变成“虚”的——`Entity.reset` 的 `this._init()`
+    派发到 `Player._init`，`Entity._init`（清 removed、onFire、fallDistance）从不执行，玩家重生后仍是“已移除”、isAlive 为假。
+    做法：父类里调用非虚函数时写 `Entity.prototype._init.call(this)`（构造函数里早就这么写了，reset 里漏了）。
+    检查办法：头文件里没有 `virtual` 的同名函数，在每个调用点都要问“C++ 这里绑定的是哪个类的版本”。

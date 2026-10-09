@@ -1,10 +1,13 @@
 /**
  * 1:1 移植自 src/client/gui/screens/ScreenChooser.h 与 ScreenChooser.cpp（S13 阶段 C 起，陆续补齐）。
- * 部分：已移植物品选择界面（默认菜单风格 0 → Touch::IngameBlockSelectionScreen）、暂停界面、
- *   起始菜单（B8c → Touch::StartMenuScreen）、选世界界面（B8d-3 → Touch::SelectWorldScreen）。
- *   加入游戏、按 IP 加入、控制台界面，以及菜单风格非 0 时的经典界面都未移植（DEFERRED(Gui)），
- *   createScreen 对它们返回 null ——与 C++ 走到 default 分支相同。
+ * 菜单风格 0：触屏版的起始菜单、选世界、物品选择；风格 1、2：经典版（StartMenuScreen、ClassicSelectWorldScreen、
+ *   IngameBlockSelectionScreen）。暂停界面与控制台两种风格相同。加入游戏、按 IP 加入是联机界面（DEFERRED(Network)），
+ *   createScreen 对它们返回 null——与 C++ 走到 default 分支相同。
  */
+import { ConsoleScreen } from './ConsoleScreen';
+import { IngameBlockSelectionScreen } from './IngameBlockSelectionScreen';
+import { ClassicSelectWorldScreen } from './SelectWorldScreen';
+import { StartMenuScreen } from './StartMenuScreen';
 import type { Minecraft } from '../../Minecraft';
 import { OptionId } from '../../Options';
 import type { Screen } from '../Screen';
@@ -51,14 +54,39 @@ export class ScreenChooser {
         case ScreenId.SCREEN_BLOCKSELECTION:
           screen = new TouchIngameBlockSelectionScreen();
           break;
-        // DEFERRED(Gui): SCREEN_JOINGAME、SCREEN_JOINBYIP、SCREEN_CONSOLE
+        case ScreenId.SCREEN_CONSOLE:
+          screen = new ConsoleScreen();
+          break;
+        // DEFERRED(Network): SCREEN_JOINGAME、SCREEN_JOINBYIP（联机界面）
         default:
           break;
       }
     } else {
-      // 经典菜单风格：暂停界面相同；其余（StartMenuScreen、IngameBlockSelectionScreen 等）DEFERRED(Gui)
-      if (id === ScreenId.SCREEN_PAUSE) screen = new PauseScreen(false);
-      else if (id === ScreenId.SCREEN_PAUSEPREV) screen = new PauseScreen(true);
+      // 经典菜单风格（1 = Xperia、2 = Java）：StartMenuScreen、SelectWorldScreen、IngameBlockSelectionScreen（经典版，
+      // TS 里选世界界面导出为 ClassicSelectWorldScreen）。暂停界面两种风格相同。
+      switch (id) {
+        case ScreenId.SCREEN_STARTMENU:
+          screen = new StartMenuScreen();
+          break;
+        case ScreenId.SCREEN_SELECTWORLD:
+          screen = new ClassicSelectWorldScreen();
+          break;
+        case ScreenId.SCREEN_PAUSE:
+          screen = new PauseScreen(false);
+          break;
+        case ScreenId.SCREEN_PAUSEPREV:
+          screen = new PauseScreen(true);
+          break;
+        case ScreenId.SCREEN_BLOCKSELECTION:
+          screen = new IngameBlockSelectionScreen();
+          break;
+        case ScreenId.SCREEN_CONSOLE:
+          screen = new ConsoleScreen();
+          break;
+        // DEFERRED(Network): SCREEN_JOINGAME、SCREEN_JOINBYIP（联机界面）
+        default:
+          break;
+      }
     }
     return screen;
   }

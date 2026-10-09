@@ -8,9 +8,10 @@
  *
  * 部分（都是本项目尚未移植的东西，一行一个）：
  *   - “加入游戏”：`minecraft->locateMultiplayer()` 与 SCREEN_JOINGAME 都是联机（OMIT(Network)）；
- *   - “选项”：OptionsScreen 未移植（DEFERRED(Gui)）。
+ *   - “选项”：打开 OptionsScreen（选项界面这一步起）。
  *   两处都点了没反应，按钮照画。
  */
+import { OptionsScreen } from './OptionsScreen';
 import { Common } from '@mcpe/core';
 import { Mth } from '@mcpe/util';
 import type { Minecraft } from '../../Minecraft';
@@ -111,7 +112,7 @@ export class TouchStartMenuScreen extends Screen {
       // DEFERRED(Gui): minecraft->screenChooser.setScreen(SCREEN_JOINGAME);（加入游戏界面未移植）
     }
     if (button.id === this.bOptions.id) {
-      // DEFERRED(Gui): minecraft->setScreen(new OptionsScreen());（选项界面未移植）
+      this.minecraft.setScreen(new OptionsScreen());
     }
     if (button === this.bQuit) {
       this.minecraft.quit();

@@ -9,8 +9,10 @@
  *    雾按视空间的 |z| 做 LINEAR、EXP 或 EXP2 混合（与常见的 GLES1 实现及 Emscripten 的 GL 模拟相同）。
  *  - GL_FLAT 用 GLSL ES 3.00 的 flat 变量，取三角形最后一个顶点的颜色，与 GLES1 相同；所以要两套程序（平滑、平直）。
  *  - 深度、剔除、混合、裁剪、视口、清屏直接用 WebGL 的原生状态。
- *  - 光照（glLightfv、glLightModelfv、LIGHTING、LIGHT0/1、COLOR_MATERIAL、NORMALIZE）只保存状态，计算 DEFERRED(GLLighting)：
- *    分支的区块渲染不开光照，只有物品与实体用到。
+ *  - 光照（“画面”这一步补上）：GLES1 固定管线的逐顶点漫反射光照，两盏方向光（LIGHT0/1，位置在 glLightfv 时按当时的
+ *    MODELVIEW 变换到视空间，与 GL 规范相同）+ 全局环境光（glLightModelfv）。COLOR_MATERIAL（默认 AMBIENT_AND_DIFFUSE）时
+ *    材质的环境与漫反射取顶点色；否则用 GL 默认材质（环境 0.2、漫反射 0.8）。法线用 MODELVIEW 左上 3×3 的逆转置变换并归一化。
+ *    没有镜面反射：分支把 specular 设为 0。区块渲染不开光照，只有物品与实体用到。
  *
  * 无头模式：构造时传 null，只维护状态与矩阵、不画任何东西，供 Node 里的单测使用。
  */
@@ -77,6 +79,7 @@ interface ArrayPointer {
 const ATTR_POS = 0;
 const ATTR_UV = 1;
 const ATTR_COLOR = 2;
+const ATTR_NORMAL = 3;
 
 function identity(): Float32Array {
   const m = new Float32Array(16);
@@ -102,9 +105,17 @@ const VS = (flat: boolean) => `#version 300 es
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec2 aUV;
 layout(location = 2) in vec4 aColor;
+layout(location = 3) in vec3 aNormal;
 uniform mat4 uModelView;
 uniform mat4 uProjection;
 uniform mat4 uTexMatrix;
+uniform bool uLighting;
+uniform bool uColorMaterial;
+uniform vec4 uModelAmbient;
+uniform bool uLightOn[2];
+uniform vec4 uLightPos[2];
+uniform vec4 uLightDiffuse[2];
+uniform vec4 uLightAmbient[2];
 out vec2 vUV;
 ${flat ? 'flat ' : ''}out vec4 vColor;
 out float vFogDist;
@@ -112,7 +123,20 @@ void main() {
   vec4 eye = uModelView * vec4(aPos, 1.0);
   gl_Position = uProjection * eye;
   vUV = (uTexMatrix * vec4(aUV, 0.0, 1.0)).xy;
-  vColor = aColor;
+  if (uLighting) {
+    vec4 matAmbient = uColorMaterial ? aColor : vec4(0.2, 0.2, 0.2, 1.0);
+    vec4 matDiffuse = uColorMaterial ? aColor : vec4(0.8, 0.8, 0.8, 1.0);
+    vec3 n = normalize(transpose(inverse(mat3(uModelView))) * aNormal);
+    vec3 c = uModelAmbient.rgb * matAmbient.rgb;
+    for (int i = 0; i < 2; i++) {
+      if (!uLightOn[i]) continue;
+      vec3 l = uLightPos[i].w == 0.0 ? normalize(uLightPos[i].xyz) : normalize(uLightPos[i].xyz - eye.xyz);
+      c += uLightAmbient[i].rgb * matAmbient.rgb + uLightDiffuse[i].rgb * matDiffuse.rgb * max(dot(n, l), 0.0);
+    }
+    vColor = vec4(clamp(c, 0.0, 1.0), matDiffuse.a);
+  } else {
+    vColor = aColor;
+  }
   vFogDist = abs(eye.z);
 }`;
 
@@ -183,8 +207,16 @@ export class GLES1 {
   fogDensity = 1;
   readonly fogColor = new Float32Array(4);
   texEnvMode = GL_MODULATE;
-  /** 只保存，不参与计算：DEFERRED(GLLighting) */
+  /** glLightfv / glLightModelfv 收到的原始参数（调试与单测用） */
   readonly lightState = new Map<string, Float32Array>();
+  /** 两盏灯：位置（视空间，glLightfv 时已乘 MODELVIEW）、漫反射、环境光；GL 默认值 */
+  readonly lights = [0, 1].map((i) => ({
+    position: new Float32Array([0, 0, 1, 0]),
+    diffuse: new Float32Array(i === 0 ? [1, 1, 1, 1] : [0, 0, 0, 1]),
+    ambient: new Float32Array([0, 0, 0, 1]),
+  }));
+  /** GL_LIGHT_MODEL_AMBIENT 的 GL 默认值 */
+  readonly modelAmbient = new Float32Array([0.2, 0.2, 0.2, 1]);
   readonly viewport = new Int32Array(4);
 
   // ---- 顶点数组
@@ -251,9 +283,40 @@ export class GLES1 {
       'uFogEnd',
       'uFogDensity',
       'uFogColor',
+      'uLighting',
+      'uColorMaterial',
+      'uModelAmbient',
+      'uLightOn[0]',
+      'uLightOn[1]',
+      'uLightPos[0]',
+      'uLightPos[1]',
+      'uLightDiffuse[0]',
+      'uLightDiffuse[1]',
+      'uLightAmbient[0]',
+      'uLightAmbient[1]',
     ])
       u[n] = gl.getUniformLocation(program, n);
     return { program, u };
+  }
+
+  // ================================================================ 光照
+  /** glLightfv：GL_POSITION 按当前 MODELVIEW 变换到视空间（GL 规范）；GL_DIFFUSE / GL_AMBIENT 原样保存 */
+  setLight(light: number, pname: number, params: ArrayLike<number>): void {
+    this.lightState.set(`${light}:${pname}`, new Float32Array(params));
+    const L = this.lights[light - GL_LIGHT0];
+    if (!L) return;
+    if (pname === 0x1203) {
+      const m = this.stacks[0]![this.stacks[0]!.length - 1]!;
+      const v = [params[0] ?? 0, params[1] ?? 0, params[2] ?? 0, params[3] ?? 0];
+      for (let r = 0; r < 4; r++) L.position[r] = m[r]! * v[0]! + m[4 + r]! * v[1]! + m[8 + r]! * v[2]! + m[12 + r]! * v[3]!;
+    } else if (pname === 0x1201) L.diffuse.set(Array.from(params).slice(0, 4));
+    else if (pname === 0x1200) L.ambient.set(Array.from(params).slice(0, 4));
+  }
+
+  /** glLightModelfv：只用到 GL_LIGHT_MODEL_AMBIENT */
+  setLightModel(pname: number, params: ArrayLike<number>): void {
+    this.lightState.set(`model:${pname}`, new Float32Array(params));
+    if (pname === 0x0b53) this.modelAmbient.set(Array.from(params).slice(0, 4));
   }
 
   // ================================================================ 开关
@@ -517,6 +580,15 @@ export class GLES1 {
     gl.uniform1f(u.uFogEnd!, this.fogEnd);
     gl.uniform1f(u.uFogDensity!, this.fogDensity);
     gl.uniform4fv(u.uFogColor!, this.fogColor);
+    gl.uniform1i(u.uLighting!, this.emulatedEnabled.has(GL_LIGHTING) ? 1 : 0);
+    gl.uniform1i(u.uColorMaterial!, this.emulatedEnabled.has(GL_COLOR_MATERIAL) ? 1 : 0);
+    gl.uniform4fv(u.uModelAmbient!, this.modelAmbient);
+    for (let i = 0; i < 2; i++) {
+      gl.uniform1i(u[`uLightOn[${i}]`]!, this.emulatedEnabled.has(GL_LIGHT0 + i) ? 1 : 0);
+      gl.uniform4fv(u[`uLightPos[${i}]`]!, this.lights[i]!.position);
+      gl.uniform4fv(u[`uLightDiffuse[${i}]`]!, this.lights[i]!.diffuse);
+      gl.uniform4fv(u[`uLightAmbient[${i}]`]!, this.lights[i]!.ambient);
+    }
 
     const bindAttr = (array: number, loc: number, fallback: () => void) => {
       const p = this.arrays.get(array)!;
@@ -541,6 +613,7 @@ export class GLES1 {
     bindAttr(GL_COLOR_ARRAY, ATTR_COLOR, () =>
       gl.vertexAttrib4f(ATTR_COLOR, this.color[0]!, this.color[1]!, this.color[2]!, this.color[3]!),
     );
+    bindAttr(GL_NORMAL_ARRAY, ATTR_NORMAL, () => gl.vertexAttrib3f(ATTR_NORMAL, this.normal[0]!, this.normal[1]!, this.normal[2]!));
     gl.drawArrays(mode, first, count);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.get(this.boundArrayBuffer) ?? null);
   }

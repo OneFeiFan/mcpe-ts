@@ -4,6 +4,7 @@
  *   raknetInstance 在网页单机版为 null，所以“退出并复制地图”“服务器可见”两个按钮与 C++ 一样不加入。
  * “回到标题”（Minecraft::leaveGame）B8f 接上了。
  */
+import { OptionsScreen } from './OptionsScreen';
 import { OptionId } from '../../Options';
 import { Button, TButton } from '../components/Button';
 import { ImageDef, IntRectangle, OptionButton } from '../components/ImageButton';
@@ -134,7 +135,7 @@ export class PauseScreen extends Screen {
       this.minecraft.leaveGame(true);
     }
     if (button.id === this.bOptions!.id) {
-      // DEFERRED(Gui): minecraft->setScreen(new OptionsScreen());（选项界面未移植）
+      this.minecraft.setScreen(new OptionsScreen());
     }
     if (button.id === this.bServerVisibility!.id) {
       // DEFERRED(Network): 切换服务器是否接受连接

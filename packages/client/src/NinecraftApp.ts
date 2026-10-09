@@ -7,6 +7,7 @@
  * 【OMIT】teardown（只被析构函数调用）、restartServer、handleBack、updateStats、testCreationAndDestruction、testJoiningAndDestruction。
  * 构建开关：_EMSCRIPTEN_（单下划线）没有定义，所以 initGLStates 里的 glHint 照常调用（WebGL 下是空操作）。
  */
+import { UsernameScreen } from './gui/screens/UsernameScreen';
 import { I18n } from '@mcpe/locale';
 import { SharedConstants } from '@mcpe/core';
 import { Mouse, Multitouch } from '@mcpe/platform';
@@ -90,7 +91,7 @@ export class NinecraftApp extends Minecraft {
     // 否则初值 true 会让玩家还没进世界就锁住光标（详见 Screen.setScreen 的实现）。
     if (this.options.getBooleanValue(OptionId.OPTIONS_FIRST_LAUNCH)) {
       this.options.toggle(OptionId.OPTIONS_FIRST_LAUNCH);
-      // DEFERRED(Gui): setScreen(new UsernameScreen());
+      this.setScreen(new UsernameScreen());
     }
   }
 

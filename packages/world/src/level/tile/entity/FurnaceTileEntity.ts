@@ -1,10 +1,10 @@
 /**
  * 1:1 移植自 src/world/level/tile/entity/FurnaceTileEntity.h 与 FurnaceTileEntity.cpp（S12 阶段 A，部分移植）。
  * ADAPTED(Cpp)：C++ 是 TileEntity 与 Container 的多重继承；这里 extends TileEntity、implements Container（见 Container.ts）。
- * 部分：熔炉配方（FurnaceRecipes，合成系统，计划外）DEFERRED(Crafting)——在它移植之前，任何原料的烧制结果都是空，
- *   canBurn 恒为 false，所以熔炉不会点燃；FurnaceTile::setLit（FurnaceTile 由你在阶段 B 移植）DEFERRED(Tile)，阶段 C 恢复。
+ * 熔炉配方（FurnaceRecipes）在合成系统这一步移植；FurnaceTile::setLit（FurnaceTile 由你在阶段 B 移植）DEFERRED(Tile)，阶段 C 恢复。
  * C++ 的 ItemInstance items[3] 是按值存放的数组：这里用 3 个 ItemInstance 对象，赋值时复制（items[slot] = *item）。
  */
+import { FurnaceRecipes } from '../../../item/crafting/FurnaceRecipes';
 import { LOGE } from '@mcpe/platform';
 import {
   type CompoundTag,
@@ -190,8 +190,7 @@ export class FurnaceTileEntity extends TileEntity implements Container {
 
   burn(): void {
     if (!this.canBurn()) return;
-    // DEFERRED(Crafting): ItemInstance result = FurnaceRecipes::getInstance()->getResult(items[0].getItem()->id);
-    const result = new ItemInstance();
+    const result = FurnaceRecipes.getInstance().getResult(this.items[0]!.getItem()!.id);
     if (this.items[2]!.isNull()) this.items[2] = new ItemInstance(result);
     else if (this.items[2]!.id === result.id) this.items[2]!.count++;
     if (--this.items[0]!.count <= 0) this.items[0]!.setNull();
@@ -214,8 +213,7 @@ export class FurnaceTileEntity extends TileEntity implements Container {
   /*private*/
   private canBurn(): boolean {
     if (this.items[FurnaceTileEntity.SLOT_INGREDIENT]!.isNull()) return false;
-    // DEFERRED(Crafting): ItemInstance burnResult = FurnaceRecipes::getInstance()->getResult(items[SLOT_INGREDIENT].getItem()->id);
-    const burnResult = new ItemInstance();
+    const burnResult = FurnaceRecipes.getInstance().getResult(this.items[FurnaceTileEntity.SLOT_INGREDIENT]!.getItem()!.id);
     if (burnResult.isNull()) return false;
     const res = this.items[FurnaceTileEntity.SLOT_RESULT]!;
     if (res.isNull()) return true;

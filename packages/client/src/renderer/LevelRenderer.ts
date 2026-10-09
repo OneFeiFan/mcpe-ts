@@ -65,8 +65,20 @@ import {
   GL_TEXTURE_COORD_ARRAY,
   glEnableClientState2,
   glDisableClientState2,
+  GL_CULL_FACE,
+  GL_TRIANGLE_FAN,
+  drawArrayVT,
+  glColor4f,
+  glDisable,
+  glEnable,
+  glPopMatrix,
+  glPushMatrix,
+  glRotatef,
+  glScalef,
+  glBlendFunc,
+  glTranslatef,
 } from './gles';
-import { Item, ParticleType } from '@mcpe/world';
+import { Item, LevelEvent, ParticleType } from '@mcpe/world';
 import { BreakingItemParticle } from '../particle/BreakingItemParticle';
 import { BubbleParticle } from '../particle/BubbleParticle';
 import { CritParticle2 } from '../particle/CritParticle2';
@@ -77,6 +89,7 @@ import { RedDustParticle } from '../particle/RedDustParticle';
 import { SmokeParticle } from '../particle/SmokeParticle';
 import { RenderList } from './RenderList';
 import { Tesselator } from './Tesselator';
+import { Lighting } from './Lighting';
 import type { Textures } from './Textures';
 import { TileRenderer } from './TileRenderer';
 
@@ -92,6 +105,8 @@ const PARTICLE_NAME_BY_ID: readonly string[] = (() => {
   for (const [k, v] of Object.entries(ParticleType)) out[v as number] = k;
   return out;
 })();
+
+const f = Math.fround;
 
 export class LevelRenderer extends LevelListener {
   static readonly CHUNK_SIZE = 16; // 没有定义 GFX_SMALLER_CHUNKS
@@ -861,7 +876,18 @@ export class LevelRenderer extends LevelListener {
     this.cullStep++;
   }
 
-  // OMIT(Sky): skyColorChanged()  LevelRenderer.cpp:980
+  /** C++ `void LevelRenderer::skyColorChanged()`：天色变了，受天空光照的区块全部标脏重建 */
+  override skyColorChanged(): void {
+    for (let i = 0; i < this.chunksLength; i++) {
+      const c = this.chunks![i]!;
+      if (c.skyLit) {
+        if (!c.isDirty()) {
+          this.dirtyChunks.push(c);
+          c.setDirty();
+        }
+      }
+    }
+  }
   renderEntities(cam: Vec3, culler: Culler, a: number): void {
     if (this.noEntityRenderFrames > 0) {
       this.noEntityRenderFrames--;
@@ -925,9 +951,284 @@ export class LevelRenderer extends LevelListener {
   gatherStats2(): string {
     return `E: ${this.renderedEntities}/${this.totalEntities}. B: ${this.culledEntities}, I: ${this.totalEntities - this.culledEntities - this.renderedEntities}\n`;
   }
-  // OMIT(Sky): renderSky(alpha)  LevelRenderer.cpp:1130
-  // OMIT(Clouds): renderClouds(alpha)  LevelRenderer.cpp:1263
-  // OMIT(Clouds): renderAdvancedClouds(alpha)  LevelRenderer.cpp:1317
+  /**
+   * C++ `void LevelRenderer::renderSky(float alpha)`（LevelRenderer.cpp:1130）：天空平面（雾里的天空色）、日出日落的扇形光晕、太阳、月亮、星星、
+   * 以及 Beta 天空时的下方“虚空”平面。只有“美丽天空”选项开着才画日月星辰和光晕。
+   * 原样保留：
+   *   - 太阳月亮前 `glTranslatef(sc.x, sc.y, sc.z)`——拿天空**颜色**当平移量（C++ 原句）；
+   *   - glPushMatrix 在“美丽天空”分支里、glPopMatrix 在分支外（选项关着时 pop 不配对，C++ 同）；
+   *   - 天空平面只在 OPENGL_ES 构建里画（Web 构建是 ES，照画）；
+   *   - 光晕的 `t.color(c[0], c[1], c[2], 0.0f)` 之后各顶点共用这个颜色。
+   */
+  renderSky(alpha: number): void {
+    const mc = this.mc;
+    const level = this.level!;
+    if (mc.level!.dimension!.foggy) return;
+    glDisable2(GL_TEXTURE_2D);
+    const sc = level.getSkyColor(mc.cameraTargetPlayer!, alpha);
+    let sr = f(sc.x);
+    let sg = f(sc.y);
+    let sb = f(sc.z);
+    if (mc.options.getBooleanValue(OptionId.OPTIONS_ANAGLYPH_3D)) {
+      const srr = f(f(f(f(sr * 30.0) + f(sg * 59.0)) + f(sb * 11.0)) / 100.0);
+      const sgg = f(f(f(sr * 30.0) + f(sg * 70.0)) / 100.0);
+      const sbb = f(f(f(sr * 30.0) + f(sb * 70.0)) / 100.0);
+      sr = srr;
+      sg = sgg;
+      sb = sbb;
+    }
+    glColor4f2(sr, sg, Mth.Min(1.0, sb), 1);
+    const t = Tesselator.instance;
+    if (mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY)) {
+      glDepthMask(false);
+    }
+    glEnable2(GL_FOG);
+    glColor4f2(sr, sg, sb, 1.0);
+    drawArrayVT(this.skyBuffer, this.skyVertexCount); // #ifdef OPENGL_ES
+    glDisable(GL_FOG);
+    glDisable(GL_ALPHA_TEST);
+    if (mc.options.getBooleanValue(OptionId.OPTIONS_BEAUTIFUL_SKY)) {
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      Lighting.turnOff();
+      const c = level.dimension!.getSunriseColor(level.getTimeOfDay(alpha), alpha);
+      if (c !== null) {
+        glDisable(GL_TEXTURE_2D);
+        glPushMatrix();
+        glRotatef(90.0, 1.0, 0.0, 0.0);
+        glRotatef(level.getTimeOfDay(alpha) > f(0.5) ? 180 : 0, 0.0, 0.0, 1.0);
+        t.begin(GL_TRIANGLE_FAN);
+        t.color(c[0]!, c[1]!, c[2]!, c[3]!);
+        t.vertex(0.0, 100.0, 0.0);
+        t.color(c[0]!, c[1]!, c[2]!, 0.0);
+        const steps = 16;
+        for (let i = 0; i <= steps; i++) {
+          const a = f(f(f(i * f(3.1415927)) * 2.0) / steps);
+          const sin = Mth.sin(a);
+          const cos = Mth.cos(a);
+          t.vertex(f(sin * 120.0), f(cos * 120.0), f(f(f(-cos * 40.0)) * c[3]!));
+        }
+        t.draw();
+        glPopMatrix();
+      }
+      glEnable(GL_TEXTURE_2D);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+      glPushMatrix();
+      glColor4f(1.0, 1.0, 1.0, 1.0);
+      glTranslatef(sc.x, sc.y, sc.z);
+      glRotatef(0.0, 0.0, 0.0, 1.0);
+      glRotatef(f(level.getTimeOfDay(alpha) * 360.0), 1.0, 0.0, 0.0);
+      let ss = 30.0;
+      this.textures!.loadAndBindTexture('terrain/sun.png');
+      t.begin();
+      t.vertexUV(-ss, 100.0, -ss, 0.0, 0.0);
+      t.vertexUV(ss, 100.0, -ss, 1.0, 0.0);
+      t.vertexUV(ss, 100.0, ss, 1.0, 1.0);
+      t.vertexUV(-ss, 100.0, ss, 0.0, 1.0);
+      t.draw();
+      ss = 20.0;
+      this.textures!.loadAndBindTexture('terrain/moon.png');
+      t.begin();
+      t.vertexUV(-ss, -100.0, ss, 1.0, 1.0);
+      t.vertexUV(ss, -100.0, ss, 0.0, 1.0);
+      t.vertexUV(ss, -100.0, -ss, 0.0, 0.0);
+      t.vertexUV(-ss, -100.0, -ss, 1.0, 0.0);
+      t.draw();
+      glDisable(GL_TEXTURE_2D);
+      const a = level.getStarBrightness(alpha);
+      if (a > 0.0) {
+        glColor4f(a, a, a, a);
+        drawArrayVT(this.starBuffer, this.starVertexCount);
+      }
+    }
+    glColor4f(1.0, 1.0, 1.0, 1.0);
+    glDisable(GL_BLEND);
+    glEnable(GL_ALPHA_TEST);
+    glEnable(GL_FOG);
+    glPopMatrix(); // 原样：push 在上面的 if 分支里
+    glColor4f(f(f(sc.x * f(0.2)) + f(0.04)), f(f(sc.y * f(0.2)) + f(0.04)), f(f(sc.z * f(0.6)) + f(0.1)), 1.0);
+    glDisable(GL_TEXTURE_2D);
+    if (mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY)) {
+      drawArrayVT(this.voidBuffer, this.voidVertexCount);
+    }
+    glEnable(GL_TEXTURE_2D);
+    if (mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY)) {
+      glDepthMask(true);
+    }
+  }
+
+  /**
+   * C++ `void LevelRenderer::renderClouds(float alpha)`（LevelRenderer.cpp:1263）：PE 的平面云——一大片 512×512 的贴图平面，
+   * 高度 128，随时间往 +x 漂（每刻 0.03 格）。“高画质 + Beta 天空”时改画立体云（renderAdvancedClouds）。
+   * 原样保留：t.begin() 之后用 t.endOverrideAndDraw() 收尾（没有 beginOverride）。
+   */
+  renderClouds(alpha: number): void {
+    const mc = this.mc;
+    if (mc.options.getBooleanValue(OptionId.OPTIONS_FANCY_GRAPHICS) && mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY)) {
+      this.renderAdvancedClouds(alpha);
+      return;
+    }
+    const player = mc.player!;
+    glEnable2(GL_TEXTURE_2D);
+    glDisable(GL_CULL_FACE);
+    const yOffs = f(player.yOld + f((player.y - player.yOld) * alpha));
+    const s = 32;
+    const d = Math.trunc(256 / s);
+    const t = Tesselator.instance;
+    this.textures!.loadAndBindTexture('environment/clouds.png');
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    const cc = this.level!.getCloudColor(alpha);
+    const cr = f(cc.x);
+    const cg = f(cc.y);
+    const cb = f(cc.z);
+    const scale = f(1 / 2048.0);
+    const time = f(this.ticks + alpha);
+    let xo = f(f(player.xo + f((player.x - player.xo) * alpha)) + f(time * f(0.03)));
+    let zo = f(player.zo + f((player.z - player.zo) * alpha));
+    const xOffs = Mth.floor(f(xo / 2048));
+    const zOffs = Mth.floor(f(zo / 2048));
+    xo = f(xo - xOffs * 2048);
+    zo = f(zo - zOffs * 2048);
+    const yy = f(f(128 - yOffs) + f(0.33));
+    const uo = f(xo * scale);
+    const vo = f(zo * scale);
+    t.begin();
+    t.color(cr, cg, cb, f(0.8));
+    for (let xx = -s * d; xx < +s * d; xx += s) {
+      for (let zz = -s * d; zz < +s * d; zz += s) {
+        t.vertexUV(xx, yy, zz + s, f(f(xx * scale) + uo), f(f((zz + s) * scale) + vo));
+        t.vertexUV(xx + s, yy, zz + s, f(f((xx + s) * scale) + uo), f(f((zz + s) * scale) + vo));
+        t.vertexUV(xx + s, yy, zz, f(f((xx + s) * scale) + uo), f(f(zz * scale) + vo));
+        t.vertexUV(xx, yy, zz, f(f(xx * scale) + uo), f(f(zz * scale) + vo));
+      }
+    }
+    t.endOverrideAndDraw();
+    glColor4f(1, 1, 1, 1.0);
+    glDisable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
+  }
+
+  /** C++ `void LevelRenderer::renderAdvancedClouds(float alpha)`（LevelRenderer.cpp:1317）：立体云（6×6 块、每块 8×8 格、厚 4），两遍：先只写深度，再画颜色 */
+  renderAdvancedClouds(alpha: number): void {
+    const mc = this.mc;
+    const player = mc.player!;
+    glDisable(GL_CULL_FACE);
+    const px = f(player.xOld + f((player.x - player.xOld) * alpha));
+    const py = f(player.yOld + f((player.y - player.yOld) * alpha));
+    const pz = f(player.zOld + f((player.z - player.zOld) * alpha));
+    const t = Tesselator.instance;
+    const ss = f(12.0);
+    const h = f(4.0);
+    const cloudTime = f(this.ticks + alpha);
+    let xo = f(f(px + f(cloudTime * f(0.03))) / ss);
+    let zo = f(f(pz / ss) + f(0.33));
+    const yy = f(f(108.0 - py) + f(0.33));
+    const xWraps = Mth.floor(xo / 2048.0);
+    const zWraps = Mth.floor(zo / 2048.0);
+    xo = f(xo - xWraps * 2048);
+    zo = f(zo - zWraps * 2048);
+    this.textures!.loadAndBindTexture('environment/clouds.png');
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    const cc = this.level!.getCloudColor(alpha);
+    const cr = f(cc.x);
+    const cg = f(cc.y);
+    const cb = f(cc.z);
+    const uvScale = f(1.0 / 256.0);
+    const uo = f(Mth.floor(xo) * uvScale);
+    const vo = f(Mth.floor(zo) * uvScale);
+    const xOffs = f(xo - Mth.floor(xo));
+    const zOffs = f(zo - Mth.floor(zo));
+    const D = 8;
+    const radius = 3;
+    const e = f(1.0 / 1024.0);
+    const U = (v: number): number => f(f(v * uvScale) + uo);
+    const V = (v: number): number => f(f(v * uvScale) + vo);
+    glPushMatrix();
+    glScalef(ss, 1.0, ss);
+    for (let pass = 0; pass < 2; pass++) {
+      if (pass === 0) glColorMask(false, false, false, false);
+      else glColorMask(true, true, true, true);
+      for (let xPos = -radius + 1; xPos <= radius; xPos++) {
+        for (let zPos = -radius + 1; zPos <= radius; zPos++) {
+          t.begin();
+          const xx = xPos * D;
+          const zz = zPos * D;
+          const xp = f(xx - xOffs);
+          const zp = f(zz - zOffs);
+          if (yy > f(-h - 1.0)) {
+            t.color(f(cr * f(0.7)), f(cg * f(0.7)), f(cb * f(0.7)), f(0.8));
+            t.normal(0.0, -1.0, 0.0);
+            t.vertexUV(f(xp + 0), f(yy + 0), f(zp + D), U(xx + 0), V(zz + D));
+            t.vertexUV(f(xp + D), f(yy + 0), f(zp + D), U(xx + D), V(zz + D));
+            t.vertexUV(f(xp + D), f(yy + 0), f(zp + 0), U(xx + D), V(zz + 0));
+            t.vertexUV(f(xp + 0), f(yy + 0), f(zp + 0), U(xx + 0), V(zz + 0));
+          }
+          if (yy <= f(h + 1.0)) {
+            t.color(cr, cg, cb, f(0.8));
+            t.normal(0.0, 1.0, 0.0);
+            const top = f(f(yy + h) - e);
+            t.vertexUV(f(xp + 0), top, f(zp + D), U(xx + 0), V(zz + D));
+            t.vertexUV(f(xp + D), top, f(zp + D), U(xx + D), V(zz + D));
+            t.vertexUV(f(xp + D), top, f(zp + 0), U(xx + D), V(zz + 0));
+            t.vertexUV(f(xp + 0), top, f(zp + 0), U(xx + 0), V(zz + 0));
+          }
+          t.color(f(cr * f(0.9)), f(cg * f(0.9)), f(cb * f(0.9)), f(0.8));
+          if (xPos > -1) {
+            t.normal(-1.0, 0.0, 0.0);
+            for (let i = 0; i < D; i++) {
+              const x = f(f(xp + i) + 0);
+              const u = U(f(f(xx + i) + f(0.5)));
+              t.vertexUV(x, f(yy + 0), f(zp + D), u, V(zz + D));
+              t.vertexUV(x, f(yy + h), f(zp + D), u, V(zz + D));
+              t.vertexUV(x, f(yy + h), f(zp + 0), u, V(zz + 0));
+              t.vertexUV(x, f(yy + 0), f(zp + 0), u, V(zz + 0));
+            }
+          }
+          if (xPos <= 1) {
+            t.normal(1.0, 0.0, 0.0);
+            for (let i = 0; i < D; i++) {
+              const x = f(f(f(xp + i) + 1) - e);
+              const u = U(f(f(xx + i) + f(0.5)));
+              t.vertexUV(x, f(yy + 0), f(zp + D), u, V(zz + D));
+              t.vertexUV(x, f(yy + h), f(zp + D), u, V(zz + D));
+              t.vertexUV(x, f(yy + h), f(zp + 0), u, V(zz + 0));
+              t.vertexUV(x, f(yy + 0), f(zp + 0), u, V(zz + 0));
+            }
+          }
+          t.color(f(cr * f(0.8)), f(cg * f(0.8)), f(cb * f(0.8)), f(0.8));
+          if (zPos > -1) {
+            t.normal(0.0, 0.0, -1.0);
+            for (let i = 0; i < D; i++) {
+              const z = f(f(zp + i) + 0);
+              const v = V(f(f(zz + i) + f(0.5)));
+              t.vertexUV(f(xp + 0), f(yy + h), z, U(xx + 0), v);
+              t.vertexUV(f(xp + D), f(yy + h), z, U(xx + D), v);
+              t.vertexUV(f(xp + D), f(yy + 0), z, U(xx + D), v);
+              t.vertexUV(f(xp + 0), f(yy + 0), z, U(xx + 0), v);
+            }
+          }
+          if (zPos <= 1) {
+            t.normal(0.0, 0.0, 1.0);
+            for (let i = 0; i < D; i++) {
+              const z = f(f(f(zp + i) + 1) - e);
+              const v = V(f(f(zz + i) + f(0.5)));
+              t.vertexUV(f(xp + 0), f(yy + h), z, U(xx + 0), v);
+              t.vertexUV(f(xp + D), f(yy + h), z, U(xx + D), v);
+              t.vertexUV(f(xp + D), f(yy + 0), z, U(xx + D), v);
+              t.vertexUV(f(xp + 0), f(yy + 0), z, U(xx + 0), v);
+            }
+          }
+          t.endOverrideAndDraw();
+        }
+      }
+    }
+    glPopMatrix();
+    glColor4f(1.0, 1.0, 1.0, 1.0);
+    glDisable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
+  }
   /**
    * C++ `LevelRenderer::playSound(name, x, y, z, volume, pitch)`（LevelRenderer.cpp:1453）——
    * `Level.playSound` 在**客户端**的这一端（另外两处 OMIT 是同一条重载的重复记录）。
@@ -1064,7 +1365,19 @@ export class LevelRenderer extends LevelListener {
     EntityRenderDispatcher.getInstance().onGraphicsReset();
   }
   // OMIT(Entity): takePicture(cam, entity)  LevelRenderer.cpp:1641
-  // OMIT(Sound): levelEvent(player, type, x, y, z, data)  LevelRenderer.cpp:1669
+  /** C++ `void LevelRenderer::levelEvent(Player*, int type, int x, int y, int z, int data)`：只处理开关门的声音（一半概率开门声、一半关门声） */
+  override levelEvent(_player: Player | null, type: number, x: number, y: number, z: number, _data: number): void {
+    const level = this.level!;
+    switch (type) {
+      case LevelEvent.SOUND_OPEN_DOOR:
+        if (Mth.random() < f(0.5)) {
+          level.playSound(f(x + 0.5), f(y + 0.5), f(z + 0.5), 'random.door_open', 1, f(f(level.random.nextFloat() * f(0.1)) + f(0.9)));
+        } else {
+          level.playSound(f(x + 0.5), f(y + 0.5), f(z + 0.5), 'random.door_close', 1, f(f(level.random.nextFloat() * f(0.1)) + f(0.9)));
+        }
+        break;
+    }
+  }
 
   private getLinearCoord(x: number, y: number, z: number): number {
     return (z * this.yChunks + y) * this.xChunks + x;
