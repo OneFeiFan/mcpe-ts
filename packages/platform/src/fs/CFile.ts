@@ -102,11 +102,21 @@ export class CFile {
     let buf = this.vfs.getBuffer(this.path) ?? new Uint8Array(0);
     const end = this.pos + total;
     if (end > buf.length) {
-      // 新分配的部分全是 0 —— 正好就是 C 在空洞处补 0 的语义
-      const grown = new Uint8Array(end);
-      grown.set(buf, 0);
-      buf = grown;
-      this.vfs.setBuffer(this.path, buf); // 数组换了，交回给 VirtualFS 并标脏
+      // 审核性能：以前每次追加都按新长度整块重新分配再拷贝，逐字段写文件（RegionFile、NBT）是 O(n²)，
+      // 进 demo 世界有 90% 以上的时间耗在这里。现在底层 ArrayBuffer 按两倍扩容，交给 VirtualFS 的是
+      // 长度恰为文件长度的视图（getBuffer().length 仍等于文件长度）。
+      const oldLen = buf.length;
+      const capacity = buf.buffer.byteLength - buf.byteOffset;
+      if (end <= capacity) {
+        buf = new Uint8Array(buf.buffer, buf.byteOffset, end); // 同一块内存，视图变长
+        // 底层内存里旧长度之后的字节可能不是 0（例如文件曾被截短），C 在空洞处补 0：只需清 [oldLen, pos)，[pos, end) 马上会被写
+        if (this.pos > oldLen) buf.fill(0, oldLen, this.pos);
+      } else {
+        const grown = new Uint8Array(Math.max(end, oldLen * 2, 64));
+        grown.set(buf, 0); // 新分配的内存全是 0，正好是 C 在空洞处补 0 的语义
+        buf = grown.subarray(0, end);
+      }
+      this.vfs.setBuffer(this.path, buf); // 视图换了，交回给 VirtualFS 并标脏
     } else {
       this.vfs.markDirty(this.path); // 原地改写，数组没换
     }

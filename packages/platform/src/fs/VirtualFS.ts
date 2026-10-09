@@ -280,7 +280,9 @@ export class VirtualFS {
     }
     for (const p of [...this.dirty]) {
       const data = this.files.get(p);
-      if (data !== undefined) await this.backend.put(p, data);
+      // 文件字节可能是更大 ArrayBuffer 上的视图（CFile 按两倍扩容）；结构化克隆会把整块 ArrayBuffer 都存进去，所以先裁成恰好的长度
+      if (data !== undefined)
+        await this.backend.put(p, data.byteLength === data.buffer.byteLength ? data : data.slice());
       this.dirty.delete(p);
     }
   }
