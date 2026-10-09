@@ -35,6 +35,10 @@ with sync_playwright() as p:
             # 跑到世界时间 = 目标值（原版暂停时存进 level.dat 的 Time，用 leveltime.py 读出）
             n = page.evaluate("(t) => { const a = window.__app; let i = 0; while (a.level && a.level.getTime() < t && i < 100000) { a.tick(0, 0); ++i; } return [i, a.level ? a.level.getTime() : -1]; }", st[1])
             print('ticks_to', st[1], '→ 跑了', n[0], '刻，世界时间', n[1])
+        elif k == 'look':
+            pass  # TS 侧的视角用 set_rot 直接设置（无头浏览器里没有指针锁定）
+        elif k == 'set_rot':
+            page.evaluate("([pitch, yawDelta]) => { const p = window.__app.player; p.xRot = p.xRotO = pitch; p.yRot = p.yRotO = p.yRot + yawDelta; }", [st[1], st[2] if len(st) > 2 else 0])
         elif k == 'settle':
             left = page.evaluate("""() => { const a = window.__app, lr = a.levelRenderer;
               if (lr && a.player) for (let i = 0; i < 2000 && lr.dirtyChunks.length; ++i) lr.updateDirtyChunks(a.player, true);
