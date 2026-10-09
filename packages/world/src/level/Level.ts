@@ -14,6 +14,7 @@
  * 【三档规则】tickTiles 的随机数（_randValue 的线性同余）按 int 回绕；其余是方块逻辑与渲染用的颜色，按 JS 数值计算。
  * 【C++ 的未初始化字段】difficulty 没有初始化（由 Minecraft 设置），这里取 0。
  */
+import { TileEntity } from './tile/entity/TileEntity';
 import { Difficulty } from '../Difficulty';
 import { MobSpawnerData } from './biome/Biome';
 import type { MobCategory } from '../entity/MobCategory';
@@ -51,7 +52,6 @@ import { Material } from './material/Material';
 import { LevelData } from './storage/LevelData';
 import type { LevelStorage } from './storage/LevelStorage';
 import { TickDataSet, TickNextTickData } from './TickNextTickData';
-import type { TileEntity } from './tile/entity/TileEntity';
 import { LiquidTile } from './tile/LiquidTile';
 import { Tile } from './tile/Tile';
 
@@ -1575,7 +1575,8 @@ export class Level implements LevelSource {
   removeTileEntity(x: number, y: number, z: number): void {
     const te = this.getTileEntity(x, y, z);
     if (te && this.updatingTileEntities) {
-      te.setRemoved();
+      // C++ 的 setRemoved 不是 virtual，这里经 TileEntity* 调用的是 TileEntity::setRemoved（ChestTileEntity 的同名函数不会被执行）
+      TileEntity.prototype.setRemoved.call(te);
       Util.remove(this.pendingTileEntities, te);
     } else {
       const lc = this.getChunk(x >> 4, z >> 4);

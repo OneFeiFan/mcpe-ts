@@ -311,7 +311,8 @@ export abstract class Player extends Mob {
     } else {
       this.playerHasRespawnPosition = true;
     }
-    this.respawnPosition = respawnPosition;
+    // C++ 的成员是 Pos respawnPosition（按值），这里复制一份（审核 V1）
+    this.respawnPosition = new Pos(respawnPosition.x, respawnPosition.y, respawnPosition.z);
   }
 
   override isShootable(): boolean {

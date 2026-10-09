@@ -30,7 +30,7 @@ export class BasicTree extends Feature {
   private height = 0;
   private trunkHeight = 0;
   private trunkHeightScale = f(0.618);
-  private branchDensity = 1.0;
+  protected branchDensity = 1.0;
   private branchSlope = f(0.381);
   private widthScale = 1.0;
   private foliageDensity = 1.0;
@@ -308,4 +308,3 @@ export class BasicTree extends Feature {
     return true;
   }
 }
-void (BasicTree.prototype as unknown as { branchDensity: unknown });

@@ -3,7 +3,7 @@
  * 每行一个 CItem：九宫格底框（选中时换一张）、右侧物品图标、左侧名字、右下角背包里已有的数量；不能合成的行用暗色字。
  * 竖直列表锁 X、水平列表锁 Y。字体 f 由使用它的界面设置（C++ 构造函数不初始化）。
  */
-import type { ItemInstance, Recipe } from '@mcpe/world';
+import { ItemInstance, type Recipe } from '@mcpe/world';
 import type { Font } from '../Font';
 import { ItemRenderer } from '../../renderer/entity/ItemRenderer';
 import { GL_SCISSOR_TEST, glDisable2, glEnable2, glScissor } from '../../renderer/gles';
@@ -43,7 +43,7 @@ export class CItem {
   private _canCraft = false;
 
   constructor(ins: ItemInstance, recipe: Recipe, text: string) {
-    this.item = ins;
+    this.item = new ItemInstance(ins); // C++ 的成员是 ItemInstance item（按值），复制一份（审核 V2）
     this.recipe = recipe;
     this.text = text;
     this.sortText = text;

@@ -14,8 +14,8 @@ import { Screen } from '../Screen';
 export class UsernameScreen extends Screen {
   private _btnDone = new TButton(0, 'Done');
   private tUsername = new TextBox(0, 'Username');
-  private _input = '';
-  private _cursorBlink = 0;
+  protected _input = '';
+  protected _cursorBlink = 0;
 
   protected override initScreen(): void {
     this._input = '';
@@ -83,4 +83,3 @@ export class UsernameScreen extends Screen {
     super.render(xm, ym, a);
   }
 }
-void (UsernameScreen.prototype as unknown as { _input: unknown; _cursorBlink: unknown });

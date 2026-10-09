@@ -22,12 +22,12 @@ export abstract class BaseContainerScreen extends Screen {
   override tick(): void {
     super.tick();
     const p = this.minecraft.player!;
-    if (!p.isAlive() || p.removed) (p as unknown as { closeContainer(): void }).closeContainer();
+    if (!p.isAlive() || p.removed) p.closeContainer();
   }
 
   protected override keyPressed(eventKey: number): void {
     if (eventKey === Keyboard.KEY_ESCAPE) {
-      (this.minecraft.player! as unknown as { closeContainer(): void }).closeContainer();
+      this.minecraft.player!.closeContainer();
     } else {
       super.keyPressed(eventKey);
     }

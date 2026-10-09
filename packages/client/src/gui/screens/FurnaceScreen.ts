@@ -57,7 +57,7 @@ export class FurnaceScreen extends BaseContainerScreen implements IInventoryPane
   private lastBurnTypeId = 0;
   private guiBackground: NinePatchLayer | null = null;
   private guiSlot: NinePatchLayer | null = null;
-  private guiSlotMarked: NinePatchLayer | null = null;
+  protected guiSlotMarked: NinePatchLayer | null = null;
   private guiSlotMarker: NinePatchLayer | null = null;
   private guiPaneFrame: NinePatchLayer | null = null;
   private player: Player;
@@ -199,7 +199,7 @@ export class FurnaceScreen extends BaseContainerScreen implements IInventoryPane
   protected override buttonClicked(button: Button): void {
     const slot = button.id;
     if (button === this.btnClose) {
-      (this.minecraft.player! as unknown as { closeContainer(): void }).closeContainer();
+      this.minecraft.player!.closeContainer();
     }
     if (slot >= FurnaceTileEntity.SLOT_INGREDIENT && slot <= FurnaceTileEntity.SLOT_RESULT) {
       const oldSlot = this.selectedSlot;
@@ -388,4 +388,3 @@ export class FurnaceScreen extends BaseContainerScreen implements IInventoryPane
     return newSize !== oldSize;
   }
 }
-void (FurnaceScreen.prototype as unknown as { guiSlotMarked: unknown }).guiSlotMarked;

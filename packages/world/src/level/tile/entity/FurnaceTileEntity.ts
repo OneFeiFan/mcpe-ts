@@ -22,6 +22,7 @@ import { Tile } from '../Tile';
 import { TileEntity, TileEntityType } from './TileEntity';
 
 export class FurnaceTileEntity extends TileEntity implements Container {
+  // OMIT(Tile): void setContainerChanged()  FurnaceTileEntity.h（只有声明、没有定义，也没有调用者；审核补登记）
   private static readonly BURN_INTERVAL = 10 * 20;
   private static readonly NumItems = 3;
   static readonly SLOT_INGREDIENT = 0;

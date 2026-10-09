@@ -40,15 +40,15 @@ function quadraticInOut(t: number, dur: number, start: number, stop: number): nu
 
 export class ClassicWorldSelectionList extends RolledSelectionListH {
   selectedItem = 0;
-  private _height: number;
+  protected _height: number;
   levels: LevelSummaryList = [];
   private _descriptions: StringVector[] = [];
   private _imageNames: string[] = [];
   hasPickedLevel = false;
   pickedLevel: LevelSummary | null = null;
-  private stoppedTick = -1;
+  protected stoppedTick = -1;
   private currentTick = 0;
-  private accRatio = 0;
+  protected accRatio = 0;
   private mode = 0;
   private td = new TweenData();
 
@@ -372,4 +372,3 @@ export class ClassicSelectWorldScreen extends Screen {
     super.keyPressed(eventKey);
   }
 }
-void (ClassicWorldSelectionList.prototype as unknown as { _height: unknown; stoppedTick: unknown; accRatio: unknown });

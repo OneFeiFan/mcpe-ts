@@ -196,6 +196,10 @@ export class ChestTileEntity extends FillingContainerMixin(TileEntity) {
     this.level!.tileEvent(this.x, this.y, this.z, ChestTile.EVENT_SET_OPEN_COUNT, this.openCount);
   }
 
+  /**
+   * C++ `void ChestTileEntity::setRemoved()`。原样保留：TileEntity::setRemoved 不是 virtual，而 Level 与 LevelChunk
+   * 都经 TileEntity* 调用它，所以这个版本在原版里从不执行（TS 的两个调用点写成了 TileEntity.prototype.setRemoved.call）。
+   */
   override setRemoved(): void {
     this.clearCache();
     this.checkNeighbors();

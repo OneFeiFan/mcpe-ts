@@ -8,9 +8,8 @@
  *   ③ 文字画在 `y + 11`（ImageButton 是 16 / 17 / 16）。
  *
  * 【构造函数里那两次 setupDefault 是有意的】C++ 里 `setupDefault()` 是虚函数，`ImageButton` 的构造函数
- * 会调一次（那时对象还是 ImageButton，走基类版本），`LargeImageButton` 的构造函数再调一次（这时才走
- * 派生版本，把尺寸改成 72×72）。TS 的虚函数在构造函数里就会派发到派生版本，所以第一次调用进去的
- * 就是派生版本 —— 结果一样（尺寸被设两遍），但过程不同，写在这里免得以后有人以为是笔误。
+ * 调一次（那时对象还是 ImageButton，走基类版本：48×48、scaleWhenPressed = true），`LargeImageButton` 的构造函数再调一次
+ * （这时才走派生版本，把尺寸改成 72×72）。TS 的基类构造函数里写成 `ImageButton.prototype.setupDefault.call(this)`，过程与 C++ 相同。
  */
 import { Mth } from '@mcpe/util';
 import type { Minecraft } from '../../Minecraft';

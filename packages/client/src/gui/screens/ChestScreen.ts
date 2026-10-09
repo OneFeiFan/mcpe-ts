@@ -32,7 +32,7 @@ const ItemSize = Math.trunc(BlockPixels + 2 * BorderPixels);
 const Bx = 10;
 const By = 6;
 
-/** 背包与箱子共有的 FillingContainer 接口（C++ 的 upcast<FillingContainer>） */
+/** 背包与箱子共有的 FillingContainer 方法（C++ 的 upcast<FillingContainer>）；两个类都由 FillingContainer 混入得到，结构上都满足它 */
 type FillingLike = {
   getNumLinkedSlots(): number;
   getItem(slot: number): ItemInstance | null;
@@ -77,13 +77,13 @@ export class ChestScreen extends BaseContainerScreen implements IInventoryPaneCa
   private inventoryItems: (ItemInstance | null)[] = [];
   private chestItems: (ItemInstance | null)[] = [];
   private doRecreatePane = false;
-  private selectedSlot = -1;
+  protected selectedSlot = -1;
   private guiBackground: NinePatchLayer | null = null;
   private guiSlot: NinePatchLayer | null = null;
-  private guiSlotMarked: NinePatchLayer | null = null;
+  protected guiSlotMarked: NinePatchLayer | null = null;
   private guiSlotMarker: NinePatchLayer | null = null;
   private guiPaneFrame: NinePatchLayer | null = null;
-  private player: Player;
+  protected player: Player;
   private chest: ChestTileEntity;
 
   constructor(player: Player, chest: ChestTileEntity) {
@@ -133,7 +133,7 @@ export class ChestScreen extends BaseContainerScreen implements IInventoryPaneCa
   }
 
   private containerFor(pane: InventoryPane): FillingLike {
-    return (pane === this.inventoryPane ? this.minecraft.player!.inventory : this.chest) as unknown as FillingLike;
+    return pane === this.inventoryPane ? this.minecraft.player!.inventory : this.chest;
   }
 
   private handleRenderPane(pane: InventoryPane | null, t: Tesselator, xm: number, ym: number, a: number): void {
@@ -200,7 +200,7 @@ export class ChestScreen extends BaseContainerScreen implements IInventoryPaneCa
 
   protected override buttonClicked(button: Button): void {
     if (button === this.btnClose) {
-      (this.minecraft.player! as unknown as { closeContainer(): void }).closeContainer();
+      this.minecraft.player!.closeContainer();
     }
   }
 
@@ -209,7 +209,7 @@ export class ChestScreen extends BaseContainerScreen implements IInventoryPaneCa
     const slotIndex = itemIndex + itemOffset;
     const item = from.getItem(slotIndex);
     let added = false;
-    const fromChest = from === (this.chest as unknown as FillingLike);
+    const fromChest = from === this.chest;
     const pane = fromChest ? this.chestPane! : this.inventoryPane!;
     const toPane = fromChest ? this.inventoryPane! : this.chestPane!;
     let wantedCount = item && !item.isNull() ? Math.trunc((item.count * statics.percent) / 100) : 0;
@@ -245,8 +245,8 @@ export class ChestScreen extends BaseContainerScreen implements IInventoryPaneCa
 
   addItem(forPane: InventoryPane, itemIndex: number): boolean {
     const l2r = forPane === this.inventoryPane;
-    const inv = this.minecraft.player!.inventory as unknown as FillingLike;
-    const chest = this.chest as unknown as FillingLike;
+    const inv: FillingLike = this.minecraft.player!.inventory;
+    const chest: FillingLike = this.chest;
     return this.handleAddItem(l2r ? inv : chest, l2r ? chest : inv, itemIndex);
   }
 
@@ -295,7 +295,7 @@ export class ChestScreen extends BaseContainerScreen implements IInventoryPaneCa
   }
 
   /** C++ 的 drawSlotItemAt（这一版没有调用方） */
-  private drawSlotItemAt(t: Tesselator, item: ItemInstance | null, x: number, y: number, selected: boolean): void {
+  protected drawSlotItemAt(t: Tesselator, item: ItemInstance | null, x: number, y: number, selected: boolean): void {
     (selected ? this.guiSlot! : this.guiSlot!).draw(t, x, y);
     if (selected) this.guiSlotMarker!.draw(t, x - 2, y - 2);
     if (item && !item.isNull()) {
@@ -304,4 +304,3 @@ export class ChestScreen extends BaseContainerScreen implements IInventoryPaneCa
     }
   }
 }
-void (ChestScreen.prototype as unknown as { drawSlotItemAt: unknown; selectedSlot: unknown; guiSlotMarked: unknown; player: unknown });

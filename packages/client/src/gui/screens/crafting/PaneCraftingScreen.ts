@@ -424,4 +424,3 @@ function stableSortBySortText(list: CItem[]): void {
   idx.sort((a, b) => (a[0].sortText < b[0].sortText ? -1 : a[0].sortText > b[0].sortText ? 1 : a[1] - b[1]));
   for (let i = 0; i < list.length; i++) list[i] = idx[i]![0];
 }
-void (0 as unknown as Minecraft);

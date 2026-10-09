@@ -15,6 +15,7 @@
  * LevelChunk.ChunkBlockCount 是 C++ 的未初始化静态变量（值为 0），创建区块前要先设成 32768
  * （NinecraftApp::init 里是 LevelChunk::ChunkBlockCount = LEVEL_HEIGHT * CHUNK_COLUMNS）。
  */
+import { TileEntity } from '../tile/entity/TileEntity';
 import { LOGE, LOGW } from '@mcpe/platform';
 import { Mth, Random } from '@mcpe/util';
 import type { AABB } from '../../phys/AABB';
@@ -22,7 +23,6 @@ import type { Entity } from '../../entity/Entity';
 import { Level } from '../Level';
 import { LevelConstants } from '../LevelConstants';
 import { LightLayer } from '../LightLayer';
-import type { TileEntity } from '../tile/entity/TileEntity';
 import type { EntityTile } from '../tile/EntityTile';
 import { Tile } from '../tile/Tile';
 import { TilePos } from '../TilePos';
@@ -559,7 +559,8 @@ export class LevelChunk {
       const pos = new TilePos(x, y, z).hashCode();
       const cit = this.tileEntities.get(pos);
       if (cit !== undefined) {
-        cit.setRemoved();
+        // C++ 的 setRemoved 不是 virtual，这里经 TileEntity* 调用的是 TileEntity::setRemoved（ChestTileEntity 的同名函数不会被执行）
+        TileEntity.prototype.setRemoved.call(cit);
         if (!this.level.isClientSide) {
           for (let i = 0; i < this.level.players.length; ++i) {
             this.level.players[i]!.tileEntityDestroyed(cit.runningId);

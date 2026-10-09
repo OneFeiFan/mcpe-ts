@@ -185,7 +185,7 @@ export class Recipes {
   }
 
   /** C++ 私有的 getItemFor（工具修复 + 逐个配方 matches）；这一版没有调用方 */
-  private getItemFor(craftSlots: CraftingContainer): ItemInstance {
+  protected getItemFor(craftSlots: CraftingContainer): ItemInstance {
     let count = 0;
     let first: ItemInstance | null = null;
     let second: ItemInstance | null = null;
@@ -212,4 +212,3 @@ export class Recipes {
     return new ItemInstance();
   }
 }
-void (Recipes.prototype as unknown as { getItemFor: unknown }).getItemFor;

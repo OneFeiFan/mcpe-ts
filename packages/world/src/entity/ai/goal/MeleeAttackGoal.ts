@@ -80,4 +80,3 @@ export class MeleeAttackGoal extends Goal {
     this.mob.doHurtTarget(target);
   }
 }
-void (null as unknown as Level);

@@ -62,7 +62,8 @@ export class ImageButton extends Button {
   constructor(id: number, msg: string, imageDef?: ImageDef) {
     super(id, msg);
     if (imageDef) this._imageDef = imageDef.copy();
-    this.setupDefault();
+    // C++ 在基类构造期间调虚函数只会走本类的版本（R13，审核 C2）
+    ImageButton.prototype.setupDefault.call(this);
   }
 
   protected setupDefault(): void {

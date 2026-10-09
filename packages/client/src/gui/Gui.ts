@@ -7,6 +7,7 @@
  *   - 粒子统计（gatherStats3 的粒子数）—— E7 起是真的（`particleEngine.countParticles()`）。
  * R10：getSlotPos(int slot, int& posX, int& posY) 的引用参数改为返回 [posX, posY]（ADAPTED(Cpp)）。
  */
+import { RectangleArea } from '../player/input/touchscreen/TouchAreaModel'; // C++ 的 RectangleArea 定义在 TouchAreaModel.h（审核 N1：去掉这里早期的同名简化版）
 import { ChatScreen } from './screens/ChatScreen';
 import { ConsoleScreen } from './screens/ConsoleScreen';
 import { SharedConstants } from '@mcpe/core';
@@ -71,16 +72,6 @@ const f = Math.fround;
 export class GuiMessage {
   message = '';
   ticks = 0;
-}
-
-/** C++ 的 RectangleArea（client/gui/…；这里只需要四个边） */
-export class RectangleArea {
-  constructor(
-    public x0: number,
-    public y0: number,
-    public x1: number,
-    public y1: number,
-  ) {}
 }
 
 export class Gui extends GuiComponent implements IConfigListener {

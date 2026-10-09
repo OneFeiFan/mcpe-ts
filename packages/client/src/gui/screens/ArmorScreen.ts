@@ -198,7 +198,7 @@ export class ArmorScreen extends Screen implements IInventoryPaneCallback {
   }
 
   /** C++ 的 canMoveToSlot（没有调用方） */
-  private canMoveToSlot(slot: number, item: ItemInstance | null): boolean {
+  protected canMoveToSlot(slot: number, item: ItemInstance | null): boolean {
     return ItemInstance.isArmorItem(item) && (item!.getItem() as ArmorItem).slot === slot;
   }
 
@@ -273,4 +273,3 @@ export class ArmorScreen extends Screen implements IInventoryPaneCallback {
     glPopMatrix();
   }
 }
-void (ArmorScreen.prototype as unknown as { canMoveToSlot: unknown }).canMoveToSlot;

@@ -18,7 +18,7 @@
  * 草方块**直接 return this**（不乘颜色）—— 因为草方块的 getColor 是生物群系色，
  * 已经烘在贴图里了。
  */
-import { Tile, type Level, type LevelSource } from '@mcpe/world';
+import { Tile, type Level } from '@mcpe/world';
 import { Particle } from './Particle';
 import { Tesselator } from '../renderer/Tesselator';
 import { TERRAIN_TEXTURE } from './ParticleTextures';
@@ -53,7 +53,7 @@ export class TerrainParticle extends Particle {
   /** C++ `TerrainParticle* init(int x, int y, int z)` —— 乘上方块自己的颜色 */
   init(x: number, y: number, z: number): this {
     if (this.tile === Tile.grass) return this;
-    const col = this.tile.getColor(this.level as unknown as LevelSource, x, y, z);
+    const col = this.tile.getColor(this.level, x, y, z);
     this.rCol = f(this.rCol * f(((col >> 16) & 0xff) / f(255.0)));
     this.gCol = f(this.gCol * f(((col >> 8) & 0xff) / f(255.0)));
     this.bCol = f(this.bCol * f((col & 0xff) / f(255.0)));

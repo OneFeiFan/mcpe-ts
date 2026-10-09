@@ -64,6 +64,11 @@ export class MobRenderer extends EntityRenderer {
   }
 
   /* MobRenderer.cpp:21 */
+  /** C++ `Model* MobRenderer::getArmor()`（审核补上） */
+  getArmor(): Model | null {
+    return this.armor;
+  }
+
   protected setArmor(armor: Model): void {
     this.armor = armor;
   }

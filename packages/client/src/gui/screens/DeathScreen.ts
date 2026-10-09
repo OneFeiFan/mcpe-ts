@@ -15,7 +15,7 @@ const WAIT_TICKS = 30;
 export class DeathScreen extends Screen {
   private bRespawn: Button | null = null;
   private bTitle: Button | null = null;
-  private _hasChosen = false; // C++ 声明并初始化，但不使用
+  protected _hasChosen = false; // C++ 声明并初始化，但不使用
   private _tick = 0;
 
   protected override initScreen(): void {
@@ -85,4 +85,3 @@ export class DeathScreen extends Screen {
     if (button === this.bTitle) this.minecraft.leaveGame();
   }
 }
-void (DeathScreen.prototype as unknown as { _hasChosen: unknown });

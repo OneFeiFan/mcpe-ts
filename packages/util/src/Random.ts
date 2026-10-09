@@ -57,6 +57,14 @@ export class Random {
     return this._seed;
   }
 
+  // 审核补登记：MT19937 原始代码里的其余辅助函数，游戏代码不调用（init_genrand 的逻辑已写在 setSeed 里）
+  // OMIT(Util): void init_genrand(unsigned long s)  Random.h
+  // OMIT(Util): void init_by_array(unsigned long init_key[], int key_length)  Random.h
+  // OMIT(Util): long genrand_int31(void)  Random.h
+  // OMIT(Util): double genrand_real1(void)  Random.h
+  // OMIT(Util): double genrand_real3(void)  Random.h
+  // OMIT(Util): double genrand_res53(void)  Random.h
+
   genrand_int32(): number {
     const mt = this.mt;
     let mti = this.mti;

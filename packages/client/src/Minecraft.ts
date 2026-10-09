@@ -86,7 +86,7 @@ const tickInputStatics = { prevMouseDownLeft: false, buildHoldTicks: 0 };
 
 /** Player::resetPos 是公开的，而 Entity::resetPos 是 protected；LocalPlayer 正身（S12 阶段 C）就位前经这里调用 */
 function resetPlayerPos(player: LocalPlayer, clearMore: boolean): void {
-  (player as unknown as { resetPos(clearMore: boolean): void }).resetPos(clearMore);
+  player.resetPos(clearMore);
 }
 
 /** Minecraft::tickInput 里的 static bool prevMouseDownLeft、static int buildHoldTicks（只被 DEFERRED 的建造代码使用） */
@@ -933,6 +933,13 @@ export class Minecraft extends App {
   gatherStats4(): string {
     return this.level!.gatherChunkSourceStats();
   }
+  /** C++ `void toggleDimension(){}`（头文件里的空内联函数） */
+  toggleDimension(): void {}
+
+  // 审核补登记：Minecraft.h 里只有声明、没有定义也没有调用者的两个函数
+  // OMIT(Player): void doActuallyRespawnPlayer()  Minecraft.h:87（没有定义）
+  // OMIT(Input): void handleMouseDown(int button, bool down)  Minecraft.h:121（没有定义）
+
   /** C++ `Player* Minecraft::respawnPlayer(int playerId)`（R10：与无参版同名 → respawnPlayerById） */
   respawnPlayerById(playerId: number): Player | null {
     const level = this.level!;
@@ -963,7 +970,7 @@ export class Minecraft extends App {
       p = level.getSharedSpawnPos();
     }
     player.setPos(Math.fround(p.x + 0.5), Math.fround(p.y + 1.0), Math.fround(p.z + 0.5));
-    (player as unknown as { resetPos(clearMore: boolean): void }).resetPos(true);
+    player.resetPos(true);
     if (this.isCreativeMode()) player.inventory.clearInventoryWithDefault();
   }
 
