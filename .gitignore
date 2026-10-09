@@ -19,7 +19,7 @@ Thumbs.db
 tools/verify/out/
 .claude/.stop-attempts
 .claude/settings.local.json
-# 文件规划三件套（代理的磁盘工作记忆，不是项目内容）
+# 代理的临时工作记录（planning-with-files 一类工具会在根目录建这三个文件；不是项目内容，项目文档在 docs/）
 task_plan.md
 findings.md
 progress.md
@@ -27,7 +27,3 @@ progress.md
 # CodeGraph 本地索引（每台机器重建即可：codegraph init）
 .codegraph/
 
-# 工作手册与清单：留在本地给人和模型看，不进仓库（按具体文件名忽略，不用 docs/*.html 通配，
-# 免得以后真要对某份 HTML 文档纳入版本管理时被这条挡住）
-docs/MCPE-TS最小Demo实施流程-修订版10.html
-docs/MCPE-TS后续清单-S11-S13.html

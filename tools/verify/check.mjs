@@ -12,7 +12,7 @@
  * 用法：
  *   node tools/verify/check.mjs                          # typecheck + 全部测试 + 台账
  *   node tools/verify/check.mjs tests/unit/client/model.test.ts   # 只跑这些测试文件
- *   node tools/verify/check.mjs --mutate tests/unit/client/model.test.ts tools/verify/mutations-g5.json
+ *   node tools/verify/check.mjs --mutate tests/unit/client/model.test.ts /tmp/mutations.json   （变异清单是临时文件）
  *   node tools/verify/check.mjs --no-test                # 只要 typecheck + 台账
  *   node tools/verify/check.mjs --logs                   # 只打印日志目录路径
  */

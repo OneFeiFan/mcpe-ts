@@ -7,7 +7,7 @@ description: 把 MCPE 0.6.1 的一个 C++ 类或函数 1:1 移植成 TypeScript 
 
 ## 0. 开工前
 
-- 读任务单（`docs/ai/TASK-*.md`）里当前步骤的“范围”“验收”。只做这一步。
+- 读 `docs/状态与路线.md` 和用户给的这一步的范围与验收条件。只做这一步。
 - `git status` 确认工作区干净；`pnpm typecheck && pnpm test` 确认起点是绿的。
 
 ## 1. 读 C++

@@ -9,8 +9,9 @@ Claude Code 每次启动都会读这个文件。**先读完它，再动手。**
 
 - 参考 C++ 源码：放在仓库外，路径记为 `$REF`（里面有 `src/` 和 `data/`）。**只读**。本机路径是
   `D:/Work/mcpe-reimplementation/reference/minecraft-pe`，已写进 `.claude/settings.json` 的 `env`，不用手动设。
-- 工作手册：`MCPE-TS最小Demo实施流程-修订版10.html`（规则 R1–R14、三档数值规则、台账标记、R10 重载命名）。
-- 每一步的任务单：`docs/ai/` 下的 `TASK-*.md`。一次只做一个任务单里的一个步骤。
+- 移植规则：`docs/移植规范.md`（R1–R14、数值三档、台账标记、R10 重载命名、原版里容易被当成 bug 的事实）。
+- 当前进度与还没做的：`docs/状态与路线.md`。一次只做一个明确的小步骤。
+- 验证方法：`docs/验证方法.md`；实际踩过的坑（带来龙去脉）：`docs/经验教训.md`；里程碑与关键决定：`docs/历史.md`。
 
 ## 必须遵守（违反会被钩子拦下）
 
@@ -25,7 +26,7 @@ Claude Code 每次启动都会读这个文件。**先读完它，再动手。**
 1. 读 C++：`python tools/porting/clean.py $REF/src/<路径>.h $REF/src/<路径>.cpp`（已按网页版构建展开 #ifdef）。
 2. 查依赖：它用到的类在 TS 里有没有（`rg "class 名字" packages`）。没有就先写前向声明（FORWARD-DECL）或把那几句标 DEFERRED。
 3. 写 TS：大类先用 `tools/porting/cls2ts.py` 生成草稿，再逐函数人工核对；小类直接手写。
-4. 逐项核对 `.claude/skills/mcpe-porting/PITFALLS.md` 里的 28 条语言差异。至少跑：
+4. 逐项核对 `.claude/skills/mcpe-porting/PITFALLS.md` 里的语言差异（速查清单），拿不准时再查 `docs/经验教训.md`。至少跑：
    - `python tools/porting/divs.py <file.ts>`：逐条判断整数除法；
    - `python tools/porting/shadow.py <file.ts> <成员清单>`：查漏加的 this.；
 5. 接线：把原来的 `DEFERRED(...)` / `OMIT(...)` 换成真实调用。
@@ -73,10 +74,11 @@ CG="$LOCALAPPDATA/codegraph/current/bin/codegraph.cmd"
 
 - `packages/core|util|platform|nbt|locale|world|client`：按 C++ 目录分的包；`apps/web`：网页入口（`src/main.ts`、`src/assets.ts` 预加载表）。
 - `tests/unit`：单元测试；`tests/golden`：黄金样本测试；`fixtures/golden`：夹具；`tools/golden`：生成夹具的 C++ harness。
+- 全部测试一次跑完超过五分钟，分三批跑（见 `docs/验证方法.md`）。
 - 浏览器里 `window.__app` 是 NinecraftApp 实例，可以直接读写游戏状态（场景脚本靠它）。
 
 ## 遇到拿不准的情况
 
-- 不确定 C++ 某句在 TS 里怎么写：先查 PITFALLS.md；还不确定就保留 C++ 原句为 `DEFERRED(待确认)`，在提交说明里列出来，不要猜。
+- 不确定 C++ 某句在 TS 里怎么写：先查 PITFALLS.md 和 `docs/经验教训.md`；还不确定就保留 C++ 原句为 `DEFERRED(待确认)`，在提交说明里列出来，不要猜。
 - 一个任务单步骤超过约 300 行改动或要碰 5 个以上文件：停下，把它拆成更小的步骤写回任务单，再继续。
 - 不要“顺手优化”：保留 C++ 的怪癖（例如字宽扫描读红色分量、`%.ld` 打印 0 为空），在注释里写明是原样保留。

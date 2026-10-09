@@ -15,5 +15,3 @@ tools/verify/out/
 pnpm-lock.yaml
 
 # 工作手册与清单：本地文档，13 万字符的 HTML，格式化纯属制造无意义的改动
-docs/MCPE-TS最小Demo实施流程-修订版10.html
-docs/MCPE-TS后续清单-S11-S13.html

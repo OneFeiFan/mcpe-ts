@@ -180,7 +180,7 @@ export default async function (h) {
     // ⚠ 摁在**脚下一格**，不是眼睛高度。`Player.tick` 的拾取盒是 `bb.grow(1, 0, 1)`
     //   （y 方向不放大），玩家碰撞盒竖直占 y-1.62 … y+0.18，所以 y-1 处照样能捡起来。
     //   摁在眼睛高度的话，粒子起点=终点=相机原点，整颗卡在近裁剪面里 —— 实测过，
-    //   脚本全绿但画面上什么都没有（_dbg-pickup.mjs 里把起点挪到前方 3 格就立刻显形了，
+    //   脚本全绿但画面上什么都没有（当时的临时调试场景里把起点挪到前方 3 格就立刻显形了，
     //   说明渲染路径没问题，是测试设定自己把它藏起来了）。
     it.setPos(a.player.x, a.player.y - 1.0, a.player.z);
     return { ok: true, itemId: src.id, count: src.count };

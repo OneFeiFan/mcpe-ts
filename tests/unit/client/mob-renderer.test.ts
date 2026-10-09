@@ -14,7 +14,7 @@ import { createFlatLevel } from '../../helpers/headlessLevel';
 
 const f = Math.fround;
 
-// G6：`MobRenderer` 的基类那一半 —— 任务单点名的三项验收（`docs/ai/TASK-G-模型与实体渲染.md:525`）：
+// G6：`MobRenderer` 的基类那一半 —— 任务单 G6 点名的三项验收（任务单原文见 docs/历史.md 里的找回方法）：
 //   `setupRotations` 的死亡翻滚角度、`getBob`、`renderNameTag` 的远近剔除。
 //
 // 【为什么只钉这三项】`render()` 全流程要拖进模型、`minecraft.options`、`postRender` 的影子一大串，

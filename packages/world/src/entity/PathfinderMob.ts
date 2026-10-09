@@ -5,7 +5,7 @@
  * 【旧 AI（H3）】`updateAi`：找攻击目标 → `Level.findPathToEntity` → 沿路径走（每刻最多转 30°）→ 随机闲逛
  *   （`findRandomStrollLocation` 在周围 13×7×13 里取 10 个随机点，按 `getWalkTargetValue` 挑最好的，再 `findPathToTile`）。
  *   这一版里**所有生物实际运行的都是这套**：`Mob::aiStep` 只在 `useNewAi()` 为真时走新 AI，而能让它为真的 `Level::setZombieAi`
- *   在 Level.cpp:1429 被注释掉了（见 docs/ai/TASK-H-生物与AI.md 的 H0）。
+ *   在 Level.cpp:1429 被注释掉了（见 docs/移植规范.md 末尾“原版里容易被当成 bug 的事实”）。
  * 【新 AI 的成员】构造函数里创建 `sensing`、`navigation`（任务单 H11）；它们只在 useNewAi() 为真时被 tick。
  *
  * 【照抄的几处】`getWalkingSpeedModifier()` 里 `fleeTime > 0` 就把速度乘 2；`checkCantSeeTarget` 的阈值 `d > 32` 是距离；
