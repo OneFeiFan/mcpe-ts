@@ -26,10 +26,22 @@ export class Sheep extends Animal {
   private static readonly EAT_ANIMATION_TICKS = SharedConstants.TicksPerSecond * 2;
   private static readonly DATA_WOOL_ID = 16;
   static readonly COLOR: readonly (readonly number[])[] = [
-    [1.0, 1.0, 1.0], [0.95, 0.7, 0.2], [0.9, 0.5, 0.85], [0.6, 0.7, 0.95],
-    [0.9, 0.9, 0.2], [0.5, 0.8, 0.1], [0.95, 0.7, 0.8], [0.3, 0.3, 0.3],
-    [0.6, 0.6, 0.6], [0.3, 0.6, 0.7], [0.7, 0.4, 0.9], [0.2, 0.4, 0.8],
-    [0.5, 0.4, 0.3], [0.4, 0.5, 0.2], [0.8, 0.3, 0.3], [0.1, 0.1, 0.1],
+    [1.0, 1.0, 1.0],
+    [0.95, 0.7, 0.2],
+    [0.9, 0.5, 0.85],
+    [0.6, 0.7, 0.95],
+    [0.9, 0.9, 0.2],
+    [0.5, 0.8, 0.1],
+    [0.95, 0.7, 0.8],
+    [0.3, 0.3, 0.3],
+    [0.6, 0.6, 0.6],
+    [0.3, 0.6, 0.7],
+    [0.7, 0.4, 0.9],
+    [0.2, 0.4, 0.8],
+    [0.5, 0.4, 0.3],
+    [0.4, 0.5, 0.2],
+    [0.8, 0.3, 0.3],
+    [0.1, 0.1, 0.1],
   ].map((row) => row.map((v) => f(v)));
   /** 见文件头：sizeof(COLOR) / sizeof(Sheep*) = 192 / 8 */
   static readonly NumColors = (16 * 3 * 4) / 8;
@@ -174,11 +186,19 @@ export class Sheep extends Animal {
 
   protected override updateAi(): void {
     super.updateAi();
-    if (!this.isPathFinding() && this.eatAnimationTick <= 0 && ((this.isBaby() && this.random.nextInt(50) === 0) || this.random.nextInt(1000) === 0)) {
+    if (
+      !this.isPathFinding() &&
+      this.eatAnimationTick <= 0 &&
+      ((this.isBaby() && this.random.nextInt(50) === 0) || this.random.nextInt(1000) === 0)
+    ) {
       const xx = Mth.floor(this.x);
       const yy = Mth.floor(this.y);
       const zz = Mth.floor(this.z);
-      if ((this.level.getTile(xx, yy, zz) === Tile.tallgrass.id && this.level.getData(xx, yy, zz) === TallGrass.TALL_GRASS) || this.level.getTile(xx, yy - 1, zz) === Tile.grass.id) {
+      if (
+        (this.level.getTile(xx, yy, zz) === Tile.tallgrass.id &&
+          this.level.getData(xx, yy, zz) === TallGrass.TALL_GRASS) ||
+        this.level.getTile(xx, yy - 1, zz) === Tile.grass.id
+      ) {
         this.eatAnimationTick = Sheep.EAT_ANIMATION_TICKS;
         this.level.broadcastEntityEvent(this, EntityEvent.EAT_GRASS);
       }
@@ -188,11 +208,25 @@ export class Sheep extends Animal {
       const zz = Mth.floor(this.z);
       let ate = false;
       if (this.level.getTile(xx, yy, zz) === Tile.tallgrass.id) {
-        this.level.levelEvent(null, LevelEvent.PARTICLES_DESTROY_BLOCK, xx, yy, zz, Tile.tallgrass.id + TallGrass.TALL_GRASS * 256);
+        this.level.levelEvent(
+          null,
+          LevelEvent.PARTICLES_DESTROY_BLOCK,
+          xx,
+          yy,
+          zz,
+          Tile.tallgrass.id + TallGrass.TALL_GRASS * 256,
+        );
         this.level.setTile(xx, yy, zz, 0);
         ate = true;
       } else if (this.level.getTile(xx, yy - 1, zz) === Tile.grass.id) {
-        this.level.levelEvent(null, LevelEvent.PARTICLES_DESTROY_BLOCK, xx, yy - 1, zz, Tile.grass.id);
+        this.level.levelEvent(
+          null,
+          LevelEvent.PARTICLES_DESTROY_BLOCK,
+          xx,
+          yy - 1,
+          zz,
+          Tile.grass.id,
+        );
         this.level.setTile(xx, yy - 1, zz, Tile.dirt.id);
         ate = true;
       }

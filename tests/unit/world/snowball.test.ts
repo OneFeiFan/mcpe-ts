@@ -55,7 +55,14 @@ class RecordingListener extends LevelListener {
     this.particles.push([name, x, y, z, xa, ya, za, data]);
   }
 
-  override playSound(name: string, x: number, y: number, z: number, volume: number, pitch: number): void {
+  override playSound(
+    name: string,
+    x: number,
+    y: number,
+    z: number,
+    volume: number,
+    pitch: number,
+  ): void {
     this.sounds.push([name, volume, pitch, x]);
   }
 }

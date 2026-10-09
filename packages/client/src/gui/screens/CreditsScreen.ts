@@ -86,7 +86,13 @@ export class CreditsScreen extends Screen {
     const lineHeight = font.lineHeight + 8;
     for (const line of this._lines) {
       const lineWidth = f(gui.getColoredWidth(font, line));
-      gui.drawColoredString(font, line, f(Math.trunc(w / 2) - f(lineWidth / 2)), Math.trunc(y), 255);
+      gui.drawColoredString(
+        font,
+        line,
+        f(Math.trunc(w / 2) - f(lineWidth / 2)),
+        Math.trunc(y),
+        255,
+      );
       if (line.includes('http') || line.includes('discord.gg')) {
         const x0 = f(Math.trunc(w / 2) - f(lineWidth / 2));
         const y0 = f(y + font.lineHeight - 1);

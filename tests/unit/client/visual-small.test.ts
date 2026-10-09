@@ -11,7 +11,10 @@ import { _mthRand, PerfTimer } from '@mcpe/util';
 describe('LevelRenderer.levelEvent（开关门的声音）', () => {
   it('SOUND_OPEN_DOOR：方块中心、random.door_open / door_close、音量 1、音高 0.9–1.0', () => {
     const calls: unknown[][] = [];
-    const level = { playSound: (...a: unknown[]) => calls.push(a), random: { nextFloat: () => 0.5 } };
+    const level = {
+      playSound: (...a: unknown[]) => calls.push(a),
+      random: { nextFloat: () => 0.5 },
+    };
     const lr = Object.create(LevelRenderer.prototype) as LevelRenderer;
     (lr as unknown as { level: unknown }).level = level;
     _mthRand.setSeed(1);
@@ -70,9 +73,14 @@ describe('PerfRenderer', () => {
     const texts = font.drawShadow.mock.calls.map((c) => c[0] as string);
     expect(texts.some((t) => t.includes('%'))).toBe(true);
     const path = () => (pr as unknown as { _debugPath: string })._debugPath;
-    const names = PerfTimer.getLog('root').slice(1).map((r) => r.name).filter((n) => n !== 'unspecified');
+    const names = PerfTimer.getLog('root')
+      .slice(1)
+      .map((r) => r.name)
+      .filter((n) => n !== 'unspecified');
     expect(names.length).toBeGreaterThan(0);
-    const all = PerfTimer.getLog('root').slice(1).map((r) => r.name);
+    const all = PerfTimer.getLog('root')
+      .slice(1)
+      .map((r) => r.name);
     const k = all.indexOf(names[0]!) + 1;
     pr.debugFpsMeterKeyPress(k);
     expect(path()).toBe('root.' + names[0]);

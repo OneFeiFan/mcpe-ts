@@ -172,10 +172,7 @@ describe('ParticleEngine.render（E5）', () => {
     const mid = t._vertexCountForTest();
     engine.renderLit(new TestParticle(level, MISC_TEXTURE), 1);
     expect(tex.bound, '第 4 档不 bind 任何纹理').toEqual([]);
-    expect(
-      t._vertexCountForTest(),
-      '比上一轮多 → 说明没被 begin 清零',
-    ).toBeGreaterThan(mid);
+    expect(t._vertexCountForTest(), '比上一轮多 → 说明没被 begin 清零').toBeGreaterThan(mid);
   });
 
   it('⚠ render 的主循环**不碰第 4 档**（`tt < 3`）—— 那一档只有 renderLit 画', () => {

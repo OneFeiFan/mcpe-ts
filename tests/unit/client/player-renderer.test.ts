@@ -233,7 +233,9 @@ describe('PlayerRenderer（G11）', () => {
 
   it('prepareArmor：穿着的不是护甲 → -1', () => {
     const { r } = makeRenderer();
-    const notArmor = { getItem: () => ({ isArmor: () => false, modelIndex: 0 }) } as unknown as ItemInstance;
+    const notArmor = {
+      getItem: () => ({ isArmor: () => false, modelIndex: 0 }),
+    } as unknown as ItemInstance;
     const p = fakePlayer({ armor: [notArmor, null, null, null] });
     expect(r.prepareArmor(p, 0, 0)).toBe(-1);
   });
@@ -315,7 +317,9 @@ describe('PlayerRenderer（G11）', () => {
 
   it('setupPosition：不睡觉时原样转发给父类', () => {
     const { r } = makeRenderer();
-    const sup = vi.spyOn(HumanoidMobRenderer.prototype, 'setupPosition').mockImplementation(() => {});
+    const sup = vi
+      .spyOn(HumanoidMobRenderer.prototype, 'setupPosition')
+      .mockImplementation(() => {});
     const p = fakePlayer();
     r.setupPosition(p, 0.1, 64, 0.3);
     expect(sup).toHaveBeenCalledWith(p, 0.1, 64, 0.3);
@@ -323,7 +327,9 @@ describe('PlayerRenderer（G11）', () => {
 
   it('setupPosition：睡觉时位置加上床偏移（三处加法按 float 算）', () => {
     const { r } = makeRenderer();
-    const sup = vi.spyOn(HumanoidMobRenderer.prototype, 'setupPosition').mockImplementation(() => {});
+    const sup = vi
+      .spyOn(HumanoidMobRenderer.prototype, 'setupPosition')
+      .mockImplementation(() => {});
     const p = fakePlayer({ sleeping: true, bed: [0.1, 0.2, 0.3] });
     r.setupPosition(p, 1, 64, 2);
     expect(sup).toHaveBeenCalledWith(p, f(1 + 0.1), f(64 + 0.2), f(2 + 0.3));
@@ -331,7 +337,9 @@ describe('PlayerRenderer（G11）', () => {
 
   it('setupPosition：死了但还"在床上"不触发睡觉分支（isAlive 与 isSleeping 都要成立）', () => {
     const { r } = makeRenderer();
-    const sup = vi.spyOn(HumanoidMobRenderer.prototype, 'setupPosition').mockImplementation(() => {});
+    const sup = vi
+      .spyOn(HumanoidMobRenderer.prototype, 'setupPosition')
+      .mockImplementation(() => {});
     const p = fakePlayer({ alive: false, sleeping: true, bed: [0.1, 0.2, 0.3] });
     r.setupPosition(p, 1, 64, 2);
     expect(sup).toHaveBeenCalledWith(p, 1, 64, 2);
@@ -339,7 +347,9 @@ describe('PlayerRenderer（G11）', () => {
 
   it('setupRotations：睡觉时父类不被调 —— 转 sleepRotation、翻转 90°、再转 270°', () => {
     const { r } = makeRenderer();
-    const sup = vi.spyOn(HumanoidMobRenderer.prototype, 'setupRotations').mockImplementation(() => {});
+    const sup = vi
+      .spyOn(HumanoidMobRenderer.prototype, 'setupRotations')
+      .mockImplementation(() => {});
     const p = fakePlayer({ sleeping: true, sleepRot: 180 });
     r.setupRotations(p, 0, 0, 0);
     expect(sup).not.toHaveBeenCalled();
@@ -348,7 +358,9 @@ describe('PlayerRenderer（G11）', () => {
 
   it('setupRotations：不睡觉时原样转发给父类', () => {
     const { r } = makeRenderer();
-    const sup = vi.spyOn(HumanoidMobRenderer.prototype, 'setupRotations').mockImplementation(() => {});
+    const sup = vi
+      .spyOn(HumanoidMobRenderer.prototype, 'setupRotations')
+      .mockImplementation(() => {});
     const p = fakePlayer();
     r.setupRotations(p, 0.5, 30, 1);
     expect(sup).toHaveBeenCalledWith(p, 0.5, 30, 1);
@@ -374,7 +386,9 @@ describe('PlayerRenderer（G11）', () => {
     const spies = [i.playerModel32, i.playerModel64, i.armorParts1, i.armorParts2].map((m) =>
       vi.spyOn(m, 'onGraphicsReset'),
     );
-    const sup = vi.spyOn(HumanoidMobRenderer.prototype, 'onGraphicsReset').mockImplementation(() => {});
+    const sup = vi
+      .spyOn(HumanoidMobRenderer.prototype, 'onGraphicsReset')
+      .mockImplementation(() => {});
     r.onGraphicsReset();
     for (const s of spies) expect(s).toHaveBeenCalledTimes(1);
     expect(sup).toHaveBeenCalledTimes(1);

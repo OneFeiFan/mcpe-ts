@@ -9,7 +9,16 @@
  */
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
-  Control, Difficulty, Goal, GoalSelector, initItems, initTileEntities, type Level, MoveControl, Player, Zombie,
+  Control,
+  Difficulty,
+  Goal,
+  GoalSelector,
+  initItems,
+  initTileEntities,
+  type Level,
+  MoveControl,
+  Player,
+  Zombie,
 } from '@mcpe/world';
 import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
@@ -30,16 +39,30 @@ class FakeGoal extends Goal {
   use = true;
   cont = true;
   log: string[];
-  constructor(public name: string, flags: number, log: string[]) {
+  constructor(
+    public name: string,
+    flags: number,
+    log: string[],
+  ) {
     super();
     this.log = log;
     this.setRequiredControlFlags(flags);
   }
-  canUse(): boolean { return this.use; }
-  override canContinueToUse(): boolean { return this.cont; }
-  override start(): void { this.log.push(`start:${this.name}`); }
-  override stop(): void { this.log.push(`stop:${this.name}`); }
-  override tick(): void { this.log.push(`tick:${this.name}`); }
+  canUse(): boolean {
+    return this.use;
+  }
+  override canContinueToUse(): boolean {
+    return this.cont;
+  }
+  override start(): void {
+    this.log.push(`start:${this.name}`);
+  }
+  override stop(): void {
+    this.log.push(`stop:${this.name}`);
+  }
+  override tick(): void {
+    this.log.push(`tick:${this.name}`);
+  }
 }
 
 describe('GoalSelector', () => {

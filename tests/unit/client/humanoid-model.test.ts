@@ -79,7 +79,10 @@ const PART_NAMES = ['head', 'hair', 'body', 'arm0', 'arm1', 'leg0', 'leg1'] as c
 const parts = (m: HumanoidModel): ModelPart[] => PART_NAMES.map((n) => m[n]);
 
 /** 把 7 个部件的某个方法都换成只记名字的桩，返回记录数组。 */
-function recordCalls(m: HumanoidModel, method: 'render' | 'renderHorrible' | 'onGraphicsReset'): string[] {
+function recordCalls(
+  m: HumanoidModel,
+  method: 'render' | 'renderHorrible' | 'onGraphicsReset',
+): string[] {
   const seen: string[] = [];
   for (const name of PART_NAMES) {
     vi.spyOn(m[name], method).mockImplementation(() => {

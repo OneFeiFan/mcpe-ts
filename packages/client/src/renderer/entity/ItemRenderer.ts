@@ -26,7 +26,6 @@ import { Tesselator } from '../Tesselator';
 import type { Textures } from '../Textures';
 import { TileRenderer } from '../TileRenderer';
 
-
 const f = Math.fround;
 /** ItemRenderer.cpp 的 _mapper：物品 id → gui_blocks.png 里的图块序号；-1 没有图块，-2 按数据值查下面的表 */
 const _mapper: readonly number[] = [
@@ -269,15 +268,10 @@ export class ItemRenderer extends EntityRenderer {
       }
       if (item.isDamaged()) {
         const p = Math.floor(
-          f(13.5 - f((item.getDamageValue() * 13.0) / item.getMaxDamage())) +
-            0.5,
+          f(13.5 - f((item.getDamageValue() * 13.0) / item.getMaxDamage())) + 0.5,
         );
         const cc = Math.trunc(
-          Math.floor(
-            f(
-              255.5 - f((item.getDamageValue() * 255.0) / item.getMaxDamage()),
-            ) + 0.5,
-          ),
+          Math.floor(f(255.5 - f((item.getDamageValue() * 255.0) / item.getMaxDamage())) + 0.5),
         );
         const t = Tesselator.instance;
         const ca = ((255 - cc) << 16) | (cc << 8);
@@ -294,13 +288,9 @@ export class ItemRenderer extends EntityRenderer {
   static renderGuiItemDamage(item: ItemInstance | null, x: number, y: number): void {
     if (!item) return;
     if (item.count > 0 && item.isDamaged()) {
-      const p = Math.floor(
-        f(13.5 - f((item.getDamageValue() * 13.0) / item.getMaxDamage())),
-      );
+      const p = Math.floor(f(13.5 - f((item.getDamageValue() * 13.0) / item.getMaxDamage())));
       const cc = Math.trunc(
-        Math.floor(
-          f(255.5 - f((item.getDamageValue() * 255.0) / item.getMaxDamage())),
-        ),
+        Math.floor(f(255.5 - f((item.getDamageValue() * 255.0) / item.getMaxDamage()))),
       );
       const t = Tesselator.instance;
       const ca = ((255 - cc) << 16) | (cc << 8);

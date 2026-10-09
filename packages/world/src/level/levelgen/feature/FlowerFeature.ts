@@ -18,7 +18,8 @@ export class FlowerFeature extends Feature {
       const y2 = y + random.nextInt(4) - random.nextInt(4);
       const z2 = z + random.nextInt(8) - random.nextInt(8);
       if (level.isEmptyTile(x2, y2, z2)) {
-        if (Tile.tiles[this.tile]!.canSurvive(level, x2, y2, z2)) { // C++ (Bush*) 强转后调 canSurvive（虚函数）
+        if (Tile.tiles[this.tile]!.canSurvive(level, x2, y2, z2)) {
+          // C++ (Bush*) 强转后调 canSurvive（虚函数）
           level.setTileNoUpdate(x2, y2, z2, this.tile);
         }
       }

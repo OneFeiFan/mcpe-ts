@@ -1,5 +1,3 @@
-
-
 const f = Math.fround;
 // 1:1 移植自 src/client/player/input/touchscreen/TouchAreaModel.h 里的 IArea 与 RectangleArea（S13 阶段 C：ScrollingPane、InventoryPane 用到）。
 // 同一头文件里的 TouchAreaModel、CircleArea 等触屏输入部分属于触屏兼容，暂不移植（DEFERRED(Touch)）。

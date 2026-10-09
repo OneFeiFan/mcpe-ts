@@ -1,14 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CompoundTag } from '@mcpe/nbt';
 import { Mth } from '@mcpe/util';
-import {
-  type Level,
-  PrimedTnt,
-  Tile,
-  TntTile,
-  EntityTypes,
-  EntityRendererId,
-} from '@mcpe/world';
+import { type Level, PrimedTnt, Tile, TntTile, EntityTypes, EntityRendererId } from '@mcpe/world';
 import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
 // 任务单 D4：`PrimedTnt`（点着的 TNT）+ `TntTile` 接线。

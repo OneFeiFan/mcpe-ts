@@ -9,8 +9,29 @@
  */
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
-  Arrow, Chicken, Cow, Creeper, Difficulty, DyePowderItem, initItems, EntityRendererId, initTileEntities, Item, ItemEntity, ItemInstance, type Level,
-  MobFactory, MobTypes, Pig, PigZombie, Player, Sheep, Skeleton, Spider, Tile, Zombie,
+  Arrow,
+  Chicken,
+  Cow,
+  Creeper,
+  Difficulty,
+  DyePowderItem,
+  initItems,
+  EntityRendererId,
+  initTileEntities,
+  Item,
+  ItemEntity,
+  ItemInstance,
+  type Level,
+  MobFactory,
+  MobTypes,
+  Pig,
+  PigZombie,
+  Player,
+  Sheep,
+  Skeleton,
+  Spider,
+  Tile,
+  Zombie,
 } from '@mcpe/world';
 import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
@@ -137,7 +158,9 @@ describe('羊', () => {
     const count0 = level.getAllEntities().filter((e) => e instanceof ItemEntity).length;
     sheep.interact(p);
     expect(sheep.isSheared()).toBe(true);
-    const drops = (level.getAllEntities().filter((e) => e instanceof ItemEntity) as ItemEntity[]).slice(count0);
+    const drops = (
+      level.getAllEntities().filter((e) => e instanceof ItemEntity) as ItemEntity[]
+    ).slice(count0);
     expect(drops.length).toBeGreaterThanOrEqual(1);
     expect(drops.length).toBeLessThanOrEqual(3);
     for (const d of drops) expect([d.item.id, d.item.getAuxValue()]).toEqual([Tile.cloth.id, 14]);

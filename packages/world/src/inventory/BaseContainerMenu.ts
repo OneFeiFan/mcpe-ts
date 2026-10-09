@@ -6,7 +6,12 @@ import { ItemInstance } from '../item/ItemInstance';
 
 export interface IContainerListener {
   refreshContainer(menu: BaseContainerMenu, items: ItemInstance[]): void;
-  slotChanged(menu: BaseContainerMenu, slot: number, item: ItemInstance, isResultSlot: boolean): void;
+  slotChanged(
+    menu: BaseContainerMenu,
+    slot: number,
+    item: ItemInstance,
+    isResultSlot: boolean,
+  ): void;
   setContainerData(menu: BaseContainerMenu, id: number, value: number): void;
 }
 

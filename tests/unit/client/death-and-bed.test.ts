@@ -8,7 +8,20 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { DeathScreen, GLES1, glSetContext, Minecraft } from '@mcpe/client';
 import { SharedConstants } from '@mcpe/core';
-import { BedTile, FlatDimension, GameType, initItems, initTileEntities, Level, LevelSettings, MemoryLevelStorage, Player, Pos, ServerLevel, Tile } from '@mcpe/world';
+import {
+  BedTile,
+  FlatDimension,
+  GameType,
+  initItems,
+  initTileEntities,
+  Level,
+  LevelSettings,
+  MemoryLevelStorage,
+  Player,
+  Pos,
+  ServerLevel,
+  Tile,
+} from '@mcpe/world';
 import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
 class TestPlayer extends Player {
@@ -38,7 +51,12 @@ const fakeMc = (player: Player) => ({
   player,
   isCreativeMode: () => false,
   options: { getIntValue: () => 0, getBooleanValue: () => false },
-  font: { draw: () => {}, drawShadow: () => {}, width: (s: string) => s.length * 6, lineHeight: 10 },
+  font: {
+    draw: () => {},
+    drawShadow: () => {},
+    width: (s: string) => s.length * 6,
+    lineHeight: 10,
+  },
   textures: { loadAndBindTexture: () => 1, loadTexture: () => 1 },
   width: 960,
   height: 540,
@@ -136,7 +154,13 @@ describe('睡到天亮（ServerLevel）', () => {
   // demo 世界与正式存档都是 ServerLevel：所有玩家都睡满 SLEEP_DURATION（100 刻）后，时间跳到下一天的 0 刻（早晨），
   // awakenAllPlayers 叫醒所有人、血补满，并记下床边的重生点。浏览器里“睡几秒就醒、界面自己关掉”就是这个。
   it('夜里躺下，约 100 刻后时间跳到下一天、玩家醒来、满血、记下重生点', () => {
-    const sl = new ServerLevel(new MemoryLevelStorage(), 'sleep', new LevelSettings(0, GameType.Survival), SharedConstants.GeneratorVersion, new FlatDimension());
+    const sl = new ServerLevel(
+      new MemoryLevelStorage(),
+      'sleep',
+      new LevelSettings(0, GameType.Survival),
+      SharedConstants.GeneratorVersion,
+      new FlatDimension(),
+    );
     prepareLevel(sl);
     const lv = sl as unknown as { skyDarken: number; updateSkyDarken(): void };
     lv.updateSkyDarken = () => {}; // 平坦维度永远白天：冻住天色，模拟夜里

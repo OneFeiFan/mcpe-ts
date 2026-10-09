@@ -97,7 +97,13 @@ function makeCam(life = 80, xRot = 0, yRot = 0): TripodCamera {
   return cam;
 }
 
-type CubeView = { xRot: number; yRot: number; y: number; render: (s: number) => void; renderHorrible: (s: number) => void };
+type CubeView = {
+  xRot: number;
+  yRot: number;
+  y: number;
+  render: (s: number) => void;
+  renderHorrible: (s: number) => void;
+};
 type TripodView = { tripod: Tile; cameraCube: CubeView };
 
 function makeRenderer(hitEntity: Entity | null = null): TripodCameraRenderer {

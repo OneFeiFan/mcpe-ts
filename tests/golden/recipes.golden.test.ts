@@ -7,8 +7,16 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { FurnaceRecipes, initItems, Recipes, ShapedRecipe, ShapelessRecipe } from '@mcpe/world';
 import { createFlatLevel } from '../helpers/headlessLevel';
 
-type Rec = { kind: string; result: number[]; size: number; craftingSize: number; pack: [number, number][] };
-const G = JSON.parse(readFileSync(new URL('../../fixtures/golden/recipes.json', import.meta.url), 'utf8')) as { recipes: Rec[]; furnace: number[][] };
+type Rec = {
+  kind: string;
+  result: number[];
+  size: number;
+  craftingSize: number;
+  pack: [number, number][];
+};
+const G = JSON.parse(
+  readFileSync(new URL('../../fixtures/golden/recipes.json', import.meta.url), 'utf8'),
+) as { recipes: Rec[]; furnace: number[][] };
 
 beforeAll(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -26,7 +34,8 @@ describe('G18-1 合成配方', () => {
     G.recipes.forEach((want, i) => {
       const r = list[i]!;
       const res = r.getResultItem();
-      const kind = r instanceof ShapedRecipe ? 'shaped' : r instanceof ShapelessRecipe ? 'shapeless' : '?';
+      const kind =
+        r instanceof ShapedRecipe ? 'shaped' : r instanceof ShapelessRecipe ? 'shapeless' : '?';
       const pack = (r.getItemPack() as unknown as { items: Map<number, number> }).items;
       const got = {
         kind,

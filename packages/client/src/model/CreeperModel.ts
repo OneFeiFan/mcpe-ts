@@ -37,7 +37,15 @@ export class CreeperModel extends Model {
     this.leg3.setPos(2, 12 + yo, -4);
   }
 
-  override render(_entity: Entity | null, time: number, r: number, bob: number, yRot: number, xRot: number, scale: number): void {
+  override render(
+    _entity: Entity | null,
+    time: number,
+    r: number,
+    bob: number,
+    yRot: number,
+    xRot: number,
+    scale: number,
+  ): void {
     this.setupAnim(time, r, bob, yRot, xRot, scale);
     this.head.render(scale);
     this.body.render(scale);
@@ -47,7 +55,14 @@ export class CreeperModel extends Model {
     this.leg3.render(scale);
   }
 
-  override setupAnim(time: number, r: number, _bob: number, yRot: number, xRot: number, _scale: number): void {
+  override setupAnim(
+    time: number,
+    r: number,
+    _bob: number,
+    yRot: number,
+    xRot: number,
+    _scale: number,
+  ): void {
     const k = f(180 / Mth.PI);
     this.head.yRot = f(yRot / k);
     this.head.xRot = f(xRot / k);

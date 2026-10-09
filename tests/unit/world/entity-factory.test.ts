@@ -12,7 +12,9 @@ import {
   Arrow,
   Snowball,
   ThrownEgg,
-  type Level, Pig } from '@mcpe/world';
+  type Level,
+  Pig,
+} from '@mcpe/world';
 import { createFlatLevel } from '../../helpers/headlessLevel';
 
 // EntityFactory（B5c-2）。它有两个消费者：存档的 loadEntities，和网络包（没移植）。
@@ -50,7 +52,9 @@ describe('world/EntityFactory', () => {
     // 【这条同时就是"接线完成"的检查点】任务单 D 每接完一个实体，就把对应的 id 从下面
     // 那张"还没移植"的表里挪上来，改成 toBeInstanceOf。D2 挪的是 IdFallingTile。
     it('IdFallingTile → FallingTile（D2 接的线）', () => {
-      expect(EntityFactory.CreateEntity(EntityTypes.IdFallingTile, lv())).toBeInstanceOf(FallingTile);
+      expect(EntityFactory.CreateEntity(EntityTypes.IdFallingTile, lv())).toBeInstanceOf(
+        FallingTile,
+      );
     });
 
     it('IdPrimedTnt → PrimedTnt（D4 接的线）', () => {
@@ -74,7 +78,10 @@ describe('world/EntityFactory', () => {
     });
 
     it('认不出的 id 才返回 null（C++ 那个 switch 落空后的 return NULL）', () => {
-      expect(EntityFactory.CreateEntity(EntityTypes.IdItemEntity - 1, lv()), 'id 比最小的还小').toBeNull();
+      expect(
+        EntityFactory.CreateEntity(EntityTypes.IdItemEntity - 1, lv()),
+        'id 比最小的还小',
+      ).toBeNull();
     });
 
     it('认不出的 id 返回 null（C++ 那个 switch 落空后的 return NULL）', () => {

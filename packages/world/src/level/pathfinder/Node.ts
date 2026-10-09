@@ -29,7 +29,14 @@ export class Node {
   }
 
   static createHash(x: number, y: number, z: number): number {
-    return ((y & 0xff) | ((x & 0x7fff) << 8) | ((z & 0x7fff) << 24) | (x < 0 ? 0x80000000 : 0) | (z < 0 ? 0x0000008000 : 0)) | 0;
+    return (
+      (y & 0xff) |
+      ((x & 0x7fff) << 8) |
+      ((z & 0x7fff) << 24) |
+      (x < 0 ? 0x80000000 : 0) |
+      (z < 0 ? 0x0000008000 : 0) |
+      0
+    );
   }
 
   distanceTo(to: Node): number {

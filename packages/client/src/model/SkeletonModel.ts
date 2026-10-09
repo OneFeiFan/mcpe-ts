@@ -29,7 +29,14 @@ export class SkeletonModel extends ZombieModel {
     this.leg1.setPos(2, 12, 0);
   }
 
-  override setupAnim(time: number, r: number, bob: number, yRot: number, xRot: number, scale: number): void {
+  override setupAnim(
+    time: number,
+    r: number,
+    bob: number,
+    yRot: number,
+    xRot: number,
+    scale: number,
+  ): void {
     this.bowAndArrow = true;
     super.setupAnim(time, r, bob, yRot, xRot, scale);
   }

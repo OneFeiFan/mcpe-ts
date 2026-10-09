@@ -7,7 +7,6 @@ import { Item } from './Item';
 import { ItemInstance } from './ItemInstance';
 import { UseAnim } from './UseAnim';
 
-
 const f = Math.fround;
 export class FoodItem extends Item {
   private static readonly EAT_DURATION = Math.trunc(20 * 1.6);

@@ -46,7 +46,14 @@ export class PigZombie extends Zombie {
     if (this.stunedTime > 0) this.stunedTime--;
     if (this.playAngrySoundIn > 0) {
       if (--this.playAngrySoundIn === 0) {
-        this.level.playSound(this.x, this.y, this.z, 'mob.zombiepig.zpigangry', f(this.getSoundVolume() * 2), f(f(f(f(this.random.nextFloat() - this.random.nextFloat()) * f(0.2)) + f(1.0)) * f(1.8)));
+        this.level.playSound(
+          this.x,
+          this.y,
+          this.z,
+          'mob.zombiepig.zpigangry',
+          f(this.getSoundVolume() * 2),
+          f(f(f(f(this.random.nextFloat() - this.random.nextFloat()) * f(0.2)) + f(1.0)) * f(1.8)),
+        );
       }
     }
     super.tick();
@@ -57,7 +64,11 @@ export class PigZombie extends Zombie {
   }
 
   override canSpawn(): boolean {
-    return this.level.difficulty > Difficulty.PEACEFUL && this.level.isUnobstructed(this.bb) && this.level.getCubes(this, this.bb).length === 0;
+    return (
+      this.level.difficulty > Difficulty.PEACEFUL &&
+      this.level.isUnobstructed(this.bb) &&
+      this.level.getCubes(this, this.bb).length === 0
+    );
   }
 
   override addAdditonalSaveData(entityTag: CompoundTag): void {

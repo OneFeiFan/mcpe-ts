@@ -77,7 +77,10 @@ export class ClassicWorldSelectionList extends RolledSelectionListH {
 
   protected renderItem(i: number, x: number, y: number, _h: number, t: Tesselator): void {
     const centerx = x + Math.trunc(this.itemWidth / 2);
-    let a0 = Mth.Max(f(1.1 - f(Math.abs(Math.trunc(this.width / 2) - centerx) * f(0.0055))), f(0.2));
+    let a0 = Mth.Max(
+      f(1.1 - f(Math.abs(Math.trunc(this.width / 2) - centerx) * f(0.0055))),
+      f(0.2),
+    );
     if (a0 > 1) a0 = 1;
     const textColor = Math.trunc(f(255.0 * a0)) * 0x010101;
     const textColor2 = Math.trunc(f(140.0 * a0)) * 0x010101;
@@ -147,7 +150,10 @@ export class ClassicWorldSelectionList extends RolledSelectionListH {
         this.mode = 0;
         this.xInertia = 0;
         this.xoo = this.xo = this.td.stop;
-        this.selectedItem = this.getItemAtPosition(Math.trunc(this.width / 2), Math.trunc(this.height / 2));
+        this.selectedItem = this.getItemAtPosition(
+          Math.trunc(this.width / 2),
+          Math.trunc(this.height / 2),
+        );
       } else {
         this.tweenInited();
       }
@@ -171,7 +177,10 @@ export class ClassicWorldSelectionList extends RolledSelectionListH {
         index++;
       }
       if (Mth.abs(diff) < 1 && speed < f(0.1)) {
-        this.selectedItem = this.getItemAtPosition(Math.trunc(this.width / 2), Math.trunc(this.height / 2));
+        this.selectedItem = this.getItemAtPosition(
+          Math.trunc(this.width / 2),
+          Math.trunc(this.height / 2),
+        );
         return;
       }
       this.td.start = this.xo;
@@ -211,7 +220,14 @@ export class ClassicDeleteWorldScreen extends ConfirmScreen {
   private _level: LevelSummary;
 
   constructor(level: LevelSummary) {
-    super(null, 'Are you sure you want to delete this world?', `'${level.name}' will be lost forever!`, 0, 'Delete', 'Cancel');
+    super(
+      null,
+      'Are you sure you want to delete this world?',
+      `'${level.name}' will be lost forever!`,
+      0,
+      'Delete',
+      'Cancel',
+    );
     this._level = level;
     this.tabButtonIndex = 1;
   }
@@ -259,7 +275,10 @@ export class ClassicSelectWorldScreen extends Screen {
     }
     if (button.id === this.bWorldView.id) {
       const wl = this.worldsList as unknown as { selectItem(i: number, d: boolean): void };
-      wl.selectItem(this.worldsList!.getItemAtPosition(Math.trunc(this.width / 2), Math.trunc(this.height / 2)), false);
+      wl.selectItem(
+        this.worldsList!.getItemAtPosition(Math.trunc(this.width / 2), Math.trunc(this.height / 2)),
+        false,
+      );
     }
   }
 
@@ -306,9 +325,11 @@ export class ClassicSelectWorldScreen extends Screen {
     this.bBack.y = yBase;
     this.bDelete.y = yBase;
     this.bBack.width = this.bDelete.width = this.bCreate.width = 84;
-    this.bDelete.x = Math.trunc(this.width / 2) - 4 - this.bDelete.width - Math.trunc(this.bDelete.width / 2);
+    this.bDelete.x =
+      Math.trunc(this.width / 2) - 4 - this.bDelete.width - Math.trunc(this.bDelete.width / 2);
     this.bCreate.x = Math.trunc(this.width / 2) - Math.trunc(this.bCreate.width / 2);
-    this.bBack.x = Math.trunc(this.width / 2) + 4 + this.bCreate.width - Math.trunc(this.bBack.width / 2);
+    this.bBack.x =
+      Math.trunc(this.width / 2) + 4 + this.bCreate.width - Math.trunc(this.bBack.width / 2);
   }
 
   override render(xm: number, ym: number, a: number): void {
@@ -321,7 +342,13 @@ export class ClassicSelectWorldScreen extends Screen {
       this._mouseHasBeenUp = !Mouse.getButtonState(MouseAction.ACTION_LEFT);
     }
     super.render(xm, ym, a);
-    this.drawCenteredString(this.minecraft.font!, 'Select world', Math.trunc(this.width / 2), 8, 0xffffffff | 0);
+    this.drawCenteredString(
+      this.minecraft.font!,
+      'Select world',
+      Math.trunc(this.width / 2),
+      8,
+      0xffffffff | 0,
+    );
   }
 
   private loadLevelSource(): void {
@@ -366,8 +393,10 @@ export class ClassicSelectWorldScreen extends Screen {
 
   protected override keyPressed(eventKey: number): void {
     if (this.bWorldView.selected) {
-      if (eventKey === this.minecraft.options.getIntValue(OptionId.OPTIONS_KEY_RIGHT)) this.worldsList!.stepLeft();
-      if (eventKey === this.minecraft.options.getIntValue(OptionId.OPTIONS_KEY_LEFT)) this.worldsList!.stepRight();
+      if (eventKey === this.minecraft.options.getIntValue(OptionId.OPTIONS_KEY_RIGHT))
+        this.worldsList!.stepLeft();
+      if (eventKey === this.minecraft.options.getIntValue(OptionId.OPTIONS_KEY_LEFT))
+        this.worldsList!.stepRight();
     }
     super.keyPressed(eventKey);
   }

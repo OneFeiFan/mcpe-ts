@@ -85,7 +85,10 @@ export default async function (h) {
   h.expect(shot1.n === 1, `世界里出现 1 支箭（实测 ${shot1.n}）`);
   h.expect(shot1.after === shot1.before + 1, '箭进了世界');
   h.expect(shot1.crit === true, '拉满 → critArrow = true（原句是 `if (pow == 1)`）');
-  h.expect(shot1.owner === shot1.playerId, `ownerId 是射箭的玩家（${shot1.owner} vs ${shot1.playerId}）`);
+  h.expect(
+    shot1.owner === shot1.playerId,
+    `ownerId 是射箭的玩家（${shot1.owner} vs ${shot1.playerId}）`,
+  );
   h.expect(shot1.damage === 1, `弓被磨损 1 点（实测 ${shot1.damage}）`);
 
   // ---- 定格拍一张"箭在飞" ----
@@ -93,7 +96,10 @@ export default async function (h) {
   const frozen = await h.state('pause 定格', (a) => {
     a.pause = true;
     const ar = a.level.entities.find((e) => e.constructor.name === 'Arrow');
-    return { n: a.level.entities.filter((e) => e.constructor.name === 'Arrow').length, z: ar ? ar.z : null };
+    return {
+      n: a.level.entities.filter((e) => e.constructor.name === 'Arrow').length,
+      z: ar ? ar.z : null,
+    };
   });
   await h.wait(400);
   await h.shot('01-箭飞出去（定格）');
@@ -124,8 +130,14 @@ export default async function (h) {
   });
   h.expect(!stuck.gone, '箭还在（插住之后要躺 60 秒才消失）');
   h.expect(stuck.inGround === true, 'inGround = true（撞墙那条路）');
-  h.expect(stuck.shakeTime !== undefined && stuck.shakeTime <= 7, `shakeTime 是 7 或已经递减（实测 ${stuck.shakeTime}）`);
-  h.expect(stuck.z < stuck.wallZ + 1, `没穿进墙里（z=${stuck.z?.toFixed(2)}，墙在 ${stuck.wallZ}）`);
+  h.expect(
+    stuck.shakeTime !== undefined && stuck.shakeTime <= 7,
+    `shakeTime 是 7 或已经递减（实测 ${stuck.shakeTime}）`,
+  );
+  h.expect(
+    stuck.z < stuck.wallZ + 1,
+    `没穿进墙里（z=${stuck.z?.toFixed(2)}，墙在 ${stuck.wallZ}）`,
+  );
   await h.shot('02-箭插在墙上');
 
   // ---- 再跑一会儿：插着的箭不该乱跑 ----

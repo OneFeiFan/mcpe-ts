@@ -210,10 +210,20 @@ export class SoundEngine {
 
   /** C++ `void update(Mob* player, float a)` */
   update(
-    player: { xo: number; x: number; yo: number; y: number; zo: number; z: number; yRotO: number; yRot: number } | null,
+    player: {
+      xo: number;
+      x: number;
+      yo: number;
+      y: number;
+      zo: number;
+      z: number;
+      yRotO: number;
+      yRot: number;
+    } | null,
     a: number,
   ): void {
-    if (this.options === null || this.options.getProgressValue(OptionId.OPTIONS_SOUND_VOLUME) === 0) return;
+    if (this.options === null || this.options.getProgressValue(OptionId.OPTIONS_SOUND_VOLUME) === 0)
+      return;
     if (player === null) return;
     this._x = player.xo + (player.x - player.xo) * a;
     this._y = player.yo + (player.y - player.yo) * a;

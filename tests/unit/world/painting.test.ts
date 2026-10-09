@@ -97,7 +97,9 @@ describe('Motive（D7）', () => {
   });
 
   it('每张画的尺寸与贴图坐标逐项对得上（抽几张有代表性的）', () => {
-    expect([Motive.Kebab.w, Motive.Kebab.h, Motive.Kebab.uo, Motive.Kebab.vo]).toEqual([16, 16, 0, 0]);
+    expect([Motive.Kebab.w, Motive.Kebab.h, Motive.Kebab.uo, Motive.Kebab.vo]).toEqual([
+      16, 16, 0, 0,
+    ]);
     expect([Motive.Pool.w, Motive.Pool.h, Motive.Pool.uo, Motive.Pool.vo]).toEqual([32, 16, 0, 32]);
     expect([Motive.Wanderer.w, Motive.Wanderer.h]).toEqual([16, 32]);
     expect([Motive.Fighters.w, Motive.Fighters.h, Motive.Fighters.uo, Motive.Fighters.vo]).toEqual([

@@ -368,11 +368,7 @@ export class ItemInHandRenderer {
       const swing1 = Mth.sin(swing * Mth.PI);
       const swing2 = Mth.sin(sqrtSwing * Mth.PI);
 
-      glTranslatef2(
-        -swing2 * 0.3,
-        Mth.sin(Mth.sqrt(swing) * Mth.PI * 2) * 0.4,
-        -swing1 * 0.4,
-      );
+      glTranslatef2(-swing2 * 0.3, Mth.sin(Mth.sqrt(swing) * Mth.PI * 2) * 0.4, -swing1 * 0.4);
       glTranslatef2(0.8 * d, -0.75 * d - (1 - h) * 0.6, -0.9 * d);
 
       glRotatef2(45, 0, 1, 0);

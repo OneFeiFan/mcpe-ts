@@ -65,27 +65,28 @@
 25. **纹理必须预加载**。`loadTexture` 只从 `apps/web/src/assets.ts` 的预加载表取。漏了一张，会沿用上一次绑定的纹理，表现为“画错了图”（S13 左上角残影 = 暗角画成了 icons.png）。用到新纹理就加进 `PRELOAD`；读文件（语言、存档）加进 `PRELOAD_FILES` 或走存储层。
 26. **同步 vs 异步**。C++ 的文件读写、`sleep` 是同步的；浏览器不能阻塞主线程。需要时改为启动时预加载 + 内存缓存 + 异步落盘，标 ADAPTED(Web) 并在文件头说明。
 27. **形参名会骗人 —— 判据永远是参考实现的"行为"，不是它的变量名。** 移植时最容易犯的错是
-   "照名字翻译"，而原版的名字本身可能是错的。
-   例（真踩过）：`AppPlatform_glfw.h` 的
-   ```cpp
-   virtual void hideCursor(bool hide) override {
-     int isHide = hide ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN;   // ← 反的
-     glfwSetInputMode(window, GLFW_CURSOR, isHide);
-   }
-   ```
-   形参叫 `hide`，`hide == true` 设的却是 NORMAL（**显示**）—— 参数的实际含义是"显示"。
-   照着名字写成 `hide ? 'none' : ''` 的结果是：进任何界面系统光标都被藏掉，而默认选项又关着
-   "游戏自己画光标"，两边都没有，只能盲选。
-   **遇到可疑的名字，去追调用方**：`GameRenderer` 调的是 `hideCursor(!rpiCursor)`，
-   默认 `rpiCursor = false` —— 这一句就说明了参数真意。查完把结论写进注释（名字照留，别改签名）。
-28. **画布坐标与鼠标坐标的单位必须一致（CSS 像素 ≠ 设备像素）。** 浏览器的事件坐标
-   （`clientX/Y`、`getBoundingClientRect`、`movementX/Y`）是 **CSS 像素**；
-   而 `canvas.width/height` 是 **设备像素**（= CSS × `devicePixelRatio`，为高分屏清晰而放大）。
-   把后者当"屏幕尺寸"喂给游戏（`getScreenWidth()`、`app.setSize()`）之后，鼠标就只能够到
-   屏幕左上角的 **1/dpr** —— Windows 缩放 125% 是 1/1.25，150% 是 1/1.5，右下角一片点不到。
-   **必须在入口处换算一次**：`设备像素 = CSS 像素 × (canvas.width / rect.width)`。
-   用这个比值而不是直接读 `devicePixelRatio`，画布尺寸不严格按 dpr 算时也不会跑偏。
-   ⚠ 这类 bug 在 `deviceScaleFactor: 1` 的无头测试里**完全测不出来** —— 见下面 F 节。
+    "照名字翻译"，而原版的名字本身可能是错的。
+    例（真踩过）：`AppPlatform_glfw.h` 的
+
+```cpp
+virtual void hideCursor(bool hide) override {
+  int isHide = hide ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN;   // ← 反的
+  glfwSetInputMode(window, GLFW_CURSOR, isHide);
+}
+```
+
+形参叫 `hide`，`hide == true` 设的却是 NORMAL（**显示**）—— 参数的实际含义是"显示"。
+照着名字写成 `hide ? 'none' : ''` 的结果是：进任何界面系统光标都被藏掉，而默认选项又关着
+"游戏自己画光标"，两边都没有，只能盲选。
+**遇到可疑的名字，去追调用方**：`GameRenderer` 调的是 `hideCursor(!rpiCursor)`，
+默认 `rpiCursor = false` —— 这一句就说明了参数真意。查完把结论写进注释（名字照留，别改签名）。28. **画布坐标与鼠标坐标的单位必须一致（CSS 像素 ≠ 设备像素）。** 浏览器的事件坐标
+（`clientX/Y`、`getBoundingClientRect`、`movementX/Y`）是 **CSS 像素**；
+而 `canvas.width/height` 是 **设备像素**（= CSS × `devicePixelRatio`，为高分屏清晰而放大）。
+把后者当"屏幕尺寸"喂给游戏（`getScreenWidth()`、`app.setSize()`）之后，鼠标就只能够到
+屏幕左上角的 **1/dpr** —— Windows 缩放 125% 是 1/1.25，150% 是 1/1.5，右下角一片点不到。
+**必须在入口处换算一次**：`设备像素 = CSS 像素 × (canvas.width / rect.width)`。
+用这个比值而不是直接读 `devicePixelRatio`，画布尺寸不严格按 dpr 算时也不会跑偏。
+⚠ 这类 bug 在 `deviceScaleFactor: 1` 的无头测试里**完全测不出来** —— 见下面 F 节。
 
 ## E2. 素材不只是图片（任务单 F 教我的）
 
@@ -138,7 +139,7 @@
   `bcos` 从 0.1f 变成 0.05f，看着像浮点精度问题，其实是整张表都是 0（G7 挂了 5 条）。
   凡是待测代码里出现 `Mth.sin` / `Mth.cos`，测试的 `beforeAll` 先来一句 `Mth.initMth()`。
 - **`Tesselator.draw()` 自己会发 4 条客户端数组开关**（`drawArrayVTN`：`enable VERTEX / enable TEXTURE_COORD /
-  disable VERTEX / disable TEXTURE_COORD`）。用 spy 记 GL 调用链的测试（G8 的 `SpyGL`）会把它们记进去 ——
+disable VERTEX / disable TEXTURE_COORD`）。用 spy 记 GL 调用链的测试（G8 的 `SpyGL`）会把它们记进去 ——
   期望数组里漏掉这 4 条，测试就挂；更糟的是**它们看起来像被待测代码多发的**，容易改错地方。
   记调用链时把 `draw()` 这两对开关当成它的一部分，写进期望里。
 - **数台账标记要用 `tools/ledger.mjs` 里那条严格正则**（`//\s*(DEFERRED|OMIT|ADAPTED|FORWARD-DECL)\(系统\)`），

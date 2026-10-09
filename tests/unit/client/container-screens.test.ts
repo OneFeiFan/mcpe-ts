@@ -8,7 +8,18 @@
  */
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { ChestScreen, FurnaceScreen, GLES1, glSetContext } from '@mcpe/client';
-import { ChestTileEntity, FurnaceTileEntity, initItems, initTileEntities, Inventory, Item, ItemInstance, type Level, Player, Tile } from '@mcpe/world';
+import {
+  ChestTileEntity,
+  FurnaceTileEntity,
+  initItems,
+  initTileEntities,
+  Inventory,
+  Item,
+  ItemInstance,
+  type Level,
+  Player,
+  Tile,
+} from '@mcpe/world';
 import { I18n } from '@mcpe/locale';
 import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
@@ -25,8 +36,18 @@ let player: TestPlayer;
 const fakeMc = () => ({
   player,
   level,
-  textures: { loadAndBindTexture: () => 1, loadTexture: () => 1, getTemporaryTextureData: () => ({ w: 256, h: 256 }) },
-  font: { draw: () => {}, drawShadow: () => {}, drawWordWrap: () => {}, width: (s: string) => s.length * 6, lineHeight: 10 },
+  textures: {
+    loadAndBindTexture: () => 1,
+    loadTexture: () => 1,
+    getTemporaryTextureData: () => ({ w: 256, h: 256 }),
+  },
+  font: {
+    draw: () => {},
+    drawShadow: () => {},
+    drawWordWrap: () => {},
+    width: (s: string) => s.length * 6,
+    lineHeight: 10,
+  },
   width: 960,
   height: 540,
   screen: null as unknown,
@@ -62,7 +83,13 @@ beforeAll(() => {
   level.addEntity(player);
 });
 
-type FurnacePriv = { inventoryItems: (ItemInstance | null)[]; addItem(p: unknown, i: number): boolean; buttonClicked(b: unknown): void; btnFuel: unknown; btnIngredient: unknown };
+type FurnacePriv = {
+  inventoryItems: (ItemInstance | null)[];
+  addItem(p: unknown, i: number): boolean;
+  buttonClicked(b: unknown): void;
+  btnFuel: unknown;
+  btnIngredient: unknown;
+};
 
 describe('熔炉界面', () => {
   it('放原料与燃料、点燃、取回原料', () => {
@@ -100,7 +127,13 @@ describe('箱子界面', () => {
     player.inventory.add(new ItemInstance(Tile.rock, 10));
     const s = new ChestScreen(player, chest);
     s.init(fakeMc() as never, 320, 180);
-    const p = s as unknown as { inventoryPane: unknown; chestPane: unknown; getItems(p: unknown): (ItemInstance | null)[]; addItem(p: unknown, i: number): boolean; keyPressed(k: number): void };
+    const p = s as unknown as {
+      inventoryPane: unknown;
+      chestPane: unknown;
+      getItems(p: unknown): (ItemInstance | null)[];
+      addItem(p: unknown, i: number): boolean;
+      keyPressed(k: number): void;
+    };
     const invItems = p.getItems(p.inventoryPane);
     const idx = invItems.findIndex((it) => it && it.id === Tile.rock.id);
     expect(p.addItem(p.inventoryPane, idx)).toBe(true);

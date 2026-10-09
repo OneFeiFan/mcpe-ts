@@ -55,11 +55,25 @@ export class PathFinder {
     return this.findPathToPoint(path, from, to.x, to.bb.y0, to.z, maxDist);
   }
 
-  findPathToTile(path: Path, from: Entity, x: number, y: number, z: number, maxDist: number): boolean {
+  findPathToTile(
+    path: Path,
+    from: Entity,
+    x: number,
+    y: number,
+    z: number,
+    maxDist: number,
+  ): boolean {
     return this.findPathToPoint(path, from, f(x + 0.5), f(y + 0.5), f(z + 0.5), maxDist);
   }
 
-  private findPathToPoint(path: Path, e: Entity, xt: number, yt: number, zt: number, maxDist: number): boolean {
+  private findPathToPoint(
+    path: Path,
+    e: Entity,
+    xt: number,
+    yt: number,
+    zt: number,
+    maxDist: number,
+  ): boolean {
     const level = this.level!;
     this.nodes.clear();
     this._nodeIndex = 0;
@@ -99,11 +113,22 @@ export class PathFinder {
         to = this.getNode(xx0, yy, zz0);
       }
     }
-    const size = new Node(Mth.floor(f(e.bbWidth + 1)), Mth.floor(f(e.bbHeight + 1)), Mth.floor(f(e.bbWidth + 1)));
+    const size = new Node(
+      Mth.floor(f(e.bbWidth + 1)),
+      Mth.floor(f(e.bbHeight + 1)),
+      Mth.floor(f(e.bbWidth + 1)),
+    );
     return this.findPathBetween(path, e, from, to, size, maxDist);
   }
 
-  private findPathBetween(path: Path, e: Entity, from: Node, to: Node, size: Node, maxDist: number): boolean {
+  private findPathBetween(
+    path: Path,
+    e: Entity,
+    from: Node,
+    to: Node,
+    size: Node,
+    maxDist: number,
+  ): boolean {
     stats.created = 0;
     from.g = 0;
     from.h = from.distanceTo(to);
@@ -153,7 +178,13 @@ export class PathFinder {
     }
   }
 
-  private getNeighbors(entity: Entity, pos: Node, size: Node, target: Node, maxDist: number): number {
+  private getNeighbors(
+    entity: Entity,
+    pos: Node,
+    size: Node,
+    target: Node,
+    maxDist: number,
+  ): number {
     let p = 0;
     let jumpSize = 0;
     if (this.isFree(entity, pos.x, pos.y + 1, pos.z, size) === PathFinder.TYPE_OPEN) jumpSize = 1;
@@ -168,12 +199,24 @@ export class PathFinder {
     return p;
   }
 
-  private getNodeFor(entity: Entity, x: number, y: number, z: number, size: Node, jumpSize: number): Node | null {
+  private getNodeFor(
+    entity: Entity,
+    x: number,
+    y: number,
+    z: number,
+    size: Node,
+    jumpSize: number,
+  ): Node | null {
     let best: Node | null = null;
     const pathType = this.isFree(entity, x, y, z, size);
     if (pathType === PathFinder.TYPE_WALKABLE) return this.getNode(x, y, z);
     if (pathType === PathFinder.TYPE_OPEN) best = this.getNode(x, y, z);
-    if (best === null && jumpSize > 0 && pathType !== PathFinder.TYPE_FENCE && this.isFree(entity, x, y + jumpSize, z, size) === PathFinder.TYPE_OPEN) {
+    if (
+      best === null &&
+      jumpSize > 0 &&
+      pathType !== PathFinder.TYPE_FENCE &&
+      this.isFree(entity, x, y + jumpSize, z, size) === PathFinder.TYPE_OPEN
+    ) {
       best = this.getNode(x, y + jumpSize, z);
       y += jumpSize;
     }

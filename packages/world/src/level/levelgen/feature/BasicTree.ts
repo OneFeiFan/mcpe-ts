@@ -48,7 +48,9 @@ export class BasicTree extends Feature {
     const origin = this.origin;
     this.trunkHeight = Math.trunc(f(this.height * this.trunkHeightScale));
     if (this.trunkHeight >= this.height) this.trunkHeight = this.height - 1;
-    let clustersPerY = Math.trunc(f(1.382) + Math.pow((this.foliageDensity * this.height) / 13.0, 2));
+    let clustersPerY = Math.trunc(
+      f(1.382) + Math.pow((this.foliageDensity * this.height) / 13.0, 2),
+    );
     if (clustersPerY < 1) clustersPerY = 1;
     const temp: number[][] = [];
     let y = origin[1]! + this.height - this.foliageHeight;
@@ -75,7 +77,12 @@ export class BasicTree extends Feature {
         const checkEnd = [x, y + this.foliageHeight, z];
         if (this.checkLine(checkStart, checkEnd) === -1) {
           const checkBranchBase = [origin[0]!, origin[1]!, origin[2]!];
-          const distance = f(Math.sqrt(Math.pow(Math.abs(origin[0]! - checkStart[0]!), 2.0) + Math.pow(Math.abs(origin[2]! - checkStart[2]!), 2.0)));
+          const distance = f(
+            Math.sqrt(
+              Math.pow(Math.abs(origin[0]! - checkStart[0]!), 2.0) +
+                Math.pow(Math.abs(origin[2]! - checkStart[2]!), 2.0),
+            ),
+          );
           const branchHeight = f(distance * this.branchSlope);
           if (f(checkStart[1]! - branchHeight) > trunkTop) {
             checkBranchBase[1] = trunkTop;
@@ -96,7 +103,14 @@ export class BasicTree extends Feature {
     this.foliageCoords = temp.slice(0, clusterCount);
   }
 
-  private crossection(x: number, y: number, z: number, radius: number, direction: number, material: number): void {
+  private crossection(
+    x: number,
+    y: number,
+    z: number,
+    radius: number,
+    direction: number,
+    material: number,
+  ): void {
     const level = this.thisLevel!;
     const rad = Math.trunc(radius + 0.618);
     const secidx1 = this.axisConversionArray[direction]!;
@@ -179,7 +193,14 @@ export class BasicTree extends Feature {
       coordinate[secidx1] = floorF(f(start[secidx1]! + f(primoffset * secfac1)) + 0.5);
       coordinate[secidx2] = floorF(f(start[secidx2]! + f(primoffset * secfac2)) + 0.5);
       const dir = 0; // C++ 的 xdiff / zdiff 两个分支都设成 0
-      this.placeBlock(this.thisLevel!, coordinate[0]!, coordinate[1]!, coordinate[2]!, material, dir);
+      this.placeBlock(
+        this.thisLevel!,
+        coordinate[0]!,
+        coordinate[1]!,
+        coordinate[2]!,
+        material,
+        dir,
+      );
       primoffset += primsign;
     }
   }

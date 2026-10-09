@@ -80,14 +80,7 @@ export class Explosion {
   private level: Level;
 
   /** C++ `Explosion(Level*, Entity*, float x, float y, float z, float r)` */
-  constructor(
-    level: Level,
-    source: Entity | null,
-    x: number,
-    y: number,
-    z: number,
-    r: number,
-  ) {
+  constructor(level: Level, source: Entity | null, x: number, y: number, z: number, r: number) {
     this.level = level;
     this.source = source;
     this.x = x;
@@ -105,7 +98,14 @@ export class Explosion {
       for (let yy = 0; yy < size; yy++)
         for (let zz = 0; zz < size; zz++) {
           // 只走立方体的表面那一层
-          if (xx !== 0 && xx !== size - 1 && yy !== 0 && yy !== size - 1 && zz !== 0 && zz !== size - 1)
+          if (
+            xx !== 0 &&
+            xx !== size - 1 &&
+            yy !== 0 &&
+            yy !== size - 1 &&
+            zz !== 0 &&
+            zz !== size - 1
+          )
             continue;
           let xd = f(f(f(xx / f(size - 1)) * 2) - 1);
           let yd = f(f(f(yy / f(size - 1)) * 2) - 1);
@@ -148,10 +148,7 @@ export class Explosion {
     const y1 = Mth.floor(f(f(this.y + this.r) + 1));
     const z0 = Mth.floor(f(f(this.z - this.r) - 1));
     const z1 = Mth.floor(f(f(this.z + this.r) + 1));
-    const entities = this.level.getEntities(
-      this.source,
-      new AABB(x0, y0, z0, x1, y1, z1),
-    );
+    const entities = this.level.getEntities(this.source, new AABB(x0, y0, z0, x1, y1, z1));
     const center = new Vec3(this.x, this.y, this.z);
     for (let i = 0; i < entities.length; i++) {
       const e = entities[i]!;
@@ -205,7 +202,10 @@ export class Explosion {
       this.z,
       'random.explode',
       4,
-      f(f(1 + f(f(this.level.random.nextFloat() - this.level.random.nextFloat()) * f(0.2))) * f(0.7)),
+      f(
+        f(1 + f(f(this.level.random.nextFloat() - this.level.random.nextFloat()) * f(0.2))) *
+          f(0.7),
+      ),
     );
     const toBlowArray = this.toBlow.entries();
     let j = 0;
@@ -227,7 +227,9 @@ export class Explosion {
         yd = f(yd * invdd);
         zd = f(zd * invdd);
         let speed = f(f(0.5) / f(f(this.r / invdd) + f(0.1)));
-        speed = f(speed * f(f(this.level.random.nextFloat() * this.level.random.nextFloat()) + f(0.3)));
+        speed = f(
+          speed * f(f(this.level.random.nextFloat() * this.level.random.nextFloat()) + f(0.3)),
+        );
         xd = f(xd * speed);
         yd = f(yd * speed);
         zd = f(zd * speed);

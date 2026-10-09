@@ -38,7 +38,6 @@ import { OptionId } from '../Options';
 import { TakeAnimationParticle } from '../particle/TakeAnimationParticle';
 import type { IMoveInput } from './input/IMoveInput';
 
-
 const f = Math.fround;
 /** LocalPlayer.cpp 的自由函数 isJumpable */
 function isJumpable(tileId: number): boolean {
@@ -353,12 +352,12 @@ export class LocalPlayer extends Player {
   }
 
   override startCrafting(x: number, y: number, z: number, tableSize: number): void {
-    void x, void y, void z;
+    (void x, void y, void z);
     if (!this.minecraft.isCreativeMode()) this.minecraft.setScreen(new WorkbenchScreen(tableSize));
   }
 
   override startStonecutting(x: number, y: number, z: number): void {
-    void x, void y, void z;
+    (void x, void y, void z);
     this.minecraft.setScreen(new StonecutterScreen());
   }
 

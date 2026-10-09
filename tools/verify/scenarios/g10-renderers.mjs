@@ -227,7 +227,9 @@ export default async function (h) {
       xoldBefore,
       xoldAfter: p ? p.xOld : null,
       px: p ? p.x : null,
-      pos: p ? [Math.round(p.x * 10) / 10, Math.round(p.y * 10) / 10, Math.round(p.z * 10) / 10] : null,
+      pos: p
+        ? [Math.round(p.x * 10) / 10, Math.round(p.y * 10) / 10, Math.round(p.z * 10) / 10]
+        : null,
     };
   });
   h.expect(!hung.error, `前置条件：${hung.error ?? 'ok'}`);

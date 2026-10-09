@@ -12,7 +12,11 @@ import { Keyboard } from '@mcpe/platform';
 import type { SignTileEntity } from '@mcpe/world';
 
 function make() {
-  const sign = { messages: ['', '', '', ''], selectedLine: -1, setChanged: vi.fn() } as unknown as SignTileEntity & { setChanged: ReturnType<typeof vi.fn> };
+  const sign = {
+    messages: ['', '', '', ''],
+    selectedLine: -1,
+    setChanged: vi.fn(),
+  } as unknown as SignTileEntity & { setChanged: ReturnType<typeof vi.fn> };
   const platform = { showKeyboard: vi.fn(), hideKeyboard: vi.fn() };
   const mc = { platform: () => platform, setScreen: vi.fn(), font: null, width: 960, height: 540 };
   const s = new TextEditScreen(sign);
@@ -27,7 +31,9 @@ describe('TextEditScreen', () => {
   it('打开时叫出键盘；关闭按钮放在右上角 19×19', () => {
     const { s, platform } = make();
     expect(platform.showKeyboard).toHaveBeenCalledTimes(1);
-    const btn = (s as unknown as { btnClose: { x: number; y: number; width: number; height: number } }).btnClose;
+    const btn = (
+      s as unknown as { btnClose: { x: number; y: number; width: number; height: number } }
+    ).btnClose;
     expect([btn.x, btn.y, btn.width, btn.height]).toEqual([320 - 19, 0, 19, 19]);
   });
 

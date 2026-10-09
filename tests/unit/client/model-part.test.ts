@@ -37,7 +37,8 @@ describe('ModelPart 的构造（G3）', () => {
     const p = new ModelPart(40, 16);
     p.addBox(0, 0, 0, 1, 1, 1);
     // texOffs 会在 cube 的 UV 里体现：+x 面从 (d+w, d) = (17, 16) 开始
-    const cube = (p as unknown as { cubes: { polygons: { vertices: { u: number }[] }[] }[] }).cubes[0]!;
+    const cube = (p as unknown as { cubes: { polygons: { vertices: { u: number }[] }[] }[] })
+      .cubes[0]!;
     expect(cube.polygons[0]!.vertices[0]!.u).toBeGreaterThan(0.25);
   });
 
@@ -172,7 +173,8 @@ describe('⚠ assign（C++ 的 operator=）：拷进现有对象，不是换对�
     expect(p.mirror).toBe(true);
     // texOffs 通过接下来 addBox 的 UV 体现：+x 面从 (d+w, d) 起 —— 有偏移就该大于 0.25
     p.addBox(0, 0, 0, 8, 8, 8);
-    const cube = (p as unknown as { cubes: { polygons: { vertices: { u: number }[] }[] }[] }).cubes[0]!;
+    const cube = (p as unknown as { cubes: { polygons: { vertices: { u: number }[] }[] }[] })
+      .cubes[0]!;
     expect(cube.polygons[0]!.vertices[0]!.u).toBeGreaterThan(0.25);
   });
 

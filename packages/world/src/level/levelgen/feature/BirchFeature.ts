@@ -35,7 +35,8 @@ export class BirchFeature extends Feature {
     }
     if (!free) return false;
     const belowTile = level.getTile(x, y - 1, z);
-    if ((belowTile !== Tile.grass.id && belowTile !== Tile.dirt.id) || y >= DEPTH - treeHeight - 1) return false;
+    if ((belowTile !== Tile.grass.id && belowTile !== Tile.dirt.id) || y >= DEPTH - treeHeight - 1)
+      return false;
     this.placeBlock(level, x, y - 1, z, Tile.dirt.id);
     for (let yy = y - 3 + treeHeight; yy <= y + treeHeight; yy++) {
       const yo = yy - (y + treeHeight);
@@ -44,14 +45,21 @@ export class BirchFeature extends Feature {
         const xo = xx - x;
         for (let zz = z - offs; zz <= z + offs; zz++) {
           const zo = zz - z;
-          if (Math.abs(xo) === offs && Math.abs(zo) === offs && (random.nextInt(2) === 0 || yo === 0)) continue;
-          if (!Tile.solid[level.getTile(xx, yy, zz)]) this.placeBlock(level, xx, yy, zz, Tile.leaves.id, LeafTile.BIRCH_LEAF);
+          if (
+            Math.abs(xo) === offs &&
+            Math.abs(zo) === offs &&
+            (random.nextInt(2) === 0 || yo === 0)
+          )
+            continue;
+          if (!Tile.solid[level.getTile(xx, yy, zz)])
+            this.placeBlock(level, xx, yy, zz, Tile.leaves.id, LeafTile.BIRCH_LEAF);
         }
       }
     }
     for (let hh = 0; hh < treeHeight; hh++) {
       const t = level.getTile(x, y + hh, z);
-      if (t === 0 || t === Tile.leaves.id) this.placeBlock(level, x, y + hh, z, Tile.treeTrunk.id, TreeTile.BIRCH_TRUNK);
+      if (t === 0 || t === Tile.leaves.id)
+        this.placeBlock(level, x, y + hh, z, Tile.treeTrunk.id, TreeTile.BIRCH_TRUNK);
     }
     return true;
   }

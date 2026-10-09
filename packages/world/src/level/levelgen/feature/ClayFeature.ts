@@ -40,7 +40,11 @@ export class ClayFeature extends Feature {
       const hr = f((Math.sin(f(f(d * Mth.PI) / count)) + 1) * ss + 1);
       for (let x2 = Math.trunc(f(xx - f(r / 2))); x2 <= Math.trunc(f(xx + f(r * f(0.5)))); x2++)
         for (let y2 = Math.trunc(f(yy - f(hr / 2))); y2 <= Math.trunc(f(yy + f(hr * f(0.5)))); y2++)
-          for (let z2 = Math.trunc(f(zz - f(r / 2))); z2 <= Math.trunc(f(zz + f(r * f(0.5)))); z2++) {
+          for (
+            let z2 = Math.trunc(f(zz - f(r / 2)));
+            z2 <= Math.trunc(f(zz + f(r * f(0.5))));
+            z2++
+          ) {
             const xd = f(f(f(x2 + f(0.5)) - xx) / f(r * f(0.5)));
             const yd = f(f(f(y2 + f(0.5)) - yy) / f(hr * f(0.5)));
             const zd = f(f(f(z2 + f(0.5)) - zz) / f(r * f(0.5)));

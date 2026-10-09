@@ -83,7 +83,16 @@ export default async function (h) {
   // ---- 4) iconcrack 用 data 查物品（332 = 雪球，id 带 +256 偏移）----
   const s4 = await h.state('iconcrack 带 data=332（雪球）', (a) => {
     const before = Number(a.particleEngine.countParticles());
-    a.level.addParticle('iconcrack', a.player.x - 1, a.player.y - 0.6, a.player.z + 3, 0, 0, 0, 332);
+    a.level.addParticle(
+      'iconcrack',
+      a.player.x - 1,
+      a.player.y - 0.6,
+      a.player.z + 3,
+      0,
+      0,
+      0,
+      332,
+    );
     return { before, after: Number(a.particleEngine.countParticles()) };
   });
   h.expect(s4.after - s4.before === 1, `iconcrack 走通（实测 +${s4.after - s4.before}）`);
@@ -132,10 +141,7 @@ export default async function (h) {
   const alive1 = await h.state('等 6 秒后', (a) => {
     return { n: Number(a.particleEngine.countParticles()) };
   });
-  h.expect(
-    alive1.n < alive0.n,
-    `粒子会自己消失（${alive0.n} → ${alive1.n}）`,
-  );
+  h.expect(alive1.n < alive0.n, `粒子会自己消失（${alive0.n} → ${alive1.n}）`);
   await h.shot('02-过了一会儿，粒子少了');
 
   // ---- 7) E9：捡起掉落物 → 那件物品飞向玩家 ----
@@ -231,5 +237,8 @@ export default async function (h) {
   const stats = await h.state('gatherStats3 的 P: 不是写死的 0', (a) => {
     return { s: a.gatherStats3() };
   });
-  h.expect(/^P: \d+\. T: /.test(stats.s), `gatherStats3 形如 "P: n. T: …"（实测 ${stats.s.slice(0, 24)}…）`);
+  h.expect(
+    /^P: \d+\. T: /.test(stats.s),
+    `gatherStats3 形如 "P: n. T: …"（实测 ${stats.s.slice(0, 24)}…）`,
+  );
 }

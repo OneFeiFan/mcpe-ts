@@ -7,11 +7,30 @@ import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { SharedConstants } from '@mcpe/core';
 import { Random } from '@mcpe/util';
-import { BasicTree, GameType, initItems, initTileEntities, Level, LevelSettings, MemoryLevelStorage, Tile } from '@mcpe/world';
+import {
+  BasicTree,
+  GameType,
+  initItems,
+  initTileEntities,
+  Level,
+  LevelSettings,
+  MemoryLevelStorage,
+  Tile,
+} from '@mcpe/world';
 import { createFlatLevel } from '../helpers/headlessLevel';
 
-type Rec = { x: number; y: number; z: number; ok: boolean; hash: number; logs: number; leaves: number };
-const G = JSON.parse(readFileSync(new URL('../../fixtures/golden/basictree.json', import.meta.url), 'utf8')) as {
+type Rec = {
+  x: number;
+  y: number;
+  z: number;
+  ok: boolean;
+  hash: number;
+  logs: number;
+  leaves: number;
+};
+const G = JSON.parse(
+  readFileSync(new URL('../../fixtures/golden/basictree.json', import.meta.url), 'utf8'),
+) as {
   seed: number;
   order: [number, number];
   trees: Rec[];
@@ -28,7 +47,12 @@ beforeAll(() => {
   createFlatLevel();
   initItems();
   initTileEntities();
-  level = new Level(new MemoryLevelStorage(), 'golden', new LevelSettings(G.seed, GameType.Creative), SharedConstants.GeneratorVersion);
+  level = new Level(
+    new MemoryLevelStorage(),
+    'golden',
+    new LevelSettings(G.seed, GameType.Creative),
+    SharedConstants.GeneratorVersion,
+  );
   const [a, b] = G.order;
   for (let cz = a; cz <= b; cz++) for (let cx = a; cx <= b; cx++) level.getChunk(cx, cz);
   G.trees.forEach((t, k) => {
@@ -64,7 +88,10 @@ describe('G17-2 大树 BasicTree', () => {
 describe('G17-2 BasicTree.treeShape（不带 Mth:: 的 abs 用的是 float 重载）', () => {
   // 奇数高度时 adjacent 带 .5：若是 ::abs(int)，会先截断成整数、结果完全不同。6 棵树的哈希分辨不出这一点（换成 int 版也都通过），所以单独比这张表。
   it('高度 5–20、每个 y 的返回值逐位与 C++ 相同', () => {
-    const tree = new BasicTree(false) as unknown as { height: number; treeShape(y: number): number };
+    const tree = new BasicTree(false) as unknown as {
+      height: number;
+      treeShape(y: number): number;
+    };
     const bad = G.shape.find(([h, y, want]) => {
       tree.height = h;
       return bits(tree.treeShape(y)) !== want;

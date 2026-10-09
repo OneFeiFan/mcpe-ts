@@ -33,27 +33,62 @@ export class OptionsItem extends GuiElementContainer {
     const yOffset = Math.trunc((this.height - 8) / 2);
     let text = this.m_label;
     const o = minecraft.options;
-    const pick = (keys: (string | null)[], value: number, fallback: string | null): string | null =>
-      value >= 0 && value < keys.length ? keys[value]! : fallback;
+    const pick = (
+      keys: (string | null)[],
+      value: number,
+      fallback: string | null,
+    ): string | null => (value >= 0 && value < keys.length ? keys[value]! : fallback);
     if (this.m_optionId === OptionId.OPTIONS_GUI_SCALE) {
-      const k = pick(['options.guiScale.auto', 'options.guiScale.small', 'options.guiScale.medium', 'options.guiScale.large', 'options.guiScale.larger', 'options.guiScale.largest'], o.getIntValue(OptionId.OPTIONS_GUI_SCALE), 'options.guiScale.auto');
+      const k = pick(
+        [
+          'options.guiScale.auto',
+          'options.guiScale.small',
+          'options.guiScale.medium',
+          'options.guiScale.large',
+          'options.guiScale.larger',
+          'options.guiScale.largest',
+        ],
+        o.getIntValue(OptionId.OPTIONS_GUI_SCALE),
+        'options.guiScale.auto',
+      );
       text += ': ' + I18n.get(k!);
     }
     if (this.m_optionId === OptionId.OPTIONS_FOG_TYPE) {
-      const k = pick(['options.fogType.vanilla', 'options.fogType.java', 'options.fogType.unused'], o.getIntValue(OptionId.OPTIONS_FOG_TYPE), null);
+      const k = pick(
+        ['options.fogType.vanilla', 'options.fogType.java', 'options.fogType.unused'],
+        o.getIntValue(OptionId.OPTIONS_FOG_TYPE),
+        null,
+      );
       text += ': ' + (k === null ? '' : I18n.get(k)); // C++ switch 无 default：scaleText 保持空串
     }
     if (this.m_optionId === OptionId.OPTIONS_DEBUG_STYLE) {
-      const k = pick(['options.debugStyle.javaBeta', 'options.debugStyle.custom', 'options.fogType.unused'], o.getIntValue(OptionId.OPTIONS_DEBUG_STYLE), null);
+      const k = pick(
+        ['options.debugStyle.javaBeta', 'options.debugStyle.custom', 'options.fogType.unused'],
+        o.getIntValue(OptionId.OPTIONS_DEBUG_STYLE),
+        null,
+      );
       text += ': ' + (k === null ? '' : I18n.get(k)); // 原样：第 3 档借用了 fogType.unused 的文字
     }
     if (this.m_optionId === OptionId.OPTIONS_MENU_STYLE) {
-      const k = pick(['options.menuStyle.pocket', 'options.menuStyle.xperia', 'options.menuStyle.java'], o.getIntValue(OptionId.OPTIONS_MENU_STYLE), null);
+      const k = pick(
+        ['options.menuStyle.pocket', 'options.menuStyle.xperia', 'options.menuStyle.java'],
+        o.getIntValue(OptionId.OPTIONS_MENU_STYLE),
+        null,
+      );
       text += ': ' + (k === null ? '' : I18n.get(k));
     }
     if (this.m_optionId === OptionId.OPTIONS_VIEW_DISTANCE) {
       const v = o.getIntValue(OptionId.OPTIONS_VIEW_DISTANCE);
-      const k = pick(['options.renderDistance.far', 'options.renderDistance.normal', 'options.renderDistance.short', 'options.renderDistance.tiny'], v, null);
+      const k = pick(
+        [
+          'options.renderDistance.far',
+          'options.renderDistance.normal',
+          'options.renderDistance.short',
+          'options.renderDistance.tiny',
+        ],
+        v,
+        null,
+      );
       text += ': ' + (k === null ? 'Debug' : I18n.get(k));
     }
     minecraft.font!.draw(text, this.x, this.y + yOffset, 0x909090, false);

@@ -28,7 +28,6 @@ import { Facing } from '@mcpe/world';
 import { Minecraft } from '../Minecraft';
 import { Tesselator } from './Tesselator';
 
-
 const f = Math.fround;
 export class TileRenderer {
   private static sideTinting = false;

@@ -97,8 +97,16 @@ export class PolygonQuad {
    * ⚠ `vboId` 在 C++ 里**收了但没用**（函数体一行都没读它）—— 照抄，参数留着。
    */
   render(t: Tesselator, scale: number, _vboId = -1): void {
-    const v0 = this.vertices[0]!.pos.sub(this.vertices[1]!.pos.x, this.vertices[1]!.pos.y, this.vertices[1]!.pos.z);
-    const v1 = this.vertices[2]!.pos.sub(this.vertices[1]!.pos.x, this.vertices[1]!.pos.y, this.vertices[1]!.pos.z);
+    const v0 = this.vertices[0]!.pos.sub(
+      this.vertices[1]!.pos.x,
+      this.vertices[1]!.pos.y,
+      this.vertices[1]!.pos.z,
+    );
+    const v1 = this.vertices[2]!.pos.sub(
+      this.vertices[1]!.pos.x,
+      this.vertices[1]!.pos.y,
+      this.vertices[1]!.pos.z,
+    );
     // ⚠ 是 v1 叉 v0，不是 v0 叉 v1 —— 顺序反了整个模型的法线都朝里
     const n = v1.cross(v0.x, v0.y, v0.z).normalized();
     if (this._flipNormal === true) {

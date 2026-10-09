@@ -61,7 +61,12 @@ export class KeyboardInput extends IMoveInput {
     this.wantUp = this.jumping;
     this.wantDown = this.sneaking;
     if (this.keys[KeyboardInput.KEY_CRAFT]) {
-      player!.startCrafting(Math.trunc(player!.x), Math.trunc(player!.y), Math.trunc(player!.z), Recipe.SIZE_2X2);
+      player!.startCrafting(
+        Math.trunc(player!.x),
+        Math.trunc(player!.y),
+        Math.trunc(player!.z),
+        Recipe.SIZE_2X2,
+      );
       // 原样：setKey 从不设置 KEY_CRAFT，这句实际走不到
     }
   }

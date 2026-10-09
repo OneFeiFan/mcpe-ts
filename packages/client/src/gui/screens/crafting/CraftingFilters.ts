@@ -7,7 +7,8 @@ export const CraftingFilters = {
     if (item.id < 0 || item.id >= 256) return false;
     const tile = Tile.tiles[item.id];
     if (!tile) return false;
-    if (tile === Tile.lapisBlock || tile === Tile.furnace || tile === Tile.stonecutterBench) return false;
+    if (tile === Tile.lapisBlock || tile === Tile.furnace || tile === Tile.stonecutterBench)
+      return false;
     if (tile === Tile.stoneSlabHalf && ins.getAuxValue() === StoneSlabTile.WOOD_SLAB) return false;
     return tile.material === Material.stone || tile.material === Material.sand;
   },

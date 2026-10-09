@@ -6,8 +6,19 @@
 import { Mouse, MouseAction, getTimeMs } from '@mcpe/platform';
 import type { Minecraft } from '../../Minecraft';
 import {
-  GL_ALPHA_TEST, GL_BLEND, GL_DEPTH_TEST, GL_FLAT, GL_ONE_MINUS_SRC_ALPHA, GL_SMOOTH, GL_SRC_ALPHA, GL_TEXTURE_2D, glBlendFunc2, glColor4f2,
-  glDisable2, glEnable2, glShadeModel2,
+  GL_ALPHA_TEST,
+  GL_BLEND,
+  GL_DEPTH_TEST,
+  GL_FLAT,
+  GL_ONE_MINUS_SRC_ALPHA,
+  GL_SMOOTH,
+  GL_SRC_ALPHA,
+  GL_TEXTURE_2D,
+  glBlendFunc2,
+  glColor4f2,
+  glDisable2,
+  glEnable2,
+  glShadeModel2,
 } from '../../renderer/gles';
 import { Tesselator } from '../../renderer/Tesselator';
 import { GuiComponent } from '../GuiComponent';
@@ -38,7 +49,14 @@ export abstract class ScrolledSelectionList extends GuiComponent {
   private doRenderHeader = false;
   private headerHeight = 0;
 
-  constructor(minecraft: Minecraft, width: number, height: number, y0: number, y1: number, itemHeight: number) {
+  constructor(
+    minecraft: Minecraft,
+    width: number,
+    height: number,
+    y0: number,
+    y1: number,
+    itemHeight: number,
+  ) {
     super();
     this.minecraft = minecraft;
     this.width = width;

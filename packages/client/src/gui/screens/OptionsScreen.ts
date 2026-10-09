@@ -18,7 +18,6 @@ import { Screen } from '../Screen';
 import { CreditsScreen } from './CreditsScreen';
 import { ScreenId } from './ScreenChooser';
 
-
 const f = Math.fround;
 export class OptionsScreen extends Screen {
   private bHeader: THeader | null = null;
@@ -91,7 +90,8 @@ export class OptionsScreen extends Screen {
     this.renderBackground();
     const xmm = Math.trunc((xm * this.width) / this.minecraft.width);
     const ymm = Math.trunc((ym * this.height) / this.minecraft.height) - 1;
-    if (this.currentOptionsGroup !== null) this.currentOptionsGroup.render(this.minecraft, xmm, ymm);
+    if (this.currentOptionsGroup !== null)
+      this.currentOptionsGroup.render(this.minecraft, xmm, ymm);
     super.render(xm, ym, a);
   }
 
@@ -131,7 +131,9 @@ export class OptionsScreen extends Screen {
     this.optionPanes.push(new OptionsGroup('options.group.graphics'));
     this.optionPanes.push(new OptionsGroup('options.group.tweaks'));
     const P = this.optionPanes;
-    P[0]!.addOptionItem(OptionId.OPTIONS_USERNAME, mc).addOptionItem(OptionId.OPTIONS_SENSITIVITY, mc);
+    P[0]!
+      .addOptionItem(OptionId.OPTIONS_USERNAME, mc)
+      .addOptionItem(OptionId.OPTIONS_SENSITIVITY, mc);
     P[1]!
       .addOptionItem(OptionId.OPTIONS_DIFFICULTY, mc)
       .addOptionItem(OptionId.OPTIONS_SERVER_VISIBLE, mc)
@@ -180,30 +182,38 @@ export class OptionsScreen extends Screen {
   }
 
   protected override mouseClicked(x: number, y: number, buttonNum: number): void {
-    if (this.currentOptionsGroup !== null) this.currentOptionsGroup.mouseClicked(this.minecraft, x, y, buttonNum);
+    if (this.currentOptionsGroup !== null)
+      this.currentOptionsGroup.mouseClicked(this.minecraft, x, y, buttonNum);
     super.mouseClicked(x, y, buttonNum);
   }
 
   protected override mouseReleased(x: number, y: number, buttonNum: number): void {
-    if (this.currentOptionsGroup !== null) this.currentOptionsGroup.mouseReleased(this.minecraft, x, y, buttonNum);
+    if (this.currentOptionsGroup !== null)
+      this.currentOptionsGroup.mouseReleased(this.minecraft, x, y, buttonNum);
     super.mouseReleased(x, y, buttonNum);
   }
 
   protected override mouseWheel(_dx: number, dy: number, xm: number, ym: number): void {
-    if (this.currentOptionsGroup !== null && this.currentOptionsGroup.pointInside(xm, ym) && dy !== 0) {
+    if (
+      this.currentOptionsGroup !== null &&
+      this.currentOptionsGroup.pointInside(xm, ym) &&
+      dy !== 0
+    ) {
       this.currentOptionsGroup.scrollByPixels(f(dy * 18.0));
     }
   }
 
   protected override keyPressed(eventKey: number): void {
-    if (this.currentOptionsGroup !== null) this.currentOptionsGroup.keyPressed(this.minecraft, eventKey);
+    if (this.currentOptionsGroup !== null)
+      this.currentOptionsGroup.keyPressed(this.minecraft, eventKey);
     if (eventKey === Keyboard.KEY_ESCAPE) this.minecraft.options.save();
     super.keyPressed(eventKey);
   }
 
   protected override charPressed(inputChar: string): void {
-    if (this.currentOptionsGroup !== null) this.currentOptionsGroup.charPressed(this.minecraft, inputChar);
-    super.keyPressed(inputChar.charCodeAt(0) << 24 >> 24); // 原样：C++ 调的是 super::keyPressed((char) 字符)
+    if (this.currentOptionsGroup !== null)
+      this.currentOptionsGroup.charPressed(this.minecraft, inputChar);
+    super.keyPressed((inputChar.charCodeAt(0) << 24) >> 24); // 原样：C++ 调的是 super::keyPressed((char) 字符)
   }
 
   override tick(): void {

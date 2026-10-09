@@ -112,7 +112,18 @@ let server = null;
 let browser = null;
 try {
   server = await startServer();
-  browser = await chromium.launch(process.env.PLAYWRIGHT_CHROMIUM_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] } : undefined); // 环境变量：指定本机已有的 Chromium（如 CI、无网络环境）
+  browser = await chromium.launch(
+    process.env.PLAYWRIGHT_CHROMIUM_PATH
+      ? {
+          executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH,
+          args: [
+            '--use-angle=swiftshader',
+            '--enable-unsafe-swiftshader',
+            '--ignore-gpu-blocklist',
+          ],
+        }
+      : undefined,
+  ); // 环境变量：指定本机已有的 Chromium（如 CI、无网络环境）
   const page = await browser.newPage({ viewport: VIEWPORT, deviceScaleFactor: DEVICE_SCALE });
 
   page.on('pageerror', (e) => report.pageErrors.push(String(e)));

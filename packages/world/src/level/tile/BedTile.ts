@@ -13,7 +13,6 @@ import { Material } from '../material/Material';
 import { DirectionalTile } from './DirectionalTile';
 import { Tile } from './Tile';
 
-
 const f = Math.fround;
 export class BedTile extends DirectionalTile {
   static readonly HEAD_PIECE_DATA = 0x8;

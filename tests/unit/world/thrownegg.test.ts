@@ -121,7 +121,17 @@ describe('ThrownEgg（D10c）', () => {
       expect(b.entityRendererId).toBe(EntityRendererId.ER_THROWNEGG_RENDERER);
       expect([b.x, b.y, b.z]).toEqual([12.5, 71.5, 13.5]);
 
-      const c = new TestEgg(level, { entityId: 9, x: 1, y: 70, z: 1, yRot: 0, xRot: 0, heightOffset: 0, getHeadHeight: () => 1.6, isPlayer: () => false } as never);
+      const c = new TestEgg(level, {
+        entityId: 9,
+        x: 1,
+        y: 70,
+        z: 1,
+        yRot: 0,
+        xRot: 0,
+        heightOffset: 0,
+        getHeadHeight: () => 1.6,
+        isPlayer: () => false,
+      } as never);
       expect(c.entityRendererId).toBe(EntityRendererId.ER_THROWNEGG_RENDERER);
       expect(c.getAuxData(), 'ownerId 记的也是 mob.entityId').toBe(9);
     });

@@ -6,7 +6,17 @@
  * - 没有标签时走 setLoadedPlayerTo：只有旧版（playerDataVersion == 1）存档才用 PlayerData 恢复（位置夹到 4..252 / 4..126）。
  */
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { initItems, initTileEntities, Inventory, Item, ItemInstance, type Level, LevelData, Player, Tile } from '@mcpe/world';
+import {
+  initItems,
+  initTileEntities,
+  Inventory,
+  Item,
+  ItemInstance,
+  type Level,
+  LevelData,
+  Player,
+  Tile,
+} from '@mcpe/world';
 import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
 class TestPlayer extends Player {}

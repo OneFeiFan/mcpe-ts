@@ -46,8 +46,17 @@ class CategoryButton extends ImageButton {
   }
 
   protected override renderBg(minecraft: Minecraft, xm: number, ym: number): void {
-    const hovered = this.active && (minecraft.useTouchscreen() ? this._currentlyDown && xm >= this.x && ym >= this.y && xm < this.x + this.width && ym < this.y + this.height : this.isInside(xm, ym));
-    if (hovered || this.selectedPtr() === this) this.statePressed.draw(Tesselator.instance, this.x, this.y);
+    const hovered =
+      this.active &&
+      (minecraft.useTouchscreen()
+        ? this._currentlyDown &&
+          xm >= this.x &&
+          ym >= this.y &&
+          xm < this.x + this.width &&
+          ym < this.y + this.height
+        : this.isInside(xm, ym));
+    if (hovered || this.selectedPtr() === this)
+      this.statePressed.draw(Tesselator.instance, this.x, this.y);
     else this.stateNormal.draw(Tesselator.instance, this.x, this.y);
   }
 
@@ -90,7 +99,15 @@ export class CraftButton extends ImageButton {
 
   protected override renderBg(minecraft: Minecraft, xm: number, ym: number): void {
     if (!this.bg || !this.bgSelected) return;
-    const hovered = this.active && (minecraft.useTouchscreen() ? this._currentlyDown && xm >= this.x && ym >= this.y && xm < this.x + this.width && ym < this.y + this.height : this.isInside(xm, ym));
+    const hovered =
+      this.active &&
+      (minecraft.useTouchscreen()
+        ? this._currentlyDown &&
+          xm >= this.x &&
+          ym >= this.y &&
+          xm < this.x + this.width &&
+          ym < this.y + this.height
+        : this.isInside(xm, ym));
     if (hovered || this.selected) this.bgSelected.draw(Tesselator.instance, this.x, this.y);
     else this.bg.draw(Tesselator.instance, this.x, this.y);
   }
@@ -141,7 +158,9 @@ export abstract class PaneCraftingScreen extends Screen implements IItemPaneCall
     this.buttons.push(this.btnClose);
     const builder = new NinePatchFactory(this.minecraft.textures!, 'gui/spritesheet.png');
     this.guiBackground = builder.createSymmetrical(new IntRectangle(0, 0, 16, 16), 4, 4);
-    this.guiPaneFrame = builder.createSymmetrical(new IntRectangle(0, 20, 8, 8), 1, 2).setExcluded(1 << 4);
+    this.guiPaneFrame = builder
+      .createSymmetrical(new IntRectangle(0, 20, 8, 8), 1, 2)
+      .setExcluded(1 << 4);
     this.guiSlotCategory = builder.createSymmetrical(new IntRectangle(8, 32, 8, 8), 2, 2);
     this.guiSlotCategorySelected = builder.createSymmetrical(new IntRectangle(0, 32, 8, 8), 2, 2);
     this.initCategories();
@@ -150,7 +169,12 @@ export abstract class PaneCraftingScreen extends Screen implements IItemPaneCall
   private initCategories(): void {
     this._categories = Array.from({ length: this.numCategories }, () => []);
     for (let i = 0; i < this.numCategories; ++i) {
-      const button = new CategoryButton(100 + i, () => this.selectedCategoryButton, this.guiSlotCategory!, this.guiSlotCategorySelected!);
+      const button = new CategoryButton(
+        100 + i,
+        () => this.selectedCategoryButton,
+        this.guiSlotCategory!,
+        this.guiSlotCategorySelected!,
+      );
       this._categoryButtons.push(button);
       this.buttons.push(button);
     }
@@ -225,7 +249,16 @@ export abstract class PaneCraftingScreen extends Screen implements IItemPaneCall
         const req = cur.neededItems[i]!;
         const reqItem = new ItemInstance(req.item);
         if (reqItem.getAuxValue() === -1) reqItem.setAuxValue(0);
-        ItemRenderer.renderGuiItemSized(null, this.minecraft.textures!, reqItem, xx, yy, 16, 16, true);
+        ItemRenderer.renderGuiItemSized(
+          null,
+          this.minecraft.textures!,
+          reqItem,
+          xx,
+          yy,
+          16,
+          16,
+          true,
+        );
       }
       t.endOverrideAndDraw();
       const scale = f(2.0 / 3.0);
@@ -246,7 +279,13 @@ export abstract class PaneCraftingScreen extends Screen implements IItemPaneCall
       }
       t.resetScale();
       t.endOverrideAndDraw();
-      font.drawWordWrap(this.currentItemDesc, this.btnCraft.x, this.btnCraft.y + this.btnCraft.height + 6, this.btnCraft.width, rgbActive);
+      font.drawWordWrap(
+        this.currentItemDesc,
+        this.btnCraft.x,
+        this.btnCraft.y + this.btnCraft.height + 6,
+        this.btnCraft.width,
+        rgbActive,
+      );
     }
   }
 
@@ -319,7 +358,10 @@ export abstract class PaneCraftingScreen extends Screen implements IItemPaneCall
   onItemSelected(_forPane: ItemPane, itemIndexInCurrentCategory: number): void {
     if (this.currentCategory >= this._categories.length) return;
     if (itemIndexInCurrentCategory >= this._categories[this.currentCategory]!.length) return;
-    this.selectItemInCategory(this.currentCategory, this._categories[this.currentCategory]![itemIndexInCurrentCategory]!);
+    this.selectItemInCategory(
+      this.currentCategory,
+      this._categories[this.currentCategory]![itemIndexInCurrentCategory]!,
+    );
   }
 
   /** C++ 私有的 onItemSelected(int buttonIndex, CItem* item)（R10） */
@@ -329,7 +371,14 @@ export abstract class PaneCraftingScreen extends Screen implements IItemPaneCall
     if (buttonIndex !== this.currentCategory) {
       this.clearCategoryItems();
       const NumCategoryItems = this._categories[buttonIndex]!.length;
-      this.pane = new ItemPane(this, this.minecraft.textures!, this.paneRect, NumCategoryItems, this.height, this.minecraft.height);
+      this.pane = new ItemPane(
+        this,
+        this.minecraft.textures!,
+        this.paneRect,
+        NumCategoryItems,
+        this.height,
+        this.minecraft.height,
+      );
       this.pane.f = this.minecraft.font;
       this.currentCategory = buttonIndex;
     }
@@ -421,6 +470,8 @@ function randomlyFillItemPack(ip: ItemPack, numItems: number): void {
 /** std::stable_sort(…, sortCanCraftPredicate)：a.sortText < b.sortText（std::string 按字节比较） */
 function stableSortBySortText(list: CItem[]): void {
   const idx = list.map((c, i) => [c, i] as const);
-  idx.sort((a, b) => (a[0].sortText < b[0].sortText ? -1 : a[0].sortText > b[0].sortText ? 1 : a[1] - b[1]));
+  idx.sort((a, b) =>
+    a[0].sortText < b[0].sortText ? -1 : a[0].sortText > b[0].sortText ? 1 : a[1] - b[1],
+  );
   for (let i = 0; i < list.length; i++) list[i] = idx[i]![0];
 }

@@ -10,7 +10,6 @@ import { Button, TButton } from '../components/Button';
 import { ImageDef, IntRectangle, OptionButton } from '../components/ImageButton';
 import { Screen } from '../Screen';
 
-
 const f = Math.fround;
 export class PauseScreen extends Screen {
   private saveStep = 0;

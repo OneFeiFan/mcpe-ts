@@ -12,14 +12,20 @@
 import { Common } from '@mcpe/core';
 import { Mth } from '@mcpe/util';
 import { OptionId } from '../../Options';
-import { GL_BLEND, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, glBlendFunc2, glColor4f2, glEnable2 } from '../../renderer/gles';
+import {
+  GL_BLEND,
+  GL_ONE_MINUS_SRC_ALPHA,
+  GL_SRC_ALPHA,
+  glBlendFunc2,
+  glColor4f2,
+  glEnable2,
+} from '../../renderer/gles';
 import { Tesselator } from '../../renderer/Tesselator';
 import { Textures } from '../../renderer/Textures';
 import { Button } from '../components/Button';
 import { Screen } from '../Screen';
 import { OptionsScreen } from './OptionsScreen';
 import { ScreenId } from './ScreenChooser';
-
 
 const f = Math.fround;
 export class StartMenuScreen extends Screen {
@@ -123,12 +129,19 @@ export class StartMenuScreen extends Screen {
       t.vertexUV(x - wh, y + 0, this.blitOffset, 0, 0);
       t.draw();
     }
-    this.drawString(font, this.version, this.width - font.width(this.version) - 2, this.height - 10, 0xffcccccc | 0);
+    this.drawString(
+      font,
+      this.version,
+      this.width - font.width(this.version) - 2,
+      this.height - 10,
+      0xffcccccc | 0,
+    );
     this.drawString(font, this.copyright, 2, this.height - 20, 0xffffff);
     glEnable2(GL_BLEND);
     glBlendFunc2(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f2(1, 1, 1, 1);
-    if (Textures.isTextureIdValid(textures.loadAndBindTexture('gui/logo/github.png'))) this.blit(2, this.height - 10, 0, 0, 8, 8, 256, 256);
+    if (Textures.isTextureIdValid(textures.loadAndBindTexture('gui/logo/github.png')))
+      this.blit(2, this.height - 10, 0, 0, 8, 8, 256, 256);
     {
       const txt = 'Kolyah35/minecraft-pe-0.6.1';
       const wtxt = font.width(txt);
@@ -144,7 +157,8 @@ export class StartMenuScreen extends Screen {
     const logoW = 8 + 2 + this.minecraft.font!.width('Kolyah35/minecraft-pe-0.6.1');
     const logoY = this.height - 10;
     const logoH = 10;
-    if (x >= logoX && x <= logoX + logoW && y >= logoY && y <= logoY + logoH) this.minecraft.platform()!.openURL('https://gitea.sffempire.ru/Kolyah35/minecraft-pe-0.6.1');
+    if (x >= logoX && x <= logoX + logoW && y >= logoY && y <= logoY + logoH)
+      this.minecraft.platform()!.openURL('https://gitea.sffempire.ru/Kolyah35/minecraft-pe-0.6.1');
     else super.mouseClicked(x, y, buttonNum);
   }
 

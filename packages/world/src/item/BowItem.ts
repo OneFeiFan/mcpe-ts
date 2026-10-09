@@ -8,7 +8,6 @@ import { Item } from './Item';
 import type { ItemInstance } from './ItemInstance';
 import { UseAnim } from './UseAnim';
 
-
 const f = Math.fround;
 export class BowItem extends Item {
   static readonly MAX_DRAW_DURATION = 20 * 1;

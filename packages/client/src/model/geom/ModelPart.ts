@@ -111,7 +111,15 @@ export class ModelPart {
   }
 
   /** C++ `addBox(const std::string& id, …)` —— 生成的 cube 会被 setId 成 `父id.子id` */
-  addBox(id: string, x0: number, y0: number, z0: number, w: number, h: number, d: number): ModelPart;
+  addBox(
+    id: string,
+    x0: number,
+    y0: number,
+    z0: number,
+    w: number,
+    h: number,
+    d: number,
+  ): ModelPart;
   /** C++ `addBox(float, float, float, int, int, int)` —— 外扩 g 固定为 0 */
   addBox(x0: number, y0: number, z0: number, w: number, h: number, d: number): ModelPart;
   /** C++ `void addBox(float, float, float, int, int, int, float g)` —— 注意**没有返回值** */

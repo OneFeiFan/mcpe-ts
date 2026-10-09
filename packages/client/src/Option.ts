@@ -6,7 +6,6 @@
  */
 import { Mth } from '@mcpe/util';
 
-
 const f = Math.fround;
 /** std::ostringstream << value 的默认格式 */
 function ostreamValue(value: number | boolean | string, isFloat: boolean): string {

@@ -6,8 +6,17 @@ import { definition, type Recipes } from './Recipes';
 
 export class FoodRecipes {
   static addRecipes(r: Recipes): void {
-    r.addShapelessRecipe(new ItemInstance(Item.mushroomStew), definition(0, Tile.mushroom1, 0, Tile.mushroom2, 0, Item.bowl));
-    r.addShapedRecipe(new ItemInstance(Tile.melon), 'MMM', 'MMM', 'MMM', definition('M', Item.melon));
+    r.addShapelessRecipe(
+      new ItemInstance(Item.mushroomStew),
+      definition(0, Tile.mushroom1, 0, Tile.mushroom2, 0, Item.bowl),
+    );
+    r.addShapedRecipe(
+      new ItemInstance(Tile.melon),
+      'MMM',
+      'MMM',
+      'MMM',
+      definition('M', Item.melon),
+    );
     r.addShapedRecipe(new ItemInstance(Item.seeds_melon), 'M', definition('M', Item.melon));
   }
 }

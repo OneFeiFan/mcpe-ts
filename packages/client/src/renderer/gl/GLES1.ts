@@ -308,7 +308,8 @@ export class GLES1 {
     if (pname === 0x1203) {
       const m = this.stacks[0]![this.stacks[0]!.length - 1]!;
       const v = [params[0] ?? 0, params[1] ?? 0, params[2] ?? 0, params[3] ?? 0];
-      for (let r = 0; r < 4; r++) L.position[r] = m[r]! * v[0]! + m[4 + r]! * v[1]! + m[8 + r]! * v[2]! + m[12 + r]! * v[3]!;
+      for (let r = 0; r < 4; r++)
+        L.position[r] = m[r]! * v[0]! + m[4 + r]! * v[1]! + m[8 + r]! * v[2]! + m[12 + r]! * v[3]!;
     } else if (pname === 0x1201) L.diffuse.set(Array.from(params).slice(0, 4));
     else if (pname === 0x1200) L.ambient.set(Array.from(params).slice(0, 4));
   }
@@ -613,7 +614,9 @@ export class GLES1 {
     bindAttr(GL_COLOR_ARRAY, ATTR_COLOR, () =>
       gl.vertexAttrib4f(ATTR_COLOR, this.color[0]!, this.color[1]!, this.color[2]!, this.color[3]!),
     );
-    bindAttr(GL_NORMAL_ARRAY, ATTR_NORMAL, () => gl.vertexAttrib3f(ATTR_NORMAL, this.normal[0]!, this.normal[1]!, this.normal[2]!));
+    bindAttr(GL_NORMAL_ARRAY, ATTR_NORMAL, () =>
+      gl.vertexAttrib3f(ATTR_NORMAL, this.normal[0]!, this.normal[1]!, this.normal[2]!),
+    );
     gl.drawArrays(mode, first, count);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.get(this.boundArrayBuffer) ?? null);
   }

@@ -26,7 +26,11 @@ export class BreakDoorGoal extends DoorInteractGoal {
 
   override canContinueToUse(): boolean {
     const d = this.mob.distanceToSqr(this.doorX, this.doorY, this.doorZ);
-    return this.breakTime >= 0 && !DoorTile.isOpen(this.mob.level, this.doorX, this.doorY, this.doorZ) && d < 2 * 2;
+    return (
+      this.breakTime >= 0 &&
+      !DoorTile.isOpen(this.mob.level, this.doorX, this.doorY, this.doorZ) &&
+      d < 2 * 2
+    );
   }
 
   override tick(): void {

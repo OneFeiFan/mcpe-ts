@@ -102,13 +102,19 @@ export abstract class Monster extends PathfinderMob {
     const xt = Mth.floor(this.x);
     const yt = Mth.floor(this.bb.y0);
     const zt = Mth.floor(this.z);
-    if (this.level.getBrightness(LightLayer.Sky, xt, yt, zt) > this.random.nextInt(32)) return false;
+    if (this.level.getBrightness(LightLayer.Sky, xt, yt, zt) > this.random.nextInt(32))
+      return false;
     const br = this.level.getRawBrightness(xt, yt, zt);
     return br <= this.random.nextInt(8);
   }
 
   protected override checkHurtTarget(target: Entity, distance: number): void {
-    if (this.attackTime <= 0 && distance < f(2.0) && target.bb.y1 > this.bb.y0 && target.bb.y0 < this.bb.y1) {
+    if (
+      this.attackTime <= 0 &&
+      distance < f(2.0) &&
+      target.bb.y1 > this.bb.y0 &&
+      target.bb.y0 < this.bb.y1
+    ) {
       this.attackTime = this.getAttackTime();
       this.doHurtTarget(target);
     }

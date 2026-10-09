@@ -12,9 +12,27 @@ import { Mth, PerfTimer } from '@mcpe/util';
 import type { Font } from '../gui/Font';
 import type { Minecraft } from '../Minecraft';
 import {
-  GL_BLEND, GL_COLOR_MATERIAL, GL_CULL_FACE, GL_DEPTH_BUFFER_BIT, GL_LINES, GL_MODELVIEW, GL_PROJECTION, GL_QUADS, GL_TEXTURE_2D,
-  GL_TRIANGLE_FAN, GL_TRIANGLE_STRIP, glClear, glDisable, glDisable2, glEnable, glEnable2, glLineWidth, glLoadIdentity2, glMatrixMode,
-  glOrthof, glTranslatef2,
+  GL_BLEND,
+  GL_COLOR_MATERIAL,
+  GL_CULL_FACE,
+  GL_DEPTH_BUFFER_BIT,
+  GL_LINES,
+  GL_MODELVIEW,
+  GL_PROJECTION,
+  GL_QUADS,
+  GL_TEXTURE_2D,
+  GL_TRIANGLE_FAN,
+  GL_TRIANGLE_STRIP,
+  glClear,
+  glDisable,
+  glDisable2,
+  glEnable,
+  glEnable2,
+  glLineWidth,
+  glLoadIdentity2,
+  glMatrixMode,
+  glOrthof,
+  glTranslatef2,
 } from '../renderer/gles';
 import { Tesselator } from '../renderer/Tesselator';
 
@@ -104,7 +122,7 @@ export class PerfRenderer {
     t.begin(GL_LINES);
     const n = this.frameTimes.length;
     for (let i = 0; i < n; i++) {
-      const col = Math.trunc((((i - this.frameTimePos) >>> 0) & (n - 1)) * 255 / n); // unsigned 回绕
+      const col = Math.trunc(((((i - this.frameTimePos) >>> 0) & (n - 1)) * 255) / n); // unsigned 回绕
       let cc = Math.trunc((col * col) / 255);
       cc = Math.trunc((cc * cc) / 255);
       let cc2 = Math.trunc((cc * cc) / 255);
@@ -143,7 +161,7 @@ export class PerfRenderer {
       t.color(result.getColor());
       t.vertex(x, y, 0);
       for (let j = steps; j >= 0; j--) {
-        const dir = f((((totalPercentage + (result.percentage * j) / steps) * Mth.PI) * 2) / 100);
+        const dir = f(((totalPercentage + (result.percentage * j) / steps) * Mth.PI * 2) / 100);
         const xx = f(Mth.sin(dir) * r);
         const yy = f(f(Mth.cos(dir) * r) * f(0.5));
         t.vertex(f(x + xx), f(y - yy), 0);
@@ -152,7 +170,7 @@ export class PerfRenderer {
       t.begin(GL_TRIANGLE_STRIP);
       t.color((result.getColor() & 0xfefefe) >> 1);
       for (let j = steps; j >= 0; j--) {
-        const dir = f((((totalPercentage + (result.percentage * j) / steps) * Mth.PI) * 2) / 100);
+        const dir = f(((totalPercentage + (result.percentage * j) / steps) * Mth.PI * 2) / 100);
         const xx = f(Mth.sin(dir) * r);
         const yy = f(f(Mth.cos(dir) * r) * f(0.5));
         t.vertex(f(x + xx), f(y - yy), 0);

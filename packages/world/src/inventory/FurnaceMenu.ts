@@ -29,7 +29,8 @@ export class FurnaceMenu extends BaseContainerMenu {
 
   getItems(): ItemInstance[] {
     const out: ItemInstance[] = [];
-    for (let i = 0; i < this.furnace.getContainerSize(); ++i) out.push(new ItemInstance(this.furnace.getItem(i)!));
+    for (let i = 0; i < this.furnace.getContainerSize(); ++i)
+      out.push(new ItemInstance(this.furnace.getItem(i)!));
     return out;
   }
 

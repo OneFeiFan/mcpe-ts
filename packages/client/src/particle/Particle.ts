@@ -91,9 +91,7 @@ export class Particle extends Entity {
     this.vo = f(Entity.sharedRandom.nextFloat() * 3);
     this.size = f(f(f(Entity.sharedRandom.nextFloat() * f(0.5)) + f(0.5)) * 2);
     // lifetime = (int)(4.0f / (sharedRandom.nextFloat() * 0.9f + 0.1f));
-    this.lifetime = Math.trunc(
-      f(f(4.0) / f(f(Entity.sharedRandom.nextFloat() * f(0.9)) + f(0.1))),
-    );
+    this.lifetime = Math.trunc(f(f(4.0) / f(f(Entity.sharedRandom.nextFloat() * f(0.9)) + f(0.1))));
     this.makeStepSound = false;
   }
 
@@ -130,7 +128,15 @@ export class Particle extends Entity {
   }
 
   /** C++ `void Particle::render(Tesselator& t, float a, float xa, float ya, float za, float xa2, float za2)` */
-  render(t: Tesselator, a: number, xa: number, ya: number, za: number, xa2: number, za2: number): void {
+  render(
+    t: Tesselator,
+    a: number,
+    xa: number,
+    ya: number,
+    za: number,
+    xa2: number,
+    za2: number,
+  ): void {
     const u0 = (this.tex % 16) / f(16.0);
     const u1 = u0 + f(0.999) / f(16.0);
     const v0 = Math.trunc(this.tex / 16) / f(16.0);

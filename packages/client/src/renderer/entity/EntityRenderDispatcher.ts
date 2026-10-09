@@ -86,7 +86,10 @@ export class EntityRenderDispatcher {
     // G9：鸡 —— 第一个用上模型系统的实体渲染器（也是第一只画面上看得见的生物）。
     // C++ 里这行在 EntityRenderDispatcher.cpp:46，与 C++ 的调用顺序无关紧要（各 id 互不覆盖）。
     // ⚠ C++ 字面量 `0.3` 没有 f 后缀，但传进的是 `float shadow` 形参 —— 按 PITFALLS 第 3 条包 f()
-    this.assign(EntityRendererId.ER_CHICKEN_RENDERER, new ChickenRenderer(new ChickenModel(), f(0.3))); // EntityRenderDispatcher.cpp:46
+    this.assign(
+      EntityRendererId.ER_CHICKEN_RENDERER,
+      new ChickenRenderer(new ChickenModel(), f(0.3)),
+    ); // EntityRenderDispatcher.cpp:46
     // G10：TNT 和画 —— 都不依赖模型系统（TNT 复用 TileRenderer，画只发顶点）。
     // ⚠ TntRenderer 构造会 `new TileRenderer()`、TripodCameraRenderer 构造会 `new Tile(0, …)` ——
     //   TNT 在真机上的构造晚于 initTiles，没影响；相机类不注册（见文件头），构造根本不发生。
@@ -101,12 +104,24 @@ export class EntityRenderDispatcher {
     );
     // C++ 第 43–51 行（任务单 H5–H8 起全部注册）
     // 任务单 H5 起：Monster 的默认渲染器、猪、牛
-    this.assign(EntityRendererId.ER_HUMANOID_RENDERER, new HumanoidMobRenderer(new HumanoidModel(), 0.5)); // EntityRenderDispatcher.cpp:43
+    this.assign(
+      EntityRendererId.ER_HUMANOID_RENDERER,
+      new HumanoidMobRenderer(new HumanoidModel(), 0.5),
+    ); // EntityRenderDispatcher.cpp:43
     this.assign(EntityRendererId.ER_PIG_RENDERER, new PigRenderer(new PigModel(0.5), null, f(0.7))); // :44（第二个模型 C++ 传 NULL）
     this.assign(EntityRendererId.ER_COW_RENDERER, new MobRenderer(new CowModel(), f(0.7))); // :45
-    this.assign(EntityRendererId.ER_SHEEP_RENDERER, new SheepRenderer(new SheepModel(), new SheepFurModel(), f(0.7))); // :47
-    this.assign(EntityRendererId.ER_SKELETON_RENDERER, new HumanoidMobRenderer(new SkeletonModel(), f(0.5))); // :48
-    this.assign(EntityRendererId.ER_ZOMBIE_RENDERER, new HumanoidMobRenderer(new ZombieModel(), f(0.5))); // :49
+    this.assign(
+      EntityRendererId.ER_SHEEP_RENDERER,
+      new SheepRenderer(new SheepModel(), new SheepFurModel(), f(0.7)),
+    ); // :47
+    this.assign(
+      EntityRendererId.ER_SKELETON_RENDERER,
+      new HumanoidMobRenderer(new SkeletonModel(), f(0.5)),
+    ); // :48
+    this.assign(
+      EntityRendererId.ER_ZOMBIE_RENDERER,
+      new HumanoidMobRenderer(new ZombieModel(), f(0.5)),
+    ); // :49
     this.assign(EntityRendererId.ER_CREEPER_RENDERER, new CreeperRenderer()); // :50
     this.assign(EntityRendererId.ER_SPIDER_RENDERER, new SpiderRenderer()); // :51
     for (const r of this._renderers.values()) r.init(this);

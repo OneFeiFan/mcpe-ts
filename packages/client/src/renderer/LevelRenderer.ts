@@ -896,16 +896,25 @@ export class LevelRenderer extends LevelListener {
     const mc = this.mc;
     const level = this.level!;
     TIMER_PUSH('prepare');
-    TileEntityRenderDispatcher.getInstance().prepare(level, this.textures, mc.font, mc.cameraTargetPlayer!, a);
+    TileEntityRenderDispatcher.getInstance().prepare(
+      level,
+      this.textures,
+      mc.font,
+      mc.cameraTargetPlayer!,
+      a,
+    );
     const disp = EntityRenderDispatcher.getInstance();
     disp.prepare(level, mc.font, mc.cameraTargetPlayer!, mc.options, a);
     this.totalEntities = 0;
     this.renderedEntities = 0;
     this.culledEntities = 0;
     const player = mc.cameraTargetPlayer!;
-    EntityRenderDispatcher.xOff = TileEntityRenderDispatcher.xOff = player.xOld + (player.x - player.xOld) * a;
-    EntityRenderDispatcher.yOff = TileEntityRenderDispatcher.yOff = player.yOld + (player.y - player.yOld) * a;
-    EntityRenderDispatcher.zOff = TileEntityRenderDispatcher.zOff = player.zOld + (player.z - player.zOld) * a;
+    EntityRenderDispatcher.xOff = TileEntityRenderDispatcher.xOff =
+      player.xOld + (player.x - player.xOld) * a;
+    EntityRenderDispatcher.yOff = TileEntityRenderDispatcher.yOff =
+      player.yOld + (player.y - player.yOld) * a;
+    EntityRenderDispatcher.zOff = TileEntityRenderDispatcher.zOff =
+      player.zOld + (player.z - player.zOld) * a;
     glEnableClientState2(GL_VERTEX_ARRAY);
     glEnableClientState2(GL_TEXTURE_COORD_ARRAY);
     TIMER_POP_PUSH('entities');
@@ -1046,7 +1055,12 @@ export class LevelRenderer extends LevelListener {
     glEnable(GL_ALPHA_TEST);
     glEnable(GL_FOG);
     glPopMatrix(); // 原样：push 在上面的 if 分支里
-    glColor4f(f(f(sc.x * f(0.2)) + f(0.04)), f(f(sc.y * f(0.2)) + f(0.04)), f(f(sc.z * f(0.6)) + f(0.1)), 1.0);
+    glColor4f(
+      f(f(sc.x * f(0.2)) + f(0.04)),
+      f(f(sc.y * f(0.2)) + f(0.04)),
+      f(f(sc.z * f(0.6)) + f(0.1)),
+      1.0,
+    );
     glDisable(GL_TEXTURE_2D);
     if (mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY)) {
       drawArrayVT(this.voidBuffer, this.voidVertexCount);
@@ -1064,7 +1078,10 @@ export class LevelRenderer extends LevelListener {
    */
   renderClouds(alpha: number): void {
     const mc = this.mc;
-    if (mc.options.getBooleanValue(OptionId.OPTIONS_FANCY_GRAPHICS) && mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY)) {
+    if (
+      mc.options.getBooleanValue(OptionId.OPTIONS_FANCY_GRAPHICS) &&
+      mc.options.getBooleanValue(OptionId.OPTIONS_BETA_SKY)
+    ) {
       this.renderAdvancedClouds(alpha);
       return;
     }
@@ -1236,7 +1253,14 @@ export class LevelRenderer extends LevelListener {
    * ⚠ 这里才是 `SOUND_DISTANCE = 16` 那道**硬剔除**生效的地方（`dd * dd` 和平方距离比）：
    *   过不去就**根本不调**声音引擎。`SoundEngine::play` 里那句同款代码是复制粘贴的残骸。
    */
-  override playSound(name: string, x: number, y: number, z: number, volume: number, pitch: number): void {
+  override playSound(
+    name: string,
+    x: number,
+    y: number,
+    z: number,
+    volume: number,
+    pitch: number,
+  ): void {
     // @todo: deny sounds here if sound is off (rather than waiting 'til SoundEngine)
     let dd = 16;
     if (volume > 1) dd *= volume;
@@ -1297,8 +1321,7 @@ export class LevelRenderer extends LevelListener {
       else if (id === 'flame') pe.add(new FlameParticle(level, x, y, z, xa, ya, za));
       else if (id === 'lava') pe.add(new LavaParticle(level, x, y, z));
       // else if (name == "splash") mc->particleEngine->add(new SplashParticle(level, x, y, z, xa, ya, za));
-      else if (id === 'largesmoke')
-        pe.add(new SmokeParticle(level, x, y, z, xa, ya, za, f(2.5)));
+      else if (id === 'largesmoke') pe.add(new SmokeParticle(level, x, y, z, xa, ya, za, f(2.5)));
       else if (id === 'reddust') pe.add(new RedDustParticle(level, x, y, z, xa, ya, za));
       else if (id === 'iconcrack')
         pe.add(new BreakingItemParticle(level, x, y, z, xa, ya, za, Item.items[data]!));
@@ -1366,14 +1389,35 @@ export class LevelRenderer extends LevelListener {
   }
   // OMIT(Entity): takePicture(cam, entity)  LevelRenderer.cpp:1641
   /** C++ `void LevelRenderer::levelEvent(Player*, int type, int x, int y, int z, int data)`：只处理开关门的声音（一半概率开门声、一半关门声） */
-  override levelEvent(_player: Player | null, type: number, x: number, y: number, z: number, _data: number): void {
+  override levelEvent(
+    _player: Player | null,
+    type: number,
+    x: number,
+    y: number,
+    z: number,
+    _data: number,
+  ): void {
     const level = this.level!;
     switch (type) {
       case LevelEvent.SOUND_OPEN_DOOR:
         if (Mth.random() < f(0.5)) {
-          level.playSound(f(x + 0.5), f(y + 0.5), f(z + 0.5), 'random.door_open', 1, f(f(level.random.nextFloat() * f(0.1)) + f(0.9)));
+          level.playSound(
+            f(x + 0.5),
+            f(y + 0.5),
+            f(z + 0.5),
+            'random.door_open',
+            1,
+            f(f(level.random.nextFloat() * f(0.1)) + f(0.9)),
+          );
         } else {
-          level.playSound(f(x + 0.5), f(y + 0.5), f(z + 0.5), 'random.door_close', 1, f(f(level.random.nextFloat() * f(0.1)) + f(0.9)));
+          level.playSound(
+            f(x + 0.5),
+            f(y + 0.5),
+            f(z + 0.5),
+            'random.door_close',
+            1,
+            f(f(level.random.nextFloat() * f(0.1)) + f(0.9)),
+          );
         }
         break;
     }

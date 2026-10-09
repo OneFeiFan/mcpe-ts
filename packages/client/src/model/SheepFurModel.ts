@@ -9,7 +9,6 @@ import { QuadrupedModel } from './QuadrupedModel';
 
 const f = Math.fround;
 
-
 export class SheepFurModel extends QuadrupedModel {
   private headXRot = 0;
 
@@ -43,7 +42,14 @@ export class SheepFurModel extends QuadrupedModel {
     this.headXRot = sheep.getHeadEatAngleScale(a);
   }
 
-  override setupAnim(time: number, r: number, bob: number, yRot: number, xRot: number, scale: number): void {
+  override setupAnim(
+    time: number,
+    r: number,
+    bob: number,
+    yRot: number,
+    xRot: number,
+    scale: number,
+  ): void {
     super.setupAnim(time, r, bob, yRot, xRot, scale);
     this.head.xRot = this.headXRot;
   }

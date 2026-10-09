@@ -36,7 +36,8 @@ export class TileEntityRenderDispatcher {
   }
 
   static getInstance(): TileEntityRenderDispatcher {
-    if (!TileEntityRenderDispatcher.instance) TileEntityRenderDispatcher.instance = new TileEntityRenderDispatcher();
+    if (!TileEntityRenderDispatcher.instance)
+      TileEntityRenderDispatcher.instance = new TileEntityRenderDispatcher();
     return TileEntityRenderDispatcher.instance;
   }
 
@@ -49,7 +50,13 @@ export class TileEntityRenderDispatcher {
     for (const r of this._renderers.values()) if (r !== null) r.onNewLevel(level);
   }
 
-  prepare(level: Level, textures: Textures | null, font: Font | null, player: Mob, a: number): void {
+  prepare(
+    level: Level,
+    textures: Textures | null,
+    font: Font | null,
+    player: Mob,
+    a: number,
+  ): void {
     if (this.level !== level) this.setLevel(level);
     this.textures = textures;
     this.cameraEntity = player;
@@ -65,7 +72,13 @@ export class TileEntityRenderDispatcher {
     if (e.distanceToSqr(this.xPlayer, this.yPlayer, this.zPlayer) < 64 * 64) {
       const br = this.level!.getBrightness(e.x, e.y, e.z);
       glColor4f(br, br, br, 1);
-      this.renderAt(e, e.x - TileEntityRenderDispatcher.xOff, e.y - TileEntityRenderDispatcher.yOff, e.z - TileEntityRenderDispatcher.zOff, a);
+      this.renderAt(
+        e,
+        e.x - TileEntityRenderDispatcher.xOff,
+        e.y - TileEntityRenderDispatcher.yOff,
+        e.z - TileEntityRenderDispatcher.zOff,
+        a,
+      );
     }
   }
 

@@ -80,7 +80,10 @@ export default async function (h) {
     };
   });
   h.expect(hatched.n >= 1, `孵出鸡了（实测 ${hatched.n} 只；(7/8)^160 ≈ 5e-10 一只都不出）`);
-  h.expect(hatched.texture === 'mob/chicken.png', `贴图是 mob/chicken.png（实测 ${hatched.texture}）`);
+  h.expect(
+    hatched.texture === 'mob/chicken.png',
+    `贴图是 mob/chicken.png（实测 ${hatched.texture}）`,
+  );
   h.expect(hatched.baby === false, `成年鸡（走成年渲染分支；实测 baby=${hatched.baby}）`);
 
   // ---- 把一只鸡摆到镜头前 ----

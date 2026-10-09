@@ -252,9 +252,7 @@ export class LargeCaveFeature extends LargeFeature {
     blocks: Uint8Array,
     _blocksSize: number,
   ): void {
-    let caves = this.random.nextInt(
-      this.random.nextInt(this.random.nextInt(40) + 1) + 1,
-    );
+    let caves = this.random.nextInt(this.random.nextInt(this.random.nextInt(40) + 1) + 1);
     if (this.random.nextInt(15) !== 0) caves = 0;
 
     for (let cave = 0; cave < caves; cave++) {

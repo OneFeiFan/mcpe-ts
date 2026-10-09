@@ -24,7 +24,15 @@ import { Region } from './Region';
 import type { Path } from './pathfinder/Path';
 import { SharedConstants } from '@mcpe/core';
 import { getTimeS, LOGE, LOGI } from '@mcpe/platform';
-import { Mth, Random, TIMER_POP, TIMER_POP_PUSH, TIMER_PUSH, Util, WeighedRandom } from '@mcpe/util';
+import {
+  Mth,
+  Random,
+  TIMER_POP,
+  TIMER_POP_PUSH,
+  TIMER_PUSH,
+  Util,
+  WeighedRandom,
+} from '@mcpe/util';
 import type { Entity } from '../entity/Entity';
 import { MobTypes, type ParticleType } from '../entity/EntityTypes';
 import type { Player } from '../entity/player/Player';
@@ -87,7 +95,8 @@ const levelStatics = { mobSpawnTick: 0 };
 
 export class Level implements LevelSource {
   /** ADAPTED(ESM)：MobSpawner.tick 由 MobSpawner 模块加载时注入（Level 不能值导入 MobSpawner：它经 MobFactory 引入各种生物类，会形成加载循环） */
-  static mobSpawnerTick: ((level: Level, spawnEnemies: boolean, spawnFriendlies: boolean) => number) | null = null;
+  static mobSpawnerTick:
+    ((level: Level, spawnEnemies: boolean, spawnFriendlies: boolean) => number) | null = null;
 
   private static readonly MAX_TICK_TILES_PER_TICK = 100; // was 1000
   static readonly MAX_LEVEL_SIZE = 32000000;
@@ -261,10 +270,15 @@ export class Level implements LevelSource {
   tick(): void {
     if (!this.isClientSide && this.levelData.getSpawnMobs()) {
       const MobSpawnInterval = 2;
-      if (++levelStatics.mobSpawnTick >= MobSpawnInterval) { // C++ 的 static int _mobSpawnTick（函数内静态，所有 Level 共用）
+      if (++levelStatics.mobSpawnTick >= MobSpawnInterval) {
+        // C++ 的 static int _mobSpawnTick（函数内静态，所有 Level 共用）
         levelStatics.mobSpawnTick = 0;
         TIMER_PUSH('mobSpawner');
-        Level.mobSpawnerTick!(this, this._spawnEnemies && this.difficulty > Difficulty.PEACEFUL, this._spawnFriendlies && this.levelData.getTime() % 400 < MobSpawnInterval);
+        Level.mobSpawnerTick!(
+          this,
+          this._spawnEnemies && this.difficulty > Difficulty.PEACEFUL,
+          this._spawnFriendlies && this.levelData.getTime() % 400 < MobSpawnInterval,
+        );
         TIMER_POP();
       }
     }
@@ -396,7 +410,14 @@ export class Level implements LevelSource {
     }
   }
   /** C++ findPath(Path*, Entity* from, Entity* to, float maxDist, bool canOpenDoors, bool avoidWater)（Level.cpp:381；R10 情形 B） */
-  findPathToEntity(path: Path, from: Entity, to: Entity, maxDist: number, canOpenDoors: boolean, avoidWater: boolean): boolean {
+  findPathToEntity(
+    path: Path,
+    from: Entity,
+    to: Entity,
+    maxDist: number,
+    canOpenDoors: boolean,
+    avoidWater: boolean,
+  ): boolean {
     TIMER_PUSH('pathfind');
     const x = Mth.floor(from.x);
     const y = Mth.floor(from.y);
@@ -412,7 +433,16 @@ export class Level implements LevelSource {
   }
 
   /** C++ findPath(Path*, Entity* from, int xBest, int yBest, int zBest, float maxDist, bool canOpenDoors, bool avoidWater)（Level.cpp:404） */
-  findPathToTile(path: Path, from: Entity, xBest: number, yBest: number, zBest: number, maxDist: number, canOpenDoors: boolean, avoidWater: boolean): boolean {
+  findPathToTile(
+    path: Path,
+    from: Entity,
+    xBest: number,
+    yBest: number,
+    zBest: number,
+    maxDist: number,
+    canOpenDoors: boolean,
+    avoidWater: boolean,
+  ): boolean {
     TIMER_PUSH('pathfind');
     const x = Mth.floor(from.x);
     const y = Mth.floor(from.y);
@@ -1300,7 +1330,15 @@ export class Level implements LevelSource {
    *   NumSmartZombiesPerPlayer 是 0——即便被调用，也只有“没有僵尸”时进入第一个分支，第二段循环一次都不执行。
    *   std::nth_element + DistanceEntitySorter（按到玩家的距离）在这里用一次排序代替：j < 0 的循环不读结果，等价。
    */
-  setZombieAi(zombies: { setUseNewAi(use: boolean): void; distanceToSqr(e: Entity): number; x: number; y: number; z: number }[]): void {
+  setZombieAi(
+    zombies: {
+      setUseNewAi(use: boolean): void;
+      distanceToSqr(e: Entity): number;
+      x: number;
+      y: number;
+      z: number;
+    }[],
+  ): void {
     const size = zombies.length;
     const NumSmartZombiesPerPlayer = 0;
     if (size <= NumSmartZombiesPerPlayer) {
@@ -1309,7 +1347,8 @@ export class Level implements LevelSource {
     }
     for (let i = 0; i < this.players.length; ++i) {
       const p = this.players[i]!;
-      const d2 = (z: { x: number; y: number; z: number }): number => (z.x - p.x) * (z.x - p.x) + (z.y - p.y) * (z.y - p.y) + (z.z - p.z) * (z.z - p.z);
+      const d2 = (z: { x: number; y: number; z: number }): number =>
+        (z.x - p.x) * (z.x - p.x) + (z.y - p.y) * (z.y - p.y) + (z.z - p.z) * (z.z - p.z);
       zombies.sort((a, b) => d2(a) - d2(b));
       for (let j = 0; j < NumSmartZombiesPerPlayer; ++j)
         if (zombies[j]!.distanceToSqr(p) < 32 * 32) zombies[j]!.setUseNewAi(true);
@@ -1464,14 +1503,7 @@ export class Level implements LevelSource {
    *
    * `if (!isClientSide)` 是原句；`ExplodePacket` 那句照旧 DEFERRED(Network)。
    */
-  explode(
-    source: Entity | null,
-    x: number,
-    y: number,
-    z: number,
-    r: number,
-    fire = false,
-  ): void {
+  explode(source: Entity | null, x: number, y: number, z: number, r: number, fire = false): void {
     if (!this.isClientSide) {
       const explosion = new Explosion(this, source, x, y, z, r);
       explosion.fire = fire;

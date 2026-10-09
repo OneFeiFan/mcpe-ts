@@ -13,7 +13,11 @@ import { Keyboard } from '@mcpe/platform';
 
 const makeMc = () => {
   const messages: string[] = [];
-  const level = { ops: new Set<string>(), bannedPlayers: new Set<string>(), players: [] as unknown[] };
+  const level = {
+    ops: new Set<string>(),
+    bannedPlayers: new Set<string>(),
+    players: [] as unknown[],
+  };
   const player = { name: 'Steve' };
   const mc = {
     level,
@@ -21,7 +25,12 @@ const makeMc = () => {
     messages,
     gui: { addMessage: (m: string) => messages.push(m) },
     setScreen: vi.fn(),
-    font: { drawShadow: () => {}, draw: () => {}, width: (s: string) => s.length * 6, lineHeight: 10 },
+    font: {
+      drawShadow: () => {},
+      draw: () => {},
+      width: (s: string) => s.length * 6,
+      lineHeight: 10,
+    },
     textures: { loadAndBindTexture: () => 1 },
     options: { set: vi.fn(), save: vi.fn(), getIntValue: () => 0, getBooleanValue: () => false },
     platform: () => ({ hideKeyboard: () => {}, showKeyboard: () => {} }),
@@ -38,7 +47,8 @@ function type(s: ConsoleScreen, text: string): void {
   const p = s as unknown as { charPressed(c: string): void };
   for (const ch of text) p.charPressed(ch);
 }
-const enter = (s: ConsoleScreen): void => (s as unknown as { keyPressed(k: number): void }).keyPressed(Keyboard.KEY_RETURN);
+const enter = (s: ConsoleScreen): void =>
+  (s as unknown as { keyPressed(k: number): void }).keyPressed(Keyboard.KEY_RETURN);
 
 describe('ConsoleScreen 与命令', () => {
   glSetContext(new GLES1(null));
@@ -106,7 +116,12 @@ describe('UsernameScreen', () => {
     const mc = makeMc();
     const s = new UsernameScreen();
     s.init(mc as never, 320, 180);
-    const p = s as unknown as { _btnDone: { active: boolean }; tUsername: { text: string }; keyPressed(k: number): void; buttonClicked(b: unknown): void };
+    const p = s as unknown as {
+      _btnDone: { active: boolean };
+      tUsername: { text: string };
+      keyPressed(k: number): void;
+      buttonClicked(b: unknown): void;
+    };
     expect(p._btnDone.active).toBe(false);
     p.tUsername.text = 'Alex';
     p.keyPressed(Keyboard.KEY_A);

@@ -12,9 +12,22 @@
  */
 import { LOGI, getTimeS } from '@mcpe/platform';
 import { Mth } from '@mcpe/util';
-import { type ChestTileEntity, ContainerMenu, Inventory, ItemInstance, type Player } from '@mcpe/world';
+import {
+  type ChestTileEntity,
+  ContainerMenu,
+  Inventory,
+  ItemInstance,
+  type Player,
+} from '@mcpe/world';
 import { ItemRenderer } from '../../renderer/entity/ItemRenderer';
-import { GL_ALPHA_TEST, GL_BLEND, GL_SCISSOR_TEST, glColor4f, glDisable2, glEnable2 } from '../../renderer/gles';
+import {
+  GL_ALPHA_TEST,
+  GL_BLEND,
+  GL_SCISSOR_TEST,
+  glColor4f,
+  glDisable2,
+  glEnable2,
+} from '../../renderer/gles';
 import { Tesselator } from '../../renderer/Tesselator';
 import type { Button } from '../components/Button';
 import { THeader } from '../components/Button';
@@ -42,7 +55,14 @@ type FillingLike = {
 };
 
 /** C++ 的 struct FlyingItem */
-type FlyingItem = { item: ItemInstance; startTime: number; sx: number; sy: number; dx: number; dy: number };
+type FlyingItem = {
+  item: ItemInstance;
+  startTime: number;
+  sx: number;
+  sy: number;
+  dx: number;
+  dy: number;
+};
 
 /** ChestScreen.cpp 的文件内静态变量 */
 const statics = { heldMs: -1, percent: -1, flyingItems: [] as FlyingItem[] };
@@ -136,7 +156,13 @@ export class ChestScreen extends BaseContainerScreen implements IInventoryPaneCa
     return pane === this.inventoryPane ? this.minecraft.player!.inventory : this.chest;
   }
 
-  private handleRenderPane(pane: InventoryPane | null, t: Tesselator, xm: number, ym: number, a: number): void {
+  private handleRenderPane(
+    pane: InventoryPane | null,
+    t: Tesselator,
+    xm: number,
+    ym: number,
+    a: number,
+  ): void {
     if (pane) {
       pane.markerIndex = -1;
       const [held, id, ms] = pane.queryHoldTime();
@@ -186,7 +212,14 @@ export class ChestScreen extends BaseContainerScreen implements IInventoryPaneCa
       tt = f(tt * tt);
       const xx = Mth.lerp(fi.sx, fi.dx, tt);
       const yy = Mth.lerp(fi.sy, fi.dy, tt);
-      ItemRenderer.renderGuiItem(this.minecraft.font, this.minecraft.textures!, fi.item, xx + 7, yy + 8, true);
+      ItemRenderer.renderGuiItem(
+        this.minecraft.font,
+        this.minecraft.textures!,
+        fi.item,
+        xx + 7,
+        yy + 8,
+        true,
+      );
       flyingToSave.push(fi);
     }
     t.enableColor();
@@ -232,7 +265,14 @@ export class ChestScreen extends BaseContainerScreen implements IInventoryPaneCa
         const [, g] = pane.getGridItemFor_slow(itemIndex);
         for (const toIndex of changed) {
           const [, gTo] = toPane.getGridItemFor_slow(toIndex);
-          statics.flyingItems.push({ startTime: f(getTimeS()), item: new ItemInstance(item!), sx: g.xf, sy: g.yf, dx: gTo.xf, dy: gTo.yf });
+          statics.flyingItems.push({
+            startTime: f(getTimeS()),
+            item: new ItemInstance(item!),
+            sx: g.xf,
+            sy: g.yf,
+            dx: gTo.xf,
+            dy: gTo.yf,
+          });
           // DEFERRED(Network): if (!fromChest && minecraft->level->isClientSide) { ContainerSetSlotPacket … }
         }
       }
@@ -261,10 +301,12 @@ export class ChestScreen extends BaseContainerScreen implements IInventoryPaneCa
   getItems(forPane: InventoryPane): (ItemInstance | null)[] {
     if (forPane === this.inventoryPane) {
       const inv = this.minecraft.player!.inventory;
-      for (let i = Inventory.MAX_SELECTION_SIZE, j = 0; i < inv.getContainerSize(); ++i, ++j) this.inventoryItems[j] = inv.getItem(i);
+      for (let i = Inventory.MAX_SELECTION_SIZE, j = 0; i < inv.getContainerSize(); ++i, ++j)
+        this.inventoryItems[j] = inv.getItem(i);
       return this.inventoryItems;
     } else {
-      for (let i = 0; i < this.chest.getContainerSize(); ++i) this.chestItems[i] = this.chest.getItem(i);
+      for (let i = 0; i < this.chest.getContainerSize(); ++i)
+        this.chestItems[i] = this.chest.getItem(i);
       return this.chestItems;
     }
   }
@@ -272,34 +314,69 @@ export class ChestScreen extends BaseContainerScreen implements IInventoryPaneCa
   private setupPane(): void {
     const inv = this.minecraft.player!.inventory;
     this.inventoryItems = [];
-    for (let i = Inventory.MAX_SELECTION_SIZE; i < inv.getContainerSize(); ++i) this.inventoryItems.push(inv.getItem(i));
+    for (let i = Inventory.MAX_SELECTION_SIZE; i < inv.getContainerSize(); ++i)
+      this.inventoryItems.push(inv.getItem(i));
     this.chestItems = [];
-    for (let i = 0; i < this.chest.getContainerSize(); ++i) this.chestItems.push(this.chest.getItem(i));
+    for (let i = 0; i < this.chest.getContainerSize(); ++i)
+      this.chestItems.push(this.chest.getItem(i));
     const maxWidth = Math.trunc(this.width / 2) - Math.trunc(Bx / 2);
     const InventoryColumns = Math.trunc(maxWidth / ItemSize);
     const realWidth = InventoryColumns * ItemSize;
     const paneWidth = realWidth;
     const realBx = Math.trunc((Math.trunc(this.width / 2) - realWidth) / 2);
     const rect = new IntRectangle(realBx, 24 + By, realWidth, this.height - By - By - 24);
-    this.inventoryPane = new InventoryPane(this, this.minecraft, rect, paneWidth, BorderPixels, inv.getContainerSize() - Inventory.MAX_SELECTION_SIZE, ItemSize, Math.trunc(BorderPixels));
+    this.inventoryPane = new InventoryPane(
+      this,
+      this.minecraft,
+      rect,
+      paneWidth,
+      BorderPixels,
+      inv.getContainerSize() - Inventory.MAX_SELECTION_SIZE,
+      ItemSize,
+      Math.trunc(BorderPixels),
+    );
     this.inventoryPane.fillMarginX = 0;
     this.inventoryPane.fillMarginY = 0;
     this.guiPaneFrame!.setSize(rect.w + 2, rect.h + 2);
     this.panesBbox = new IntRectangle(rect.x, rect.y, rect.w, rect.h);
     rect.x += Math.trunc(this.width / 2);
     this.panesBbox.w += rect.x - this.panesBbox.x;
-    this.chestPane = new InventoryPane(this, this.minecraft, rect, paneWidth, BorderPixels, this.chest.getContainerSize(), ItemSize, Math.trunc(BorderPixels));
+    this.chestPane = new InventoryPane(
+      this,
+      this.minecraft,
+      rect,
+      paneWidth,
+      BorderPixels,
+      this.chest.getContainerSize(),
+      ItemSize,
+      Math.trunc(BorderPixels),
+    );
     this.chestPane.fillMarginX = 0;
     this.chestPane.fillMarginY = 0;
-    LOGI(`Creating new panes\n:          Inventory ${this.inventoryItems.length}\n          Chest     ${this.chestItems.length}\n`);
+    LOGI(
+      `Creating new panes\n:          Inventory ${this.inventoryItems.length}\n          Chest     ${this.chestItems.length}\n`,
+    );
   }
 
   /** C++ 的 drawSlotItemAt（这一版没有调用方） */
-  protected drawSlotItemAt(t: Tesselator, item: ItemInstance | null, x: number, y: number, selected: boolean): void {
+  protected drawSlotItemAt(
+    t: Tesselator,
+    item: ItemInstance | null,
+    x: number,
+    y: number,
+    selected: boolean,
+  ): void {
     (selected ? this.guiSlot! : this.guiSlot!).draw(t, x, y);
     if (selected) this.guiSlotMarker!.draw(t, x - 2, y - 2);
     if (item && !item.isNull()) {
-      ItemRenderer.renderGuiItem(this.minecraft.font, this.minecraft.textures!, item, x + 7, y + 8, true);
+      ItemRenderer.renderGuiItem(
+        this.minecraft.font,
+        this.minecraft.textures!,
+        item,
+        x + 7,
+        y + 8,
+        true,
+      );
       this.minecraft.gui.renderSlotText(item, x + 3, y + 3, true, true);
     }
   }

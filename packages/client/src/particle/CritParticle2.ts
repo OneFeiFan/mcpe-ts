@@ -57,9 +57,7 @@ export class CritParticle2 extends Particle {
     this.size = f(this.size * scale);
     this.oSize = this.size;
     // lifetime = (int)(6 / (r * 0.8f + 0.6f) * scale) —— float 除法
-    this.lifetime = Math.trunc(
-      f(f(6 / f(f(Mth.random() * f(0.8)) + f(0.6))) * scale),
-    );
+    this.lifetime = Math.trunc(f(f(6 / f(f(Mth.random() * f(0.8)) + f(0.6))) * scale));
     this.noPhysics = false;
     this.tex = 16 * 4 + 1;
     this.tick(); // ⚠ 调的是本类重写的 tick（见文件头）

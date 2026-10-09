@@ -36,11 +36,26 @@ export abstract class Slider extends GuiElement {
       const stepDistance = Math.trunc(barWidth / (this.m_numSteps - 1));
       for (let a = 0; a < this.m_numSteps; ++a) {
         const renderSliderStepPosX = xSliderStart + a * stepDistance + 1;
-        this.fill(renderSliderStepPosX - 1, ySliderStart - 2, renderSliderStepPosX + 1, ySliderEnd + 2, 0xff606060 | 0);
+        this.fill(
+          renderSliderStepPosX - 1,
+          ySliderStart - 2,
+          renderSliderStepPosX + 1,
+          ySliderEnd + 2,
+          0xff606060 | 0,
+        );
       }
     }
     minecraft.textures!.loadAndBindTexture('gui/touchgui.png');
-    this.blit(xSliderStart + Math.trunc(f(this.m_percentage * barWidth)) - Math.trunc(handleSizeX / 2), this.y, 226, 126, handleSizeX, handleSizeY, handleSizeX, handleSizeY);
+    this.blit(
+      xSliderStart + Math.trunc(f(this.m_percentage * barWidth)) - Math.trunc(handleSizeX / 2),
+      this.y,
+      226,
+      126,
+      handleSizeX,
+      handleSizeY,
+      handleSizeX,
+      handleSizeY,
+    );
   }
 
   override mouseClicked(_minecraft: Minecraft, x: number, y: number, _buttonNum: number): void {
@@ -78,7 +93,10 @@ export class SliderFloat extends Slider {
     super.mouseReleased(minecraft, x, y, buttonNum);
     if (this.pointInside(x, y)) {
       const o = this.m_option;
-      minecraft.options.set(this.m_optId, f(f(this.m_percentage * f(o.getMax() - o.getMin())) + o.getMin()));
+      minecraft.options.set(
+        this.m_optId,
+        f(f(this.m_percentage * f(o.getMax() - o.getMin())) + o.getMin()),
+      );
     }
   }
 }

@@ -7,7 +7,17 @@
  */
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { ArmorScreen, GLES1, glSetContext, StonecutterScreen, WorkbenchScreen } from '@mcpe/client';
-import { initItems, initTileEntities, Inventory, Item, ItemInstance, type Level, Player, Recipe, Tile } from '@mcpe/world';
+import {
+  initItems,
+  initTileEntities,
+  Inventory,
+  Item,
+  ItemInstance,
+  type Level,
+  Player,
+  Recipe,
+  Tile,
+} from '@mcpe/world';
 import { I18n } from '@mcpe/locale';
 import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
@@ -17,8 +27,18 @@ let player: Player;
 
 const mc = () => ({
   player,
-  textures: { loadAndBindTexture: () => 1, loadTexture: () => 1, getTemporaryTextureData: () => ({ w: 256, h: 256 }) },
-  font: { draw: () => {}, drawShadow: () => {}, drawWordWrap: () => {}, width: (s: string) => s.length * 6, lineHeight: 10 },
+  textures: {
+    loadAndBindTexture: () => 1,
+    loadTexture: () => 1,
+    getTemporaryTextureData: () => ({ w: 256, h: 256 }),
+  },
+  font: {
+    draw: () => {},
+    drawShadow: () => {},
+    drawWordWrap: () => {},
+    width: (s: string) => s.length * 6,
+    lineHeight: 10,
+  },
   width: 960,
   height: 540,
   screen: null as unknown,
@@ -45,7 +65,12 @@ beforeAll(() => {
   level.addEntity(player);
 });
 
-type Priv = { _items: { item: ItemInstance; canCraft(): boolean; recipe: Recipe }[]; _categories: unknown[][]; currentItem: unknown; craftSelectedItem(): void };
+type Priv = {
+  _items: { item: ItemInstance; canCraft(): boolean; recipe: Recipe }[];
+  _categories: unknown[][];
+  currentItem: unknown;
+  craftSelectedItem(): void;
+};
 
 function open(s: { init(m: never, w: number, h: number): void }): Priv {
   s.init(mc() as never, 320, 180);
@@ -91,7 +116,11 @@ describe('合成界面', () => {
 describe('护甲界面', () => {
   it('点背包里的铁头盔：穿上并从背包移除；点头盔槽：脱下放回背包', () => {
     player.inventory.add(new ItemInstance(Item.helmet_iron));
-    const s = open(new ArmorScreen()) as unknown as { armorItems: (ItemInstance | null)[]; addItem(p: unknown, i: number): boolean; takeAndClearSlot(i: number): void };
+    const s = open(new ArmorScreen()) as unknown as {
+      armorItems: (ItemInstance | null)[];
+      addItem(p: unknown, i: number): boolean;
+      takeAndClearSlot(i: number): void;
+    };
     const idx = s.armorItems.findIndex((it) => it && it.id === Item.helmet_iron.id);
     expect(idx).toBeGreaterThanOrEqual(0);
     expect(s.addItem(null, idx)).toBe(true);
@@ -99,7 +128,8 @@ describe('护甲界面', () => {
     s.takeAndClearSlot(0);
     expect(player.getArmor(0)).toBeNull();
     let found = false;
-    for (let i = 0; i < player.inventory.getContainerSize(); i++) if (player.inventory.getItem(i)?.id === Item.helmet_iron.id) found = true;
+    for (let i = 0; i < player.inventory.getContainerSize(); i++)
+      if (player.inventory.getItem(i)?.id === Item.helmet_iron.id) found = true;
     expect(found).toBe(true);
   });
 });

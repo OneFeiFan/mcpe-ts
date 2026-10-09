@@ -114,7 +114,11 @@ export abstract class PathfinderMob extends Mob {
     }
     TIMER_POP();
     let doStroll = false;
-    if (!this.holdGround && attackTarget !== null && (this.path.isEmpty() || this.random.nextInt(20) === 0)) {
+    if (
+      !this.holdGround &&
+      attackTarget !== null &&
+      (this.path.isEmpty() || this.random.nextInt(20) === 0)
+    ) {
       this.level.findPathToEntity(this.path, this, attackTarget, maxDist, false, false);
     } else if (!this.holdGround) {
       if (this.path.isEmpty() && this.random.nextInt(180) === 0) {

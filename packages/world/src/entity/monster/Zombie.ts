@@ -48,14 +48,32 @@ export class Zombie extends Monster {
   }
 
   override aiStep(): void {
-    if ((++this.fireCheckTick & 1) && this.level.isDay() && !this.level.isClientSide) {
+    if (++this.fireCheckTick & 1 && this.level.isDay() && !this.level.isClientSide) {
       const br = this.getBrightness(1);
       if (br > f(0.5)) {
-        if (this.level.canSeeSky(Mth.floor(this.x), Mth.floor(this.y), Mth.floor(this.z)) && f(this.random.nextFloat() * f(3.5)) < f(br - f(0.4))) {
+        if (
+          this.level.canSeeSky(Mth.floor(this.x), Mth.floor(this.y), Mth.floor(this.z)) &&
+          f(this.random.nextFloat() * f(3.5)) < f(br - f(0.4))
+        ) {
           for (let i = 0; i < 5; ++i) {
-            const xa = f(f(f(f(2.0 * this.random.nextFloat()) - 1.0) * f(f(2.0 * this.random.nextFloat()) - 1.0)) * f(0.02));
-            const ya = f(f(f(f(2.0 * this.random.nextFloat()) - 1.0) * f(f(2.0 * this.random.nextFloat()) - 1.0)) * f(0.02));
-            const za = f(f(f(f(2.0 * this.random.nextFloat()) - 1.0) * f(f(2.0 * this.random.nextFloat()) - 1.0)) * f(0.02));
+            const xa = f(
+              f(
+                f(f(2.0 * this.random.nextFloat()) - 1.0) *
+                  f(f(2.0 * this.random.nextFloat()) - 1.0),
+              ) * f(0.02),
+            );
+            const ya = f(
+              f(
+                f(f(2.0 * this.random.nextFloat()) - 1.0) *
+                  f(f(2.0 * this.random.nextFloat()) - 1.0),
+              ) * f(0.02),
+            );
+            const za = f(
+              f(
+                f(f(2.0 * this.random.nextFloat()) - 1.0) *
+                  f(f(2.0 * this.random.nextFloat()) - 1.0),
+              ) * f(0.02),
+            );
             this.level.addParticle(
               'explode',
               this.x + f(this.random.nextFloat() * this.bbWidth * 2) - this.bbWidth,

@@ -22,7 +22,11 @@ export class ArmorRecipes {
     for (let m = 0; m < materialIds.length; m++) {
       const materialId = materialIds[m]!;
       for (let t = 0; t < shapes.length; t++) {
-        r.addShapedRecipe(new ItemInstance(map[t]![m]!), shapes[t]!, definition('X', Item.items[materialId]!));
+        r.addShapedRecipe(
+          new ItemInstance(map[t]![m]!),
+          shapes[t]!,
+          definition('X', Item.items[materialId]!),
+        );
       }
     }
   }

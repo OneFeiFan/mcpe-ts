@@ -16,7 +16,9 @@ export class KeyOption extends TButton {
 
   override mouseClicked(minecraft: Minecraft, x: number, y: number, _buttonNum: number): void {
     this.selected = this.isInside(x, y);
-    this.msg = this.selected ? '...' : Keyboard.getKeyName(minecraft.options.getIntValue(this.id as OptionId));
+    this.msg = this.selected
+      ? '...'
+      : Keyboard.getKeyName(minecraft.options.getIntValue(this.id as OptionId));
   }
 
   override released(_mx: number, _my: number): void {}

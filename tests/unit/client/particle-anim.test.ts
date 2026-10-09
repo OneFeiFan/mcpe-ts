@@ -93,9 +93,7 @@ describe('SmokeParticle（E2）', () => {
     resetRandom(r);
     const s = new SmokeParticle(level, 8.5, 70.5, 8.5, 0, 0, 0, f(2.0));
     // scale=2 → 16 / (0.5*0.8f + 0.2f) = 16/0.6f ≈ 26.67 → 26
-    expect(inner(s).lifetime).toBe(
-      Math.trunc(f(f(f(2.0) * f(8.0)) / f(f(r * f(0.8)) + f(0.2)))),
-    );
+    expect(inner(s).lifetime).toBe(Math.trunc(f(f(f(2.0) * f(8.0)) / f(f(r * f(0.8)) + f(0.2)))));
     expect(inner(s).lifetime, '手算：16 / 0.8f ≈ 19.9999994 截断').toBe(20);
   });
 
@@ -186,9 +184,7 @@ describe('ExplodeParticle（E2）', () => {
 
     resetRandom(0.75);
     const e = new ExplodeParticle(level, 8.5, 70.5, 8.5, 0, 0, 0);
-    expect(inner(e).lifetime).toBe(
-      Math.trunc(f(f(16.0) / f(f(r * f(0.8)) + f(0.2)))) + 2,
-    );
+    expect(inner(e).lifetime).toBe(Math.trunc(f(f(16.0) / f(f(r * f(0.8)) + f(0.2)))) + 2);
   });
 
   it('tick：阻力是 0.90f（不是烟的 0.96f），yd 一样 +0.004f', () => {

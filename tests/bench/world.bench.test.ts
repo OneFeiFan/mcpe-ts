@@ -6,7 +6,14 @@
 import { describe, it, vi } from 'vitest';
 import { SharedConstants } from '@mcpe/core';
 import { Chunk, GLES1, glSetContext, Minecraft, Tesselator } from '@mcpe/client';
-import { GameType, initItems, initTileEntities, Level, LevelSettings, MemoryLevelStorage } from '@mcpe/world';
+import {
+  GameType,
+  initItems,
+  initTileEntities,
+  Level,
+  LevelSettings,
+  MemoryLevelStorage,
+} from '@mcpe/world';
 import { createFlatLevel } from '../helpers/headlessLevel';
 
 describe('性能基线', () => {
@@ -16,7 +23,12 @@ describe('性能基线', () => {
     createFlatLevel();
     initItems();
     initTileEntities();
-    const level = new Level(new MemoryLevelStorage(), 'perf', new LevelSettings(123, GameType.Survival), SharedConstants.GeneratorVersion);
+    const level = new Level(
+      new MemoryLevelStorage(),
+      'perf',
+      new LevelSettings(123, GameType.Survival),
+      SharedConstants.GeneratorVersion,
+    );
     let t0 = performance.now();
     for (let cz = 2; cz <= 8; cz++) for (let cx = 2; cx <= 8; cx++) level.getChunk(cx, cz);
     const gen = performance.now() - t0;
@@ -27,7 +39,8 @@ describe('性能基线', () => {
     const chunks: Chunk[] = [];
     for (let cz = 3; cz <= 7; cz++)
       for (let cx = 3; cx <= 7; cx++)
-        for (let cy = 0; cy < 8; cy++) chunks.push(new Chunk(level, cx * 16, cy * 16, cz * 16, 16, 0, [id++, id++, id++]));
+        for (let cy = 0; cy < 8; cy++)
+          chunks.push(new Chunk(level, cx * 16, cy * 16, cz * 16, 16, 0, [id++, id++, id++]));
     t0 = performance.now();
     for (let round = 0; round < 3; round++)
       for (const c of chunks) {
@@ -35,7 +48,11 @@ describe('性能基线', () => {
         c.rebuild();
       }
     const reb = (performance.now() - t0) / 3;
-    console.info(`[perf] 生成+地物 49 区块: ${gen.toFixed(0)} ms（${(gen / 49).toFixed(1)} ms/区块）`);
-    console.info(`[perf] 重建 ${chunks.length} 个渲染区块（AO 开，三轮平均）: ${reb.toFixed(0)} ms（${(reb / chunks.length).toFixed(2)} ms/个）`);
+    console.info(
+      `[perf] 生成+地物 49 区块: ${gen.toFixed(0)} ms（${(gen / 49).toFixed(1)} ms/区块）`,
+    );
+    console.info(
+      `[perf] 重建 ${chunks.length} 个渲染区块（AO 开，三轮平均）: ${reb.toFixed(0)} ms（${(reb / chunks.length).toFixed(2)} ms/个）`,
+    );
   }, 300000);
 });

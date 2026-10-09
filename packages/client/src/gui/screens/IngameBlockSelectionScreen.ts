@@ -14,8 +14,19 @@ import { MouseAction } from '@mcpe/platform';
 import { OptionId } from '../../Options';
 import { ItemRenderer } from '../../renderer/entity/ItemRenderer';
 import {
-  GL_ALPHA_TEST, GL_BLEND, GL_DEPTH_TEST, GL_ONE_MINUS_SRC_ALPHA, GL_RESCALE_NORMAL, GL_SRC_ALPHA, glBlendFunc2, glColor4f2, glDisable2,
-  glEnable2, glPopMatrix2, glPushMatrix2, glScalef2,
+  GL_ALPHA_TEST,
+  GL_BLEND,
+  GL_DEPTH_TEST,
+  GL_ONE_MINUS_SRC_ALPHA,
+  GL_RESCALE_NORMAL,
+  GL_SRC_ALPHA,
+  glBlendFunc2,
+  glColor4f2,
+  glDisable2,
+  glEnable2,
+  glPopMatrix2,
+  glPushMatrix2,
+  glScalef2,
 } from '../../renderer/gles';
 import { Lighting } from '../../renderer/Lighting';
 import { RectangleArea } from '../../player/input/touchscreen/TouchAreaModel';
@@ -24,7 +35,6 @@ import { Gui } from '../Gui';
 import { Screen } from '../Screen';
 import { ArmorScreen } from './ArmorScreen';
 import { WorkbenchScreen } from './crafting/WorkbenchScreen';
-
 
 const f = Math.fround;
 const demoVersionString = 'Not available in the demo version';
@@ -45,7 +55,12 @@ export class IngameBlockSelectionScreen extends Screen {
     this.InventoryCols = mc.isCreativeMode() ? 13 : 9;
     this.InventorySize = inventory.getContainerSize() - Inventory.MAX_SELECTION_SIZE;
     this.InventoryRows = 1 + Math.trunc((this.InventorySize - 1) / this.InventoryCols);
-    this._area = new RectangleArea(this.getSlotPosX(0) - 4, this.getSlotPosY(0) - 4, this.getSlotPosX(this.InventoryCols) + 4, this.getSlotPosY(this.InventoryRows) + 4);
+    this._area = new RectangleArea(
+      this.getSlotPosX(0) - 4,
+      this.getSlotPosY(0) - 4,
+      this.getSlotPosX(this.InventoryCols) + 4,
+      this.getSlotPosY(this.InventoryRows) + 4,
+    );
     if (!mc.isCreativeMode()) {
       this.bArmor.width = 42;
       this.bCrafting.width = 42;
@@ -137,16 +152,23 @@ export class IngameBlockSelectionScreen extends Screen {
     const o = this.minecraft.options;
     if (eventKey === o.getIntValue(OptionId.OPTIONS_KEY_LEFT) && selX > 0) {
       tmpSelectedSlot -= 1;
-    } else if (eventKey === o.getIntValue(OptionId.OPTIONS_KEY_RIGHT) && selX < this.InventoryCols - 1) {
+    } else if (
+      eventKey === o.getIntValue(OptionId.OPTIONS_KEY_RIGHT) &&
+      selX < this.InventoryCols - 1
+    ) {
       tmpSelectedSlot += 1;
-    } else if (eventKey === o.getIntValue(OptionId.OPTIONS_KEY_BACK) && selY < this.InventoryRows - 1) {
+    } else if (
+      eventKey === o.getIntValue(OptionId.OPTIONS_KEY_BACK) &&
+      selY < this.InventoryRows - 1
+    ) {
       tmpSelectedSlot += this.InventoryCols;
     } else if (eventKey === o.getIntValue(OptionId.OPTIONS_KEY_FORWARD) && selY > 0) {
       tmpSelectedSlot -= this.InventoryCols;
     }
     if (this.isAllowed(tmpSelectedSlot)) this.selectedItem = tmpSelectedSlot;
     if (eventKey === o.getIntValue(OptionId.OPTIONS_KEY_MENU_OK)) this.selectSlotAndClose();
-    if (eventKey === o.getIntValue(OptionId.OPTIONS_KEY_MENU_CANCEL)) this.minecraft.setScreen(null);
+    if (eventKey === o.getIntValue(OptionId.OPTIONS_KEY_MENU_CANCEL))
+      this.minecraft.setScreen(null);
   }
 
   protected override mouseWheel(_dx: number, dy: number, _xm: number, _ym: number): void {
@@ -181,7 +203,10 @@ export class IngameBlockSelectionScreen extends Screen {
       if (this.isAllowed(slot)) {
         this.selectedItem = slot;
       } else {
-        this._pendingQuit = !this._area.isInside(x, y) && !this.bArmor.isInside(x, y) && !this.bCrafting.isInside(x, y);
+        this._pendingQuit =
+          !this._area.isInside(x, y) &&
+          !this.bArmor.isInside(x, y) &&
+          !this.bCrafting.isInside(x, y);
       }
     }
     if (!this._pendingQuit) super.mouseClicked(x, y, buttonNum);

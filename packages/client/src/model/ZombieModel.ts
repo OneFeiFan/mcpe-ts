@@ -8,7 +8,14 @@ import { HumanoidModel } from './HumanoidModel';
 const f = Math.fround;
 
 export class ZombieModel extends HumanoidModel {
-  override setupAnim(time: number, r: number, bob: number, yRot: number, xRot: number, scale: number): void {
+  override setupAnim(
+    time: number,
+    r: number,
+    bob: number,
+    yRot: number,
+    xRot: number,
+    scale: number,
+  ): void {
     super.setupAnim(time, r, bob, yRot, xRot, scale);
     if (!this.holdingLeftHand && !this.holdingRightHand) {
       const attack2 = f(Mth.sin(f(this.attackTime * Mth.PI)));

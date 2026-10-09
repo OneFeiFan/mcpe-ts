@@ -89,7 +89,10 @@ export default async function (h) {
   h.expect(threw.sameAsStatic === true, 'Item.items[332] 就是 Item.snowBall');
   h.expect(threw.n === 1, `世界里出现 1 个 Snowball 实体（实测 ${threw.n}）`);
   h.expect(threw.after === threw.before + 1, '实体进了世界');
-  h.expect(threw.owner === threw.playerId, `ownerId 是扔它的玩家（${threw.owner} vs ${threw.playerId}）`);
+  h.expect(
+    threw.owner === threw.playerId,
+    `ownerId 是扔它的玩家（${threw.owner} vs ${threw.playerId}）`,
+  );
   // ⚠ demo 世界是**创造模式**（startDemoWorld 用 GameType.Creative）→ `abilities.instabuild` 为真，
   //   所以 C++ 那句 `if (!player->abilities.instabuild) instance->count--;` **不执行**。
   //   创造模式不减数量是对的；生存那条分支在下面单独验。
@@ -107,7 +110,10 @@ export default async function (h) {
   const frozen = await h.state('pause 定格，读飞行中的位置', (a) => {
     a.pause = true;
     const s = a.level.entities.find((e) => e.constructor.name === 'Snowball');
-    return { n: a.level.entities.filter((e) => e.constructor.name === 'Snowball').length, z: s ? s.z : null };
+    return {
+      n: a.level.entities.filter((e) => e.constructor.name === 'Snowball').length,
+      z: s ? s.z : null,
+    };
   });
   await h.wait(400);
   await h.shot('01-半空中的雪球（定格）');

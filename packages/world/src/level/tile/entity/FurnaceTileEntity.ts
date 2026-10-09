@@ -214,7 +214,9 @@ export class FurnaceTileEntity extends TileEntity implements Container {
   /*private*/
   private canBurn(): boolean {
     if (this.items[FurnaceTileEntity.SLOT_INGREDIENT]!.isNull()) return false;
-    const burnResult = FurnaceRecipes.getInstance().getResult(this.items[FurnaceTileEntity.SLOT_INGREDIENT]!.getItem()!.id);
+    const burnResult = FurnaceRecipes.getInstance().getResult(
+      this.items[FurnaceTileEntity.SLOT_INGREDIENT]!.getItem()!.id,
+    );
     if (burnResult.isNull()) return false;
     const res = this.items[FurnaceTileEntity.SLOT_RESULT]!;
     if (res.isNull()) return true;

@@ -1,8 +1,19 @@
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
-  GLES1, ModelPart, glSetContext, ChestModel, SignModel, PigModel, CowModel, SheepModel, SheepFurModel, ZombieModel, SkeletonModel,
-  CreeperModel, SpiderModel,
+  GLES1,
+  ModelPart,
+  glSetContext,
+  ChestModel,
+  SignModel,
+  PigModel,
+  CowModel,
+  SheepModel,
+  SheepFurModel,
+  ZombieModel,
+  SkeletonModel,
+  CreeperModel,
+  SpiderModel,
 } from '@mcpe/client';
 
 // 真值来自 tools/golden/harness_model.cpp（参考 C++ 源码 client/model/geom/*.cpp，x86-64 上生成）。
@@ -65,13 +76,11 @@ function expectFloats(actual: number[], expected: number[], what: string): void 
   }
 }
 
-const vertexTuple = (v: { pos: { x: number; y: number; z: number }; u: number; v: number }): number[] => [
-  v.pos.x,
-  v.pos.y,
-  v.pos.z,
-  v.u,
-  v.v,
-];
+const vertexTuple = (v: {
+  pos: { x: number; y: number; z: number };
+  u: number;
+  v: number;
+}): number[] => [v.pos.x, v.pos.y, v.pos.z, v.u, v.v];
 
 beforeAll(() => glSetContext(new GLES1(null))); // 无头：ModelPart 构造时会 glGenBuffers2
 
@@ -88,7 +97,15 @@ describe('合成形状：与 C++ 逐位一致（G3 的判据）', () => {
     it(`${shape.label}`, () => {
       const [xo, yo] = shape.texOffs as [number, number];
       const [tw, th] = shape.texSize as [number, number];
-      const [x0, y0, z0, w, h, d, g] = shape.box as [number, number, number, number, number, number, number];
+      const [x0, y0, z0, w, h, d, g] = shape.box as [
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+      ];
 
       const mp = new ModelPart(xo, yo);
       mp.setTexSize(tw, th);
@@ -106,7 +123,8 @@ describe('合成形状：与 C++ 逐位一致（G3 的判据）', () => {
       expectFloats(got.vertices.flatMap(vertexTuple), want.vertices.flat(), 'vertices');
 
       // 3) 6 个面 × 4 个角
-      const cube = (mp as unknown as { cubes: { polygons: { vertices: unknown[]; }[] }[] }).cubes[0]!;
+      const cube = (mp as unknown as { cubes: { polygons: { vertices: unknown[] }[] }[] })
+        .cubes[0]!;
       expect(cube.polygons.length, '6 个面').toBe(6);
       for (let j = 0; j < 6; j++) {
         const gp = cube.polygons[j] as unknown as {
@@ -139,17 +157,39 @@ describe('方块实体与生物的模型：与 C++ 逐位一致', () => {
   ];
   for (const [name, make] of cases) {
     it(name, () => {
-      const want = G.models.find((m) => (m as unknown as { model: string }).model === name) as unknown as {
+      const want = G.models.find(
+        (m) => (m as unknown as { model: string }).model === name,
+      ) as unknown as {
         texWidth: number;
         texHeight: number;
-        parts: { name: string; pos: number[]; rot: number[]; texSize: number[]; mirror: boolean; visible: boolean; cubes: { bounds: number[]; vertices: number[][]; polygons: { vertices: number[][] }[] }[] }[];
+        parts: {
+          name: string;
+          pos: number[];
+          rot: number[];
+          texSize: number[];
+          mirror: boolean;
+          visible: boolean;
+          cubes: { bounds: number[]; vertices: number[][]; polygons: { vertices: number[][] }[] }[];
+        }[];
       };
       expect(want, `夹具里有 ${name}`).toBeTruthy();
       const m = make();
       expect([m.texWidth, m.texHeight], '模型的贴图尺寸').toEqual([want.texWidth, want.texHeight]);
       for (const wp of want.parts) {
         const part = m[wp.name]!;
-        const pi = part as unknown as { x: number; y: number; z: number; xRot: number; yRot: number; zRot: number; xTexSize: number; yTexSize: number; mirror: boolean; visible: boolean; cubes: unknown[] };
+        const pi = part as unknown as {
+          x: number;
+          y: number;
+          z: number;
+          xRot: number;
+          yRot: number;
+          zRot: number;
+          xTexSize: number;
+          yTexSize: number;
+          mirror: boolean;
+          visible: boolean;
+          cubes: unknown[];
+        };
         expectFloats([pi.x, pi.y, pi.z], wp.pos, `${wp.name}.pos`);
         expectFloats([pi.xRot, pi.yRot, pi.zRot], wp.rot, `${wp.name}.rot`);
         expect([pi.xTexSize, pi.yTexSize], `${wp.name}.texSize`).toEqual(wp.texSize);
@@ -157,11 +197,31 @@ describe('方块实体与生物的模型：与 C++ 逐位一致', () => {
         expect(pi.cubes.length, `${wp.name} 的 cube 数`).toBe(wp.cubes.length);
         wp.cubes.forEach((wc, ci) => {
           const got = cubeOf(part, ci);
-          expectFloats([got.x0, got.y0, got.z0, got.x1, got.y1, got.z1], wc.bounds, `${wp.name}.cubes[${ci}].bounds`);
-          expectFloats(got.vertices.flatMap(vertexTuple), wc.vertices.flat(), `${wp.name}.cubes[${ci}].vertices`);
-          const cube = (part as unknown as { cubes: { polygons: { vertices: { pos: { x: number; y: number; z: number }; u: number; v: number }[] }[] }[] }).cubes[ci]!;
+          expectFloats(
+            [got.x0, got.y0, got.z0, got.x1, got.y1, got.z1],
+            wc.bounds,
+            `${wp.name}.cubes[${ci}].bounds`,
+          );
+          expectFloats(
+            got.vertices.flatMap(vertexTuple),
+            wc.vertices.flat(),
+            `${wp.name}.cubes[${ci}].vertices`,
+          );
+          const cube = (
+            part as unknown as {
+              cubes: {
+                polygons: {
+                  vertices: { pos: { x: number; y: number; z: number }; u: number; v: number }[];
+                }[];
+              }[];
+            }
+          ).cubes[ci]!;
           wc.polygons.forEach((wpoly, j) => {
-            expectFloats(cube.polygons[j]!.vertices.map(vertexTuple).flat(), wpoly.vertices.flat(), `${wp.name}.cubes[${ci}].polygons[${j}]`);
+            expectFloats(
+              cube.polygons[j]!.vertices.map(vertexTuple).flat(),
+              wpoly.vertices.flat(),
+              `${wp.name}.cubes[${ci}].polygons[${j}]`,
+            );
           });
         });
       }

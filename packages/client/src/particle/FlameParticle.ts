@@ -31,9 +31,15 @@ export class FlameParticle extends Particle {
     this.yd = f(f(this.yd * f(0.01)) + ya);
     this.zd = f(f(this.zd * f(0.01)) + za);
     // ⚠ 直接改 x/y/z，不 setPos（碰撞盒不动）
-    this.x = f(this.x + f(f(Entity.sharedRandom.nextFloat() - Entity.sharedRandom.nextFloat()) * f(0.05)));
-    this.y = f(this.y + f(f(Entity.sharedRandom.nextFloat() - Entity.sharedRandom.nextFloat()) * f(0.05)));
-    this.z = f(this.z + f(f(Entity.sharedRandom.nextFloat() - Entity.sharedRandom.nextFloat()) * f(0.05)));
+    this.x = f(
+      this.x + f(f(Entity.sharedRandom.nextFloat() - Entity.sharedRandom.nextFloat()) * f(0.05)),
+    );
+    this.y = f(
+      this.y + f(f(Entity.sharedRandom.nextFloat() - Entity.sharedRandom.nextFloat()) * f(0.05)),
+    );
+    this.z = f(
+      this.z + f(f(Entity.sharedRandom.nextFloat() - Entity.sharedRandom.nextFloat()) * f(0.05)),
+    );
     this.oSize = this.size;
     this.rCol = f(1.0);
     this.gCol = f(1.0);

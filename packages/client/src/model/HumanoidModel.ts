@@ -232,7 +232,7 @@ export class HumanoidModel extends Model {
       swing = f(swing * swing);
       swing = f(1 - swing);
       const aa = Mth.sin(f(swing * Mth.PI));
-      const bb = f(f(Mth.sin(f(this.attackTime * Mth.PI)) * -(f(this.head.xRot - f(0.7)))) * f(0.75));
+      const bb = f(f(Mth.sin(f(this.attackTime * Mth.PI)) * -f(this.head.xRot - f(0.7))) * f(0.75));
       this.arm0.xRot = f(this.arm0.xRot - f(f(aa * f(1.2)) + bb));
       this.arm0.yRot = f(this.arm0.yRot + f(this.body.yRot * 2));
       this.arm0.zRot = f(Mth.sin(f(this.attackTime * Mth.PI)) * f(-0.4));

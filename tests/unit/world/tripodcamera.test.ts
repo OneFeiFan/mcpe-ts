@@ -83,9 +83,9 @@ describe('TripodCamera（D5）', () => {
     });
 
     it('getShadowHeightOffs 是 0', () => {
-      expect(new TripodCamera(level, fakePlayer(), X + 0.5, 70, Z + 0.5).getShadowHeightOffs()).toBe(
-        0,
-      );
+      expect(
+        new TripodCamera(level, fakePlayer(), X + 0.5, 70, Z + 0.5).getShadowHeightOffs(),
+      ).toBe(0);
     });
   });
 

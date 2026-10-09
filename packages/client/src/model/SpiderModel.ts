@@ -62,7 +62,15 @@ export class SpiderModel extends Model {
     this.leg7.setPos(4, 0 + yo, -1);
   }
 
-  override render(_entity: Entity | null, time: number, r: number, bob: number, yRot: number, xRot: number, scale: number): void {
+  override render(
+    _entity: Entity | null,
+    time: number,
+    r: number,
+    bob: number,
+    yRot: number,
+    xRot: number,
+    scale: number,
+  ): void {
     this.setupAnim(time, r, bob, yRot, xRot, scale);
     this.head.render(scale);
     this.body0.render(scale);
@@ -77,7 +85,14 @@ export class SpiderModel extends Model {
     this.leg7.render(scale);
   }
 
-  override setupAnim(time: number, r: number, _bob: number, yRot: number, xRot: number, _scale: number): void {
+  override setupAnim(
+    time: number,
+    r: number,
+    _bob: number,
+    yRot: number,
+    xRot: number,
+    _scale: number,
+  ): void {
     const k = f(180 / Mth.PI);
     this.head.yRot = f(yRot / k);
     this.head.xRot = f(xRot / k);
@@ -103,9 +118,16 @@ export class SpiderModel extends Model {
     const tt = f(f(time * f(0.6662)) * 2);
     const ph = (q: number): number => f(f(f(Mth.PI * 2) * q) / 4.0);
     const c = (q: number): number => f(-f(f(Mth.cos(f(tt + ph(q)))) * f(0.4)) * r);
-    const s = (q: number): number => f(Math.abs(f(f(Mth.sin(f(f(time * f(0.6662)) + ph(q)))) * f(0.4))) * r);
-    const c0 = c(0), c1 = c(2), c2 = c(1), c3 = c(3);
-    const s0 = s(0), s1 = s(2), s2 = s(1), s3 = s(3);
+    const s = (q: number): number =>
+      f(Math.abs(f(f(Mth.sin(f(f(time * f(0.6662)) + ph(q)))) * f(0.4))) * r);
+    const c0 = c(0),
+      c1 = c(2),
+      c2 = c(1),
+      c3 = c(3);
+    const s0 = s(0),
+      s1 = s(2),
+      s2 = s(1),
+      s3 = s(3);
     this.leg0.yRot = f(this.leg0.yRot + c0);
     this.leg1.yRot = f(this.leg1.yRot - c0);
     this.leg2.yRot = f(this.leg2.yRot + c1);

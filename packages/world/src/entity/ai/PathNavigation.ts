@@ -45,7 +45,16 @@ export class PathNavigation {
   createPathToPos(x: number, y: number, z: number): Path | null {
     if (!this.canUpdatePath()) return null;
     const p = new Path();
-    this.level.findPathToTile(p, this.mob, Mth.floor(x), Math.trunc(y), Mth.floor(z), this.maxDist, this.canOpenDoors, this.avoidWater);
+    this.level.findPathToTile(
+      p,
+      this.mob,
+      Mth.floor(x),
+      Math.trunc(y),
+      Mth.floor(z),
+      this.maxDist,
+      this.canOpenDoors,
+      this.avoidWater,
+    );
     return p;
   }
 
@@ -57,7 +66,14 @@ export class PathNavigation {
   createPathToMob(target: Mob): Path | null {
     if (!this.canUpdatePath()) return null;
     const p = new Path();
-    this.level.findPathToEntity(p, this.mob, target, this.maxDist, this.canOpenDoors, this.avoidWater);
+    this.level.findPathToEntity(
+      p,
+      this.mob,
+      target,
+      this.maxDist,
+      this.canOpenDoors,
+      this.avoidWater,
+    );
     return p;
   }
 
@@ -95,7 +111,12 @@ export class PathNavigation {
     if (this.canUpdatePath()) this.updatePath();
     if (this.isDone()) return;
     const target = this.path!.currentPos(this.mob);
-    (this.mob.getMoveControl() as MoveControl).setWantedPosition(target.x, target.y, target.z, this.speed);
+    (this.mob.getMoveControl() as MoveControl).setWantedPosition(
+      target.x,
+      target.y,
+      target.z,
+      this.speed,
+    );
   }
 
   isDone(): boolean {
@@ -169,7 +190,8 @@ export class PathNavigation {
 
   private trimPathFromSun(): void {
     const mob = this.mob;
-    if (this.level.canSeeSky(Mth.floor(mob.x), Math.trunc(mob.bb.y0 + 0.5), Mth.floor(mob.z))) return;
+    if (this.level.canSeeSky(Mth.floor(mob.x), Math.trunc(mob.bb.y0 + 0.5), Mth.floor(mob.z)))
+      return;
     const path = this.path!;
     for (let i = 0; i < path.getSize(); ++i) {
       const n = path.get(i);
@@ -180,7 +202,13 @@ export class PathNavigation {
     }
   }
 
-  private canMoveDirectly(startPos: Vec3, stopPos: Vec3, sx: number, sy: number, sz: number): boolean {
+  private canMoveDirectly(
+    startPos: Vec3,
+    stopPos: Vec3,
+    sx: number,
+    sy: number,
+    sz: number,
+  ): boolean {
     let gridPosX = Mth.floor(startPos.x);
     let gridPosZ = Mth.floor(startPos.z);
     let dirX = f(stopPos.x - startPos.x);
@@ -192,7 +220,10 @@ export class PathNavigation {
     dirZ = f(dirZ * nf);
     sx += 2;
     sz += 2;
-    if (!this.canWalkOn(gridPosX, Math.trunc(startPos.y), gridPosZ, sx, sy, sz, startPos, dirX, dirZ)) return false;
+    if (
+      !this.canWalkOn(gridPosX, Math.trunc(startPos.y), gridPosZ, sx, sy, sz, startPos, dirX, dirZ)
+    )
+      return false;
     sx -= 2;
     sz -= 2;
     const deltaX = f(1 / Mth.abs(dirX));
@@ -219,15 +250,39 @@ export class PathNavigation {
         gridPosZ += stepZ;
         currentDirZ = gridGoalZ - gridPosZ;
       }
-      if (!this.canWalkOn(gridPosX, Math.trunc(startPos.y), gridPosZ, sx, sy, sz, startPos, dirX, dirZ)) return false;
+      if (
+        !this.canWalkOn(
+          gridPosX,
+          Math.trunc(startPos.y),
+          gridPosZ,
+          sx,
+          sy,
+          sz,
+          startPos,
+          dirX,
+          dirZ,
+        )
+      )
+        return false;
     }
     return true;
   }
 
-  private canWalkOn(x: number, y: number, z: number, sx: number, sy: number, sz: number, startPos: Vec3, goalDirX: number, goalDirZ: number): boolean {
+  private canWalkOn(
+    x: number,
+    y: number,
+    z: number,
+    sx: number,
+    sy: number,
+    sz: number,
+    startPos: Vec3,
+    goalDirX: number,
+    goalDirZ: number,
+  ): boolean {
     const startX = x - Math.trunc(sx / 2);
     const startZ = z - Math.trunc(sz / 2);
-    if (!this.canWalkAbove(startX, y, startZ, sx, sy, sz, startPos, goalDirX, goalDirZ)) return false;
+    if (!this.canWalkAbove(startX, y, startZ, sx, sy, sz, startPos, goalDirX, goalDirZ))
+      return false;
     for (let xx = startX; xx < startX + sx; xx++) {
       for (let zz = startZ; zz < startZ + sz; zz++) {
         const dirX = f(f(xx + 0.5) - startPos.x);
@@ -243,7 +298,17 @@ export class PathNavigation {
     return true;
   }
 
-  private canWalkAbove(startX: number, startY: number, startZ: number, sx: number, sy: number, sz: number, startPos: Vec3, goalDirX: number, goalDirZ: number): boolean {
+  private canWalkAbove(
+    startX: number,
+    startY: number,
+    startZ: number,
+    sx: number,
+    sy: number,
+    sz: number,
+    startPos: Vec3,
+    goalDirX: number,
+    goalDirZ: number,
+  ): boolean {
     for (let xx = startX; xx < startX + sx; xx++) {
       for (let yy = startY; yy < startY + sy; yy++) {
         for (let zz = startZ; zz < startZ + sz; zz++) {

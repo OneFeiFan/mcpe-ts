@@ -8,7 +8,13 @@ export class NearestAttackableTargetGoal extends TargetGoal {
   private targetType: number;
   private randomInterval: number;
 
-  constructor(mob: Monster, targetType: number, within: number, randomInterval: number, mustSee: boolean) {
+  constructor(
+    mob: Monster,
+    targetType: number,
+    within: number,
+    randomInterval: number,
+    mustSee: boolean,
+  ) {
     super(mob, within, mustSee);
     this.targetType = targetType;
     this.randomInterval = randomInterval;
@@ -18,7 +24,8 @@ export class NearestAttackableTargetGoal extends TargetGoal {
   canUse(): boolean {
     if (this.randomInterval > 0 && this.mob.random.nextInt(this.randomInterval) !== 0) return false;
     let potentialTarget: Mob | null = null;
-    if (this.targetType === 1) potentialTarget = this.mob.level.getNearestPlayer(this.mob, this.within);
+    if (this.targetType === 1)
+      potentialTarget = this.mob.level.getNearestPlayer(this.mob, this.within);
     if (!this.canAttack(potentialTarget, false)) return false;
     this.target = potentialTarget;
     return true;

@@ -9,10 +9,16 @@ import { definition, type Recipes } from './Recipes';
 export class ClothDyeRecipes {
   static addRecipes(r: Recipes): void {
     for (let i = 0; i < 16; i++) {
-      if (i === D.BLACK || i === D.BROWN || i === D.SILVER || i === D.GRAY || i === D.WHITE) continue;
+      if (i === D.BLACK || i === D.BROWN || i === D.SILVER || i === D.GRAY || i === D.WHITE)
+        continue;
       r.addShapelessRecipe(
         new ItemInstance(Tile.cloth, 1, ClothTile.getTileDataForItemAuxValue(i)),
-        definition(0, new ItemInstance(Item.dye_powder, 1, i), 0, new ItemInstance(Item.items[Tile.cloth.id]!, 1, 0)),
+        definition(
+          0,
+          new ItemInstance(Item.dye_powder, 1, i),
+          0,
+          new ItemInstance(Item.items[Tile.cloth.id]!, 1, 0),
+        ),
       );
     }
     const dye = (n: number, aux: number): ItemInstance => new ItemInstance(Item.dye_powder, n, aux);
@@ -24,6 +30,9 @@ export class ClothDyeRecipes {
     r.addShapelessRecipe(dye(2, D.LIGHT_BLUE), definition(0, dye(1, D.BLUE), 0, dye(1, D.WHITE)));
     r.addShapelessRecipe(dye(2, D.CYAN), definition(0, dye(1, D.BLUE), 0, dye(1, D.GREEN)));
     r.addShapelessRecipe(dye(2, D.PURPLE), definition(0, dye(1, D.BLUE), 0, dye(1, D.RED)));
-    r.addShapelessRecipe(dye(4, D.MAGENTA), definition(0, dye(1, D.BLUE), 0, dye(1, D.RED), 0, dye(1, D.RED), 0, dye(1, D.WHITE)));
+    r.addShapelessRecipe(
+      dye(4, D.MAGENTA),
+      definition(0, dye(1, D.BLUE), 0, dye(1, D.RED), 0, dye(1, D.RED), 0, dye(1, D.WHITE)),
+    );
   }
 }

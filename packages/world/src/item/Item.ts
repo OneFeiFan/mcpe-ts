@@ -724,8 +724,20 @@ export class Item {
     clickZ?: number,
   ): boolean {
     // 两个重载按参数个数区分：第三个参数是数字（x）的是不带玩家的版本
-    if (typeof xOrLevel === 'number') return this.useOnWithoutPlayer(itemInstance, levelOrPlayer as Level, xOrLevel, a3, a4, a5);
-    return this.useOnByPlayer(itemInstance, levelOrPlayer as Player, xOrLevel, a3, a4, a5, face!, clickX!, clickY!, clickZ!);
+    if (typeof xOrLevel === 'number')
+      return this.useOnWithoutPlayer(itemInstance, levelOrPlayer as Level, xOrLevel, a3, a4, a5);
+    return this.useOnByPlayer(
+      itemInstance,
+      levelOrPlayer as Player,
+      xOrLevel,
+      a3,
+      a4,
+      a5,
+      face!,
+      clickX!,
+      clickY!,
+      clickZ!,
+    );
   }
 
   useOnWithoutPlayer(

@@ -64,11 +64,14 @@ export default async function (h) {
   h.expect(iih.id === 0, `空手就绪：IIH.item.id=${iih.id}（height=${iih.height}）`);
 
   // ---- 00 第三人称：能看到自己的头和身子 ----
-  const tp = await h.state('切第三人称（= 按 F5：options.toggle(2)，2 是 OPTIONS_THIRD_PERSON_VIEW）', (a) => {
-    if (!a.options.getBooleanValue(2)) a.options.toggle(2);
-    a.pause = true;
-    return { third: a.options.getBooleanValue(2) };
-  });
+  const tp = await h.state(
+    '切第三人称（= 按 F5：options.toggle(2)，2 是 OPTIONS_THIRD_PERSON_VIEW）',
+    (a) => {
+      if (!a.options.getBooleanValue(2)) a.options.toggle(2);
+      a.pause = true;
+      return { third: a.options.getBooleanValue(2) };
+    },
+  );
   h.expect(tp.third === true, `第三人称开关打开了（third=${tp.third}）`);
   await h.wait(2500);
   await h.shot('00-第三人称：自己站在画面里（头+身子）');

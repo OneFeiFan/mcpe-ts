@@ -49,9 +49,7 @@ export class SmokeParticle extends Particle {
     this.size = f(this.size * scale);
     this.oSize = this.size;
     // lifetime = (int)(scale * 8.0f / (Mth::random() * 0.8f + 0.2f))
-    this.lifetime = Math.trunc(
-      f(f(scale * f(8.0)) / f(f(Mth.random() * f(0.8)) + f(0.2))),
-    );
+    this.lifetime = Math.trunc(f(f(scale * f(8.0)) / f(f(Mth.random() * f(0.8)) + f(0.2))));
     this.noPhysics = false;
   }
 

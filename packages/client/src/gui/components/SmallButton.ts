@@ -11,7 +11,14 @@ export class SmallButton extends Button {
   }
 
   /** C++ SmallButton(int id, int x, int y, int width, int height, const std::string& msg) */
-  static override sized(id: number, x: number, y: number, width: number, height: number, msg: string): SmallButton {
+  static override sized(
+    id: number,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    msg: string,
+  ): SmallButton {
     return new SmallButton(id, x, y, msg, width, height);
   }
 

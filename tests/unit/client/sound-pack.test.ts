@@ -119,7 +119,11 @@ describe('解析器会拒绝畸形输入（F2）', () => {
 
   it('合法输入：**十六进制**写法也要认', () => {
     const hex = HEAD.map((v) => `0x${v.toString(16)}`);
-    const r = run({ 'a.pcm': source('a', []).replace(/\[\d+\]/, '[20]').replace('{\n\n}', '{}') });
+    const r = run({
+      'a.pcm': source('a', [])
+        .replace(/\[\d+\]/, '[20]')
+        .replace('{\n\n}', '{}'),
+    });
     void hex;
     // 用真正的十六进制源码再跑一次
     const body = [...hex, '0x7', '0x8', '0x9', '0xa'].join(',');
@@ -137,7 +141,9 @@ describe('解析器会拒绝畸形输入（F2）', () => {
 
   it('⚠ 头里算出来的长度和声明不符 → 报错退出', () => {
     // 头说 1ch/2B/8000Hz/2 帧 = 16+4 = 20，但声明 24
-    const bad = run({ 'a.pcm': `unsigned char PCM_a[24] = {\n${[...HEAD, 1, 2, 3, 4, 5, 6, 7, 8].join(',')}\n};\n` });
+    const bad = run({
+      'a.pcm': `unsigned char PCM_a[24] = {\n${[...HEAD, 1, 2, 3, 4, 5, 6, 7, 8].join(',')}\n};\n`,
+    });
     expect(bad.ok).toBe(false);
     expect(bad.out).toContain('算出 20 字节');
   });

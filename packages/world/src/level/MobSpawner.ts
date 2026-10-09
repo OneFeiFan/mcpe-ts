@@ -30,7 +30,12 @@ import { Material } from './material/Material';
 const f = Math.fround;
 const MIN_SPAWN_DISTANCE = 24;
 /** MobSpawner.cpp 的 _bedEnemies（这一版没有任何代码读它） */
-const bedEnemies: readonly number[] = [MobTypes.Spider, MobTypes.Zombie, MobTypes.Skeleton, MobTypes.PigZombie];
+const bedEnemies: readonly number[] = [
+  MobTypes.Spider,
+  MobTypes.Zombie,
+  MobTypes.Skeleton,
+  MobTypes.PigZombie,
+];
 /** MobSpawner::tick 的 static unsigned int _pid、makeBabyMob 的 static Random babyRandom(98495119L) */
 const statics = { pid: 0, babyRandom: null as Random | null };
 
@@ -71,7 +76,11 @@ export class MobSpawner {
     const spawnPos = level.getSharedSpawnPos();
     for (let i = 0; i < MobCategory.numValues; ++i) {
       const mobCategory = MobCategory.values[i]!;
-      if ((mobCategory.isFriendly() && !spawnFriendlies) || (!mobCategory.isFriendly() && !spawnEnemies)) continue;
+      if (
+        (mobCategory.isFriendly() && !spawnFriendlies) ||
+        (!mobCategory.isFriendly() && !spawnEnemies)
+      )
+        continue;
       const numMobs = level.countInstanceOfBaseType(mobCategory.getBaseClassId());
       if (numMobs > mobCategory.getMaxInstancesPerLevel()) continue;
       chunkLoop: for (;;) {
@@ -81,7 +90,8 @@ export class MobSpawner {
           const yStart = start[1];
           const zStart = start[2];
           if (level.isSolidBlockingTile(xStart, yStart, zStart)) continue;
-          if (level.getMaterial(xStart, yStart, zStart) !== mobCategory.getSpawnPositionMaterial()) continue;
+          if (level.getMaterial(xStart, yStart, zStart) !== mobCategory.getSpawnPositionMaterial())
+            continue;
           let clusterSize = 0;
           for (let dd = 0; dd < 3; dd++) {
             let x = xStart;
@@ -116,10 +126,19 @@ export class MobSpawner {
                   if (!currentMobType.isValid()) break;
                   if (mobCategory === MobCategory.monster) {
                     const typeCount = level.countInstanceOfType(currentMobType.mobClassId);
-                    const typeMax = Math.trunc(Math.trunc(f(f(1.5 * currentMobType.randomWeight) * mobCategory.getMaxInstancesPerLevel())) / Biome.defaultTotalEnemyWeight);
+                    const typeMax = Math.trunc(
+                      Math.trunc(
+                        f(
+                          f(1.5 * currentMobType.randomWeight) *
+                            mobCategory.getMaxInstancesPerLevel(),
+                        ),
+                      ) / Biome.defaultTotalEnemyWeight,
+                    );
                     if (typeCount >= typeMax) break;
                   }
-                  maxCreatureCount = currentMobType.minCount + level.random.nextInt(1 + currentMobType.maxCount - currentMobType.minCount);
+                  maxCreatureCount =
+                    currentMobType.minCount +
+                    level.random.nextInt(1 + currentMobType.maxCount - currentMobType.minCount);
                 }
                 const tmp = MobFactory.getStaticTestMob(currentMobType.mobClassId, level);
                 if (!tmp) continue;
@@ -127,7 +146,18 @@ export class MobSpawner {
                 if (!tmp.canSpawn()) continue;
                 const mob = MobFactory.CreateMob(currentMobType.mobClassId, level);
                 if (!mob) continue;
-                if (MobSpawner.addMob(level, mob, xx, yy, zz, f(level.random.nextFloat() * 360), 0, false)) {
+                if (
+                  MobSpawner.addMob(
+                    level,
+                    mob,
+                    xx,
+                    yy,
+                    zz,
+                    f(level.random.nextFloat() * 360),
+                    0,
+                    false,
+                  )
+                ) {
                   ++currentCreatureCount;
                   if (++clusterSize >= mob.getMaxSpawnClusterSize()) continue chunkLoop; // goto chunkLoop
                 }
@@ -143,7 +173,15 @@ export class MobSpawner {
     return count;
   }
 
-  static postProcessSpawnMobs(level: Level, biome: Biome, xo: number, zo: number, cellWidth: number, cellHeight: number, random: Random): void {
+  static postProcessSpawnMobs(
+    level: Level,
+    biome: Biome,
+    xo: number,
+    zo: number,
+    cellWidth: number,
+    cellHeight: number,
+    random: Random,
+  ): void {
     const mobs = biome.getMobs(MobCategory.creature);
     if (mobs.length === 0) {
       return;
@@ -188,7 +226,13 @@ export class MobSpawner {
     MobSpawner.makeBabyMob(mob, f(0.5));
   }
 
-  static isSpawnPositionOk(category: MobCategory, level: Level, x: number, y: number, z: number): boolean {
+  static isSpawnPositionOk(
+    category: MobCategory,
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+  ): boolean {
     if (category.getSpawnPositionMaterial() === Material.water) {
       return level.getMaterial(x, y, z).isLiquid() && !level.isSolidBlockingTile(x, y + 1, z);
     } else {
@@ -204,12 +248,21 @@ export class MobSpawner {
   /** C++ 返回 TilePos（按值）；这里返回 [x, y, z] */
   static getRandomPosWithin(level: Level, xo: number, zo: number): [number, number, number] {
     const x = xo + level.random.nextInt(16);
-    const y = level.random.nextInt(LevelConstants.LEVEL_HEIGHT) // Level::DEPTH;
+    const y = level.random.nextInt(LevelConstants.LEVEL_HEIGHT); // Level::DEPTH;
     const z = zo + level.random.nextInt(16);
     return [x, y, z];
   }
 
-  static addMob(level: Level, mob: Mob, xx: number, yy: number, zz: number, yRot: number, xRot: number, force: boolean): boolean {
+  static addMob(
+    level: Level,
+    mob: Mob,
+    xx: number,
+    yy: number,
+    zz: number,
+    yRot: number,
+    xRot: number,
+    force: boolean,
+  ): boolean {
     mob.moveTo(xx, yy, zz, yRot, xRot);
     if (force || mob.canSpawn()) {
       level.addEntity(mob);
@@ -223,13 +276,31 @@ export class MobSpawner {
   static makeBabyMob(mob: Mob, probability: number): void {
     if (!statics.babyRandom) statics.babyRandom = new Random(98495119);
     if (MobTypes.BaseCreature === mob.getCreatureBaseType()) {
-      if (statics.babyRandom.nextFloat() < probability) (mob as Animal).setAge(-20 * 60 * SharedConstants.TicksPerSecond);
+      if (statics.babyRandom.nextFloat() < probability)
+        (mob as Animal).setAge(-20 * 60 * SharedConstants.TicksPerSecond);
     }
   }
 }
 
 // ADAPTED(ESM)：把 tick 注入 Level（见 Level.mobSpawnerTick）
-Level.mobSpawnerTick = (level, spawnEnemies, spawnFriendlies) => MobSpawner.tick(level, spawnEnemies, spawnFriendlies);
+Level.mobSpawnerTick = (level, spawnEnemies, spawnFriendlies) =>
+  MobSpawner.tick(level, spawnEnemies, spawnFriendlies);
 // ADAPTED(ESM)：把 postProcessSpawnMobs 注入 RandomLevelSource（见 MobSpawnerHooks）
-MobSpawnerHooks.postProcessSpawnMobs = ((level: Level, biome: Biome, xo: number, zo: number, w: number, h: number, random: Random) =>
-  MobSpawner.postProcessSpawnMobs(level, biome, xo, zo, w, h, random)) as unknown as typeof MobSpawnerHooks.postProcessSpawnMobs;
+MobSpawnerHooks.postProcessSpawnMobs = ((
+  level: Level,
+  biome: Biome,
+  xo: number,
+  zo: number,
+  w: number,
+  h: number,
+  random: Random,
+) =>
+  MobSpawner.postProcessSpawnMobs(
+    level,
+    biome,
+    xo,
+    zo,
+    w,
+    h,
+    random,
+  )) as unknown as typeof MobSpawnerHooks.postProcessSpawnMobs;

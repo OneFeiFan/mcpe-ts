@@ -14,7 +14,8 @@ export class ShapelessRecipe extends Recipe {
     super();
     this.result = new ItemInstance(result);
     this.ingredients = ingredients.map((i) => new ItemInstance(i));
-    for (const ing of this.ingredients) if (!ing.isNull()) this.myItems.add(ItemPackClass.getIdForItemInstance(ing));
+    for (const ing of this.ingredients)
+      if (!ing.isNull()) this.myItems.add(ItemPackClass.getIdForItemInstance(ing));
   }
 
   getResultItem(): ItemInstance {
@@ -33,7 +34,11 @@ export class ShapelessRecipe extends Recipe {
         if (item) {
           let found = false;
           for (const ingredient of this.ingredients) {
-            if (item.id === ingredient.id && (ingredient.getAuxValue() === Recipe.ANY_AUX_VALUE || item.getAuxValue() === ingredient.getAuxValue())) {
+            if (
+              item.id === ingredient.id &&
+              (ingredient.getAuxValue() === Recipe.ANY_AUX_VALUE ||
+                item.getAuxValue() === ingredient.getAuxValue())
+            ) {
               found = true;
               const k = tempList.findIndex((t) => t.equals(ingredient));
               if (k >= 0) tempList.splice(k, 1);

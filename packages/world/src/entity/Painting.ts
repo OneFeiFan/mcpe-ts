@@ -34,22 +34,8 @@ export class Painting extends HangingEntity {
   /** C++ `Painting(Level*, int xTile, int yTile, int zTile, int dir)` */
   constructor(level: Level, xTile: number, yTile: number, zTile: number, dir: number);
   /** C++ `Painting(Level*, int x, int y, int z, int dir, const std::string& motiveName)` */
-  constructor(
-    level: Level,
-    x: number,
-    y: number,
-    z: number,
-    dir: number,
-    motiveName: string,
-  );
-  constructor(
-    level: Level,
-    x?: number,
-    y?: number,
-    z?: number,
-    dir?: number,
-    motiveName?: string,
-  ) {
+  constructor(level: Level, x: number, y: number, z: number, dir: number, motiveName: string);
+  constructor(level: Level, x?: number, y?: number, z?: number, dir?: number, motiveName?: string) {
     super(level, x ?? 0, y ?? 0, z ?? 0, dir ?? 0);
     if (motiveName !== undefined) {
       // 第三支：按名字查画作；查不到就是 DefaultImage（见 Motive.getMotiveByName）

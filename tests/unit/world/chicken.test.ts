@@ -148,9 +148,7 @@ describe('Chicken / Animal（D10b）', () => {
 
     it('扇翅膀那五个字段的初值（flapping 是 1，其余 0）', () => {
       const c = makeChicken();
-      expect([c.sheared, c.flap, c.oFlap, c.flapSpeed, c.oFlapSpeed]).toEqual([
-        false, 0, 0, 0, 0,
-      ]);
+      expect([c.sheared, c.flap, c.oFlap, c.flapSpeed, c.oFlapSpeed]).toEqual([false, 0, 0, 0, 0]);
       expect(c.flapping).toBe(1);
     });
 

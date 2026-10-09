@@ -7,7 +7,16 @@
  */
 import { type SignTileEntity, Tile, type TileEntity } from '@mcpe/world';
 import { SignModel } from '../../model/SignModel';
-import { glColor4f, glDepthMask, glNormal3f, glPopMatrix, glPushMatrix, glRotatef, glScalef, glTranslatef } from '../gles';
+import {
+  glColor4f,
+  glDepthMask,
+  glNormal3f,
+  glPopMatrix,
+  glPushMatrix,
+  glRotatef,
+  glScalef,
+  glTranslatef,
+} from '../gles';
 import { TileEntityRenderer } from './TileEntityRenderer';
 
 const f = Math.fround;

@@ -456,7 +456,15 @@ export class RandomLevelSource extends ChunkSource {
       }
     }
     const ss = f(0.5);
-    const oFor = Math.trunc(f(f(f(f(this.forestNoise.getValue(f(xo * ss), f(zo * ss))) / 8) + f(random.nextFloat() * 4) + 4) / 3));
+    const oFor = Math.trunc(
+      f(
+        f(
+          f(f(this.forestNoise.getValue(f(xo * ss), f(zo * ss))) / 8) +
+            f(random.nextFloat() * 4) +
+            4,
+        ) / 3,
+      ),
+    );
     let forests = 0;
     if (random.nextInt(10) === 0) forests += 1;
     if (biome === BiomeClass.forest) forests += oFor + 2;
@@ -550,17 +558,36 @@ export class RandomLevelSource extends ChunkSource {
       const z = zo + random.nextInt(16) + 8;
       new SpringFeature(Tile.lava.id).place(level, random, x, y, z);
     }
-    if (this.spawnMobs && !level.isClientSide) (MobSpawnerHooks.postProcessSpawnMobs as unknown as (l: Level, b: Biome, xo: number, zo: number, w: number, h: number, r: Random) => void)(level, biome, xo + 8, zo + 8, 16, 16, random) // 由 MobSpawner 注入（ADAPTED(ESM)）;
+    if (this.spawnMobs && !level.isClientSide)
+      (
+        MobSpawnerHooks.postProcessSpawnMobs as unknown as (
+          l: Level,
+          b: Biome,
+          xo: number,
+          zo: number,
+          w: number,
+          h: number,
+          r: Random,
+        ) => void
+      )(level, biome, xo + 8, zo + 8, 16, 16, random); // 由 MobSpawner 注入（ADAPTED(ESM)）;
     const temperatures = level.getBiomeSource()!.getTemperatureBlock(null, xo + 8, zo + 8, 16, 16);
     for (let x = xo + 8; x < xo + 8 + 16; x++)
       for (let z = zo + 8; z < zo + 8 + 16; z++) {
         const xp = x - (xo + 8);
         const zp = z - (zo + 8);
         const y = level.getTopSolidBlock(x, z);
-        const temp = f(temperatures[xp * 16 + zp]! - f(f(f(y - 64) / f(64.0)) * RandomLevelSource.SNOW_SCALE));
+        const temp = f(
+          temperatures[xp * 16 + zp]! - f(f(f(y - 64) / f(64.0)) * RandomLevelSource.SNOW_SCALE),
+        );
         if (temp < RandomLevelSource.SNOW_CUTOFF) {
-          if (y > 0 && y < 128 && level.isEmptyTile(x, y, z) && level.getMaterial(x, y - 1, z).blocksMotion()) {
-            if (level.getMaterial(x, y - 1, z) !== Material.ice) level.setTile(x, y, z, Tile.topSnow.id);
+          if (
+            y > 0 &&
+            y < 128 &&
+            level.isEmptyTile(x, y, z) &&
+            level.getMaterial(x, y - 1, z).blocksMotion()
+          ) {
+            if (level.getMaterial(x, y - 1, z) !== Material.ice)
+              level.setTile(x, y, z, Tile.topSnow.id);
           }
         }
       }

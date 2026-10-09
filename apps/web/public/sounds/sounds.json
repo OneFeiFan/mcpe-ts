@@ -1,929 +1,929 @@
 [
- {
-  "name": "bow",
-  "offset": 0,
-  "size": 40156,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 20070
- },
- {
-  "name": "bowhit1",
-  "offset": 40156,
-  "size": 64788,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 32386
- },
- {
-  "name": "bowhit2",
-  "offset": 104944,
-  "size": 66166,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 33075
- },
- {
-  "name": "bowhit3",
-  "offset": 171110,
-  "size": 78570,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 39277
- },
- {
-  "name": "bowhit4",
-  "offset": 249680,
-  "size": 88216,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 44100
- },
- {
-  "name": "burp1",
-  "offset": 337896,
-  "size": 28924,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 14454
- },
- {
-  "name": "chicken1",
-  "offset": 366820,
-  "size": 49630,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 24807
- },
- {
-  "name": "chicken2",
-  "offset": 416450,
-  "size": 66166,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 33075
- },
- {
-  "name": "chicken3",
-  "offset": 482616,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "chickenhurt1",
-  "offset": 526732,
-  "size": 49630,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 24807
- },
- {
-  "name": "chickenhurt2",
-  "offset": 576362,
-  "size": 33092,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 16538
- },
- {
-  "name": "chickenplop",
-  "offset": 609454,
-  "size": 15812,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 7898
- },
- {
-  "name": "click",
-  "offset": 625266,
-  "size": 49344,
-  "channels": 2,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 12332
- },
- {
-  "name": "cloth1",
-  "offset": 674610,
-  "size": 17962,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 8973
- },
- {
-  "name": "cloth2",
-  "offset": 692572,
-  "size": 17962,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 8973
- },
- {
-  "name": "cloth3",
-  "offset": 710534,
-  "size": 17962,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 8973
- },
- {
-  "name": "cloth4",
-  "offset": 728496,
-  "size": 17962,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 8973
- },
- {
-  "name": "cow1",
-  "offset": 746458,
-  "size": 120832,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 60408
- },
- {
-  "name": "cow2",
-  "offset": 867290,
-  "size": 120832,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 60408
- },
- {
-  "name": "cow3",
-  "offset": 988122,
-  "size": 176408,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 88196
- },
- {
-  "name": "cow4",
-  "offset": 1164530,
-  "size": 149828,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 74906
- },
- {
-  "name": "cowhurt1",
-  "offset": 1314358,
-  "size": 39886,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 19935
- },
- {
-  "name": "cowhurt2",
-  "offset": 1354244,
-  "size": 39886,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 19935
- },
- {
-  "name": "cowhurt3",
-  "offset": 1394130,
-  "size": 44718,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22351
- },
- {
-  "name": "creeper1",
-  "offset": 1438848,
-  "size": 40692,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 20338
- },
- {
-  "name": "creeper2",
-  "offset": 1479540,
-  "size": 42832,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 21408
- },
- {
-  "name": "creeper3",
-  "offset": 1522372,
-  "size": 40692,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 20338
- },
- {
-  "name": "creeper4",
-  "offset": 1563064,
-  "size": 45508,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22746
- },
- {
-  "name": "creeperdeath",
-  "offset": 1608572,
-  "size": 107510,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 53747
- },
- {
-  "name": "door_close",
-  "offset": 1716082,
-  "size": 34470,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 17227
- },
- {
-  "name": "door_open",
-  "offset": 1750552,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "eat1",
-  "offset": 1794668,
-  "size": 24538,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 12261
- },
- {
-  "name": "eat2",
-  "offset": 1819206,
-  "size": 24538,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 12261
- },
- {
-  "name": "eat3",
-  "offset": 1843744,
-  "size": 24538,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 12261
- },
- {
-  "name": "explode",
-  "offset": 1868282,
-  "size": 74128,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 37056
- },
- {
-  "name": "fallbig1",
-  "offset": 1942410,
-  "size": 70260,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 35122
- },
- {
-  "name": "fallbig2",
-  "offset": 2012670,
-  "size": 50944,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 25464
- },
- {
-  "name": "fallsmall",
-  "offset": 2063614,
-  "size": 45676,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22830
- },
- {
-  "name": "fuse",
-  "offset": 2109290,
-  "size": 249690,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 124837
- },
- {
-  "name": "glass1",
-  "offset": 2358980,
-  "size": 61006,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 30495
- },
- {
-  "name": "glass2",
-  "offset": 2419986,
-  "size": 61006,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 30495
- },
- {
-  "name": "glass3",
-  "offset": 2480992,
-  "size": 61006,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 30495
- },
- {
-  "name": "grass1",
-  "offset": 2541998,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "grass2",
-  "offset": 2586114,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "grass3",
-  "offset": 2630230,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "grass4",
-  "offset": 2674346,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "gravel1",
-  "offset": 2718462,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "gravel2",
-  "offset": 2762578,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "gravel3",
-  "offset": 2806694,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "gravel4",
-  "offset": 2850810,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "hurt",
-  "offset": 2894926,
-  "size": 86392,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 43188
- },
- {
-  "name": "pig1",
-  "offset": 2981318,
-  "size": 30336,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 15160
- },
- {
-  "name": "pig2",
-  "offset": 3011654,
-  "size": 57898,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 28941
- },
- {
-  "name": "pig3",
-  "offset": 3069552,
-  "size": 33092,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 16538
- },
- {
-  "name": "pigdeath",
-  "offset": 3102644,
-  "size": 46482,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 23233
- },
- {
-  "name": "pop",
-  "offset": 3149126,
-  "size": 15356,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 7670
- },
- {
-  "name": "pop2",
-  "offset": 3164482,
-  "size": 18544,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 9264
- },
- {
-  "name": "sand1",
-  "offset": 3183026,
-  "size": 27580,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 13782
- },
- {
-  "name": "sand2",
-  "offset": 3210606,
-  "size": 27580,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 13782
- },
- {
-  "name": "sand3",
-  "offset": 3238186,
-  "size": 27580,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 13782
- },
- {
-  "name": "sand4",
-  "offset": 3265766,
-  "size": 27580,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 13782
- },
- {
-  "name": "sheep1",
-  "offset": 3293346,
-  "size": 88216,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 44100
- },
- {
-  "name": "sheep2",
-  "offset": 3381562,
-  "size": 77192,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 38588
- },
- {
-  "name": "sheep3",
-  "offset": 3458754,
-  "size": 88216,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 44100
- },
- {
-  "name": "skeleton1",
-  "offset": 3546970,
-  "size": 56920,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 28452
- },
- {
-  "name": "skeleton2",
-  "offset": 3603890,
-  "size": 56920,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 28452
- },
- {
-  "name": "skeleton3",
-  "offset": 3660810,
-  "size": 49808,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 24896
- },
- {
-  "name": "skeletondeath",
-  "offset": 3710618,
-  "size": 52030,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 26007
- },
- {
-  "name": "skeletonhurt1",
-  "offset": 3762648,
-  "size": 42886,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 21435
- },
- {
-  "name": "skeletonhurt2",
-  "offset": 3805534,
-  "size": 42694,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 21339
- },
- {
-  "name": "skeletonhurt3",
-  "offset": 3848228,
-  "size": 43954,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 21969
- },
- {
-  "name": "skeletonhurt4",
-  "offset": 3892182,
-  "size": 47602,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 23793
- },
- {
-  "name": "spider1",
-  "offset": 3939784,
-  "size": 62082,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 31033
- },
- {
-  "name": "spider2",
-  "offset": 4001866,
-  "size": 46566,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 23275
- },
- {
-  "name": "spider3",
-  "offset": 4048432,
-  "size": 46566,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 23275
- },
- {
-  "name": "spider4",
-  "offset": 4094998,
-  "size": 31050,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 15517
- },
- {
-  "name": "spiderdeath",
-  "offset": 4126048,
-  "size": 121292,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 60638
- },
- {
-  "name": "splash",
-  "offset": 4247340,
-  "size": 47748,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 11025,
-  "numFrames": 23866
- },
- {
-  "name": "stone1",
-  "offset": 4295088,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "stone2",
-  "offset": 4339204,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "stone3",
-  "offset": 4383320,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "stone4",
-  "offset": 4427436,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "wood1",
-  "offset": 4471552,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "wood2",
-  "offset": 4515668,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "wood3",
-  "offset": 4559784,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "wood4",
-  "offset": 4603900,
-  "size": 44116,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22050
- },
- {
-  "name": "zombie1",
-  "offset": 4648016,
-  "size": 132316,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 66150
- },
- {
-  "name": "zombie2",
-  "offset": 4780332,
-  "size": 121292,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 60638
- },
- {
-  "name": "zombie3",
-  "offset": 4901624,
-  "size": 187442,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 93713
- },
- {
-  "name": "zombiedeath",
-  "offset": 5089066,
-  "size": 66166,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 33075
- },
- {
-  "name": "zombiehurt1",
-  "offset": 5155232,
-  "size": 82704,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 41344
- },
- {
-  "name": "zombiehurt2",
-  "offset": 5237936,
-  "size": 88216,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 44100
- },
- {
-  "name": "zpig1",
-  "offset": 5326152,
-  "size": 111258,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 55621
- },
- {
-  "name": "zpig2",
-  "offset": 5437410,
-  "size": 148338,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 74161
- },
- {
-  "name": "zpig3",
-  "offset": 5585748,
-  "size": 46368,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 23176
- },
- {
-  "name": "zpig4",
-  "offset": 5632116,
-  "size": 74178,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 37081
- },
- {
-  "name": "zpigangry1",
-  "offset": 5706294,
-  "size": 106622,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 53303
- },
- {
-  "name": "zpigangry2",
-  "offset": 5812916,
-  "size": 44050,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 22017
- },
- {
-  "name": "zpigangry3",
-  "offset": 5856966,
-  "size": 129798,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 64891
- },
- {
-  "name": "zpigangry4",
-  "offset": 5986764,
-  "size": 148338,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 74161
- },
- {
-  "name": "zpigdeath",
-  "offset": 6135102,
-  "size": 148338,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 74161
- },
- {
-  "name": "zpighurt1",
-  "offset": 6283440,
-  "size": 55638,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 27811
- },
- {
-  "name": "zpighurt2",
-  "offset": 6339078,
-  "size": 51002,
-  "channels": 1,
-  "byteWidth": 2,
-  "frameRate": 44100,
-  "numFrames": 25493
- }
+  {
+    "name": "bow",
+    "offset": 0,
+    "size": 40156,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 20070
+  },
+  {
+    "name": "bowhit1",
+    "offset": 40156,
+    "size": 64788,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 32386
+  },
+  {
+    "name": "bowhit2",
+    "offset": 104944,
+    "size": 66166,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 33075
+  },
+  {
+    "name": "bowhit3",
+    "offset": 171110,
+    "size": 78570,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 39277
+  },
+  {
+    "name": "bowhit4",
+    "offset": 249680,
+    "size": 88216,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 44100
+  },
+  {
+    "name": "burp1",
+    "offset": 337896,
+    "size": 28924,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 14454
+  },
+  {
+    "name": "chicken1",
+    "offset": 366820,
+    "size": 49630,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 24807
+  },
+  {
+    "name": "chicken2",
+    "offset": 416450,
+    "size": 66166,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 33075
+  },
+  {
+    "name": "chicken3",
+    "offset": 482616,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "chickenhurt1",
+    "offset": 526732,
+    "size": 49630,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 24807
+  },
+  {
+    "name": "chickenhurt2",
+    "offset": 576362,
+    "size": 33092,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 16538
+  },
+  {
+    "name": "chickenplop",
+    "offset": 609454,
+    "size": 15812,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 7898
+  },
+  {
+    "name": "click",
+    "offset": 625266,
+    "size": 49344,
+    "channels": 2,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 12332
+  },
+  {
+    "name": "cloth1",
+    "offset": 674610,
+    "size": 17962,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 8973
+  },
+  {
+    "name": "cloth2",
+    "offset": 692572,
+    "size": 17962,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 8973
+  },
+  {
+    "name": "cloth3",
+    "offset": 710534,
+    "size": 17962,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 8973
+  },
+  {
+    "name": "cloth4",
+    "offset": 728496,
+    "size": 17962,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 8973
+  },
+  {
+    "name": "cow1",
+    "offset": 746458,
+    "size": 120832,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 60408
+  },
+  {
+    "name": "cow2",
+    "offset": 867290,
+    "size": 120832,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 60408
+  },
+  {
+    "name": "cow3",
+    "offset": 988122,
+    "size": 176408,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 88196
+  },
+  {
+    "name": "cow4",
+    "offset": 1164530,
+    "size": 149828,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 74906
+  },
+  {
+    "name": "cowhurt1",
+    "offset": 1314358,
+    "size": 39886,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 19935
+  },
+  {
+    "name": "cowhurt2",
+    "offset": 1354244,
+    "size": 39886,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 19935
+  },
+  {
+    "name": "cowhurt3",
+    "offset": 1394130,
+    "size": 44718,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22351
+  },
+  {
+    "name": "creeper1",
+    "offset": 1438848,
+    "size": 40692,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 20338
+  },
+  {
+    "name": "creeper2",
+    "offset": 1479540,
+    "size": 42832,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 21408
+  },
+  {
+    "name": "creeper3",
+    "offset": 1522372,
+    "size": 40692,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 20338
+  },
+  {
+    "name": "creeper4",
+    "offset": 1563064,
+    "size": 45508,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22746
+  },
+  {
+    "name": "creeperdeath",
+    "offset": 1608572,
+    "size": 107510,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 53747
+  },
+  {
+    "name": "door_close",
+    "offset": 1716082,
+    "size": 34470,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 17227
+  },
+  {
+    "name": "door_open",
+    "offset": 1750552,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "eat1",
+    "offset": 1794668,
+    "size": 24538,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 12261
+  },
+  {
+    "name": "eat2",
+    "offset": 1819206,
+    "size": 24538,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 12261
+  },
+  {
+    "name": "eat3",
+    "offset": 1843744,
+    "size": 24538,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 12261
+  },
+  {
+    "name": "explode",
+    "offset": 1868282,
+    "size": 74128,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 37056
+  },
+  {
+    "name": "fallbig1",
+    "offset": 1942410,
+    "size": 70260,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 35122
+  },
+  {
+    "name": "fallbig2",
+    "offset": 2012670,
+    "size": 50944,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 25464
+  },
+  {
+    "name": "fallsmall",
+    "offset": 2063614,
+    "size": 45676,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22830
+  },
+  {
+    "name": "fuse",
+    "offset": 2109290,
+    "size": 249690,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 124837
+  },
+  {
+    "name": "glass1",
+    "offset": 2358980,
+    "size": 61006,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 30495
+  },
+  {
+    "name": "glass2",
+    "offset": 2419986,
+    "size": 61006,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 30495
+  },
+  {
+    "name": "glass3",
+    "offset": 2480992,
+    "size": 61006,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 30495
+  },
+  {
+    "name": "grass1",
+    "offset": 2541998,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "grass2",
+    "offset": 2586114,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "grass3",
+    "offset": 2630230,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "grass4",
+    "offset": 2674346,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "gravel1",
+    "offset": 2718462,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "gravel2",
+    "offset": 2762578,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "gravel3",
+    "offset": 2806694,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "gravel4",
+    "offset": 2850810,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "hurt",
+    "offset": 2894926,
+    "size": 86392,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 43188
+  },
+  {
+    "name": "pig1",
+    "offset": 2981318,
+    "size": 30336,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 15160
+  },
+  {
+    "name": "pig2",
+    "offset": 3011654,
+    "size": 57898,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 28941
+  },
+  {
+    "name": "pig3",
+    "offset": 3069552,
+    "size": 33092,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 16538
+  },
+  {
+    "name": "pigdeath",
+    "offset": 3102644,
+    "size": 46482,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 23233
+  },
+  {
+    "name": "pop",
+    "offset": 3149126,
+    "size": 15356,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 7670
+  },
+  {
+    "name": "pop2",
+    "offset": 3164482,
+    "size": 18544,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 9264
+  },
+  {
+    "name": "sand1",
+    "offset": 3183026,
+    "size": 27580,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 13782
+  },
+  {
+    "name": "sand2",
+    "offset": 3210606,
+    "size": 27580,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 13782
+  },
+  {
+    "name": "sand3",
+    "offset": 3238186,
+    "size": 27580,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 13782
+  },
+  {
+    "name": "sand4",
+    "offset": 3265766,
+    "size": 27580,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 13782
+  },
+  {
+    "name": "sheep1",
+    "offset": 3293346,
+    "size": 88216,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 44100
+  },
+  {
+    "name": "sheep2",
+    "offset": 3381562,
+    "size": 77192,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 38588
+  },
+  {
+    "name": "sheep3",
+    "offset": 3458754,
+    "size": 88216,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 44100
+  },
+  {
+    "name": "skeleton1",
+    "offset": 3546970,
+    "size": 56920,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 28452
+  },
+  {
+    "name": "skeleton2",
+    "offset": 3603890,
+    "size": 56920,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 28452
+  },
+  {
+    "name": "skeleton3",
+    "offset": 3660810,
+    "size": 49808,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 24896
+  },
+  {
+    "name": "skeletondeath",
+    "offset": 3710618,
+    "size": 52030,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 26007
+  },
+  {
+    "name": "skeletonhurt1",
+    "offset": 3762648,
+    "size": 42886,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 21435
+  },
+  {
+    "name": "skeletonhurt2",
+    "offset": 3805534,
+    "size": 42694,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 21339
+  },
+  {
+    "name": "skeletonhurt3",
+    "offset": 3848228,
+    "size": 43954,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 21969
+  },
+  {
+    "name": "skeletonhurt4",
+    "offset": 3892182,
+    "size": 47602,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 23793
+  },
+  {
+    "name": "spider1",
+    "offset": 3939784,
+    "size": 62082,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 31033
+  },
+  {
+    "name": "spider2",
+    "offset": 4001866,
+    "size": 46566,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 23275
+  },
+  {
+    "name": "spider3",
+    "offset": 4048432,
+    "size": 46566,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 23275
+  },
+  {
+    "name": "spider4",
+    "offset": 4094998,
+    "size": 31050,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 15517
+  },
+  {
+    "name": "spiderdeath",
+    "offset": 4126048,
+    "size": 121292,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 60638
+  },
+  {
+    "name": "splash",
+    "offset": 4247340,
+    "size": 47748,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 11025,
+    "numFrames": 23866
+  },
+  {
+    "name": "stone1",
+    "offset": 4295088,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "stone2",
+    "offset": 4339204,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "stone3",
+    "offset": 4383320,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "stone4",
+    "offset": 4427436,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "wood1",
+    "offset": 4471552,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "wood2",
+    "offset": 4515668,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "wood3",
+    "offset": 4559784,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "wood4",
+    "offset": 4603900,
+    "size": 44116,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22050
+  },
+  {
+    "name": "zombie1",
+    "offset": 4648016,
+    "size": 132316,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 66150
+  },
+  {
+    "name": "zombie2",
+    "offset": 4780332,
+    "size": 121292,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 60638
+  },
+  {
+    "name": "zombie3",
+    "offset": 4901624,
+    "size": 187442,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 93713
+  },
+  {
+    "name": "zombiedeath",
+    "offset": 5089066,
+    "size": 66166,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 33075
+  },
+  {
+    "name": "zombiehurt1",
+    "offset": 5155232,
+    "size": 82704,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 41344
+  },
+  {
+    "name": "zombiehurt2",
+    "offset": 5237936,
+    "size": 88216,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 44100
+  },
+  {
+    "name": "zpig1",
+    "offset": 5326152,
+    "size": 111258,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 55621
+  },
+  {
+    "name": "zpig2",
+    "offset": 5437410,
+    "size": 148338,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 74161
+  },
+  {
+    "name": "zpig3",
+    "offset": 5585748,
+    "size": 46368,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 23176
+  },
+  {
+    "name": "zpig4",
+    "offset": 5632116,
+    "size": 74178,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 37081
+  },
+  {
+    "name": "zpigangry1",
+    "offset": 5706294,
+    "size": 106622,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 53303
+  },
+  {
+    "name": "zpigangry2",
+    "offset": 5812916,
+    "size": 44050,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 22017
+  },
+  {
+    "name": "zpigangry3",
+    "offset": 5856966,
+    "size": 129798,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 64891
+  },
+  {
+    "name": "zpigangry4",
+    "offset": 5986764,
+    "size": 148338,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 74161
+  },
+  {
+    "name": "zpigdeath",
+    "offset": 6135102,
+    "size": 148338,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 74161
+  },
+  {
+    "name": "zpighurt1",
+    "offset": 6283440,
+    "size": 55638,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 27811
+  },
+  {
+    "name": "zpighurt2",
+    "offset": 6339078,
+    "size": 51002,
+    "channels": 1,
+    "byteWidth": 2,
+    "frameRate": 44100,
+    "numFrames": 25493
+  }
 ]

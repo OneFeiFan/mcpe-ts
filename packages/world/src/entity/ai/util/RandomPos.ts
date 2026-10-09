@@ -6,26 +6,40 @@ import { Mth } from '@mcpe/util';
 import { Vec3 } from '../../../phys/Vec3';
 import type { PathfinderMob } from '../../PathfinderMob';
 
-
 const f = Math.fround;
 export class RandomPos {
   static getPos(mob: PathfinderMob, xzDist: number, yDist: number): Vec3 | null {
     return RandomPos.generateRandomPos(mob, xzDist, yDist, null);
   }
 
-  static getPosTowards(mob: PathfinderMob, xzDist: number, yDist: number, towardsPos: Vec3): Vec3 | null {
+  static getPosTowards(
+    mob: PathfinderMob,
+    xzDist: number,
+    yDist: number,
+    towardsPos: Vec3,
+  ): Vec3 | null {
     const tempDir = new Vec3(towardsPos.x, towardsPos.y, towardsPos.z);
     tempDir.subSelf(mob.x, mob.y, mob.z);
     return RandomPos.generateRandomPos(mob, xzDist, yDist, tempDir);
   }
 
-  static getPosAvoid(mob: PathfinderMob, xzDist: number, yDist: number, avoidPos: Vec3): Vec3 | null {
+  static getPosAvoid(
+    mob: PathfinderMob,
+    xzDist: number,
+    yDist: number,
+    avoidPos: Vec3,
+  ): Vec3 | null {
     const tempDir = new Vec3(mob.x, mob.y, mob.z);
     tempDir.subSelf(avoidPos.x, avoidPos.y, avoidPos.z);
     return RandomPos.generateRandomPos(mob, xzDist, yDist, tempDir);
   }
 
-  private static generateRandomPos(mob: PathfinderMob, xzDist: number, yDist: number, dir: Vec3 | null): Vec3 | null {
+  private static generateRandomPos(
+    mob: PathfinderMob,
+    xzDist: number,
+    yDist: number,
+    dir: Vec3 | null,
+  ): Vec3 | null {
     const random = mob.random;
     let hasBest = false;
     let xBest = 0;

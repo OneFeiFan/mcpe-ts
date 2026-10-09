@@ -55,7 +55,15 @@ export class QuadrupedModel extends Model {
     this.leg3.setPos(3, 18 + 6 - legSize, -5);
   }
 
-  override render(_entity: Entity | null, time: number, r: number, bob: number, yRot: number, xRot: number, scale: number): void {
+  override render(
+    _entity: Entity | null,
+    time: number,
+    r: number,
+    bob: number,
+    yRot: number,
+    xRot: number,
+    scale: number,
+  ): void {
     this.setupAnim(time, r, bob, yRot, xRot, scale);
     if (this.young) {
       const ss = 2.0;
@@ -119,7 +127,14 @@ export class QuadrupedModel extends Model {
     }
   }
 
-  override setupAnim(time: number, r: number, _bob: number, yRot: number, xRot: number, _scale: number): void {
+  override setupAnim(
+    time: number,
+    r: number,
+    _bob: number,
+    yRot: number,
+    xRot: number,
+    _scale: number,
+  ): void {
     const k = f(f(180.0) / Mth.PI);
     this.head.xRot = f(xRot / k);
     this.head.yRot = f(yRot / k);

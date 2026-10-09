@@ -94,11 +94,19 @@ export class OptionsGroup extends GuiElementContainer {
       if (!this.scrollingGesture) {
         const totalDx = xm - this.dragStartX;
         const totalDy = ym - this.dragStartY;
-        if (Math.abs(totalDx) >= OptionsGroup.ScrollStartThreshold || Math.abs(totalDy) >= OptionsGroup.ScrollStartThreshold) {
+        if (
+          Math.abs(totalDx) >= OptionsGroup.ScrollStartThreshold ||
+          Math.abs(totalDy) >= OptionsGroup.ScrollStartThreshold
+        ) {
           if (Math.abs(totalDy) >= Math.abs(totalDx)) {
             this.scrollingGesture = true;
           } else if (!this.touchDispatched) {
-            super.mouseClicked(minecraft, this.touchStartX, this.touchStartY, MouseAction.ACTION_LEFT);
+            super.mouseClicked(
+              minecraft,
+              this.touchStartX,
+              this.touchStartY,
+              MouseAction.ACTION_LEFT,
+            );
             this.touchDispatched = true;
           }
         }
@@ -132,7 +140,12 @@ export class OptionsGroup extends GuiElementContainer {
     const wasTracking = this.trackingScrollGesture;
     this.trackingScrollGesture = false;
     this.scrollingGesture = false;
-    if (buttonNum === MouseAction.ACTION_LEFT && wasTracking && !this.touchDispatched && this.pointInside(this.touchStartX, this.touchStartY)) {
+    if (
+      buttonNum === MouseAction.ACTION_LEFT &&
+      wasTracking &&
+      !this.touchDispatched &&
+      this.pointInside(this.touchStartX, this.touchStartY)
+    ) {
       super.mouseClicked(minecraft, this.touchStartX, this.touchStartY, buttonNum);
       this.touchDispatched = true;
     }

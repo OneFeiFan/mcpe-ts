@@ -25,7 +25,6 @@ import { HitResult } from '../phys/HitResult';
 import { Vec3 } from '../phys/Vec3';
 import { ParticleType } from './EntityTypes';
 
-
 const f = Math.fround;
 export abstract class Mob extends Entity {
   static readonly ATTACK_DURATION = 5;
@@ -1108,7 +1107,8 @@ export abstract class Mob extends Entity {
     this.yya = 0;
 
     let lookDistance = 8;
-    if (this.random.nextFloat() < f(0.02)) { // float 字面量 0.02f（G16-2 抓出的漂移：本函数原来没有 float 截断）
+    if (this.random.nextFloat() < f(0.02)) {
+      // float 字面量 0.02f（G16-2 抓出的漂移：本函数原来没有 float 截断）
       player = this.level.getNearestPlayer(this, lookDistance);
       if (player !== null) {
         this.lookingAtId = player.entityId;

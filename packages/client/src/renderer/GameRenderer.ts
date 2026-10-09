@@ -90,7 +90,6 @@ import { _t_keepPic } from './LevelRenderer';
 import { Lighting } from './Lighting';
 import { Tesselator } from './Tesselator';
 
-
 const f = Math.fround;
 /** GameRenderer.cpp 的文件内静态变量 static int _shTicks = -1; */
 let _shTicks = -1;
@@ -544,7 +543,12 @@ export class GameRenderer {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix2();
     glLoadIdentity2();
-    gluPerspective((this._setupCameraFov = this.getFov(a, true)), f(mc.width / mc.height), 2, this.renderDistance * 512);
+    gluPerspective(
+      (this._setupCameraFov = this.getFov(a, true)),
+      f(mc.width / mc.height),
+      2,
+      this.renderDistance * 512,
+    );
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix2();
     this.setupFog(0);

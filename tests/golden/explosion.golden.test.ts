@@ -85,7 +85,10 @@ describe('G-D3 爆炸', () => {
 
   it('前置条件：夹具本身是有内容的（不是全 0 空跑）', () => {
     const sizes = G.cases.map((c) => c.toBlowSize);
-    expect(sizes.some((n) => n > 50), `有几个 case 真的炸出了坑（${sizes.join('/')}）`).toBe(true);
+    expect(
+      sizes.some((n) => n > 50),
+      `有几个 case 真的炸出了坑（${sizes.join('/')}）`,
+    ).toBe(true);
     // 黑曜石那个 case 是反例：抗性 1200，一步就停，toBlow 是空的
     const obsidian = G.cases.find((c) => c.name.includes('obsidian'));
     expect(obsidian?.toBlowSize, '黑曜石挡得住').toBe(0);

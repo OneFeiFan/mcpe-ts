@@ -8,5 +8,6 @@ import { _mthRand } from '@mcpe/util';
 
 export function mockMthRandom(v: number): void {
   vi.spyOn(_mthRand, 'nextFloat').mockReturnValue(v);
-  vi.spyOn(_mthRand, 'nextInt').mockImplementation(((n?: number) => (n === undefined ? 0 : (v * n) | 0)) as typeof _mthRand.nextInt);
+  vi.spyOn(_mthRand, 'nextInt').mockImplementation(((n?: number) =>
+    n === undefined ? 0 : (v * n) | 0) as typeof _mthRand.nextInt);
 }

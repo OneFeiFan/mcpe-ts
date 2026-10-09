@@ -13,7 +13,14 @@
 import { I18n } from '@mcpe/locale';
 import { LOGI } from '@mcpe/platform';
 import { Mth } from '@mcpe/util';
-import { FurnaceMenu, FurnaceRecipes, FurnaceTileEntity, Inventory, ItemInstance, type Player } from '@mcpe/world';
+import {
+  FurnaceMenu,
+  FurnaceRecipes,
+  FurnaceTileEntity,
+  Inventory,
+  ItemInstance,
+  type Player,
+} from '@mcpe/world';
 import { ItemRenderer } from '../../renderer/entity/ItemRenderer';
 import { GL_ALPHA_TEST, GL_BLEND, glDisable2, glEnable2 } from '../../renderer/gles';
 import { Tesselator } from '../../renderer/Tesselator';
@@ -79,13 +86,21 @@ export class FurnaceScreen extends BaseContainerScreen implements IInventoryPane
     def.setSrc(new IntRectangle(60, 0, 18, 18));
     this.btnClose.setImageDef(def, true);
     this.btnClose.scaleWhenPressed = false;
-    this.buttons.push(this.bHeader, this.btnIngredient, this.btnFuel, this.btnResult, this.btnClose);
+    this.buttons.push(
+      this.bHeader,
+      this.btnIngredient,
+      this.btnFuel,
+      this.btnResult,
+      this.btnClose,
+    );
     const builder = new NinePatchFactory(this.minecraft.textures!, 'gui/spritesheet.png');
     this.guiBackground = builder.createSymmetrical(new IntRectangle(0, 0, 16, 16), 4, 4);
     this.guiSlot = builder.createSymmetrical(new IntRectangle(0, 32, 8, 8), 3, 3);
     this.guiSlotMarked = builder.createSymmetrical(new IntRectangle(0, 44, 8, 8), 3, 3);
     this.guiSlotMarker = builder.createSymmetrical(new IntRectangle(10, 42, 16, 16), 5, 5);
-    this.guiPaneFrame = builder.createSymmetrical(new IntRectangle(28, 42, 4, 4), 1, 1).setExcluded(1 << 4);
+    this.guiPaneFrame = builder
+      .createSymmetrical(new IntRectangle(28, 42, 4, 4), 1, 1)
+      .setExcluded(1 << 4);
     this.recheckRecipes();
   }
 
@@ -101,12 +116,20 @@ export class FurnaceScreen extends BaseContainerScreen implements IInventoryPane
     const realWidth = InventoryColumns * ItemSize;
     const paneWidth = realWidth + Bx + Bx;
     const realBx = Math.trunc((paneWidth - realWidth) / 2);
-    this.inventoryPaneRect = new IntRectangle(realBx, 26 + By, realWidth, this.height - By - By - 28);
+    this.inventoryPaneRect = new IntRectangle(
+      realBx,
+      26 + By,
+      realWidth,
+      this.height - By - By - 28,
+    );
     {
       const cx = this.inventoryPaneRect.x + this.inventoryPaneRect.w;
       const rightWidth = this.width - cx;
       btnIngredient.width = btnFuel.width = btnResult.width = Math.trunc(this.guiSlot!.getWidth());
-      btnIngredient.height = btnFuel.height = btnResult.height = Math.trunc(this.guiSlot!.getHeight());
+      btnIngredient.height =
+        btnFuel.height =
+        btnResult.height =
+          Math.trunc(this.guiSlot!.getHeight());
       const space = rightWidth - (2 * btnFuel.width + 40);
       const margin = Math.trunc(space / 2);
       const bx0 = cx + margin;
@@ -134,7 +157,13 @@ export class FurnaceScreen extends BaseContainerScreen implements IInventoryPane
     }
   }
 
-  private handleRenderPane(pane: InventoryPane | null, t: Tesselator, xm: number, ym: number, a: number): void {
+  private handleRenderPane(
+    pane: InventoryPane | null,
+    t: Tesselator,
+    xm: number,
+    ym: number,
+    a: number,
+  ): void {
     if (pane) {
       pane.markerIndex = -1;
       const [held, id, ms] = pane.queryHoldTime();
@@ -168,21 +197,52 @@ export class FurnaceScreen extends BaseContainerScreen implements IInventoryPane
     this.handleRenderPane(this.inventoryPane, t, xm, ym, a);
     t.colorABGR(0xffffffff | 0);
     const { btnIngredient, btnFuel, btnResult } = this;
-    this.drawSlotItemAt(t, this.furnace.getItem(btnIngredient.id), btnIngredient.x, btnIngredient.y, btnIngredient.id === this.selectedSlot);
-    this.drawSlotItemAt(t, this.furnace.getItem(btnFuel.id), btnFuel.x, btnFuel.y, btnFuel.id === this.selectedSlot);
+    this.drawSlotItemAt(
+      t,
+      this.furnace.getItem(btnIngredient.id),
+      btnIngredient.x,
+      btnIngredient.y,
+      btnIngredient.id === this.selectedSlot,
+    );
+    this.drawSlotItemAt(
+      t,
+      this.furnace.getItem(btnFuel.id),
+      btnFuel.x,
+      btnFuel.y,
+      btnFuel.id === this.selectedSlot,
+    );
     const resultSlotItem = this.furnace.getItem(btnResult.id);
-    this.drawSlotItemAt(t, resultSlotItem, btnResult.x, btnResult.y, btnResult.id === this.selectedSlot);
+    this.drawSlotItemAt(
+      t,
+      resultSlotItem,
+      btnResult.x,
+      btnResult.y,
+      btnResult.id === this.selectedSlot,
+    );
     if (!this.burnResult.isNull()) {
       if (!resultSlotItem || resultSlotItem.isNull()) {
         glEnable2(GL_BLEND);
         t.beginOverride();
         t.colorABGR(0x33ffffff);
         t.noColor();
-        ItemRenderer.renderGuiItem(this.minecraft.font, this.minecraft.textures!, this.burnResult, btnResult.x + 7, btnResult.y + 8, true);
+        ItemRenderer.renderGuiItem(
+          this.minecraft.font,
+          this.minecraft.textures!,
+          this.burnResult,
+          btnResult.x + 7,
+          btnResult.y + 8,
+          true,
+        );
         t.endOverrideAndDraw();
         glDisable2(GL_BLEND);
       }
-      this.minecraft.font!.drawWordWrap(this.currentItemDesc, btnResult.x - 24, btnResult.y + btnResult.height + 6, this.descWidth, rgbActive);
+      this.minecraft.font!.drawWordWrap(
+        this.currentItemDesc,
+        btnResult.x - 24,
+        btnResult.y + btnResult.height + 6,
+        this.descWidth,
+        rgbActive,
+      );
     }
     this.minecraft.textures!.loadAndBindTexture('gui/spritesheet.png');
     const yy = btnResult.y + 8;
@@ -217,8 +277,10 @@ export class FurnaceScreen extends BaseContainerScreen implements IInventoryPane
       for (let i = Inventory.MAX_SELECTION_SIZE; i < inv.getContainerSize(); ++i) {
         const item = inv.getItem(i);
         if (item) {
-          if (FurnaceTileEntity.isFuel(item)) this.listFuel.push(new CItem(new ItemInstance(item), null as never, ''));
-          if (recipes.isFurnaceItem(item.id)) this.listIngredient.push(new CItem(new ItemInstance(item), null as never, ''));
+          if (FurnaceTileEntity.isFuel(item))
+            this.listFuel.push(new CItem(new ItemInstance(item), null as never, ''));
+          if (recipes.isFurnaceItem(item.id))
+            this.listIngredient.push(new CItem(new ItemInstance(item), null as never, ''));
         }
       }
     }
@@ -252,7 +314,8 @@ export class FurnaceScreen extends BaseContainerScreen implements IInventoryPane
     const item = this.inventoryItems[slot];
     if (!item) return false;
     if (this.selectedSlot === this.btnFuel.id) return FurnaceTileEntity.getBurnDuration(item) > 0;
-    else if (this.selectedSlot === this.btnIngredient.id) return !FurnaceRecipes.getInstance().getResult(item.id).isNull();
+    else if (this.selectedSlot === this.btnIngredient.id)
+      return !FurnaceRecipes.getInstance().getResult(item.id).isNull();
     return false;
   }
 
@@ -301,7 +364,8 @@ export class FurnaceScreen extends BaseContainerScreen implements IInventoryPane
     if (!this.isAllowed(inventorySlot)) return false;
     const jitem = this.furnace.getItem(this.selectedSlot);
     if (!jitem || jitem.isNull()) return true;
-    if (ItemInstance.isStackable(item!, jitem) && jitem.count < jitem.getMaxStackSize()) return true;
+    if (ItemInstance.isStackable(item!, jitem) && jitem.count < jitem.getMaxStackSize())
+      return true;
     return false;
   }
 
@@ -325,19 +389,41 @@ export class FurnaceScreen extends BaseContainerScreen implements IInventoryPane
   }
 
   private setupInventoryPane(): void {
-    this.inventoryPane = new InventoryPane(this, this.minecraft, this.inventoryPaneRect, this.inventoryPaneRect.w, BorderPixels, this.inventoryItems.length, ItemSize, Math.trunc(BorderPixels));
+    this.inventoryPane = new InventoryPane(
+      this,
+      this.minecraft,
+      this.inventoryPaneRect,
+      this.inventoryPaneRect.w,
+      BorderPixels,
+      this.inventoryItems.length,
+      ItemSize,
+      Math.trunc(BorderPixels),
+    );
     this.inventoryPane.fillMarginX = 0;
     this.inventoryPane.fillMarginY = 0;
     this.guiPaneFrame!.setSize(this.inventoryPaneRect.w + 2, this.inventoryPaneRect.h + 2);
   }
 
-  private drawSlotItemAt(t: Tesselator, item: ItemInstance | null, x: number, y: number, selected: boolean): void {
+  private drawSlotItemAt(
+    t: Tesselator,
+    item: ItemInstance | null,
+    x: number,
+    y: number,
+    selected: boolean,
+  ): void {
     const xx = x;
     const yy = y;
     (selected ? this.guiSlot! : this.guiSlot!).draw(t, xx, yy); // 原样：两边都是 guiSlot
     if (selected) this.guiSlotMarker!.draw(t, xx - 2, yy - 2);
     if (item && !item.isNull()) {
-      ItemRenderer.renderGuiItem(this.minecraft.font, this.minecraft.textures!, item, xx + 7, yy + 8, true);
+      ItemRenderer.renderGuiItem(
+        this.minecraft.font,
+        this.minecraft.textures!,
+        item,
+        xx + 7,
+        yy + 8,
+        true,
+      );
       this.minecraft.gui.renderSlotText(item, xx + 3, yy + 3, true, true);
     }
   }

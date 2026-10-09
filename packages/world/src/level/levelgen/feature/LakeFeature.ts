@@ -62,7 +62,8 @@ export class LakeFeature extends Feature {
           if (isEdge(xx, zz, yy)) {
             const m = level.getMaterial(x + xx, y + yy, z + zz);
             if (yy >= 4 && m.isLiquid()) return false;
-            if (yy < 4 && !m.isSolid() && level.getTile(x + xx, y + yy, z + zz) !== this.tile) return false;
+            if (yy < 4 && !m.isSolid() && level.getTile(x + xx, y + yy, z + zz) !== this.tile)
+              return false;
           }
         }
       }
@@ -80,7 +81,10 @@ export class LakeFeature extends Feature {
       for (let zz = 0; zz < 16; zz++) {
         for (let yy = 4; yy < 8; yy++) {
           if (at(xx, zz, yy)) {
-            if (level.getTile(x + xx, y + yy - 1, z + zz) === Tile.dirt.id && level.getBrightness(LightLayer.Sky, x + xx, y + yy, z + zz) > 0) {
+            if (
+              level.getTile(x + xx, y + yy - 1, z + zz) === Tile.dirt.id &&
+              level.getBrightness(LightLayer.Sky, x + xx, y + yy, z + zz) > 0
+            ) {
               level.setTileNoUpdate(x + xx, y + yy - 1, z + zz, Tile.grass.id);
             }
           }
@@ -92,7 +96,10 @@ export class LakeFeature extends Feature {
         for (let zz = 0; zz < 16; zz++) {
           for (let yy = 0; yy < 8; yy++) {
             if (isEdge(xx, zz, yy)) {
-              if ((yy < 4 || random.nextInt(2) !== 0) && level.getMaterial(x + xx, y + yy, z + zz).isSolid()) {
+              if (
+                (yy < 4 || random.nextInt(2) !== 0) &&
+                level.getMaterial(x + xx, y + yy, z + zz).isSolid()
+              ) {
                 level.setTileNoUpdate(x + xx, y + yy, z + zz, Tile.rock.id);
               }
             }

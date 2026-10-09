@@ -1,12 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Random } from '@mcpe/util';
-import {
-  FallingTile,
-  HeavyTile,
-  type Level,
-  SandTile,
-  Tile,
-} from '@mcpe/world';
+import { FallingTile, HeavyTile, type Level, SandTile, Tile } from '@mcpe/world';
 import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
 // 任务单 D2：把 FallingTile 接到线上。D1 测的是**类本身**，这里测的是**接线**。

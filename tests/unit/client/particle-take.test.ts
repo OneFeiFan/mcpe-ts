@@ -1,13 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CompoundTag } from '@mcpe/nbt';
-import {
-  Entity,
-  initItems,
-  Item,
-  ItemEntity,
-  ItemInstance,
-  type Level,
-} from '@mcpe/world';
+import { Entity, initItems, Item, ItemEntity, ItemInstance, type Level } from '@mcpe/world';
 import {
   EntityRenderDispatcher,
   GLES1,
@@ -183,9 +176,10 @@ describe('TakeAnimationParticle.tick（E9）', () => {
     const p = makeParticle();
     const before = [p.x, p.y, p.z, p.xd, p.yd, p.zd];
     p.tick();
-    expect([p.x, p.y, p.z, p.xd, p.yd, p.zd], '基类 tick 会 move() 并吃阻力，这里都不该发生').toEqual(
-      before,
-    );
+    expect(
+      [p.x, p.y, p.z, p.xd, p.yd, p.zd],
+      '基类 tick 会 move() 并吃阻力，这里都不该发生',
+    ).toEqual(before);
   });
 
   it('⚠ 不调 Particle::tick —— 就算基类的 lifetime 只有 1 也不会被移除', () => {
@@ -276,7 +270,14 @@ describe('TakeAnimationParticle.render 的坐标（E9）', () => {
     const p = makeParticle();
     const e = inner(p).e;
     p.render(Tesselator.instance, 0.375, 0, 0, 0, 0, 0);
-    const [entity, , , , rot, a] = renderAt.mock.calls[0]! as [Entity, number, number, number, number, number];
+    const [entity, , , , rot, a] = renderAt.mock.calls[0]! as [
+      Entity,
+      number,
+      number,
+      number,
+      number,
+      number,
+    ];
     expect(entity).toBe(e);
     expect(rot).toBe(e.yRot);
     expect(a).toBe(0.375);
@@ -298,10 +299,11 @@ describe('TakeAnimationParticle.render 的坐标（E9）', () => {
     const p = makeParticle();
     expect([p.x, p.y, p.z]).toEqual([inner(p).e.x, inner(p).e.y, inner(p).e.z]);
     p.tick();
-    expect(
-      [p.x, p.y, p.z],
-      'tick 两边都不动 → 仍然相等',
-    ).toEqual([inner(p).e.x, inner(p).e.y, inner(p).e.z]);
+    expect([p.x, p.y, p.z], 'tick 两边都不动 → 仍然相等').toEqual([
+      inner(p).e.x,
+      inner(p).e.y,
+      inner(p).e.z,
+    ]);
   });
 });
 
@@ -395,12 +397,14 @@ describe('LocalPlayer.take 的接线（E9）', () => {
   });
 
   it('particleEngine 或 level 为 null 时不炸（C++ 里不判空，TS 的类型是 | null）', () => {
-    for (const stub of [{ particleEngine: null, level }, { particleEngine: engine, level: null }]) {
+    for (const stub of [
+      { particleEngine: null, level },
+      { particleEngine: engine, level: null },
+    ]) {
       const p = Object.create(LocalPlayer.prototype) as LocalPlayer;
       (p as unknown as { minecraft: Minecraft }).minecraft = stub as unknown as Minecraft;
       expect(() => p.take(item, 1)).not.toThrow();
     }
     expect(engine.countParticles()).toBe('0');
   });
-
 });

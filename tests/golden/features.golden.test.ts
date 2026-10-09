@@ -7,11 +7,20 @@
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { SharedConstants } from '@mcpe/core';
-import { GameType, initItems, initTileEntities, Level, LevelSettings, MemoryLevelStorage } from '@mcpe/world';
+import {
+  GameType,
+  initItems,
+  initTileEntities,
+  Level,
+  LevelSettings,
+  MemoryLevelStorage,
+} from '@mcpe/world';
 import { createFlatLevel } from '../helpers/headlessLevel';
 
 type ChunkRec = { x: number; z: number; hash: number; hist: Record<string, number> };
-const G = JSON.parse(readFileSync(new URL('../../fixtures/golden/features.json', import.meta.url), 'utf8')) as { seed: number; order: [number, number]; chunks: ChunkRec[] };
+const G = JSON.parse(
+  readFileSync(new URL('../../fixtures/golden/features.json', import.meta.url), 'utf8'),
+) as { seed: number; order: [number, number]; chunks: ChunkRec[] };
 
 let level: Level;
 
@@ -21,7 +30,12 @@ beforeAll(() => {
   createFlatLevel(); // initHeadless：材质、方块、生物群系、区块大小
   initItems();
   initTileEntities();
-  level = new Level(new MemoryLevelStorage(), 'golden', new LevelSettings(G.seed, GameType.Creative), SharedConstants.GeneratorVersion);
+  level = new Level(
+    new MemoryLevelStorage(),
+    'golden',
+    new LevelSettings(G.seed, GameType.Creative),
+    SharedConstants.GeneratorVersion,
+  );
   const [a, b] = G.order;
   for (let cz = a; cz <= b; cz++) for (let cx = a; cx <= b; cx++) level.getChunk(cx, cz);
 }, 120000);

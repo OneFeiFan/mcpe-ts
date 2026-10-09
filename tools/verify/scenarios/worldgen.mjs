@@ -116,7 +116,10 @@ export default async function (h) {
     chunkSource: a.level ? a.level.getChunkSource().constructor.name : null,
   }));
   h.expect(inGame.level === 'loaded', '世界建起来了');
-  h.expect(inGame.screen === null, '加载屏已经关掉（ProgressScreen.render 里那句 setScreen(null)）');
+  h.expect(
+    inGame.screen === null,
+    '加载屏已经关掉（ProgressScreen.render 里那句 setScreen(null)）',
+  );
   h.expect(inGame.player !== null, '玩家建出来了');
   h.expect(inGame.dimensionClass !== 'FlatDimension', '不是平坦维度 —— 走的是普通维度的真路');
   h.expect(
@@ -224,7 +227,11 @@ export default async function (h) {
     a.player.y = lv.getHeightmap(px, pz) + 2;
     a.player.yRot = (Math.atan2(-(hiX - px), hiZ - pz) * 180) / Math.PI;
     a.player.xRot = -3;
-    return { pos: [a.player.x, a.player.y, a.player.z], peak: [hiX, hMax, hiZ], yRot: a.player.yRot };
+    return {
+      pos: [a.player.x, a.player.y, a.player.z],
+      peak: [hiX, hMax, hiZ],
+      yRot: a.player.yRot,
+    };
   });
   h.expect(vantage.peak[1] === relief.hMax, '两次扫出来的最高点一致（同一片地形）');
   await h.wait(3000);

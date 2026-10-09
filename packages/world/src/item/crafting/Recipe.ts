@@ -85,7 +85,8 @@ export abstract class Recipe {
     const id = typeof ii === 'number' ? ii : ii.id;
     const isTile = id < 256;
     if (!isTile) return false;
-    if (id === Tile.cloth.id || id === Tile.stoneSlabHalf.id || id === Tile.sandStone.id) return false;
+    if (id === Tile.cloth.id || id === Tile.stoneSlabHalf.id || id === Tile.sandStone.id)
+      return false;
     return true;
   }
 }

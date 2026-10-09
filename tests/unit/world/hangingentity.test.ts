@@ -49,7 +49,8 @@ class TestHanging extends HangingEntity {
 /** 在 (xTile-1..xTile, yTile..yTile+1, zTile) 摆一堵 2×2 的石头墙 */
 function buildWall(xTile: number, yTile: number, zTile: number): void {
   for (let dx = -1; dx <= 0; dx++)
-    for (let dy = 0; dy <= 1; dy++) level.setTileNoUpdate(xTile + dx, yTile + dy, zTile, Tile.rock.id);
+    for (let dy = 0; dy <= 1; dy++)
+      level.setTileNoUpdate(xTile + dx, yTile + dy, zTile, Tile.rock.id);
 }
 
 beforeAll(() => {

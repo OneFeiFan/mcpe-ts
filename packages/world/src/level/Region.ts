@@ -119,7 +119,12 @@ export class Region implements LevelSource {
     const xc = (x >> 4) - this.xc1;
     const zc = (z >> 4) - this.zc1;
 
-    return this.chunks[xc * this.size_z + zc]!.getRawBrightness(x & 15, y, z & 15, this.level.skyDarken);
+    return this.chunks[xc * this.size_z + zc]!.getRawBrightness(
+      x & 15,
+      y,
+      z & 15,
+      this.level.skyDarken,
+    );
   }
 
   getData(x: number, y: number, z: number): number {

@@ -77,7 +77,6 @@ import {
 import { Textures } from './renderer/Textures';
 import { TileRenderer } from './renderer/TileRenderer';
 import { Timer } from './Timer';
-
 
 const f = Math.fround;
 /** Minecraft.cpp 的 checkGlError：只在定义了 GLDEBUG 时有内容 */
@@ -661,7 +660,10 @@ export class Minecraft extends App {
         }
         if (e.action === MouseAction.ACTION_WHEEL) {
           // 聊天或控制台开着时，滚轮翻聊天记录；否则切换物品栏格子
-          if (this.screen && (this.screen instanceof ChatScreen || this.screen instanceof ConsoleScreen)) {
+          if (
+            this.screen &&
+            (this.screen instanceof ChatScreen || this.screen instanceof ConsoleScreen)
+          ) {
             this.gui.scrollChat(e.dy);
           } else {
             const v = this.player.inventory;

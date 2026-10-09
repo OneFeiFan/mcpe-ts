@@ -3,11 +3,17 @@
  * 原样保留：init 里 `if (true)` 总是用 Touch::TButton；WAIT_TICKS 声明了但不用。
  * C++ 的无参 init() 是 initScreen（R10）。
  */
-import { GL_BLEND, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, glBlendFunc, glDisable, glEnable } from '../../renderer/gles';
+import {
+  GL_BLEND,
+  GL_ONE_MINUS_SRC_ALPHA,
+  GL_SRC_ALPHA,
+  glBlendFunc,
+  glDisable,
+  glEnable,
+} from '../../renderer/gles';
 import type { Button } from '../components/Button';
 import { TButton } from '../components/Button';
 import { Screen } from '../Screen';
-
 
 const f = Math.fround;
 export class InBedScreen extends Screen {

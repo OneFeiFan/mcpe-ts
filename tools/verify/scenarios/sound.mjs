@@ -24,10 +24,7 @@ export default async function (h) {
     system: a.soundEngine ? a.soundEngine._systemForTest().constructor.name : null,
   }));
   h.expect(wired.engine, 'Minecraft.soundEngine 不是 null');
-  h.expect(
-    wired.names === 42,
-    `100 条 sounds.add 归并成 42 个游戏内名字（实测 ${wired.names}）`,
-  );
+  h.expect(wired.names === 42, `100 条 sounds.add 归并成 42 个游戏内名字（实测 ${wired.names}）`);
   h.expect(
     wired.system === 'WebAudioSoundSystem',
     `注入的是 Web Audio 后端（实测 ${wired.system}）`,
@@ -82,10 +79,7 @@ export default async function (h) {
   h.expect(falloff.mid > falloff.edge, `中间比远处响（${falloff.mid} > ${falloff.edge}）`);
   // ⚠ 不是 1.1：C++ 是 `clamp(1.1f - dist/20, -1.0f, 1.0f)`，**上界就是 1.0**，
   //   所以 dist ≤ 2 格时被夹成正好 1（第一版断言写了 1.1，是我想当然了）
-  h.expect(
-    falloff.near === 1,
-    `脚下被 clamp 成正好 1（实测 ${falloff.near}）`,
-  );
+  h.expect(falloff.near === 1, `脚下被 clamp 成正好 1（实测 ${falloff.near}）`);
   // 期望值按**和实现一样的算式**算（C++ 全是 float 运算，_invMaxDistance = f(1/20)）
   const f32 = Math.fround;
   const want5 = f32(f32(1.1) - f32(5 * f32(1 / 20)));
@@ -111,7 +105,11 @@ export default async function (h) {
     const ctx = sys.context();
     const desc = a.soundEngine._systemForTest() && null;
     void desc;
-    return { hasCtx: ctx !== null, state: ctx ? ctx.state : null, sampleRate: ctx ? ctx.sampleRate : 0 };
+    return {
+      hasCtx: ctx !== null,
+      state: ctx ? ctx.state : null,
+      sampleRate: ctx ? ctx.sampleRate : 0,
+    };
   });
   h.expect(audio.hasCtx, '浏览器给得出 AudioContext');
   h.expect(

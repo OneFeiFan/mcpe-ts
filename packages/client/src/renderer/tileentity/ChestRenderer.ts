@@ -8,7 +8,14 @@
 import { Mth } from '@mcpe/util';
 import { type ChestTile, type ChestTileEntity, type TileEntity } from '@mcpe/world';
 import { ChestModel } from '../../model/ChestModel';
-import { glColor4f2, glPopMatrix2, glPushMatrix2, glRotatef2, glScalef2, glTranslatef2 } from '../gles';
+import {
+  glColor4f2,
+  glPopMatrix2,
+  glPushMatrix2,
+  glRotatef2,
+  glScalef2,
+  glTranslatef2,
+} from '../gles';
 import { TileEntityRenderer } from './TileEntityRenderer';
 
 const f = Math.fround;

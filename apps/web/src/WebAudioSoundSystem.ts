@@ -124,7 +124,14 @@ export class WebAudioSoundSystem extends SoundSystem {
   /**
    * C++ `void playAt(const SoundDesc& desc, float x, float y, float z, float volume, float pitch)`
    */
-  override playAt(desc: SoundDesc, x: number, y: number, z: number, volume: number, pitch: number): void {
+  override playAt(
+    desc: SoundDesc,
+    x: number,
+    y: number,
+    z: number,
+    volume: number,
+    pitch: number,
+  ): void {
     // 1:1 照抄 SoundSystemAL.cpp:137
     if (pitch < 0.01) pitch = 1;
 

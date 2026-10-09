@@ -60,12 +60,34 @@ class SpySystem extends SoundSystem {
 /** 玩具包：两个文件，专门用来钉 SoundBank 的取段/缓存语义 */
 function toyBank(): SoundBank {
   const index = [
-    { name: 'stone1', offset: 0, size: 20, channels: 1, byteWidth: 2, frameRate: 8000, numFrames: 2 },
-    { name: 'cloth1', offset: 20, size: 20, channels: 1, byteWidth: 2, frameRate: 8000, numFrames: 2 },
+    {
+      name: 'stone1',
+      offset: 0,
+      size: 20,
+      channels: 1,
+      byteWidth: 2,
+      frameRate: 8000,
+      numFrames: 2,
+    },
+    {
+      name: 'cloth1',
+      offset: 20,
+      size: 20,
+      channels: 1,
+      byteWidth: 2,
+      frameRate: 8000,
+      numFrames: 2,
+    },
   ];
   const bin = new Uint8Array(40);
-  bin.set(packed(1, 2, 8000, 2, (i) => i), 0);
-  bin.set(packed(1, 2, 8000, 2, (i) => 100 + i), 20);
+  bin.set(
+    packed(1, 2, 8000, 2, (i) => i),
+    0,
+  );
+  bin.set(
+    packed(1, 2, 8000, 2, (i) => 100 + i),
+    20,
+  );
   return new SoundBank(bin, index);
 }
 

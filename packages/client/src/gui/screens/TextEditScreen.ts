@@ -9,8 +9,21 @@
 import { Keyboard, LOGW } from '@mcpe/platform';
 import type { SignTileEntity } from '@mcpe/world';
 import {
-  GL_CULL_FACE, GL_MODELVIEW, GL_PROJECTION, GL_QUADS, glColor4f2, glDepthMask, glDisable, glEnable, glLoadIdentity, glMatrixMode, glOrthof,
-  glPopMatrix, glPushMatrix, glScalef2, glTranslatef,
+  GL_CULL_FACE,
+  GL_MODELVIEW,
+  GL_PROJECTION,
+  GL_QUADS,
+  glColor4f2,
+  glDepthMask,
+  glDisable,
+  glEnable,
+  glLoadIdentity,
+  glMatrixMode,
+  glOrthof,
+  glPopMatrix,
+  glPushMatrix,
+  glScalef2,
+  glTranslatef,
 } from '../../renderer/gles';
 import { Tesselator } from '../../renderer/Tesselator';
 import type { Button } from '../components/Button';

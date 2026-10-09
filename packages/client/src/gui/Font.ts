@@ -10,7 +10,6 @@ import type { Options } from '../Options';
 import { Tesselator } from '../renderer/Tesselator';
 import type { Textures } from '../renderer/Textures';
 
-
 const f = Math.fround;
 const SECTION = 0xa7; // '\xa7'
 

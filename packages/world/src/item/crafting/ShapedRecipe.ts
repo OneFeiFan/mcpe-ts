@@ -23,7 +23,8 @@ export class ShapedRecipe extends Recipe {
     this.resultId = result.id;
     this.result = new ItemInstance(result);
     for (let i = 0; i < width * height; ++i)
-      if (!recipeItems[i]!.isNull()) this.myItems.add(ItemPackClass.getIdForItemInstance(recipeItems[i]!));
+      if (!recipeItems[i]!.isNull())
+        this.myItems.add(ItemPackClass.getIdForItemInstance(recipeItems[i]!));
   }
 
   getMaxCraftCount(fromItems: ItemPack): number {
@@ -57,7 +58,12 @@ export class ShapedRecipe extends Recipe {
   }
 
   /** C++ 私有重载 matches(craftSlots, xOffs, yOffs, xFlip)（R10 情形 B） */
-  private matchesAt(craftSlots: CraftingContainer, xOffs: number, yOffs: number, xFlip: boolean): boolean {
+  private matchesAt(
+    craftSlots: CraftingContainer,
+    xOffs: number,
+    yOffs: number,
+    xFlip: boolean,
+  ): boolean {
     for (let x = 0; x < 3; x++) {
       for (let y = 0; y < 3; y++) {
         const xs = x - xOffs;
@@ -71,7 +77,11 @@ export class ShapedRecipe extends Recipe {
         if (!item && expected.isNull()) continue;
         if ((item === null) !== expected.isNull()) return false;
         if (expected.id !== item!.id) return false;
-        if (expected.getAuxValue() !== Recipe.ANY_AUX_VALUE && expected.getAuxValue() !== item!.getAuxValue()) return false;
+        if (
+          expected.getAuxValue() !== Recipe.ANY_AUX_VALUE &&
+          expected.getAuxValue() !== item!.getAuxValue()
+        )
+          return false;
       }
     }
     return true;

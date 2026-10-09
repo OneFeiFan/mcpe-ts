@@ -20,13 +20,7 @@
  */
 import { Mth } from '@mcpe/util';
 import { type Arrow, type Entity } from '@mcpe/world';
-import {
-  glPopMatrix2,
-  glPushMatrix2,
-  glRotatef,
-  glScalef,
-  glTranslatef,
-} from '../gles';
+import { glPopMatrix2, glPushMatrix2, glRotatef, glScalef, glTranslatef } from '../gles';
 import { Tesselator } from '../Tesselator';
 import { EntityRenderer } from './EntityRenderer';
 

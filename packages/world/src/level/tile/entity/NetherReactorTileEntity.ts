@@ -177,7 +177,16 @@ export class NetherReactorTileEntity extends TileEntity {
     ) {
       enemyPosition = this.getSpawnPosition(3, 4, -1);
     }
-    MobSpawner.addMob(this.level!, mob, enemyPosition.x, enemyPosition.y, enemyPosition.z, 0, 0, true);
+    MobSpawner.addMob(
+      this.level!,
+      mob,
+      enemyPosition.x,
+      enemyPosition.y,
+      enemyPosition.z,
+      0,
+      0,
+      true,
+    );
   }
 
   spawnItem(): void {

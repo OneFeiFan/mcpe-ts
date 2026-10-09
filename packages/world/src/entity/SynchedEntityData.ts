@@ -14,7 +14,6 @@ import type { IDataInput, IDataOutput } from '@mcpe/util';
 import { ItemInstance } from '../item/ItemInstance';
 import { Pos } from '../Pos';
 
-
 const f = Math.fround;
 type DataValue = number | string | ItemInstance | Pos;
 

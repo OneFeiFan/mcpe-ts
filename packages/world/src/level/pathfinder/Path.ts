@@ -96,7 +96,12 @@ export class Path {
     if (path.length !== this.length) return false;
     for (let i = 0; i < this.length; ++i) {
       const node = path.nodes![i]!;
-      if (this.nodes![i]!.x !== node.x || this.nodes![i]!.y !== node.y || this.nodes![i]!.z !== node.z) return false;
+      if (
+        this.nodes![i]!.x !== node.x ||
+        this.nodes![i]!.y !== node.y ||
+        this.nodes![i]!.z !== node.z
+      )
+        return false;
     }
     return true;
   }

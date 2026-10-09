@@ -534,7 +534,8 @@ export class Gui extends GuiComponent implements IConfigListener {
   /** C++ `void Gui::setScissorRect(const IntRectangle& bbox)`（箱子界面用）：GLuint 截断 */
   setScissorRect(bbox: { x: number; y: number; w: number; h: number }): void {
     const x = Math.trunc(f(Gui.GuiScale * bbox.x)) >>> 0;
-    const y = (this.minecraft.height - (Math.trunc(f(Gui.GuiScale * (bbox.y + bbox.h))) >>> 0)) >>> 0;
+    const y =
+      (this.minecraft.height - (Math.trunc(f(Gui.GuiScale * (bbox.y + bbox.h))) >>> 0)) >>> 0;
     const w = Math.trunc(f(Gui.GuiScale * bbox.w)) >>> 0;
     const h = Math.trunc(f(Gui.GuiScale * bbox.h)) >>> 0;
     glScissor(x, y, w, h);

@@ -72,9 +72,18 @@ export class ItemPane extends ScrollingPane {
   guiSlotItem: NinePatchLayer;
   guiSlotItemSelected: NinePatchLayer;
 
-  constructor(screen: IItemPaneCallback, textures: Textures, rect: IntRectangle, numItems: number, guiHeight: number, physicalScreenHeight: number, isVertical = true) {
+  constructor(
+    screen: IItemPaneCallback,
+    textures: Textures,
+    rect: IntRectangle,
+    numItems: number,
+    guiHeight: number,
+    physicalScreenHeight: number,
+    isVertical = true,
+  ) {
     super(
-      (isVertical ? ScrollingPaneFlags.SF_LockX : ScrollingPaneFlags.SF_LockY) | ScrollingPaneFlags.SF_ShowScrollbar,
+      (isVertical ? ScrollingPaneFlags.SF_LockX : ScrollingPaneFlags.SF_LockY) |
+        ScrollingPaneFlags.SF_ShowScrollbar,
       rect,
       isVertical ? new IntRectangle(0, 0, rect.w, 22) : new IntRectangle(0, 0, 32, rect.h),
       isVertical ? 1 : numItems,
@@ -102,20 +111,35 @@ export class ItemPane extends ScrollingPane {
     const bbox = this.bbox;
     glEnable2(GL_SCISSOR_TEST);
     const x = Math.trunc(f(this.screenScale * bbox.x)) >>> 0;
-    const y = (this.physicalScreenHeight - (Math.trunc(f(this.screenScale * (bbox.y + bbox.h))) >>> 0)) >>> 0;
+    const y =
+      (this.physicalScreenHeight - (Math.trunc(f(this.screenScale * (bbox.y + bbox.h))) >>> 0)) >>>
+      0;
     const w = Math.trunc(f(this.screenScale * bbox.w)) >>> 0;
     const h = Math.trunc(f(this.screenScale * bbox.h)) >>> 0;
     glScissor(x, y, w, h);
     const t = Tesselator.instance;
     t.beginOverride();
     for (const item of items) {
-      (item.selected ? this.guiSlotItemSelected : this.guiSlotItem).draw(t, Gui.floorAlignToScreenPixel(f(item.xf - 1)), Gui.floorAlignToScreenPixel(item.yf));
+      (item.selected ? this.guiSlotItemSelected : this.guiSlotItem).draw(
+        t,
+        Gui.floorAlignToScreenPixel(f(item.xf - 1)),
+        Gui.floorAlignToScreenPixel(item.yf),
+      );
     }
     t.endOverrideAndDraw();
     t.beginOverride();
     for (const item of items) {
       const citem = cat[item.id]!;
-      ItemRenderer.renderGuiItemSized(null, this.textures, citem.item, Gui.floorAlignToScreenPixel(f(item.xf + this.itemBbox.w - 16)), Gui.floorAlignToScreenPixel(f(2 + item.yf)), 16, 16, false);
+      ItemRenderer.renderGuiItemSized(
+        null,
+        this.textures,
+        citem.item,
+        Gui.floorAlignToScreenPixel(f(item.xf + this.itemBbox.w - 16)),
+        Gui.floorAlignToScreenPixel(f(2 + item.yf)),
+        16,
+        16,
+        false,
+      );
     }
     t.endOverrideAndDraw();
     t.beginOverride();
@@ -126,25 +150,71 @@ export class ItemPane extends ScrollingPane {
       const c = buf.length;
       const xf = f(item.xf - 1);
       if (citem.canCraft()) {
-        font.drawShadow(citem.text, Gui.floorAlignToScreenPixel(f(xf + 2)), Gui.floorAlignToScreenPixel(f(item.yf + 6)), rgbActive);
+        font.drawShadow(
+          citem.text,
+          Gui.floorAlignToScreenPixel(f(xf + 2)),
+          Gui.floorAlignToScreenPixel(f(item.yf + 6)),
+          rgbActive,
+        );
         t.scale2d(f(0.6667), f(0.6667));
-        font.drawShadow(buf, Gui.floorAlignToScreenPixel(f(f(1.5) * f(xf + this.itemBbox.w - c * 4))), Gui.floorAlignToScreenPixel(f(f(1.5) * f(item.yf + this.itemBbox.h - 8))), rgbActive);
+        font.drawShadow(
+          buf,
+          Gui.floorAlignToScreenPixel(f(f(1.5) * f(xf + this.itemBbox.w - c * 4))),
+          Gui.floorAlignToScreenPixel(f(f(1.5) * f(item.yf + this.itemBbox.h - 8))),
+          rgbActive,
+        );
         t.resetScale();
       } else {
-        font.draw(citem.text, Gui.floorAlignToScreenPixel(f(xf + 3)), Gui.floorAlignToScreenPixel(f(item.yf + 7)), rgbInactiveShadow);
-        font.draw(citem.text, Gui.floorAlignToScreenPixel(f(xf + 2)), Gui.floorAlignToScreenPixel(f(item.yf + 6)), rgbInactive);
+        font.draw(
+          citem.text,
+          Gui.floorAlignToScreenPixel(f(xf + 3)),
+          Gui.floorAlignToScreenPixel(f(item.yf + 7)),
+          rgbInactiveShadow,
+        );
+        font.draw(
+          citem.text,
+          Gui.floorAlignToScreenPixel(f(xf + 2)),
+          Gui.floorAlignToScreenPixel(f(item.yf + 6)),
+          rgbInactive,
+        );
         t.scale2d(f(0.6667), f(0.6667));
-        font.draw(buf, Gui.floorAlignToScreenPixel(f(f(1.5) * f(xf + this.itemBbox.w - c * 4))), Gui.floorAlignToScreenPixel(f(f(1.5) * f(item.yf + this.itemBbox.h - 8))), rgbInactive);
+        font.draw(
+          buf,
+          Gui.floorAlignToScreenPixel(f(f(1.5) * f(xf + this.itemBbox.w - c * 4))),
+          Gui.floorAlignToScreenPixel(f(f(1.5) * f(item.yf + this.itemBbox.h - 8))),
+          rgbInactive,
+        );
         t.resetScale();
       }
     }
     t.endOverrideAndDraw();
     if (this.isVertical) {
       this.fillGradient(bbox.x, bbox.y, bbox.x + bbox.w, bbox.y + 28, 0xbb000000 | 0, 0x00000000);
-      this.fillGradient(bbox.x, bbox.y + bbox.h - 28, bbox.x + bbox.w, bbox.y + bbox.h, 0x00000000, 0xbb000000 | 0);
+      this.fillGradient(
+        bbox.x,
+        bbox.y + bbox.h - 28,
+        bbox.x + bbox.w,
+        bbox.y + bbox.h,
+        0x00000000,
+        0xbb000000 | 0,
+      );
     } else {
-      this.fillHorizontalGradient(bbox.x, bbox.y, bbox.x + 28, bbox.y + bbox.h, 0xbb000000 | 0, 0x00000000);
-      this.fillHorizontalGradient(bbox.x + bbox.w - 28, bbox.y, bbox.x + bbox.w, bbox.y + bbox.h, 0x00000000, 0xbb000000 | 0);
+      this.fillHorizontalGradient(
+        bbox.x,
+        bbox.y,
+        bbox.x + 28,
+        bbox.y + bbox.h,
+        0xbb000000 | 0,
+        0x00000000,
+      );
+      this.fillHorizontalGradient(
+        bbox.x + bbox.w - 28,
+        bbox.y,
+        bbox.x + bbox.w,
+        bbox.y + bbox.h,
+        0x00000000,
+        0xbb000000 | 0,
+      );
     }
     glDisable2(GL_SCISSOR_TEST);
     this.drawScrollBar(this.hScroll);

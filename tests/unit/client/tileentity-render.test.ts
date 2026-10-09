@@ -21,7 +21,14 @@ import {
   glSetContext,
   type Font,
 } from '@mcpe/client';
-import { ChestTileEntity, initTileEntities, SignTileEntity, Tile, TileEntityRendererId, type Mob } from '@mcpe/world';
+import {
+  ChestTileEntity,
+  initTileEntities,
+  SignTileEntity,
+  Tile,
+  TileEntityRendererId,
+  type Mob,
+} from '@mcpe/world';
 import { Mth } from '@mcpe/util';
 import { createFlatLevel } from '../../helpers/headlessLevel';
 
@@ -71,7 +78,18 @@ beforeAll(() => {
 function prepared(): TileEntityRenderDispatcher {
   const level = createFlatLevel();
   const d = TileEntityRenderDispatcher.getInstance();
-  const player = { x: 0, y: 64, z: 0, xOld: 0, yOld: 64, zOld: 0, xRot: 0, xRotO: 0, yRot: 0, yRotO: 0 } as unknown as Mob;
+  const player = {
+    x: 0,
+    y: 64,
+    z: 0,
+    xOld: 0,
+    yOld: 64,
+    zOld: 0,
+    xRot: 0,
+    xRotO: 0,
+    yRot: 0,
+    yRotO: 0,
+  } as unknown as Mob;
   d.prepare(level, fakeTextures as never, fakeFont, player, 0);
   return d;
 }
@@ -97,8 +115,12 @@ describe('分派器', () => {
   it('64 格以外不画，以内才交给渲染器', () => {
     const d = prepared();
     const sign = new SignTileEntity();
-    const spy = vi.spyOn(d.getRendererById(TileEntityRendererId.TR_SIGN_RENDERER)!, 'render').mockImplementation(() => {});
-    sign.x = 64; sign.y = 64; sign.z = 0; // 距离平方 = 64² + 0.5² … ≥ 4096
+    const spy = vi
+      .spyOn(d.getRendererById(TileEntityRendererId.TR_SIGN_RENDERER)!, 'render')
+      .mockImplementation(() => {});
+    sign.x = 64;
+    sign.y = 64;
+    sign.z = 0; // 距离平方 = 64² + 0.5² … ≥ 4096
     d.render(sign, 0);
     expect(spy).not.toHaveBeenCalled();
     sign.x = 10;
@@ -109,7 +131,11 @@ describe('分派器', () => {
 });
 
 describe('SignRenderer', () => {
-  function renderSign(tileId: number, data: number, selectedLine = -1): { ops: string[]; cube2Visible: boolean } {
+  function renderSign(
+    tileId: number,
+    data: number,
+    selectedLine = -1,
+  ): { ops: string[]; cube2Visible: boolean } {
     const d = prepared();
     const level = d.level!;
     level.setTileAndData(2, 70, 2, tileId, data);
@@ -120,7 +146,11 @@ describe('SignRenderer', () => {
     drawn.length = 0;
     const r = d.getRendererById(TileEntityRendererId.TR_SIGN_RENDERER) as SignRenderer;
     r.render(sign, 1, 2, 3, 0);
-    return { ops: [...gl.ops], cube2Visible: (r as unknown as { signModel: { cube2: { visible: boolean } } }).signModel.cube2.visible };
+    return {
+      ops: [...gl.ops],
+      cube2Visible: (r as unknown as { signModel: { cube2: { visible: boolean } } }).signModel.cube2
+        .visible,
+    };
   }
 
   const size = f(16 / 24.0);

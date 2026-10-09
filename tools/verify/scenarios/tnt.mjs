@@ -119,10 +119,7 @@ export default async function (h) {
   });
   h.expect(after.tntLeft === 0, `9 块 TNT 全没了（还剩 ${after.tntLeft}）`);
   h.expect(after.primed === 0, `连锁跑完之后没有残留的 PrimedTnt（还剩 ${after.primed}）`);
-  h.expect(
-    after.n < before.n,
-    `这一片方块变少了（${before.n} → ${after.n}）—— 爆炸真的改了世界`,
-  );
+  h.expect(after.n < before.n, `这一片方块变少了（${before.n} → ${after.n}）—— 爆炸真的改了世界`);
   h.expect(after.center === 0, '正中间那格被炸空了');
   await h.shot('03-炸完了');
 

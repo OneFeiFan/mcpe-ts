@@ -25,7 +25,6 @@ import { StringTag } from './StringTag';
 import { ByteArrayTag } from './ByteArrayTag';
 import { ListTag } from './ListTag';
 
-
 const f = Math.fround;
 // 复刻 std::less<std::string>：按无符号字节的字典序
 const encoder = new TextEncoder();

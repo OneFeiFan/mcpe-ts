@@ -43,7 +43,8 @@ export class PineFeature extends Feature {
     }
     if (!free) return false;
     const belowTile = level.getTile(x, y - 1, z);
-    if ((belowTile !== Tile.grass.id && belowTile !== Tile.dirt.id) || y >= DEPTH - treeHeight - 1) return false;
+    if ((belowTile !== Tile.grass.id && belowTile !== Tile.dirt.id) || y >= DEPTH - treeHeight - 1)
+      return false;
     this.placeBlock(level, x, y - 1, z, Tile.dirt.id);
     let currentRadius = 0;
     for (let yy = y + treeHeight; yy >= y + trunkHeight; yy--) {
@@ -51,8 +52,10 @@ export class PineFeature extends Feature {
         const xo = xx - x;
         for (let zz = z - currentRadius; zz <= z + currentRadius; zz++) {
           const zo = zz - z;
-          if (Math.abs(xo) === currentRadius && Math.abs(zo) === currentRadius && currentRadius > 0) continue;
-          if (!Tile.solid[level.getTile(xx, yy, zz)]) this.placeBlock(level, xx, yy, zz, Tile.leaves.id, LeafTile.EVERGREEN_LEAF);
+          if (Math.abs(xo) === currentRadius && Math.abs(zo) === currentRadius && currentRadius > 0)
+            continue;
+          if (!Tile.solid[level.getTile(xx, yy, zz)])
+            this.placeBlock(level, xx, yy, zz, Tile.leaves.id, LeafTile.EVERGREEN_LEAF);
         }
       }
       if (currentRadius >= 1 && yy === y + trunkHeight + 1) {
@@ -63,7 +66,8 @@ export class PineFeature extends Feature {
     }
     for (let hh = 0; hh < treeHeight - 1; hh++) {
       const t = level.getTile(x, y + hh, z);
-      if (t === 0 || t === Tile.leaves.id) this.placeBlock(level, x, y + hh, z, Tile.treeTrunk.id, TreeTile.DARK_TRUNK);
+      if (t === 0 || t === Tile.leaves.id)
+        this.placeBlock(level, x, y + hh, z, Tile.treeTrunk.id, TreeTile.DARK_TRUNK);
     }
     return true;
   }

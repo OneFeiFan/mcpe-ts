@@ -4,5 +4,15 @@
  * 由 MobSpawner 模块加载时把函数填进来。
  */
 export const MobSpawnerHooks: {
-  postProcessSpawnMobs: ((level: never, biome: never, xo: number, zo: number, w: number, h: number, random: never) => void) | null;
+  postProcessSpawnMobs:
+    | ((
+        level: never,
+        biome: never,
+        xo: number,
+        zo: number,
+        w: number,
+        h: number,
+        random: never,
+      ) => void)
+    | null;
 } = { postProcessSpawnMobs: null };

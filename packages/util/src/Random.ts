@@ -1,7 +1,6 @@
 // 1:1 移植自 src/util/Random.h；部分语句暂缓或省略，见文件内的 DEFERRED / OMIT 标记
 import { getTimeMs } from '@mcpe/platform';
 
-
 const f = Math.fround;
 const N = 624;
 const M = 397;

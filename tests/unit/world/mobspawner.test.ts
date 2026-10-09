@@ -11,7 +11,18 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { Random } from '@mcpe/util';
 import {
-  Animal, Chicken, Difficulty, MobFactory, Player, initItems, initTileEntities, type Level, MobCategory, MobSpawner, MobTypes, Zombie,
+  Animal,
+  Chicken,
+  Difficulty,
+  MobFactory,
+  Player,
+  initItems,
+  initTileEntities,
+  type Level,
+  MobCategory,
+  MobSpawner,
+  MobTypes,
+  Zombie,
 } from '@mcpe/world';
 import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
@@ -87,9 +98,11 @@ describe('MobSpawner', () => {
     level.addEntity(p);
     (level as unknown as { skyDarken: number }).skyDarken = 8;
     // 判断“能不能刷”用的是 MobFactory 缓存的测试用生物（getStaticTestMob），它的 random 默认按时间播种——这里固定种子，让结果可复现
-    for (const t of [MobTypes.Spider, MobTypes.Zombie, MobTypes.Skeleton, MobTypes.Creeper]) MobFactory.getStaticTestMob(t, level)!.random.setSeed(t * 7919);
+    for (const t of [MobTypes.Spider, MobTypes.Zombie, MobTypes.Skeleton, MobTypes.Creeper])
+      MobFactory.getStaticTestMob(t, level)!.random.setSeed(t * 7919);
     const before = new Set(level.getAllEntities());
-    for (let i = 0; i < 20000 && level.getAllEntities().length === before.size; i++) MobSpawner.tick(level, true, false);
+    for (let i = 0; i < 20000 && level.getAllEntities().length === before.size; i++)
+      MobSpawner.tick(level, true, false);
     const added = level.getAllEntities().filter((e) => !before.has(e));
     expect(added.length).toBeGreaterThan(0);
     for (const e of added) {

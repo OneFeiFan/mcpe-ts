@@ -41,8 +41,14 @@ export class FurnaceRecipes {
     this.addFurnaceRecipe(Item.chicken_raw.id, new ItemInstance(Item.chicken_cooked));
     this.addFurnaceRecipe(Tile.stoneBrick.id, new ItemInstance(Tile.rock));
     this.addFurnaceRecipe(Item.clay.id, new ItemInstance(Item.brick));
-    this.addFurnaceRecipe(Tile.cactus.id, new ItemInstance(Item.dye_powder, 1, DyePowderItem.GREEN));
-    this.addFurnaceRecipe(Tile.mushroom2.id, new ItemInstance(Item.dye_powder, 1, DyePowderItem.RED));
+    this.addFurnaceRecipe(
+      Tile.cactus.id,
+      new ItemInstance(Item.dye_powder, 1, DyePowderItem.GREEN),
+    );
+    this.addFurnaceRecipe(
+      Tile.mushroom2.id,
+      new ItemInstance(Item.dye_powder, 1, DyePowderItem.RED),
+    );
     this.addFurnaceRecipe(Tile.treeTrunk.id, new ItemInstance(Item.coal, 1, CoalItem.CHAR_COAL));
     this.addFurnaceRecipe(Tile.netherrack.id, new ItemInstance(Item.netherbrick));
   }

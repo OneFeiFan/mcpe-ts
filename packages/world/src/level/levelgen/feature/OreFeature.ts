@@ -51,7 +51,8 @@ export class OreFeature extends Feature {
               for (let z2 = zt0; z2 <= zt1; z2++) {
                 const zd = f(f(f(z2 + f(0.5)) - zz) / f(r / 2));
                 if (f(f(f(xd * xd) + f(yd * yd)) + f(zd * zd)) < 1) {
-                  if (level.getTile(x2, y2, z2) === Tile.rock.id) level.setTileNoUpdate(x2, y2, z2, this.tile);
+                  if (level.getTile(x2, y2, z2) === Tile.rock.id)
+                    level.setTileNoUpdate(x2, y2, z2, this.tile);
                 }
               }
             }

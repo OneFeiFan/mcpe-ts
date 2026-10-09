@@ -103,9 +103,13 @@ export default async function (h) {
     return {
       eggs: eggs.length,
       chickens: chickens.length,
-      chickenTypeIds: chickens.map((c) => (typeof c.getEntityTypeId === 'function' ? c.getEntityTypeId() : -1)),
+      chickenTypeIds: chickens.map((c) =>
+        typeof c.getEntityTypeId === 'function' ? c.getEntityTypeId() : -1,
+      ),
       chickenIsBaby: chickens.map((c) => (typeof c.isBaby === 'function' ? c.isBaby() : null)),
-      chickenHealth: chickens.map((c) => (typeof c.getMaxHealth === 'function' ? c.getMaxHealth() : null)),
+      chickenHealth: chickens.map((c) =>
+        typeof c.getMaxHealth === 'function' ? c.getMaxHealth() : null,
+      ),
       total: a.level.entities.length,
     };
   });
@@ -119,8 +123,14 @@ export default async function (h) {
       landed.chickenTypeIds.every((id) => id === 10),
       `孵出来的都是 MobTypes.Chicken=10（实测 ${landed.chickenTypeIds.join(',')}）`,
     );
-    h.expect(landed.chickenHealth.every((hp) => hp === 4), '血量都是 4');
-    h.expect(landed.chickenIsBaby.every((b) => b === false), '刚孵出来就是成年（AgableMob 的 -1 → setAge(0)）');
+    h.expect(
+      landed.chickenHealth.every((hp) => hp === 4),
+      '血量都是 4',
+    );
+    h.expect(
+      landed.chickenIsBaby.every((b) => b === false),
+      '刚孵出来就是成年（AgableMob 的 -1 → setAge(0)）',
+    );
   }
   await h.shot('01-落地之后（远处可能有 G9 之后看得见的鸡）');
 
@@ -135,6 +145,9 @@ export default async function (h) {
     };
   });
   h.expect(alive.n >= 1, `鸡还活着（实测 ${alive.n} 只）`);
-  h.expect(alive.removed.every((r) => r === false), '没有被移除');
+  h.expect(
+    alive.removed.every((r) => r === false),
+    '没有被移除',
+  );
   await h.shot('02-鸡 tick 了两秒之后');
 }

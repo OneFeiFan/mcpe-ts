@@ -6,7 +6,6 @@
 import { LOGE } from '@mcpe/platform';
 import type { Node } from './Node';
 
-
 const f = Math.fround;
 const FLT_MAX = 3.4028234663852886e38;
 

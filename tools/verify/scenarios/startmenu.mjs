@@ -247,7 +247,10 @@ export default async function (h) {
   // 退回标题，接着测**另一个**入口
   const back2 = await h.state('退回起始菜单', (a) => {
     a.leaveGame();
-    return { cls: a.screen ? a.screen.constructor.name : null, level: a.level === null ? null : 'x' };
+    return {
+      cls: a.screen ? a.screen.constructor.name : null,
+      level: a.level === null ? null : 'x',
+    };
   });
   h.expect(back2.cls === 'TouchStartMenuScreen', '退回起始菜单');
   h.expect(back2.level === null, '世界拆掉了');

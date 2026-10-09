@@ -22,13 +22,7 @@
  *      —— 一个 y 轴一个 x 轴，顺序也是原样（先 y 后 x）。
  */
 import type { Entity } from '@mcpe/world';
-import {
-  glPopMatrix2,
-  glPushMatrix2,
-  glRotatef2,
-  glScalef2,
-  glTranslatef2,
-} from '../gles';
+import { glPopMatrix2, glPushMatrix2, glRotatef2, glScalef2, glTranslatef2 } from '../gles';
 import { Tesselator } from '../Tesselator';
 import { EntityRenderer } from './EntityRenderer';
 

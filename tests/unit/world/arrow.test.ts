@@ -411,7 +411,16 @@ describe('Arrow（D11a）', () => {
       a.playerArrow = true;
       const tag = new CompoundTag();
       expect(a.save(tag), '前置条件：能存下来').toBe(true);
-      for (const k of ['xTile', 'yTile', 'zTile', 'inTile', 'inData', 'shake', 'inGround', 'player']) {
+      for (const k of [
+        'xTile',
+        'yTile',
+        'zTile',
+        'inTile',
+        'inData',
+        'shake',
+        'inGround',
+        'player',
+      ]) {
         expect(tag.contains(k), `存档里应当有 ${k}`).toBe(true);
       }
       expect(tag.getBoolean('player')).toBe(true);

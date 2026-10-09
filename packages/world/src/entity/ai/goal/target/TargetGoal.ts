@@ -5,7 +5,6 @@ import type { Player } from '../../../player/Player';
 import type { Sensing } from '../../Sensing';
 import { Goal } from '../Goal';
 
-
 const f = Math.fround;
 export abstract class TargetGoal extends Goal {
   static readonly TargetFlag = 1;

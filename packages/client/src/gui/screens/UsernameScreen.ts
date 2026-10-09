@@ -77,8 +77,20 @@ export class UsernameScreen extends Screen {
     const cy = Math.trunc(this.height / 2);
     const font = this.minecraft.font!;
     this.drawCenteredString(font, 'Enter your username', cx, cy - 70, 0xffffffff | 0);
-    this.drawCenteredString(font, 'Please choose a username so others can easily', cx, cy - 52, 0xffaaaaaa | 0);
-    this.drawCenteredString(font, "identify you in chat. Don't worry, you can", cx, cy - 40, 0xffaaaaaa | 0);
+    this.drawCenteredString(
+      font,
+      'Please choose a username so others can easily',
+      cx,
+      cy - 52,
+      0xffaaaaaa | 0,
+    );
+    this.drawCenteredString(
+      font,
+      "identify you in chat. Don't worry, you can",
+      cx,
+      cy - 40,
+      0xffaaaaaa | 0,
+    );
     this.drawCenteredString(font, 'change it anytime.', cx, cy - 28, 0xffaaaaaa | 0);
     super.render(xm, ym, a);
   }

@@ -17,7 +17,14 @@ export abstract class Feature {
 
   init(_v1: number, _v2: number, _v3: number): void {}
 
-  protected placeBlock(level: Level, x: number, y: number, z: number, tile: number, data = 0): void {
+  protected placeBlock(
+    level: Level,
+    x: number,
+    y: number,
+    z: number,
+    tile: number,
+    data = 0,
+  ): void {
     if (this.doUpdate) {
       level.setTileAndData(x, y, z, tile, data);
     } else {

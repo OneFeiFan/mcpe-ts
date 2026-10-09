@@ -217,11 +217,7 @@ describe('TerrainParticle（E4）', () => {
     const grass = new TerrainParticle(level, 8.5, 70.5, 8.5, 0, 0, 0, Tile.grass, 0);
     const g0 = { r: inner(grass).rCol, g: inner(grass).gCol, b: inner(grass).bCol };
     expect(grass.init(8, 70, 8)).toBe(grass);
-    expect([inner(grass).rCol, inner(grass).gCol, inner(grass).bCol]).toEqual([
-      g0.r,
-      g0.g,
-      g0.b,
-    ]);
+    expect([inner(grass).rCol, inner(grass).gCol, inner(grass).bCol]).toEqual([g0.r, g0.g, g0.b]);
   });
 
   it('render 的 UV 用 `tex & 15` / `tex >> 4` 取格号，再加 uo/vo 的 1/4 抖动', () => {
@@ -277,7 +273,16 @@ describe('BreakingItemParticle（E4）', () => {
     Entity.sharedRandom.setSeed(SEED);
     const base = new BreakingItemParticle(level, 8.5, 70.5, 8.5, Item.snowBall);
     Entity.sharedRandom.setSeed(SEED);
-    const p = new BreakingItemParticle(level, 8.5, 70.5, 8.5, f(0.5), f(0.25), f(-0.5), Item.snowBall);
+    const p = new BreakingItemParticle(
+      level,
+      8.5,
+      70.5,
+      8.5,
+      f(0.5),
+      f(0.25),
+      f(-0.5),
+      Item.snowBall,
+    );
     expect(p.xd).toBe(f(f(base.xd * f(0.1)) + f(0.5)));
     expect(p.yd).toBe(f(f(base.yd * f(0.1)) + f(0.25)));
     expect(p.zd).toBe(f(f(base.zd * f(0.1)) + f(-0.5)));

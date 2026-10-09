@@ -89,7 +89,9 @@ class FakeFont {
  * 真去 `new Chicken(level)` 要拖进世界、纹理、初始化一大串，而且 `tickCount` / `deathTime`
  * 还没法精确摆成想要的值 —— 而精确摆值恰恰是这里要测的。
  */
-function fakeMob(o: { deathTime?: number; tickCount?: number; dist?: number; player?: boolean } = {}): Mob {
+function fakeMob(
+  o: { deathTime?: number; tickCount?: number; dist?: number; player?: boolean } = {},
+): Mob {
   return {
     deathTime: o.deathTime ?? 0,
     tickCount: o.tickCount ?? 0,

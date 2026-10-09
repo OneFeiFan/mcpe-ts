@@ -122,7 +122,10 @@ describe('PolygonQuad（G2）', () => {
     const p = rightFace();
     for (let i = 0; i < 4; i++) {
       const want = HEAD_RIGHT.uv[i]!;
-      expect([p.vertices[i]!.u, p.vertices[i]!.v], `第 ${i} 个角`).toEqual([f(want[0]), f(want[1])]);
+      expect([p.vertices[i]!.u, p.vertices[i]!.v], `第 ${i} 个角`).toEqual([
+        f(want[0]),
+        f(want[1]),
+      ]);
     }
   });
 

@@ -13,7 +13,16 @@ import { type ArmorItem, Inventory, ItemInstance, type Player } from '@mcpe/worl
 import { EntityRenderDispatcher } from '../../renderer/entity/EntityRenderDispatcher';
 import { ItemRenderer } from '../../renderer/entity/ItemRenderer';
 import {
-  GL_ALPHA_TEST, GL_TEXTURE_2D, glColor4f2, glDisable2, glEnable2, glPopMatrix, glPushMatrix, glRotatef, glScalef, glTranslatef,
+  GL_ALPHA_TEST,
+  GL_TEXTURE_2D,
+  glColor4f2,
+  glDisable2,
+  glEnable2,
+  glPopMatrix,
+  glPushMatrix,
+  glRotatef,
+  glScalef,
+  glTranslatef,
 } from '../../renderer/gles';
 import { Tesselator } from '../../renderer/Tesselator';
 import type { Button } from '../components/Button';
@@ -73,7 +82,9 @@ export class ArmorScreen extends Screen implements IInventoryPaneCallback {
     const builder = new NinePatchFactory(this.minecraft.textures!, 'gui/spritesheet.png');
     this.guiBackground = builder.createSymmetrical(new IntRectangle(0, 0, 16, 16), 4, 4);
     this.guiSlot = builder.createSymmetrical(new IntRectangle(0, 32, 8, 8), 3, 3, 20, 20);
-    this.guiPaneFrame = builder.createSymmetrical(new IntRectangle(28, 42, 4, 4), 1, 1).setExcluded(1 << 4);
+    this.guiPaneFrame = builder
+      .createSymmetrical(new IntRectangle(28, 42, 4, 4), 1, 1)
+      .setExcluded(1 << 4);
     this.guiPlayerBg = builder.createSymmetrical(new IntRectangle(0, 20, 8, 8), 3, 3);
     this.updateItems();
   }
@@ -89,7 +100,12 @@ export class ArmorScreen extends Screen implements IInventoryPaneCallback {
     const realWidth = InventoryColumns * ItemSize;
     const paneWidth = realWidth + Bx + Bx;
     const realBx = Math.trunc((paneWidth - realWidth) / 2);
-    this.inventoryPaneRect = new IntRectangle(realBx, 26 + By, realWidth, this.height - By - By - 28);
+    this.inventoryPaneRect = new IntRectangle(
+      realBx,
+      26 + By,
+      realWidth,
+      this.height - By - By - 28,
+    );
     for (let i = 0; i < ArmorScreen.NUM_ARMORBUTTONS; ++i) {
       const b = this.armorButtons[i]!;
       b.x = paneWidth;
@@ -119,7 +135,13 @@ export class ArmorScreen extends Screen implements IInventoryPaneCallback {
     }
   }
 
-  private handleRenderPane(pane: InventoryPane | null, t: Tesselator, xm: number, ym: number, a: number): void {
+  private handleRenderPane(
+    pane: InventoryPane | null,
+    t: Tesselator,
+    xm: number,
+    ym: number,
+    a: number,
+  ): void {
     if (pane) {
       pane.render(xm, ym, a);
       this.guiPaneFrame!.draw(t, pane.rect.x - 1, pane.rect.y - 1);
@@ -139,9 +161,18 @@ export class ArmorScreen extends Screen implements IInventoryPaneCallback {
     t.addOffset(0, 0, -490);
     this.guiPlayerBg!.draw(t, this.guiPlayerBgRect.x, this.guiPlayerBgRect.y);
     t.addOffset(0, 0, 490);
-    this.renderPlayer(this.guiPlayerBgRect.x + Math.trunc(this.guiPlayerBgRect.w / 2), f(f(0.85) * this.height));
+    this.renderPlayer(
+      this.guiPlayerBgRect.x + Math.trunc(this.guiPlayerBgRect.w / 2),
+      f(f(0.85) * this.height),
+    );
     for (let i = 0; i < ArmorScreen.NUM_ARMORBUTTONS; ++i) {
-      this.drawSlotItemAt(t, i, this.player.getArmor(i), this.armorButtons[i]!.x, this.armorButtons[i]!.y);
+      this.drawSlotItemAt(
+        t,
+        i,
+        this.player.getArmor(i),
+        this.armorButtons[i]!.x,
+        this.armorButtons[i]!.y,
+      );
     }
     glDisable2(GL_ALPHA_TEST);
   }
@@ -203,17 +234,39 @@ export class ArmorScreen extends Screen implements IInventoryPaneCallback {
   }
 
   private setupInventoryPane(): void {
-    this.inventoryPane = new InventoryPane(this, this.minecraft, this.inventoryPaneRect, this.inventoryPaneRect.w, BorderPixels, this.armorItems.length, ItemSize, Math.trunc(BorderPixels));
+    this.inventoryPane = new InventoryPane(
+      this,
+      this.minecraft,
+      this.inventoryPaneRect,
+      this.inventoryPaneRect.w,
+      BorderPixels,
+      this.armorItems.length,
+      ItemSize,
+      Math.trunc(BorderPixels),
+    );
     this.inventoryPane.fillMarginX = 0;
     this.inventoryPane.fillMarginY = 0;
   }
 
-  private drawSlotItemAt(t: Tesselator, slot: number, item: ItemInstance | null, x: number, y: number): void {
+  private drawSlotItemAt(
+    t: Tesselator,
+    slot: number,
+    item: ItemInstance | null,
+    x: number,
+    y: number,
+  ): void {
     const xx = x;
     const yy = y;
     this.guiSlot!.draw(t, xx, yy);
     if (item && !item.isNull()) {
-      ItemRenderer.renderGuiItem(this.minecraft.font, this.minecraft.textures!, item, xx + 2, yy, true);
+      ItemRenderer.renderGuiItem(
+        this.minecraft.font,
+        this.minecraft.textures!,
+        item,
+        xx + 2,
+        yy,
+        true,
+      );
       glDisable2(GL_TEXTURE_2D);
       ItemRenderer.renderGuiItemDamage(item, xx + 2, yy + 3); // C++ 的 renderGuiItemDecorations(item, x, y)（R10）
       glEnable2(GL_TEXTURE_2D);
@@ -260,7 +313,9 @@ export class ArmorScreen extends Screen implements IInventoryPaneCallback {
     const oldWAS = player.walkAnimSpeed;
     const oldWASO = player.walkAnimSpeedO;
     player.walkAnimSpeedO = player.walkAnimSpeed = f(0.25);
-    player.walkAnimPos = f(f(f(getTimeS()) * player.walkAnimSpeed) * SharedConstants.TicksPerSecond);
+    player.walkAnimPos = f(
+      f(f(getTimeS()) * player.walkAnimSpeed) * SharedConstants.TicksPerSecond,
+    );
     const rd = EntityRenderDispatcher.getInstance();
     rd.playerRotY = 180;
     rd.renderAt(player, 0, 0, 0, 0, 1);

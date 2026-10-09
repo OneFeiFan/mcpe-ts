@@ -85,7 +85,10 @@ describe('Explosion（D3）', () => {
         for (let z = Z - 5; z <= Z + 5; z++) second.push(level2.getTile(x, y, z));
 
     expect(second).toEqual(first);
-    expect(first.some((t) => t === 0), '前置条件：确实炸掉了一些格子').toBe(true);
+    expect(
+      first.some((t) => t === 0),
+      '前置条件：确实炸掉了一些格子',
+    ).toBe(true);
   });
 
   it('isClientSide 时整个 explode 直接返回，什么都不动', () => {
@@ -210,12 +213,10 @@ describe('Explosion（D3）', () => {
   });
 });
 
-
 function countFire(cx: number, cy: number, cz: number, r: number): number {
   let n = 0;
   for (let x = cx - r; x <= cx + r; x++)
     for (let y = cy - r; y <= cy + r; y++)
-      for (let z = cz - r; z <= cz + r; z++)
-        if (level.getTile(x, y, z) === Tile.fire.id) n++;
+      for (let z = cz - r; z <= cz + r; z++) if (level.getTile(x, y, z) === Tile.fire.id) n++;
   return n;
 }

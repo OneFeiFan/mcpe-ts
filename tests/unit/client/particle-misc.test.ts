@@ -186,7 +186,7 @@ describe('CritParticle2（E3）', () => {
     expect(inner(p).lifetime).toBe(Math.trunc(f(f(6 / f(f(r * f(0.8)) + f(0.6))) * f(2.0))));
     expect(inner(p).lifetime, '手算：6 / 1.2f = 5，再 ×2 → 10').toBe(10);
     // 反面对照：写成整数除法 `6 / (int)(...)` 会先得到 6，再 ×2 = 12（不一样，所以这条钉得住）
-    expect(Math.trunc(f(6 / Math.trunc(f(f(r * f(0.8)) + f(0.6))) * f(2.0)))).toBe(12);
+    expect(Math.trunc(f((6 / Math.trunc(f(f(r * f(0.8)) + f(0.6)))) * f(2.0)))).toBe(12);
   });
 
   it('tick：阻力 0.7f（不是基类的 0.98f），然后 yd -= 0.02f', () => {

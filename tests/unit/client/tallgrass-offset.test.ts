@@ -17,7 +17,9 @@ const fast = (x: number, y: number, z: number): number[] => {
 
 describe('草的随机偏移：32 位写法与 64 位逐位相同', () => {
   it('世界内的每一格（0–255 × 0–127 × 0–255，步长 3）以及大坐标、负坐标', () => {
-    for (let x = 0; x < 256; x += 3) for (let y = 0; y < 128; y += 3) for (let z = 0; z < 256; z += 3) expect(fast(x, y, z)).toEqual(ref(x, y, z));
+    for (let x = 0; x < 256; x += 3)
+      for (let y = 0; y < 128; y += 3)
+        for (let z = 0; z < 256; z += 3) expect(fast(x, y, z)).toEqual(ref(x, y, z));
     const big = [-2147483648, -123456789, -1, 2147483647, 30000000, -30000000];
     for (const x of big) for (const z of big) expect(fast(x, 64, z)).toEqual(ref(x, 64, z));
   });

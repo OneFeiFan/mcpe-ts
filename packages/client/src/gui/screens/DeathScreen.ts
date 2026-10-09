@@ -63,14 +63,32 @@ export class DeathScreen extends Screen {
     if (this.minecraft.options.getIntValue(OptionId.OPTIONS_MENU_STYLE) === 2) {
       glPushMatrix2();
       glScalef2(2, 2, 2);
-      this.drawCenteredString(font, I18n.get('deathScreen.title.hardcore'), Math.trunc(this.width / 4), Math.trunc(this.height / 8), 0xffffff);
+      this.drawCenteredString(
+        font,
+        I18n.get('deathScreen.title.hardcore'),
+        Math.trunc(this.width / 4),
+        Math.trunc(this.height / 8),
+        0xffffff,
+      );
       glPopMatrix2();
       const ss = 'Score: &e' + this.minecraft.player!.getScore();
-      this.drawCenteredString(font, ss, Math.trunc(this.width / 2), Math.trunc(this.height / 4) + 32, 0xffffff);
+      this.drawCenteredString(
+        font,
+        ss,
+        Math.trunc(this.width / 2),
+        Math.trunc(this.height / 4) + 32,
+        0xffffff,
+      );
     } else {
       glPushMatrix2();
       glScalef2(2, 2, 2);
-      this.drawCenteredString(font, I18n.get('deathScreen.title'), Math.trunc(this.width / 4), Math.trunc(this.height / 8), 0xffffff);
+      this.drawCenteredString(
+        font,
+        I18n.get('deathScreen.title'),
+        Math.trunc(this.width / 4),
+        Math.trunc(this.height / 8),
+        0xffffff,
+      );
       glPopMatrix2();
     }
     if (this._tick >= WAIT_TICKS) super.render(xm, ym, a);

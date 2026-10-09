@@ -192,7 +192,11 @@ export abstract class HangingEntity extends Entity {
 
   /** C++ `void HangingEntity::move(float, float, float)` */
   override move(xa: number, ya: number, za: number): void {
-    if (!this.level.isClientSide && !this.removed && f(f(xa * xa) + f(f(ya * ya) + f(za * za))) > 0) {
+    if (
+      !this.level.isClientSide &&
+      !this.removed &&
+      f(f(xa * xa) + f(f(ya * ya) + f(za * za))) > 0
+    ) {
       this.dropItem();
       this.remove();
     }
@@ -207,7 +211,11 @@ export abstract class HangingEntity extends Entity {
     const xa = typeof a === 'number' ? a : 0;
     const ya = typeof a === 'number' ? b! : 0;
     const za = typeof a === 'number' ? c! : 0;
-    if (!this.level.isClientSide && !this.removed && f(f(xa * xa) + f(f(ya * ya) + f(za * za))) > 0) {
+    if (
+      !this.level.isClientSide &&
+      !this.removed &&
+      f(f(xa * xa) + f(f(ya * ya) + f(za * za))) > 0
+    ) {
       this.dropItem();
       this.remove();
     }

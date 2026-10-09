@@ -51,7 +51,12 @@ export function definition(...pairs: (string | number | Item | Tile | ItemInstan
   const list: TypeList = [];
   for (let i = 0; i + 1 < pairs.length; i += 2) {
     const c = pairs[i]!;
-    list.push(new RecipeType(typeof c === 'number' ? String.fromCharCode(c) : (c as string), pairs[i + 1] as Item | Tile | ItemInstance));
+    list.push(
+      new RecipeType(
+        typeof c === 'number' ? String.fromCharCode(c) : (c as string),
+        pairs[i + 1] as Item | Tile | ItemInstance,
+      ),
+    );
   }
   return list;
 }
@@ -87,49 +92,204 @@ export class Recipes {
     ArmorRecipes.addRecipes(this);
     ClothDyeRecipes.addRecipes(this);
     this.addShapedRecipe(new ItemInstance(Item.paper, 3), '###', definition('#', Item.reeds));
-    this.addShapedRecipe(new ItemInstance(Item.book, 1), '#', '#', '#', definition('#', Item.paper));
-    this.addShapedRecipe(new ItemInstance(Tile.fence, 2), '###', '###', definition('#', Item.stick));
-    this.addShapedRecipe(new ItemInstance(Tile.fenceGate, 1), '#W#', '#W#', definition('#', Item.stick, 'W', Tile.wood));
-    this.addShapedRecipe(new ItemInstance(Tile.bookshelf, 1), '###', 'XXX', '###', definition('#', Tile.wood, 'X', Item.book));
-    this.addShapedRecipe(new ItemInstance(Tile.snow, 1), '##', '##', definition('#', Item.snowBall));
+    this.addShapedRecipe(
+      new ItemInstance(Item.book, 1),
+      '#',
+      '#',
+      '#',
+      definition('#', Item.paper),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.fence, 2),
+      '###',
+      '###',
+      definition('#', Item.stick),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.fenceGate, 1),
+      '#W#',
+      '#W#',
+      definition('#', Item.stick, 'W', Tile.wood),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.bookshelf, 1),
+      '###',
+      'XXX',
+      '###',
+      definition('#', Tile.wood, 'X', Item.book),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.snow, 1),
+      '##',
+      '##',
+      definition('#', Item.snowBall),
+    );
     this.addShapedRecipe(new ItemInstance(Tile.clay, 1), '##', '##', definition('#', Item.clay));
-    this.addShapedRecipe(new ItemInstance(Tile.redBrick, 1), '##', '##', definition('#', Item.brick));
-    this.addShapedRecipe(new ItemInstance(Tile.lightGem, 1), '##', '##', definition('#', Item.yellowDust));
+    this.addShapedRecipe(
+      new ItemInstance(Tile.redBrick, 1),
+      '##',
+      '##',
+      definition('#', Item.brick),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.lightGem, 1),
+      '##',
+      '##',
+      definition('#', Item.yellowDust),
+    );
     this.addShapedRecipe(new ItemInstance(Tile.cloth, 1), '##', '##', definition('#', Item.string));
-    this.addShapedRecipe(new ItemInstance(Tile.tnt, 1), 'X#X', '#X#', 'X#X', definition('X', Item.sulphur, '#', Tile.sand));
-    this.addShapedRecipe(new ItemInstance(Tile.stoneSlabHalf, 6, StoneSlabTile.COBBLESTONE_SLAB), '###', definition('#', Tile.stoneBrick));
-    this.addShapedRecipe(new ItemInstance(Tile.stoneSlabHalf, 6, StoneSlabTile.STONE_SLAB), '###', definition('#', Tile.rock));
-    this.addShapedRecipe(new ItemInstance(Tile.stoneSlabHalf, 6, StoneSlabTile.SAND_SLAB), '###', definition('#', Tile.sandStone));
-    this.addShapedRecipe(new ItemInstance(Tile.stoneSlabHalf, 6, StoneSlabTile.WOOD_SLAB), '###', definition('#', Tile.wood));
-    this.addShapedRecipe(new ItemInstance(Tile.stoneSlabHalf, 6, StoneSlabTile.BRICK_SLAB), '###', definition('#', Tile.redBrick));
-    this.addShapedRecipe(new ItemInstance(Tile.stoneSlabHalf, 6, StoneSlabTile.SMOOTHBRICK_SLAB), '###', definition('#', Tile.stoneBrickSmooth));
-    this.addShapedRecipe(new ItemInstance(Tile.ladder, 2), '# #', '###', '# #', definition('#', Item.stick));
-    this.addShapedRecipe(new ItemInstance(Item.door_wood, 1), '##', '##', '##', definition('#', Tile.wood));
-    this.addShapedRecipe(new ItemInstance(Tile.trapdoor, 2), '###', '###', definition('#', Tile.wood));
-    this.addShapedRecipe(new ItemInstance(Item.sign, 1), '###', '###', ' X ', definition('#', Tile.wood, 'X', Item.stick));
+    this.addShapedRecipe(
+      new ItemInstance(Tile.tnt, 1),
+      'X#X',
+      '#X#',
+      'X#X',
+      definition('X', Item.sulphur, '#', Tile.sand),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.stoneSlabHalf, 6, StoneSlabTile.COBBLESTONE_SLAB),
+      '###',
+      definition('#', Tile.stoneBrick),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.stoneSlabHalf, 6, StoneSlabTile.STONE_SLAB),
+      '###',
+      definition('#', Tile.rock),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.stoneSlabHalf, 6, StoneSlabTile.SAND_SLAB),
+      '###',
+      definition('#', Tile.sandStone),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.stoneSlabHalf, 6, StoneSlabTile.WOOD_SLAB),
+      '###',
+      definition('#', Tile.wood),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.stoneSlabHalf, 6, StoneSlabTile.BRICK_SLAB),
+      '###',
+      definition('#', Tile.redBrick),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.stoneSlabHalf, 6, StoneSlabTile.SMOOTHBRICK_SLAB),
+      '###',
+      definition('#', Tile.stoneBrickSmooth),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.ladder, 2),
+      '# #',
+      '###',
+      '# #',
+      definition('#', Item.stick),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Item.door_wood, 1),
+      '##',
+      '##',
+      '##',
+      definition('#', Tile.wood),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.trapdoor, 2),
+      '###',
+      '###',
+      definition('#', Tile.wood),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Item.sign, 1),
+      '###',
+      '###',
+      ' X ',
+      definition('#', Tile.wood, 'X', Item.stick),
+    );
     this.addShapedRecipe(new ItemInstance(Item.sugar, 1), '#', definition('#', Item.reeds));
     this.addShapedRecipe(new ItemInstance(Tile.wood, 4), '#', definition('#', Tile.treeTrunk));
     this.addShapedRecipe(new ItemInstance(Item.stick, 4), '#', '#', definition('#', Tile.wood));
-    this.addShapedRecipe(new ItemInstance(Tile.torch, 4), 'X', '#', definition('X', Item.coal, '#', Item.stick));
-    this.addShapedRecipe(new ItemInstance(Tile.torch, 4), 'X', '#', definition('X', new ItemInstance(Item.coal, 1, CoalItem.CHAR_COAL), '#', Item.stick));
+    this.addShapedRecipe(
+      new ItemInstance(Tile.torch, 4),
+      'X',
+      '#',
+      definition('X', Item.coal, '#', Item.stick),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.torch, 4),
+      'X',
+      '#',
+      definition('X', new ItemInstance(Item.coal, 1, CoalItem.CHAR_COAL), '#', Item.stick),
+    );
     this.addShapedRecipe(new ItemInstance(Item.bowl, 4), '# #', ' # ', definition('#', Tile.wood));
-    this.addShapedRecipe(new ItemInstance(Item.flintAndSteel, 1), 'A ', ' B', definition('A', Item.ironIngot, 'B', Item.flint));
+    this.addShapedRecipe(
+      new ItemInstance(Item.flintAndSteel, 1),
+      'A ',
+      ' B',
+      definition('A', Item.ironIngot, 'B', Item.flint),
+    );
     this.addShapedRecipe(new ItemInstance(Item.bread, 1), '###', definition('#', Item.wheat));
-    this.addShapedRecipe(new ItemInstance(Tile.stairs_wood, 4), '#  ', '## ', '###', definition('#', Tile.wood));
-    this.addShapedRecipe(new ItemInstance(Tile.stairs_stone, 4), '#  ', '## ', '###', definition('#', Tile.stoneBrick));
-    this.addShapedRecipe(new ItemInstance(Tile.stairs_brick, 4), '#  ', '## ', '###', definition('#', Tile.redBrick));
-    this.addShapedRecipe(new ItemInstance(Tile.stairs_stoneBrickSmooth, 4), '#  ', '## ', '###', definition('#', Tile.stoneBrickSmooth));
-    this.addShapedRecipe(new ItemInstance(Tile.stairs_netherBricks, 4), '#  ', '## ', '###', definition('#', Tile.netherBrick));
-    this.addShapedRecipe(new ItemInstance(Item.painting, 1), '###', '#X#', '###', definition('#', Item.stick, 'X', Tile.cloth));
-    this.addShapedRecipe(new ItemInstance(Item.bed, 1), '###', 'XXX', definition('#', Tile.cloth, 'X', Tile.wood));
-    this.addShapedRecipe(new ItemInstance(Tile.netherReactor, 1), 'X#X', 'X#X', 'X#X', definition('#', Item.emerald, 'X', Item.ironIngot));
+    this.addShapedRecipe(
+      new ItemInstance(Tile.stairs_wood, 4),
+      '#  ',
+      '## ',
+      '###',
+      definition('#', Tile.wood),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.stairs_stone, 4),
+      '#  ',
+      '## ',
+      '###',
+      definition('#', Tile.stoneBrick),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.stairs_brick, 4),
+      '#  ',
+      '## ',
+      '###',
+      definition('#', Tile.redBrick),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.stairs_stoneBrickSmooth, 4),
+      '#  ',
+      '## ',
+      '###',
+      definition('#', Tile.stoneBrickSmooth),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.stairs_netherBricks, 4),
+      '#  ',
+      '## ',
+      '###',
+      definition('#', Tile.netherBrick),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Item.painting, 1),
+      '###',
+      '#X#',
+      '###',
+      definition('#', Item.stick, 'X', Tile.cloth),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Item.bed, 1),
+      '###',
+      'XXX',
+      definition('#', Tile.cloth, 'X', Tile.wood),
+    );
+    this.addShapedRecipe(
+      new ItemInstance(Tile.netherReactor, 1),
+      'X#X',
+      'X#X',
+      'X#X',
+      definition('#', Item.emerald, 'X', Item.ironIngot),
+    );
     LOGI(`${this.recipes.length} recipes\n`);
   }
 
   /** C++ 的 4 个重载：(result, r0[, r1[, r2]], types) 与 (result, RowList, types) */
   addShapedRecipe(result: ItemInstance, ...args: (string | RowList | TypeList)[]): void {
     const types = args[args.length - 1] as TypeList;
-    const rows: RowList = args.length === 2 && Array.isArray(args[0]) ? (args[0] as RowList) : (args.slice(0, -1) as string[]);
+    const rows: RowList =
+      args.length === 2 && Array.isArray(args[0])
+        ? (args[0] as RowList)
+        : (args.slice(0, -1) as string[]);
     if (rows.length === 0) {
       LOGE('Recipes::addShapedRecipe: adding an empty recipe!\n');
       return;
@@ -179,7 +339,11 @@ export class Recipes {
     for (const recipe of this.recipes) {
       const res = recipe.getResultItem();
       if (result.id !== res.id) continue;
-      if ((result.count === 0 && result.getAuxValue() === res.getAuxValue()) || (result.count === res.count && result.getAuxValue() === res.getAuxValue())) return recipe;
+      if (
+        (result.count === 0 && result.getAuxValue() === res.getAuxValue()) ||
+        (result.count === res.count && result.getAuxValue() === res.getAuxValue())
+      )
+        return recipe;
     }
     return null;
   }
@@ -197,7 +361,13 @@ export class Recipes {
         count++;
       }
     }
-    if (count === 2 && first!.id === second!.id && first!.count === 1 && second!.count === 1 && Item.items[first!.id]!.canBeDepleted()) {
+    if (
+      count === 2 &&
+      first!.id === second!.id &&
+      first!.count === 1 &&
+      second!.count === 1 &&
+      Item.items[first!.id]!.canBeDepleted()
+    ) {
       const item = Item.items[first!.id]!;
       const remaining1 = item.getMaxDamage() - first!.getDamageValue();
       const remaining2 = item.getMaxDamage() - second!.getDamageValue();

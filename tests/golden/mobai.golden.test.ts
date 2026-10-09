@@ -13,7 +13,9 @@ import { Chicken, initTileEntities, type Level, Tile } from '@mcpe/world';
 import { createFlatLevel, prepareLevel } from '../helpers/headlessLevel';
 
 type MobRec = { start: number[]; seed: number; ticks: number[][] };
-const G = JSON.parse(readFileSync(new URL('../../fixtures/golden/mobai.json', import.meta.url), 'utf8')) as { floor: number; mobs: MobRec[]; mthSeed: number };
+const G = JSON.parse(
+  readFileSync(new URL('../../fixtures/golden/mobai.json', import.meta.url), 'utf8'),
+) as { floor: number; mobs: MobRec[]; mthSeed: number };
 const F = G.floor;
 let level: Level;
 
@@ -49,7 +51,13 @@ describe('G16-2 旧 AI 的行为轨迹', () => {
     const mobs = G.mobs.map((m, i) => {
       const c = new Chicken(level);
       c.moveTo(m.start[0]!, m.start[1]!, m.start[2]!, m.start[3]!, 0);
-      const ci = c as unknown as { random: { setSeed(s: number): void }; ambientSoundTime: number; eggTime: number; rotA: number; timeOffs: number };
+      const ci = c as unknown as {
+        random: { setSeed(s: number): void };
+        ambientSoundTime: number;
+        eggTime: number;
+        rotA: number;
+        timeOffs: number;
+      };
       ci.random.setSeed(m.seed);
       ci.ambientSoundTime = -40;
       ci.eggTime = 6000;
@@ -70,9 +78,13 @@ describe('G16-2 旧 AI 的行为轨迹', () => {
           const e = Math.abs(v - want[k]!);
           if (e > maxErr[k]!) maxErr[k] = e;
           const tol = k === 3 ? 1e-3 : 1e-4;
-          if (e >= tol) throw new Error(`第 ${i} 只鸡第 ${t} 刻的第 ${k} 个量：TS ${v}，C++ ${want[k]}`);
+          if (e >= tol)
+            throw new Error(`第 ${i} 只鸡第 ${t} 刻的第 ${k} 个量：TS ${v}，C++ ${want[k]}`);
         });
-        expect([c.onGround ? 1 : 0, c.isPathFinding() ? 1 : 0], `第 ${i} 只鸡第 ${t} 刻的标志`).toEqual([want[4], want[5]]);
+        expect(
+          [c.onGround ? 1 : 0, c.isPathFinding() ? 1 : 0],
+          `第 ${i} 只鸡第 ${t} 刻的标志`,
+        ).toEqual([want[4], want[5]]);
       }
     }
     expect(maxErr[1], 'y 完全一致').toBe(0);

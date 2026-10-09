@@ -28,7 +28,20 @@ export class NinePatchDescription {
   private imgW = -1;
   private imgH = -1;
 
-  private static make(x: number, y: number, x1: number, x2: number, x3: number, y1: number, y2: number, y3: number, w: number, e: number, n: number, s: number): NinePatchDescription {
+  private static make(
+    x: number,
+    y: number,
+    x1: number,
+    x2: number,
+    x3: number,
+    y1: number,
+    y2: number,
+    y3: number,
+    w: number,
+    e: number,
+    n: number,
+    s: number,
+  ): NinePatchDescription {
     const d = new NinePatchDescription();
     d.u0 = f(x);
     d.u1 = f(x + x1);
@@ -66,8 +79,27 @@ export class NinePatchDescription {
     return this;
   }
 
-  static createSymmetrical(texWidth: number, texHeight: number, src: IntRectangle, xCutAt: number, yCutAt: number): NinePatchDescription {
-    const patch = NinePatchDescription.make(src.x, src.y, xCutAt, src.w - xCutAt, src.w, yCutAt, src.h - yCutAt, src.h, xCutAt, xCutAt, yCutAt, yCutAt);
+  static createSymmetrical(
+    texWidth: number,
+    texHeight: number,
+    src: IntRectangle,
+    xCutAt: number,
+    yCutAt: number,
+  ): NinePatchDescription {
+    const patch = NinePatchDescription.make(
+      src.x,
+      src.y,
+      xCutAt,
+      src.w - xCutAt,
+      src.w,
+      yCutAt,
+      src.h - yCutAt,
+      src.h,
+      xCutAt,
+      xCutAt,
+      yCutAt,
+      yCutAt,
+    );
     if (texWidth > 0) patch.transformUVForImageSize(texWidth, texHeight);
     return patch;
   }
@@ -122,7 +154,8 @@ export class NinePatchLayer extends GuiElement {
     this.textures.loadAndBindTexture(this.imageName);
     t.begin();
     t.addOffset(x, y, 0);
-    for (let i = 0, b = 1; i < 9; ++i, b += b) if ((b & this.excluded) === 0) this.d(t, this.quads[i]!);
+    for (let i = 0, b = 1; i < 9; ++i, b += b)
+      if ((b & this.excluded) === 0) this.d(t, this.quads[i]!);
     t.addOffset(-x, -y, 0);
     t.draw();
   }
@@ -164,7 +197,10 @@ export class NinePatchLayer extends GuiElement {
 
   private getPatchInfo(xc: number, yc: number): [number, number, number, number] {
     const d = this.desc;
-    let x0 = 0, x1 = 0, y0 = 0, y1 = 0;
+    let x0 = 0,
+      x1 = 0,
+      y0 = 0,
+      y1 = 0;
     if (xc === 0) {
       x0 = 0;
       x1 = d.w;
@@ -217,7 +253,19 @@ export class NinePatchFactory {
     }
   }
 
-  createSymmetrical(src: IntRectangle, xCutAt: number, yCutAt: number, w = 32.0, h = 32.0): NinePatchLayer {
-    return new NinePatchLayer(NinePatchDescription.createSymmetrical(this.width, this.height, src, xCutAt, yCutAt), this.imageName, this.textures, w, h);
+  createSymmetrical(
+    src: IntRectangle,
+    xCutAt: number,
+    yCutAt: number,
+    w = 32.0,
+    h = 32.0,
+  ): NinePatchLayer {
+    return new NinePatchLayer(
+      NinePatchDescription.createSymmetrical(this.width, this.height, src, xCutAt, yCutAt),
+      this.imageName,
+      this.textures,
+      w,
+      h,
+    );
   }
 }
