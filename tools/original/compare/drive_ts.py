@@ -1,5 +1,5 @@
 """用同样的步骤驱动 TS 版（Playwright，854×480）。用法：python3 drive_ts.py steps.json outdir（TS_URL 默认 http://127.0.0.1:5173/）
-额外步骤：["ticks",N]   直接跑 N 个游戏刻（跳过渲染；无头浏览器约 1 帧/秒，按秒等不到原版那么多刻）
+额外步骤：["ticks_to",T] 跑到世界时间 T；["ticks",N]   直接跑 N 个游戏刻（跳过渲染；无头浏览器约 1 帧/秒，按秒等不到原版那么多刻）
           ["settle"]    把脏区块一次重建完，并把按帧收敛的暗角 tbr 设成收敛值 0（原版几十帧/秒时早已收敛）
 控制台日志写到 outdir/console.log。"""
 import json, sys, time, os
@@ -31,6 +31,10 @@ with sync_playwright() as p:
         elif k == 'ticks':
             n = page.evaluate("(n) => { const a = window.__app; for (let i = 0; i < n; ++i) a.tick(i, n - 1); return a.level ? a.level.getTime() : -1; }", st[1])
             print('ticks', st[1], '→ world time', n)
+        elif k == 'ticks_to':
+            # 跑到世界时间 = 目标值（原版暂停时存进 level.dat 的 Time，用 leveltime.py 读出）
+            n = page.evaluate("(t) => { const a = window.__app; let i = 0; while (a.level && a.level.getTime() < t && i < 100000) { a.tick(0, 0); ++i; } return [i, a.level ? a.level.getTime() : -1]; }", st[1])
+            print('ticks_to', st[1], '→ 跑了', n[0], '刻，世界时间', n[1])
         elif k == 'settle':
             left = page.evaluate("""() => { const a = window.__app, lr = a.levelRenderer;
               if (lr && a.player) for (let i = 0; i < 2000 && lr.dirtyChunks.length; ++i) lr.updateDirtyChunks(a.player, true);
