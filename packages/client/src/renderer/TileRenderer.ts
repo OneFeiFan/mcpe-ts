@@ -409,12 +409,14 @@ export class TileRenderer {
     let yt = y;
     let zt = z;
     if (tt === Tile.tallgrass) {
-      // long seed = (x * 3129871) ^ (z * 116129781l) ^ (y);（x * 3129871 是 int 乘法，会溢出；其余按 64 位）
-      let seed = BigInt(Math.imul(x, 3129871)) ^ (BigInt(z) * 116129781n) ^ BigInt(y);
-      seed = BigInt.asIntN(64, seed * seed * 42317861n + seed * 11n);
-      xt += (Number((seed >> 16n) & 0xfn) / 15.0 - 0.5) * 0.5;
-      yt += (Number((seed >> 20n) & 0xfn) / 15.0 - 1.0) * 0.2;
-      zt += (Number((seed >> 24n) & 0xfn) / 15.0 - 0.5) * 0.5;
+      // long seed = (x * 3129871) ^ (z * 116129781l) ^ (y); seed = seed * seed * 42317861 + seed * 11;
+      // 只用到第 16–27 位，而 64 位乘法与加法结果的低 32 位只取决于操作数的低 32 位，
+      // 所以整段可以在 32 位里算（Math.imul），结果与 64 位逐位相同（审核 P1：原来每个方块用一次 BigInt）。
+      const s0 = Math.imul(x, 3129871) ^ Math.imul(z, 116129781) ^ y;
+      const seed = (Math.imul(Math.imul(s0, s0), 42317861) + Math.imul(s0, 11)) | 0;
+      xt += (((seed >>> 16) & 0xf) / 15.0 - 0.5) * 0.5;
+      yt += (((seed >>> 20) & 0xf) / 15.0 - 1.0) * 0.2;
+      zt += (((seed >>> 24) & 0xf) / 15.0 - 0.5) * 0.5;
     }
     this.tesselateCrossTexture(tt, level.getData(x, y, z), xt, yt, zt);
     return true;

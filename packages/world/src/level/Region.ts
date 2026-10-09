@@ -9,7 +9,10 @@ import { Tile } from './tile/Tile';
 export class Region implements LevelSource {
   private xc1: number;
   private zc1: number;
-  private chunks: (LevelChunk | null)[][];
+  private chunks: (LevelChunk | null)[];
+  /** 构造时缓存的两个方块 id（getRawBrightness 的热路径里每次都要比较） */
+  private slabId: number;
+  private farmlandId: number;
   private level: Level;
 
   private size_x: number;
@@ -34,16 +37,15 @@ export class Region implements LevelSource {
     this.size_x = xc2 - this.xc1 + 1;
     this.size_z = zc2 - this.zc1 + 1;
 
-    this.chunks = new Array<Array<LevelChunk | null>>(this.size_x);
-    for (let i = 0; i < this.size_x; ++i) {
-      this.chunks[i] = new Array<LevelChunk | null>(this.size_z).fill(null);
-    }
-
+    // 审核 P3：C++ 的 LevelChunk*** chunks（二维）在这里压成一维数组，下标 xc * size_z + zc；取值热路径少一层间接
+    this.chunks = new Array<LevelChunk | null>(this.size_x * this.size_z).fill(null);
     for (let xc = this.xc1; xc <= xc2; xc++) {
       for (let zc = this.zc1; zc <= zc2; zc++) {
-        this.chunks[xc - this.xc1]![zc - this.zc1] = level.getChunk(xc, zc);
+        this.chunks[(xc - this.xc1) * this.size_z + (zc - this.zc1)] = level.getChunk(xc, zc);
       }
     }
+    this.slabId = Tile.stoneSlabHalf.id;
+    this.farmlandId = Tile.farmland.id;
   }
 
   // C++ ~Region() 释放 chunks[i] 和 chunks，TS 里 GC 负责，省略。
@@ -59,7 +61,7 @@ export class Region implements LevelSource {
       return 0;
     }
 
-    const lc = this.chunks[xc]![zc];
+    const lc = this.chunks[xc * this.size_z + zc]!;
     if (lc === null) return 0;
 
     return lc!.getTile(x & 15, y, z & 15);
@@ -92,7 +94,7 @@ export class Region implements LevelSource {
 
     if (propagate) {
       const id = this.getTile(x, y, z);
-      if (id === Tile.stoneSlabHalf.id || id === Tile.farmland.id) {
+      if (id === this.slabId || id === this.farmlandId) {
         let br = this.getRawBrightness(x, y + 1, z, false);
         const br1 = this.getRawBrightness(x + 1, y, z, false);
         const br2 = this.getRawBrightness(x - 1, y, z, false);
@@ -116,7 +118,7 @@ export class Region implements LevelSource {
     const xc = (x >> 4) - this.xc1;
     const zc = (z >> 4) - this.zc1;
 
-    return this.chunks[xc]![zc]!.getRawBrightness(x & 15, y, z & 15, this.level.skyDarken);
+    return this.chunks[xc * this.size_z + zc]!.getRawBrightness(x & 15, y, z & 15, this.level.skyDarken);
   }
 
   getData(x: number, y: number, z: number): number {
@@ -125,7 +127,7 @@ export class Region implements LevelSource {
     const xc = (x >> 4) - this.xc1;
     const zc = (z >> 4) - this.zc1;
 
-    return this.chunks[xc]![zc]!.getData(x & 15, y, z & 15);
+    return this.chunks[xc * this.size_z + zc]!.getData(x & 15, y, z & 15);
   }
 
   getMaterial(x: number, y: number, z: number): Material {

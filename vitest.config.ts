@@ -4,7 +4,9 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['tests/**/*.test.ts'],
+    // tests/bench 是性能基线，默认不跑；BENCH=1 时只跑它
+    include: process.env.BENCH ? ['tests/bench/**/*.test.ts'] : ['tests/**/*.test.ts'],
+    exclude: process.env.BENCH ? [] : ['tests/bench/**', '**/node_modules/**'],
     // s9.test.ts 与 leave-game.test.ts 的 beforeAll 要走完 NinecraftApp 的完整启动
     // （建存档、建平坦世界、塞玩家）—— prepareLevel 要过 441 个区块并逐个 updateLights，
     // 单跑整文件就要 21~24 秒，并行跑时被别的 worker 抢 CPU 更久，表现为 "Hook timed out"，
