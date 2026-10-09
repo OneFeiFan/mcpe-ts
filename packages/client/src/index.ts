@@ -1,3 +1,4 @@
+// NEW：包入口，只做转出口（不对应 C++ 文件）
 export * from './Timer.js';
 export * from './AppConstants.js';
 export * from './AppPlatform.js';

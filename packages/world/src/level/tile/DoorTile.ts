@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/DoorTile.h 与 DoorTile.cpp
 import { Tile } from './Tile';
 import { Material } from '../material/Material';
 import { Level } from '../Level';

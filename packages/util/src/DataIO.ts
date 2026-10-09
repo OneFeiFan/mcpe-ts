@@ -1,3 +1,4 @@
+// 1:1 移植自 src/util/DataIO.h 与 DataIO.cpp
 // DataIO.ts
 
 export interface IDataOutput {

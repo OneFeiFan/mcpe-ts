@@ -1298,7 +1298,7 @@ export class LevelRenderer extends LevelListener {
       else if (id === 'lava') pe.add(new LavaParticle(level, x, y, z));
       // else if (name == "splash") mc->particleEngine->add(new SplashParticle(level, x, y, z, xa, ya, za));
       else if (id === 'largesmoke')
-        pe.add(new SmokeParticle(level, x, y, z, xa, ya, za, Math.fround(2.5)));
+        pe.add(new SmokeParticle(level, x, y, z, xa, ya, za, f(2.5)));
       else if (id === 'reddust') pe.add(new RedDustParticle(level, x, y, z, xa, ya, za));
       else if (id === 'iconcrack')
         pe.add(new BreakingItemParticle(level, x, y, z, xa, ya, za, Item.items[data]!));

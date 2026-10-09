@@ -1,3 +1,4 @@
+// 1:1 移植自 src/nbt/ByteTag.h
 import type { IDataInput, IDataOutput } from '@mcpe/util';
 import { Tag, TAG_Byte } from './Tag';
 

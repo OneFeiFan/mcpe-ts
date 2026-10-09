@@ -14,6 +14,8 @@ import type { IDataInput, IDataOutput } from '@mcpe/util';
 import { ItemInstance } from '../item/ItemInstance';
 import { Pos } from '../Pos';
 
+
+const f = Math.fround;
 type DataValue = number | string | ItemInstance | Pos;
 
 export class DataItem {
@@ -89,7 +91,7 @@ export class SynchedEntityData {
       case SynchedEntityData.TYPE_INT:
         return (v as number) | 0;
       case SynchedEntityData.TYPE_FLOAT:
-        return Math.fround(v as number);
+        return f(v as number);
       default:
         return v;
     }

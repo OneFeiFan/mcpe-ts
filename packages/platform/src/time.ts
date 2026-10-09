@@ -1,3 +1,4 @@
+// 1:1 移植自 src/platform/time.h 与 time.cpp
 import { LOGI } from './log.js';
 
 // 平台适配：C++ 的 getTimeS()/getTimeMs() 以程序启动时刻为 0（time.cpp 里减去 _t_start），

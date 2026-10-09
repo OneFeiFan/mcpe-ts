@@ -77,7 +77,9 @@ import {
 import { Textures } from './renderer/Textures';
 import { TileRenderer } from './renderer/TileRenderer';
 import { Timer } from './Timer';
+
 
+const f = Math.fround;
 /** Minecraft.cpp 的 checkGlError：只在定义了 GLDEBUG 时有内容 */
 function checkGlError(_tag: string): void {}
 
@@ -273,7 +275,7 @@ export class Minecraft extends App {
         else Gui.GuiScale = 1.0;
       }
     }
-    Gui.InvGuiScale = Math.fround(1.0 / Gui.GuiScale);
+    Gui.InvGuiScale = f(1.0 / Gui.GuiScale);
     const screenWidth = Math.trunc(this.width * Gui.InvGuiScale);
     const screenHeight = Math.trunc(this.height * Gui.InvGuiScale);
     const config = createConfig(this);
@@ -969,7 +971,7 @@ export class Minecraft extends App {
     } else {
       p = level.getSharedSpawnPos();
     }
-    player.setPos(Math.fround(p.x + 0.5), Math.fround(p.y + 1.0), Math.fround(p.z + 0.5));
+    player.setPos(f(p.x + 0.5), f(p.y + 1.0), f(p.z + 0.5));
     player.resetPos(true);
     if (this.isCreativeMode()) player.inventory.clearInventoryWithDefault();
   }

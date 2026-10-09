@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/item/SaplingTileItem.h
 import { TileItem } from './TileItem';
 import { Tile } from '../level/tile/Tile';
 import type { ItemInstance } from './ItemInstance';

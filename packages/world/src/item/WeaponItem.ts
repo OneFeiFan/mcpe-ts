@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/item/WeaponItem.h
 import { Item, Tier } from './Item';
 import { ItemInstance } from './ItemInstance';
 import { Entity } from '../entity/Entity';

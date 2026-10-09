@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/InvisibleTile.h
 import { Material } from '../material/Material';
 import { Tile } from './Tile';
 

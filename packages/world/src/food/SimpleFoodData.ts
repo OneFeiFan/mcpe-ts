@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/food/SimpleFoodData.h 与 SimpleFoodData.cpp
 import { FoodConstants } from './FoodConstants';
 import { FoodItem } from '../item/FoodItem';
 import { Mth } from '@mcpe/util';

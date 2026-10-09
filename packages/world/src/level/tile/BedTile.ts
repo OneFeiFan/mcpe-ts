@@ -13,6 +13,8 @@ import { Material } from '../material/Material';
 import { DirectionalTile } from './DirectionalTile';
 import { Tile } from './Tile';
 
+
+const f = Math.fround;
 export class BedTile extends DirectionalTile {
   static readonly HEAD_PIECE_DATA = 0x8;
   static readonly OCCUPIED_DATA = 0x4;
@@ -66,7 +68,7 @@ export class BedTile extends DirectionalTile {
       if (level.getTile(x, y, z) === this.id) {
         level.setTile(x, y, z, 0);
       }
-      level.explode(null, Math.fround(x + 0.5), Math.fround(y + 0.5), Math.fround(z + 0.5), 5, true);
+      level.explode(null, f(x + 0.5), f(y + 0.5), f(z + 0.5), 5, true);
       return true;
     }
     if (BedTile.isOccupied(data)) {

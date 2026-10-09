@@ -1,3 +1,4 @@
+// 1:1 移植自 src/nbt/LongTag.h
 import { Tag, TAG_Long } from './Tag';
 import type { IDataInput, IDataOutput } from '@mcpe/util';
 

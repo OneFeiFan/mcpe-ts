@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/Region.h 与 Region.cpp
 import type { LevelSource } from './LevelSource';
 import { Level } from './Level';
 import { Material } from './material/Material';

@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/item/TreeTileItem.h
 import { TileItem } from './TileItem';
 import { Tile } from '../level/tile/Tile';
 import { ItemInstance } from './ItemInstance';

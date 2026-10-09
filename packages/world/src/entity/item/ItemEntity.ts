@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/entity/item/ItemEntity.h 与 ItemEntity.cpp
 import { Entity, registerItemEntityClass } from '../Entity';
 import { Level } from '../../level/Level';
 import type { Player } from '../player/Player';

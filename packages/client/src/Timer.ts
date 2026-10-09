@@ -1,3 +1,4 @@
+// 1:1 移植自 src/client/Timer.h
 import { getTimeMs } from '@mcpe/platform';
 
 export class Timer {

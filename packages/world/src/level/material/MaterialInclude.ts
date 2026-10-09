@@ -1,3 +1,4 @@
+// ADAPTED(ESM)：对应 C++ Material.cpp 里 initMaterials() 的“include 全部子类再 new”那一段，原因见下
 // 平台适配（ES 模块）：C++ 的 Material.cpp 直接 #include 全部子类再在 initMaterials() 里 new。
 // ES 模块里基类若 import 子类、子类又 extends 基类，会在加载时触发
 // "Cannot access 'Material' before initialization"（TDZ）。因此：

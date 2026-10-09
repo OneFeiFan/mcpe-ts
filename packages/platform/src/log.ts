@@ -1,3 +1,4 @@
+// 1:1 移植自 src/platform/log.h
 // log.ts
 
 export type LogLevel = 'V' | 'I' | 'W' | 'E';

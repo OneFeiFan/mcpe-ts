@@ -1,3 +1,4 @@
+// 1:1 移植自 src/nbt/CompoundTag.h
 import {
   Tag,
   TAG_Compound,
@@ -24,6 +25,8 @@ import { StringTag } from './StringTag';
 import { ByteArrayTag } from './ByteArrayTag';
 import { ListTag } from './ListTag';
 
+
+const f = Math.fround;
 // 复刻 std::less<std::string>：按无符号字节的字典序
 const encoder = new TextEncoder();
 
@@ -134,7 +137,7 @@ export class CompoundTag extends Tag {
 
   putDouble(name: string, value: number): void {
     // 复刻 C++ bug：参数类型是 float，必须先 fround
-    this.insertNew(name, new DoubleTag(name, Math.fround(value)));
+    this.insertNew(name, new DoubleTag(name, f(value)));
   }
 
   putString(name: string, value: string): void {

@@ -1,3 +1,4 @@
+// 1:1 移植自 src/client/renderer/ptexture/DynamicTexture.h 与 DynamicTexture.cpp
 import { Tile } from '@mcpe/world';
 import type { Textures } from '../Textures';
 import { Mth } from '@mcpe/util';

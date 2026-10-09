@@ -8,6 +8,8 @@ import { Item } from './Item';
 import type { ItemInstance } from './ItemInstance';
 import { UseAnim } from './UseAnim';
 
+
+const f = Math.fround;
 export class BowItem extends Item {
   static readonly MAX_DRAW_DURATION = 20 * 1;
 
@@ -38,7 +40,7 @@ export class BowItem extends Item {
     player.inventory.removeResource(Item.arrow.id);
     if (!level.isClientSide) {
       // `pow * 2.0f` 里的 2.0f 是带 f 后缀的字面量 → 过 f()
-      const arrow = new Arrow(level, player, Math.fround(pow * Math.fround(2.0)));
+      const arrow = new Arrow(level, player, f(pow * f(2.0)));
       if (pow === 1) arrow.critArrow = true;
       level.addEntity(arrow);
     }

@@ -2,13 +2,13 @@
  * 1:1 移植自 src/client/model/SheepFurModel.h 与 SheepFurModel.cpp（任务单 H6）：羊毛那一层，各部件比 SheepModel 外扩（头 0.6、身体 1.75、腿 0.5）。
  * 吃草时的头部动作与 SheepModel 相同。ModelPart(this, …) 临时对象的问题同 SheepModel。
  */
+import type { Sheep } from '@mcpe/world';
 import type { Mob } from '@mcpe/world';
 import { ModelPart } from './geom/ModelPart';
 import { QuadrupedModel } from './QuadrupedModel';
 
 const f = Math.fround;
 
-type EatingSheep = { getHeadEatPositionScale(a: number): number; getHeadEatAngleScale(a: number): number };
 
 export class SheepFurModel extends QuadrupedModel {
   private headXRot = 0;
@@ -38,7 +38,7 @@ export class SheepFurModel extends QuadrupedModel {
 
   override prepareMobModel(mob: Mob | null, time: number, r: number, a: number): void {
     super.prepareMobModel(mob, time, r, a);
-    const sheep = mob as unknown as EatingSheep;
+    const sheep = mob as Sheep;
     this.head.y = f(6 + f(sheep.getHeadEatPositionScale(a) * 9));
     this.headXRot = sheep.getHeadEatAngleScale(a);
   }

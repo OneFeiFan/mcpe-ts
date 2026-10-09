@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/phys/Vec3.h
 export class Vec3 {
   public x: number = 0;
   public y: number = 0;

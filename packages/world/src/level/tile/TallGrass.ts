@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/TallGrass.h 与 TallGrass.cpp
 import { Bush } from './Bush';
 import { Tile } from './Tile';
 import { Material } from '../material/Material';

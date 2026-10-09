@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/item/ItemInstance.h 与 ItemInstance.cpp
 import { I18n } from '@mcpe/locale';
 import { CompoundTag } from '@mcpe/nbt';
 import type { Entity } from '../entity/Entity';

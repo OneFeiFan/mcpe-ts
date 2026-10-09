@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/Mushroom.h 与 Mushroom.cpp
 import { Bush } from './Bush';
 import { Level } from '../Level';
 import { Tile } from './Tile';

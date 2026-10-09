@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/item/ShovelItem.h 与 ShovelItem.cpp
 import { DiggerItem } from './DiggerItem';
 import { Tile } from '../level/tile/Tile';
 import type { Tier } from './Item';

@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/item/ArmorItem.h 与 ArmorItem.cpp
 import { Item } from './Item';
 
 export class ArmorItem extends Item {

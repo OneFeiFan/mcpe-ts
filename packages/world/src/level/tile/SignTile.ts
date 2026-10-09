@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/SignTile.h
 import { EntityTile } from './EntityTile';
 import { Material } from '../material/Material';
 import { Level } from '../Level';

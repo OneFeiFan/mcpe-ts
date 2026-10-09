@@ -1,3 +1,4 @@
+// 1:1 移植自 src/platform/input/Keyboard.h 与 Keyboard.cpp
 export class KeyboardAction {
   public static readonly KEYUP = 0;
   public static readonly KEYDOWN = 1;

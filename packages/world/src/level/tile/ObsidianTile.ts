@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/ObsidianTile.h
 import { StoneTile } from './StoneTile';
 import { Level } from '../Level';
 import type { Random } from '@mcpe/util';

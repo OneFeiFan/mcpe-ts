@@ -6,6 +6,8 @@ import { Mth } from '@mcpe/util';
 import { Vec3 } from '../../../phys/Vec3';
 import type { PathfinderMob } from '../../PathfinderMob';
 
+
+const f = Math.fround;
 export class RandomPos {
   static getPos(mob: PathfinderMob, xzDist: number, yDist: number): Vec3 | null {
     return RandomPos.generateRandomPos(mob, xzDist, yDist, null);
@@ -34,7 +36,7 @@ export class RandomPos {
       let xt = random.nextInt(2 * xzDist) - xzDist;
       let yt = random.nextInt(2 * yDist) - yDist;
       let zt = random.nextInt(2 * xzDist) - xzDist;
-      if (dir !== null && Math.fround(Math.fround(xt * dir.x) + Math.fround(zt * dir.z)) < 0) continue;
+      if (dir !== null && f(f(xt * dir.x) + f(zt * dir.z)) < 0) continue;
       xt += Mth.floor(mob.x);
       yt += Mth.floor(mob.y);
       zt += Mth.floor(mob.z);

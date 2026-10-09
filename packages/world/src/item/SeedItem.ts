@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/item/SeedItem.h
 import type { Player } from '../entity/player/Player';
 import type { Level } from '../level/Level';
 import { Item } from './Item';

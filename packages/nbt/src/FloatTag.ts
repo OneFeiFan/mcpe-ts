@@ -1,12 +1,15 @@
+// 1:1 移植自 src/nbt/FloatTag.h
 import { Tag, TAG_Float } from './Tag';
 import type { IDataInput, IDataOutput } from '@mcpe/util';
 
+
+const f = Math.fround;
 export class FloatTag extends Tag {
   public data: number;
 
   constructor(name: string, data: number = 0.0) {
     super(name);
-    this.data = Math.fround(data);
+    this.data = f(data);
   }
 
   write(dos: IDataOutput): void {
@@ -14,7 +17,7 @@ export class FloatTag extends Tag {
   }
 
   load(dis: IDataInput): void {
-    this.data = Math.fround(dis.readFloat());
+    this.data = f(dis.readFloat());
   }
 
   getId(): number {

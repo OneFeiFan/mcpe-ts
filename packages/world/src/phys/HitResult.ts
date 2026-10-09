@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/phys/HitResult.h 与 HitResult.cpp
 import { Vec3 } from './Vec3';
 import type { Entity } from '../entity/Entity';
 

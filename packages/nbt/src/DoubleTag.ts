@@ -1,3 +1,4 @@
+// 1:1 移植自 src/nbt/DoubleTag.h
 import type { IDataInput, IDataOutput } from '@mcpe/util';
 import { Tag, TAG_Double } from './Tag';
 

@@ -6,6 +6,8 @@
  */
 import { Mth } from '@mcpe/util';
 
+
+const f = Math.fround;
 /** std::ostringstream << value 的默认格式 */
 function ostreamValue(value: number | boolean | string, isFloat: boolean): string {
   if (typeof value === 'boolean') return value ? '1' : '0';
@@ -63,9 +65,9 @@ export class OptionFloat extends Option {
 
   constructor(key: string, value = 0.0, min = 0.0, max = 1.0) {
     super(key);
-    this.m_value = Math.fround(value);
-    this.m_min = Math.fround(min);
-    this.m_max = Math.fround(max);
+    this.m_value = f(value);
+    this.m_min = f(min);
+    this.m_max = f(max);
   }
 
   get(): number {
@@ -73,7 +75,7 @@ export class OptionFloat extends Option {
   }
 
   set(value: number): void {
-    this.m_value = Math.fround(Mth.clamp(value, this.m_min, this.m_max));
+    this.m_value = f(Mth.clamp(value, this.m_min, this.m_max));
   }
 
   getMin(): number {
@@ -92,7 +94,7 @@ export class OptionFloat extends Option {
     }
     const m = FLOAT_RE.exec(value);
     if (!m) return false;
-    this.m_value = Math.fround(parseFloat(m[1]!.replace(/^([+-]?)inf(inity)?$/i, '$1Infinity')));
+    this.m_value = f(parseFloat(m[1]!.replace(/^([+-]?)inf(inity)?$/i, '$1Infinity')));
     return true;
   }
 

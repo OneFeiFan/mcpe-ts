@@ -170,7 +170,7 @@ export abstract class Player extends Mob {
 
   /** C++ 的 static Player* asPlayer(Entity*) */
   static asPlayer(e: Entity | null): Player | null {
-    return Player.isPlayer(e) ? (e as unknown as Player) : null;
+    return Player.isPlayer(e) ? (e as Player) : null;
   }
 
   override tick(): void {

@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/item/AuxDataTileItem.h
 import type { Tile } from '../level/tile/Tile';
 import type { ItemInstance } from './ItemInstance';
 import { TileItem } from './TileItem';

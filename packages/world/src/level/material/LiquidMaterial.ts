@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/material/LiquidMaterial.h
 import { Material } from './Material';
 
 export class LiquidMaterial extends Material {

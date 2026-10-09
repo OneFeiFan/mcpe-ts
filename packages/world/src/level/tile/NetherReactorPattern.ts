@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/NetherReactorPattern.h 与 NetherReactorPattern.cpp
 import { Tile } from './Tile';
 
 export class NetherReactorPattern {

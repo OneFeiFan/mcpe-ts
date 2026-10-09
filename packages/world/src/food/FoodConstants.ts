@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/food/FoodConstants.h
 export class FoodConstants {
   static readonly MAX_FOOD = 20;
 

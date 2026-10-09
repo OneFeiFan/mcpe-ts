@@ -1,3 +1,4 @@
+// 1:1 移植自 src/nbt/StringTag.h
 import { Tag, TAG_String } from './Tag';
 import type { IDataInput, IDataOutput } from '@mcpe/util';
 

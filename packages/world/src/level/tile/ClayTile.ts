@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/ClayTile.h
 import { Tile } from './Tile';
 import { Material } from '../material/Material';
 import { Item } from '../../item/Item';

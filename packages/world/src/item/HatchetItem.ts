@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/item/HatchetItem.h 与 HatchetItem.cpp
 import { DiggerItem } from './DiggerItem';
 import { ItemInstance } from './ItemInstance';
 import { Tile } from '../level/tile/Tile';

@@ -20,6 +20,8 @@ import { Screen } from '../Screen';
 import { OptionsScreen } from './OptionsScreen';
 import { ScreenId } from './ScreenChooser';
 
+
+const f = Math.fround;
 export class StartMenuScreen extends Screen {
   private bHost!: Button;
   private bJoin!: Button;
@@ -107,11 +109,11 @@ export class StartMenuScreen extends Screen {
     const data = textures.getTemporaryTextureData(id);
     if (data) {
       textures.bind(id);
-      const x = Math.fround(this.width / 2);
+      const x = f(this.width / 2);
       const y = Math.trunc(this.height / 16);
-      const wh = Mth.Min(Math.fround(this.width / 2.0), Math.fround(data.w / 2));
-      const scale = Math.fround(Math.fround(2.0 * wh) / data.w);
-      const h = Math.fround(scale * data.h);
+      const wh = Mth.Min(f(this.width / 2.0), f(data.w / 2));
+      const scale = f(f(2.0 * wh) / data.w);
+      const h = f(scale * data.h);
       const t = Tesselator.instance;
       glColor4f2(1, 1, 1, 1);
       t.begin();

@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/FurnaceTile.h 与 FurnaceTile.cpp
 import { getEpochTimeS } from '@mcpe/platform';
 import { EntityTile } from './EntityTile';
 import { Material } from '../material/Material';

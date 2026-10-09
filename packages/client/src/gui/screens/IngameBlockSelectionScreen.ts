@@ -25,6 +25,8 @@ import { Screen } from '../Screen';
 import { ArmorScreen } from './ArmorScreen';
 import { WorkbenchScreen } from './crafting/WorkbenchScreen';
 
+
+const f = Math.fround;
 const demoVersionString = 'Not available in the demo version';
 
 export class IngameBlockSelectionScreen extends Screen {
@@ -123,8 +125,8 @@ export class IngameBlockSelectionScreen extends Screen {
     if (!this.isAllowed(slot - Inventory.MAX_SELECTION_SIZE)) return;
     glPushMatrix2();
     glScalef2(Gui.InvGuiScale + Gui.InvGuiScale, Gui.InvGuiScale + Gui.InvGuiScale, 1);
-    const k = Math.fround(0.5 * Gui.GuiScale);
-    mc.gui.renderSlotText(item, Math.fround(k * x), Math.fround(k * y), true, true);
+    const k = f(0.5 * Gui.GuiScale);
+    mc.gui.renderSlotText(item, f(k * x), f(k * y), true, true);
     glPopMatrix2();
   }
 

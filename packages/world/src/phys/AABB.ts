@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/phys/AABB.h
 import { Vec3 } from './Vec3';
 import { HitResult } from './HitResult';
 

@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/entity/SharedFlags.h
 export namespace SharedFlagsInformation {
   export enum SharedFlags {
     FLAG_ONFIRE = 0,

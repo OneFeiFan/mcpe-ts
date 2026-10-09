@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/LightGemTile.h 与 LightGemTile.cpp
 import { Tile } from './Tile';
 import { Material } from '../material/Material';
 import { Item } from '../../item/Item';

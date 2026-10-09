@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/item/ShearsItem.h
 import { Item } from './Item';
 import { ItemInstance } from './ItemInstance';
 import { Tile } from '../level/tile/Tile';

@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/MelonTile.h 与 MelonTile.cpp
 import { Tile } from './Tile';
 import { Material } from '../material/Material';
 import type { LevelSource } from '../LevelSource';

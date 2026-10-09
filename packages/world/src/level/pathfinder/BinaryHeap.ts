@@ -6,6 +6,8 @@
 import { LOGE } from '@mcpe/platform';
 import type { Node } from './Node';
 
+
+const f = Math.fround;
 const FLT_MAX = 3.4028234663852886e38;
 
 export class BinaryHeap {
@@ -54,7 +56,7 @@ export class BinaryHeap {
 
   changeCost(node: Node, newCost: number): void {
     const oldCost = node.f;
-    node.f = Math.fround(newCost);
+    node.f = f(newCost);
     if (newCost < oldCost) {
       this.upHeap(node.heapIdx);
     } else {

@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/GravelTile.h
 import { HeavyTile } from './HeavyTile';
 import { Item } from '../../item/Item';
 import type { Random } from '@mcpe/util';

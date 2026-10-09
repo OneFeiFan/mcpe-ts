@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/chunk/ChunkCache.h
 import { ChunkSource } from './ChunkSource';
 import { ChunkStorage } from './storage/ChunkStorage';
 import { EmptyLevelChunk } from './EmptyLevelChunk';

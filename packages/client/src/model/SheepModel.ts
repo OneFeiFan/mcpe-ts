@@ -3,13 +3,13 @@
  * C++ 的 `head = ModelPart(this, 0, 0)`：临时对象构造时就 setModel(this) 进了部件表，赋值后临时对象销毁——部件表里留下悬空指针
  *   （只有 onGraphicsReset 会遍历它，属于未定义行为）。TS 里直接新建对象，部件表里是有效对象。
  */
+import type { Sheep } from '@mcpe/world';
 import type { Mob } from '@mcpe/world';
 import { ModelPart } from './geom/ModelPart';
 import { QuadrupedModel } from './QuadrupedModel';
 
 const f = Math.fround;
 
-type EatingSheep = { getHeadEatPositionScale(a: number): number; getHeadEatAngleScale(a: number): number };
 
 export class SheepModel extends QuadrupedModel {
   private headXRot = 0;
@@ -26,7 +26,7 @@ export class SheepModel extends QuadrupedModel {
 
   override prepareMobModel(mob: Mob | null, time: number, r: number, a: number): void {
     super.prepareMobModel(mob, time, r, a);
-    const sheep = mob as unknown as EatingSheep;
+    const sheep = mob as Sheep;
     this.head.y = f(6 + f(sheep.getHeadEatPositionScale(a) * 9));
     this.headXRot = sheep.getHeadEatAngleScale(a);
   }

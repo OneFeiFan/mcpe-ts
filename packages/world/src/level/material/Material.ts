@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/material/Material.h 与 Material.cpp
 import type { DecorationMaterial } from './DecorationMaterial';
 import type { GasMaterial } from './GasMaterial';
 import type { LiquidMaterial } from './LiquidMaterial';

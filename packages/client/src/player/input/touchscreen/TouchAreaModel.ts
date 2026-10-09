@@ -1,3 +1,6 @@
+
+
+const f = Math.fround;
 // 1:1 移植自 src/client/player/input/touchscreen/TouchAreaModel.h 里的 IArea 与 RectangleArea（S13 阶段 C：ScrollingPane、InventoryPane 用到）。
 // 同一头文件里的 TouchAreaModel、CircleArea 等触屏输入部分属于触屏兼容，暂不移植（DEFERRED(Touch)）。
 export abstract class IArea {
@@ -13,10 +16,10 @@ export class RectangleArea extends IArea {
 
   constructor(x0: number, y0: number, x1: number, y1: number) {
     super();
-    this._x0 = Math.fround(x0);
-    this._x1 = Math.fround(x1);
-    this._y0 = Math.fround(y0);
-    this._y1 = Math.fround(y1);
+    this._x0 = f(x0);
+    this._x1 = f(x1);
+    this._y0 = f(y0);
+    this._y1 = f(y1);
   }
 
   isInside(x: number, y: number): boolean {

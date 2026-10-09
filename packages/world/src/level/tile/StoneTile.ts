@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/StoneTile.h
 import { Random } from '@mcpe/util';
 import { Material } from '../material/Material';
 import { Tile } from './Tile';

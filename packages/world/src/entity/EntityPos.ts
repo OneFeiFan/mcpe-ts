@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/entity/EntityPos.h
 export class EntityPos {
   public x: number;
   public y: number;

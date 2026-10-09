@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/entity/player/Abilities.h
 import { CompoundTag } from '@mcpe/nbt';
 
 export class Abilities {

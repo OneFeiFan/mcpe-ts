@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/entity/Entity.h 与 Entity.cpp
 import { getEpochTimeS } from '@mcpe/platform';
 import { Level } from '../level/Level';
 import { ItemInstance } from '../item/ItemInstance';

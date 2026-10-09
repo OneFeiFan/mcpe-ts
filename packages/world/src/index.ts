@@ -1,3 +1,4 @@
+// NEW：包入口，只做转出口（不对应 C++ 文件）
 // @mcpe/world 对外出口。包内部文件之间一律直接 import 具体文件，禁止 import 本 barrel。
 export * from './Pos.js';
 export * from './phys/Vec3.js';

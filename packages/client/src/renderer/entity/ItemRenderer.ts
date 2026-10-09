@@ -26,6 +26,8 @@ import { Tesselator } from '../Tesselator';
 import type { Textures } from '../Textures';
 import { TileRenderer } from '../TileRenderer';
 
+
+const f = Math.fround;
 /** ItemRenderer.cpp 的 _mapper：物品 id → gui_blocks.png 里的图块序号；-1 没有图块，-2 按数据值查下面的表 */
 const _mapper: readonly number[] = [
   -1, 7, 9, 8, 0, 5, -2, -1, -1, -1, -1, -1, 14, 15, 39, 38, 37, -2, -2, -1, 49, 41, 46, -1, -2, -1,
@@ -80,8 +82,8 @@ export class ItemRenderer extends EntityRenderer {
     this.random.setSeed(187);
     const item = itemEntity.item;
     glPushMatrix2();
-    const bob = Math.fround(Mth.sin((itemEntity.age + a) / 10.0 + itemEntity.bobOffs) * 0.1 + 0.1);
-    const spin = Math.fround(((itemEntity.age + a) / 20.0 + itemEntity.bobOffs) * Mth.RADDEG);
+    const bob = f(Mth.sin((itemEntity.age + a) / 10.0 + itemEntity.bobOffs) * 0.1 + 0.1);
+    const spin = f(((itemEntity.age + a) / 20.0 + itemEntity.bobOffs) * Mth.RADDEG);
     let count = 1;
     if (item.count > 20) count = 4;
     else if (item.count > 5) count = 3;
@@ -267,13 +269,13 @@ export class ItemRenderer extends EntityRenderer {
       }
       if (item.isDamaged()) {
         const p = Math.floor(
-          Math.fround(13.5 - Math.fround((item.getDamageValue() * 13.0) / item.getMaxDamage())) +
+          f(13.5 - f((item.getDamageValue() * 13.0) / item.getMaxDamage())) +
             0.5,
         );
         const cc = Math.trunc(
           Math.floor(
-            Math.fround(
-              255.5 - Math.fround((item.getDamageValue() * 255.0) / item.getMaxDamage()),
+            f(
+              255.5 - f((item.getDamageValue() * 255.0) / item.getMaxDamage()),
             ) + 0.5,
           ),
         );
@@ -293,11 +295,11 @@ export class ItemRenderer extends EntityRenderer {
     if (!item) return;
     if (item.count > 0 && item.isDamaged()) {
       const p = Math.floor(
-        Math.fround(13.5 - Math.fround((item.getDamageValue() * 13.0) / item.getMaxDamage())),
+        f(13.5 - f((item.getDamageValue() * 13.0) / item.getMaxDamage())),
       );
       const cc = Math.trunc(
         Math.floor(
-          Math.fround(255.5 - Math.fround((item.getDamageValue() * 255.0) / item.getMaxDamage())),
+          f(255.5 - f((item.getDamageValue() * 255.0) / item.getMaxDamage())),
         ),
       );
       const t = Tesselator.instance;

@@ -10,6 +10,8 @@ import type { Options } from '../Options';
 import { Tesselator } from '../renderer/Tesselator';
 import type { Textures } from '../renderer/Textures';
 
+
+const f = Math.fround;
 const SECTION = 0xa7; // '\xa7'
 
 export class Font {
@@ -61,7 +63,7 @@ export class Font {
       }
       if (i === 0x20) x = 4 - 2; // ' '
       this.charWidths[i] = x + 2;
-      this.fcharWidths[i] = Math.fround(this.charWidths[i]!);
+      this.fcharWidths[i] = f(this.charWidths[i]!);
     }
     // USE_VBO：this is <1 —— 不建显示列表
   }
@@ -171,7 +173,7 @@ export class Font {
     const t = Tesselator.instance;
     const ix = (i & 15) * 8;
     const iy = (i >> 4) * 8;
-    const s = Math.fround(7.99);
+    const s = f(7.99);
     const uo = 0.0 / 128.0;
     const vo = 0.0 / 128.0;
     t.vertexUV(x, y + s, 0, ix / 128.0 + uo, (iy + s) / 128.0 + vo);

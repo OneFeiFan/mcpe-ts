@@ -5,6 +5,8 @@ import type { Player } from '../../../player/Player';
 import type { Sensing } from '../../Sensing';
 import { Goal } from '../Goal';
 
+
+const f = Math.fround;
 export abstract class TargetGoal extends Goal {
   static readonly TargetFlag = 1;
   protected mob: Monster;
@@ -14,7 +16,7 @@ export abstract class TargetGoal extends Goal {
   constructor(mob: Monster, within: number, mustSee: boolean) {
     super();
     this.mob = mob;
-    this.within = Math.fround(within);
+    this.within = f(within);
     this.mustSee = mustSee;
   }
 
@@ -22,7 +24,7 @@ export abstract class TargetGoal extends Goal {
     const target = this.mob.getTarget();
     if (target === null) return false;
     if (!target.isAlive()) return false;
-    if (this.mob.distanceToSqr(target) > Math.fround(this.within * this.within)) return false;
+    if (this.mob.distanceToSqr(target) > f(this.within * this.within)) return false;
     if (this.mustSee && !(this.mob.sensing as Sensing).canSee(target)) return false;
     return true;
   }

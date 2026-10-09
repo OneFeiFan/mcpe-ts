@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/GrassTile.h 与 GrassTile.cpp
 import { Random } from '@mcpe/util';
 import { Material } from '../material/Material';
 import { GrassColor } from '../GrassColor';

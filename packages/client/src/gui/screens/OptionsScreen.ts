@@ -18,6 +18,8 @@ import { Screen } from '../Screen';
 import { CreditsScreen } from './CreditsScreen';
 import { ScreenId } from './ScreenChooser';
 
+
+const f = Math.fround;
 export class OptionsScreen extends Screen {
   private bHeader: THeader | null = null;
   private btnClose: ImageButton | null = null;
@@ -189,7 +191,7 @@ export class OptionsScreen extends Screen {
 
   protected override mouseWheel(_dx: number, dy: number, xm: number, ym: number): void {
     if (this.currentOptionsGroup !== null && this.currentOptionsGroup.pointInside(xm, ym) && dy !== 0) {
-      this.currentOptionsGroup.scrollByPixels(Math.fround(dy * 18.0));
+      this.currentOptionsGroup.scrollByPixels(f(dy * 18.0));
     }
   }
 

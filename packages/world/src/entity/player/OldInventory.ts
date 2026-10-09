@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/entity/player/OldInventory.h
 import type { Tile } from '../../level/tile/Tile';
 import type { Player } from './Player';
 

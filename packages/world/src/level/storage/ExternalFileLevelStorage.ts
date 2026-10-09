@@ -209,7 +209,7 @@ function decodePlayerData(buf: Uint8Array, out: PlayerData): void {
   }
 }
 
-export class ExternalFileLevelStorage extends LevelStorage {
+export class ExternalFileLevelStorage extends LevelStorage implements ChunkStorage {
   private levelId: string;
   private levelPath: string;
   /** C++ 是 LevelData* 且可能为 NULL（两个文件都读不出来时就 delete 掉了），所以这里要能是 null */
@@ -282,13 +282,12 @@ export class ExternalFileLevelStorage extends LevelStorage {
   /**
    * C++ 的 `ChunkStorage* createChunkStorage(Dimension*) { return this; }` —— 返回自己。
    *
-   * 【为什么要断言】C++ 里这个类**同时继承 LevelStorage 和 ChunkStorage**，TS 只能单继承，
-   * 所以返回 this 时要显式跨过类型系统。ChunkStorage 那一半共六个方法：load / save / tick /
+   * C++ 里这个类同时继承 LevelStorage 和 ChunkStorage；TS 只能单继承，ChunkStorage 那一半用 implements 表达（审核 S5）。ChunkStorage 那一半共六个方法：load / save / tick /
    * flush（B5b-1、B5b-2）、saveAll（B5b-2，见那里的注释）、saveEntities（B5c-1），**现在齐了**。
    * 这个类要到 B7 才接进 Minecraft，在那之前没人会调它。
    */
   createChunkStorage(_dimension: Dimension): ChunkStorage {
-    return this as unknown as ChunkStorage;
+    return this;
   }
 
   /** C++ 的空实现：`void checkSession() {}` */

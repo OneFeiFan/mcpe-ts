@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/LevelEvent.h
 export class LevelEvent {
   static readonly SOUND_CLICK = 1000;
   static readonly SOUND_CLICK_FAIL = 1001;

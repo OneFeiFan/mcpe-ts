@@ -1,3 +1,4 @@
+// 1:1 移植自 src/util/Color.h 与 Color.cpp
 import { Mth } from './Mth';
 
 export class Color {

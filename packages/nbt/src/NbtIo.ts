@@ -1,3 +1,4 @@
+// 1:1 移植自 src/nbt/NbtIo.h
 import { Tag, TAG_Compound } from './Tag';
 import { CompoundTag } from './CompoundTag';
 import type { IDataInput, IDataOutput } from '@mcpe/util';

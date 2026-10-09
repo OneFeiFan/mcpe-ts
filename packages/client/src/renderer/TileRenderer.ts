@@ -28,6 +28,8 @@ import { Facing } from '@mcpe/world';
 import { Minecraft } from '../Minecraft';
 import { Tesselator } from './Tesselator';
 
+
+const f = Math.fround;
 export class TileRenderer {
   private static sideTinting = false;
 
@@ -629,7 +631,7 @@ export class TileRenderer {
     if (this.noCulling || up) {
       changed = true;
       let tex = tt.getTexture(1, data);
-      let angle = Math.fround(LiquidTile.getSlopeAngle(level, x, y, z, m));
+      let angle = f(LiquidTile.getSlopeAngle(level, x, y, z, m));
       if (angle > -999) {
         tex = tt.getTexture(2, data);
       }

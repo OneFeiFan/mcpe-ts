@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/LevelListener.h
 import type { ParticleType } from '../entity/EntityTypes';
 import type { Entity } from '../entity/Entity';
 import type { TripodCamera } from '../entity/item/TripodCamera';

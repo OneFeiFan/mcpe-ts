@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/entity/EntityEvent.h
 export class EntityEvent {
   static readonly JUMP = 1;
   static readonly HURT = 2;

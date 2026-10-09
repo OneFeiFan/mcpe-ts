@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/entity/EntityRendererId.h
 export enum EntityRendererId {
   ER_DEFAULT_RENDERER,
   ER_QUERY_RENDERER,

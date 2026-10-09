@@ -1,5 +1,8 @@
+// 1:1 移植自 src/util/Random.h；部分语句暂缓或省略，见文件内的 DEFERRED / OMIT 标记
 import { getTimeMs } from '@mcpe/platform';
 
+
+const f = Math.fround;
 const N = 624;
 const M = 397;
 const MATRIX_A = 0x9908b0df;
@@ -104,7 +107,7 @@ export class Random {
 
   nextFloat(): number {
     // C++: (float)genrand_real2()
-    return Math.fround(this.genrand_int32() * TWO_32_INV);
+    return f(this.genrand_int32() * TWO_32_INV);
   }
 
   nextDouble(): number {

@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/material/GasMaterial.h
 import { Material } from './Material';
 
 export class GasMaterial extends Material {

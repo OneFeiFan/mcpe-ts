@@ -1,3 +1,4 @@
+// ADAPTED(ESM)：C++ ParticleEngine.h 的纹理档常量单独成文件，原因见下
 /**
  * C++ `ParticleEngine.h:13-18` 的五个纹理档常量。
  *

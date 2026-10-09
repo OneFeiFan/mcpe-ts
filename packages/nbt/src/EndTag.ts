@@ -1,3 +1,4 @@
+// 1:1 移植自 src/nbt/EndTag.h
 import { Tag, TAG_End } from './Tag';
 import type { IDataInput, IDataOutput } from '@mcpe/util';
 

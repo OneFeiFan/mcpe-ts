@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/item/HoeItem.h 与 HoeItem.cpp
 import { Item, Tier } from './Item';
 import { ItemInstance } from './ItemInstance';
 import { Level } from '../level/Level';

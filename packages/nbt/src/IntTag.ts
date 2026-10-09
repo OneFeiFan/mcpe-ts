@@ -1,3 +1,4 @@
+// 1:1 移植自 src/nbt/IntTag.h
 import { Tag, TAG_Int } from './Tag';
 import type { IDataInput, IDataOutput } from '@mcpe/util';
 

@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/StairTile.h 与 StairTile.cpp
 import { Tile } from './Tile';
 import { Material } from '../material/Material';
 import { Level } from '../Level';

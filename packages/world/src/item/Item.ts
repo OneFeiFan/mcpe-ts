@@ -711,28 +711,21 @@ export class Item {
     clickY: number,
     clickZ: number,
   ): boolean;
-  useOn(...a: unknown[]): boolean {
-    if (a.length <= 6)
-      return this.useOnWithoutPlayer(
-        a[0] as ItemInstance,
-        a[1] as Level,
-        a[2] as number,
-        a[3] as number,
-        a[4] as number,
-        a[5] as number,
-      );
-    return this.useOnByPlayer(
-      a[0] as ItemInstance,
-      a[1] as Player,
-      a[2] as Level,
-      a[3] as number,
-      a[4] as number,
-      a[5] as number,
-      a[6] as number,
-      a[7] as number,
-      a[8] as number,
-      a[9] as number,
-    );
+  useOn(
+    itemInstance: ItemInstance,
+    levelOrPlayer: Level | Player,
+    xOrLevel: number | Level,
+    a3: number,
+    a4: number,
+    a5: number,
+    face?: number,
+    clickX?: number,
+    clickY?: number,
+    clickZ?: number,
+  ): boolean {
+    // 两个重载按参数个数区分：第三个参数是数字（x）的是不带玩家的版本
+    if (typeof xOrLevel === 'number') return this.useOnWithoutPlayer(itemInstance, levelOrPlayer as Level, xOrLevel, a3, a4, a5);
+    return this.useOnByPlayer(itemInstance, levelOrPlayer as Player, xOrLevel, a3, a4, a5, face!, clickX!, clickY!, clickZ!);
   }
 
   useOnWithoutPlayer(

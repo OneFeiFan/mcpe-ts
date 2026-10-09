@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/CropTile.h 与 CropTile.cpp
 import { Bush } from './Bush';
 import { Tile } from './Tile';
 import { Level } from '../Level';

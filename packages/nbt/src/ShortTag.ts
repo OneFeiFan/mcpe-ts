@@ -1,3 +1,4 @@
+// 1:1 移植自 src/nbt/ShortTag.h
 import { Tag, TAG_Short } from './Tag';
 import type { IDataInput, IDataOutput } from '@mcpe/util';
 

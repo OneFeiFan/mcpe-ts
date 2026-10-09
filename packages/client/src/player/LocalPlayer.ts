@@ -38,6 +38,8 @@ import { OptionId } from '../Options';
 import { TakeAnimationParticle } from '../particle/TakeAnimationParticle';
 import type { IMoveInput } from './input/IMoveInput';
 
+
+const f = Math.fround;
 /** LocalPlayer.cpp 的自由函数 isJumpable */
 function isJumpable(tileId: number): boolean {
   return (
@@ -343,7 +345,7 @@ export class LocalPlayer extends Player {
       if (minecraft.particleEngine !== null && minecraft.level !== null) {
         minecraft.particleEngine.add(
           // -0.5f（float32 里能精确表示，包一层只是照规矩标出它是 float 字面量）
-          new TakeAnimationParticle(minecraft.level, e as ItemEntity, this, Math.fround(-0.5)),
+          new TakeAnimationParticle(minecraft.level, e as ItemEntity, this, f(-0.5)),
         );
       }
     }

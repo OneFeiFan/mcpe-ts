@@ -25,6 +25,8 @@ import { HitResult } from '../phys/HitResult';
 import { Vec3 } from '../phys/Vec3';
 import { ParticleType } from './EntityTypes';
 
+
+const f = Math.fround;
 export abstract class Mob extends Entity {
   static readonly ATTACK_DURATION = 5;
   static readonly SWING_DURATION = 8;
@@ -909,7 +911,7 @@ export abstract class Mob extends Entity {
       for (let i = 0; i < entities.length; i++) {
         let e = entities[i]!;
         if (e.isPlayer()) {
-          let p = e as unknown as Mob; // C++ (Player*) e
+          let p = e as Mob; // C++ (Player*) e
           if (p.isSleeping()) continue;
         }
         if (e.isPushable()) e.push(this);
@@ -1106,13 +1108,13 @@ export abstract class Mob extends Entity {
     this.yya = 0;
 
     let lookDistance = 8;
-    if (this.random.nextFloat() < Math.fround(0.02)) { // float 字面量 0.02f（G16-2 抓出的漂移：本函数原来没有 float 截断）
+    if (this.random.nextFloat() < f(0.02)) { // float 字面量 0.02f（G16-2 抓出的漂移：本函数原来没有 float 截断）
       player = this.level.getNearestPlayer(this, lookDistance);
       if (player !== null) {
         this.lookingAtId = player.entityId;
         this.lookTime = 10 + this.random.nextInt(20);
       } else {
-        this.yRotA = Math.fround(Math.fround(this.random.nextFloat() - 0.5) * 20);
+        this.yRotA = f(f(this.random.nextFloat() - 0.5) * 20);
       }
     }
 
@@ -1132,16 +1134,16 @@ export abstract class Mob extends Entity {
         }
       }
     } else {
-      if (this.random.nextFloat() < Math.fround(0.05)) {
-        this.yRotA = Math.fround(Math.fround(this.random.nextFloat() - 0.5) * 20);
+      if (this.random.nextFloat() < f(0.05)) {
+        this.yRotA = f(f(this.random.nextFloat() - 0.5) * 20);
       }
-      this.yRot = Math.fround(this.yRot + this.yRotA);
+      this.yRot = f(this.yRot + this.yRotA);
       this.xRot = this.defaultLookAngle;
     }
 
     let inWater = this.isInWater();
     let inLava = this.isInLava();
-    if (inWater || inLava) this.jumping = this.random.nextFloat() < Math.fround(0.8);
+    if (inWater || inLava) this.jumping = this.random.nextFloat() < f(0.8);
   }
 
   protected newServerAiStep(): void {

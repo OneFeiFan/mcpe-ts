@@ -90,6 +90,8 @@ import { _t_keepPic } from './LevelRenderer';
 import { Lighting } from './Lighting';
 import { Tesselator } from './Tesselator';
 
+
+const f = Math.fround;
 /** GameRenderer.cpp 的文件内静态变量 static int _shTicks = -1; */
 let _shTicks = -1;
 
@@ -384,7 +386,7 @@ export class GameRenderer {
       if (this.zoom === 1 && cameraEntity.isPlayer()) {
         if (mc.hitResult.isHit() && !cameraEntity.isUnderLiquid(Material.water)) {
           TIMER_POP_PUSH('select');
-          const player = cameraEntity as unknown as Player;
+          const player = cameraEntity as Player;
           if (mc.options.getBooleanValue(OptionId.OPTIONS_BLOCK_OUTLINE)) {
             levelRenderer.renderHitOutline(player, mc.hitResult, 0, null, a); // java block outline one
           } else {
@@ -542,19 +544,19 @@ export class GameRenderer {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix2();
     glLoadIdentity2();
-    gluPerspective((this._setupCameraFov = this.getFov(a, true)), Math.fround(mc.width / mc.height), 2, this.renderDistance * 512);
+    gluPerspective((this._setupCameraFov = this.getFov(a, true)), f(mc.width / mc.height), 2, this.renderDistance * 512);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix2();
     this.setupFog(0);
     glDepthMask(false);
     glEnable2(GL_FOG);
-    glFogf(GL_FOG_START, Math.fround(this.renderDistance * Math.fround(0.2)));
-    glFogf(GL_FOG_END, Math.fround(this.renderDistance * Math.fround(0.75)));
+    glFogf(GL_FOG_START, f(this.renderDistance * f(0.2)));
+    glFogf(GL_FOG_END, f(this.renderDistance * f(0.75)));
     levelRenderer.renderSky(a);
-    glFogf(GL_FOG_START, Math.fround(Math.fround(this.renderDistance * Math.fround(4.2)) * Math.fround(0.6)));
-    glFogf(GL_FOG_END, Math.fround(this.renderDistance * Math.fround(4.2)));
+    glFogf(GL_FOG_START, f(f(this.renderDistance * f(4.2)) * f(0.6)));
+    glFogf(GL_FOG_END, f(this.renderDistance * f(4.2)));
     levelRenderer.renderClouds(a);
-    glFogf(GL_FOG_START, Math.fround(this.renderDistance * Math.fround(0.6)));
+    glFogf(GL_FOG_START, f(this.renderDistance * f(0.6)));
     glFogf(GL_FOG_END, this.renderDistance);
     glDisable2(GL_FOG);
     glDepthMask(true);

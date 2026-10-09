@@ -69,6 +69,6 @@ export class DoorInteractGoal extends Goal {
   private getDoorTile(x: number, y: number, z: number): DoorTile | null {
     const tileId = this.mob.level.getTile(x, y, z);
     if (tileId !== Tile.door_wood.id) return null;
-    return Tile.tiles[tileId] as unknown as DoorTile;
+    return Tile.tiles[tileId] as DoorTile;
   }
 }

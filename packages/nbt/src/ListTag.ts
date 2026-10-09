@@ -1,3 +1,4 @@
+// 1:1 移植自 src/nbt/ListTag.h
 import { Tag, TAG_List, TAG_Byte, TAG_Float, TAGERR_OUT_OF_BOUNDS, TAGERR_BAD_TYPE } from './Tag';
 import { FloatTag } from './FloatTag';
 import type { IDataInput, IDataOutput, PrintStream } from '@mcpe/util';

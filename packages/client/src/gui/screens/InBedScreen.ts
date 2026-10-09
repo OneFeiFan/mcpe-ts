@@ -8,6 +8,8 @@ import type { Button } from '../components/Button';
 import { TButton } from '../components/Button';
 import { Screen } from '../Screen';
 
+
+const f = Math.fround;
 export class InBedScreen extends Screen {
   private bWakeUp: Button | null = null;
 
@@ -20,7 +22,7 @@ export class InBedScreen extends Screen {
   override setupPositions(): void {
     const b = this.bWakeUp!;
     b.width = Math.trunc(this.width / 2);
-    b.height = Math.trunc(Math.fround(this.height * Math.fround(0.2)));
+    b.height = Math.trunc(f(this.height * f(0.2)));
     b.y = this.height - Math.trunc(b.height * 1.5);
     b.x = Math.trunc(this.width / 2) - Math.trunc(b.width / 2);
   }

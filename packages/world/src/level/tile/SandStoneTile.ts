@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/level/tile/SandStoneTile.h
 import { MultiTextureTile } from './MultiTextureTile';
 import { Material } from '../material/Material';
 import { Facing } from '../../Facing';

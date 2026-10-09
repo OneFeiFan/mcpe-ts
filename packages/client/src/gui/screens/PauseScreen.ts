@@ -10,6 +10,8 @@ import { Button, TButton } from '../components/Button';
 import { ImageDef, IntRectangle, OptionButton } from '../components/ImageButton';
 import { Screen } from '../Screen';
 
+
+const f = Math.fround;
 export class PauseScreen extends Screen {
   private saveStep = 0;
   private visibleTime = 0;
@@ -29,8 +31,8 @@ export class PauseScreen extends Screen {
     def.setSrc(new IntRectangle(160, 144, 39, 31));
     def.name = 'gui/touchgui.png';
     const defSrc = def.getSrc()!;
-    def.width = defSrc.w * Math.fround(0.666667);
-    def.height = defSrc.h * Math.fround(0.666667);
+    def.width = defSrc.w * f(0.666667);
+    def.height = defSrc.h * f(0.666667);
     defSrc.y += defSrc.h;
     this.bThirdPerson.setImageDef(def, true);
     this.bHideGui.setImageDef(def, true);

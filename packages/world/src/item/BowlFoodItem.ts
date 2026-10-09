@@ -1,3 +1,4 @@
+// 1:1 移植自 src/world/item/BowlFoodItem.h
 import { FoodItem } from './FoodItem';
 import { ItemInstance } from './ItemInstance';
 import { Item } from './Item';
