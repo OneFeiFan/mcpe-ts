@@ -1,0 +1,17 @@
+[
+  ["click", 427, 243],
+  ["type", "Steve"],
+  ["key", "Return"],
+  ["wait", 2],
+  ["click", 390, 250],
+  ["wait", 2],
+  ["click", 427, 240],
+  ["wait", 2],
+  ["click", 426, 246],
+  ["type", "123"],
+  ["wait", 1],
+  ["click", 426, 380],
+  ["wait", 20],
+  ["key", "Escape"],
+  ["wait", 3]
+]

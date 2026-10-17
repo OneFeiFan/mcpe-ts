@@ -49,4 +49,17 @@ with sync_playwright() as p:
     print('dirty 剩余 / 玩家 x y z / 偏航 俯仰 / 世界时间：', left)
     page.screenshot(path=shot, timeout=280000)
     open(shot + '.console.log', 'w').write('\n'.join(logs))
+    if os.environ.get('EXPORT_TO'):
+        # 往返：TS 把载入的存档再存一次（打开游戏内界面时原版做的就是 saveLevelData + saveGame），导出成文件夹给原版读
+        dst = os.environ['EXPORT_TO']
+        page.evaluate("() => { const a = window.__app; a.level.saveLevelData(); a.level.saveGame(); a.leaveGame(); }"); time.sleep(2)
+        files = page.evaluate("""async ([root, wid]) => { const P = await import('/@fs' + root + '/packages/platform/src/index.ts');
+          const vfs = P.getVfs(); const base = '/games/com.mojang/minecraftWorlds/' + wid; const out = {};
+          const walk = (d) => { for (const n of vfs.listDir(d)) { const q = d + '/' + n; const buf = vfs.getBuffer(q);
+            if (buf) { let s = ''; for (let i = 0; i < buf.length; i += 8192) s += String.fromCharCode(...buf.subarray(i, i + 8192)); out[q.slice(base.length + 1)] = btoa(s); }
+            else walk(q); } };
+          walk(base); return out; }""", [ROOT, wid])
+        for rel, b64 in files.items():
+            q = os.path.join(dst, rel); os.makedirs(os.path.dirname(q), exist_ok=True); open(q, 'wb').write(base64.b64decode(b64))
+        print('往返导出', sorted(files))
     b.close()
