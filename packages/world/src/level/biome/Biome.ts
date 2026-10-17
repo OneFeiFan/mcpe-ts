@@ -264,10 +264,16 @@ export class Biome {
   }
 
   getSkyColor(temp: number): number {
-    temp /= 3;
+    // float 运算（审核：以前按 double 算）
+    const f = Math.fround;
+    temp = f(f(temp) / 3);
     if (temp < -1) temp = -1;
     if (temp > 1) temp = 1;
-    return Color.getHSBColor(224 / 360.0 - temp * 0.05, 0.5 + temp * 0.1, 1.0).getRGB();
+    return Color.getHSBColor(
+      f(f(224 / f(360.0)) - f(temp * f(0.05))),
+      f(f(0.5) + f(temp * f(0.1))),
+      1.0,
+    ).getRGB();
   }
 
   getGrassColor(): number {

@@ -77,48 +77,50 @@ describe('精确档：与 C++ 逐位一致', () => {
   });
 });
 
-describe('放宽档：直接用 JS，与 C++ 只差 float 末位', () => {
+describe('其余函数：2026-10 审核后也与 C++ 逐位一致', () => {
   it('sqrt、atan、atan2', () => {
     expect(
-      firstMismatch<[number, number]>(G.sqrt, ([x, r]) => close(Mth.sqrt(fl(x)), fl(r))),
+      firstMismatch<[number, number]>(G.sqrt, ([x, r]) => bits(Mth.sqrt(fl(x))) === bits(fl(r))),
     ).toBeUndefined();
     expect(
-      firstMismatch<[number, number]>(G.atan, ([x, r]) => close(Mth.atan(fl(x)), fl(r))),
+      firstMismatch<[number, number]>(G.atan, ([x, r]) => bits(Mth.atan(fl(x))) === bits(fl(r))),
     ).toBeUndefined();
     expect(
-      firstMismatch<[number, number, number]>(G.atan2, ([y, x, r]) =>
-        close(Mth.atan2(fl(y), fl(x)), fl(r)),
+      firstMismatch<[number, number, number]>(
+        G.atan2,
+        ([y, x, r]) => bits(Mth.atan2(fl(y), fl(x))) === bits(fl(r)),
       ),
     ).toBeUndefined();
   });
 
-  it('floor：传入 float 时与 C++ 相同；越界输入不再模拟 x86 的强转结果', () => {
-    const inRange = (G.floorF as [number, number][]).filter(([x]) => Math.abs(fl(x)) < 2 ** 31);
-    expect(firstMismatch(inRange, ([x, r]) => Mth.floor(fl(x)) === r)).toBeUndefined();
+  it('floor：全部样本（含越界输入的 x86 强转结果）与 C++ 相同；double 实参先舍入成 float', () => {
+    expect(
+      firstMismatch(G.floorF as [number, number][], ([x, r]) => Mth.floor(fl(x)) === r),
+    ).toBeUndefined();
     for (const p of G.probes) expect(Mth.floor(fl(p.x))).toBe(p.floor);
-    expect(Mth.floor(0.99999999)).toBe(0); // C++ 先把参数转成 float 得 1；放宽后按 double 取整
+    expect(Mth.floor(0.99999999)).toBe(1); // C++ 先把参数转成 float（得 1.0f）再取整
   });
 
   it('lerp 与 lerpInt', () => {
     expect(
       firstMismatch<[number, number, number, number]>(
         G.lerp,
-        ([a, b, t, r]) => Math.abs(Mth.lerp(fl(a), fl(b), fl(t)) - fl(r)) <= 2e-4,
+        ([a, b, t, r]) => bits(Mth.lerp(fl(a), fl(b), fl(t))) === bits(fl(r)),
       ),
-    ).toBeUndefined(); // |结果| ≤ 3000，float 末位约 2.4e-4
+    ).toBeUndefined();
     expect(
       firstMismatch<[number, number, number, number]>(
         G.lerpInt,
-        ([a, b, t, r]) => Math.abs(Mth.lerpInt(a, b, fl(t)) - r) <= 1,
+        ([a, b, t, r]) => Mth.lerpInt(a, b, fl(t)) === r,
       ),
-    ).toBeUndefined(); // 乘积恰好落在整数附近时截断可能差 1
+    ).toBeUndefined();
   });
 
-  it('absDecrease 近似相等；absMax、absMaxSigned 只做选择，结果逐位相同', () => {
+  it('absDecrease、absMax、absMaxSigned 逐位相同', () => {
     expect(
       firstMismatch<[number, number, number, number]>(
         G.absDecrease,
-        ([v, w, m, r]) => Math.abs(Mth.absDecrease(fl(v), fl(w), fl(m)) - fl(r)) <= 2e-6,
+        ([v, w, m, r]) => bits(Mth.absDecrease(fl(v), fl(w), fl(m))) === bits(fl(r)),
       ),
     ).toBeUndefined();
     expect(

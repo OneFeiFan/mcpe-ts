@@ -25,7 +25,7 @@ export interface IDataInput {
 
 export abstract class BytesDataOutput implements IDataOutput {
   writeString(v: string): void {
-    // 按 UTF-8 编码为字节；若原 C++ 使用其他编码，需替换
+    // C++ 的 std::string 存原始字节；游戏里的字符串在 TS 里是 JS 字符串，按 UTF-8 编码成字节（ASCII 与 C++ 逐字节相同）
     const bytes = new TextEncoder().encode(v);
     const length = bytes.length & 0x7fff;
     this.writeShort(length);
@@ -80,7 +80,7 @@ export abstract class BytesDataInput implements IDataInput {
       len = BytesDataInput.MAX_STRING_LENGTH - 1;
     }
     if (len < 0) {
-      // C++ 此处行为未定义，TS 里直接抛错更安全
+      // ADAPTED(Safety)：C++ 此处 new char[len + 1] 的长度为负，行为未定义；TS 直接抛错
       throw new Error(`Negative string length: ${len}`);
     }
 
@@ -90,6 +90,7 @@ export abstract class BytesDataInput implements IDataInput {
     let end = bytes.indexOf(0);
     if (end === -1) end = bytes.length;
 
+    // UTF-8 解码：ASCII 与 C++ 相同；非法的多字节序列会被换成 U+FFFD（C++ 保留原始字节），只在存档被截断或损坏时出现
     return new TextDecoder().decode(bytes.subarray(0, end));
   }
 
@@ -103,9 +104,10 @@ export abstract class BytesDataInput implements IDataInput {
     return new DataView(bytes.buffer, bytes.byteOffset, 8).getFloat64(0, true);
   }
 
+  /** C++ 返回 char（x86 上有符号）：-128..127（审核：以前返回 0..255；NBT 的调用方自己 & 0xff，不受影响） */
   readByte(): number {
     const bytes = this.readBytes(1);
-    return bytes[0]!; // 0..255
+    return (bytes[0]! << 24) >> 24;
   }
 
   readShort(): number {

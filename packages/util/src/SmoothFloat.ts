@@ -7,6 +7,9 @@ export class SmoothFloat {
   private lastAmount = 0;
 
   getNewDeltaValue(deltaValue: number, accelerationAmount: number): number {
+    // 形参是 float：实参先转 float（审核：以前直接拿 double 参与运算，与 C++ 可能差末位）
+    deltaValue = f(deltaValue);
+    accelerationAmount = f(accelerationAmount);
     this.targetValue = f(this.targetValue + deltaValue);
     deltaValue = f(f(this.targetValue - this.remainingValue) * accelerationAmount);
     this.lastAmount = f(this.lastAmount + f(f(deltaValue - this.lastAmount) * f(0.5)));

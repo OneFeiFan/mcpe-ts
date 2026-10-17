@@ -15,10 +15,9 @@
  *   OreFeature 用 sin、cos、PI 决定矿脉形状，在“种子 → 世界”的链上。
  *   查表和 fround 还保证了所有浏览器算出同样的值。
  *
- * 【放宽】直接用 JS，不再模拟 float 舍入和越界强转：
- *   sqrt、atan、atan2、floor、abs、Min、Max、clamp、lerp、lerpInt、absDecrease、absMax、absMaxSigned。
- *   与 C++ 的差别只在 float 与 double 的末位（约 1e-7），或 |x| ≥ 2^31 这类实际不会出现的输入。
- *   种子链上的代码自己负责按 float 计算，传进来的已经是 float，floor 等结果与 C++ 相同。
+ * 【其余函数】2026-10 全量审核后也改为与 C++ 一致：参数与返回值是 float 的先转 float、结果再转 float；
+ *   比较照 C++ 的写法（不用 Math.min / Math.max，两者在 NaN 与 ±0 上不同）。abs / Min / Max / clamp 有 int 与 float
+ *   两个重载、TS 分不出来，所以只照比较写法、不做 float 舍入（见各函数的注释）。
  *   random（任务单 H1 起 1:1）：C++ 是 Mth.cpp 的 `static Random _rand`（种子 getTimeMs()），random() = _rand.nextFloat()、
  *   random(n) = _rand.nextInt(n)。这里同样用一个模块级 Random（`_mthRand`）。以前用 Math.random，random(n) 的分布与序列都和 C++ 不同，
  *   做不了生物 AI 的黄金样本。`_mthRand` 导出只为测试与黄金样本对照（setSeed 固定序列、或 vi.spyOn 打桩），游戏代码不要直接用它（ADAPTED(Test)）。
@@ -84,50 +83,84 @@ function intFloorDiv(a: number, b: number): number {
   return (a / b) | 0;
 }
 
-// ================================================================ 放宽
+// ================================================================ 其余函数（2026-10 全量审核后改为与 C++ 逐位一致）
+// C++ 里这些函数的参数与返回值都是 float（int 版另有重载的除外），所以先把实参转成 float、结果再转成 float。
+// 比较写法照 C++（a <= b ? a : b 等），不用 Math.min / Math.max：两者在 NaN 与 ±0 上的结果不同。
 
-/** C++ 的参数是 float；这里不再先转 float，也不模拟越界强转 */
+/** int floor(float v) { int i = (int) v; return v < i ? i - 1 : i; } —— 实参先转 float（double 实参在 C++ 里会被舍入） */
 function floor(v: number): number {
-  return Math.floor(v) | 0;
+  const x = f(v);
+  const i = f2i(x);
+  return x < i ? (i - 1) | 0 : i;
 }
-
+/** float sqrt(float x) { float ret = ::sqrt(x); return ret; } —— ::sqrt 按 double 算，结果存回 float */
+function sqrt(x: number): number {
+  return f(Math.sqrt(f(x)));
+}
+/** float atan(float x) */
+function atan(x: number): number {
+  return f(Math.atan(f(x)));
+}
+/** float atan2(float dy, float dx) */
+function atan2(dy: number, dx: number): number {
+  return f(Math.atan2(f(dy), f(dx)));
+}
+/**
+ * abs / Min / Max 在 C++ 里有 int 与 float 两个重载，TS 分不出实参是哪种，所以**不**做 float 舍入
+ * （int 实参超过 2^24 时舍入会改变数值）；只保证比较写法与 C++ 相同。调用方传入的若本来就是 float，结果与 C++ 一致。
+ */
+function abs(a: number): number {
+  return a >= 0 ? a : -a;
+}
+function Min(a: number, b: number): number {
+  return a <= b ? a : b;
+}
+function Max(a: number, b: number): number {
+  return a >= b ? a : b;
+}
 function random(): number;
 function random(n: number): number;
 function random(n?: number): number {
   return n === undefined ? _mthRand.nextFloat() : _mthRand.nextInt(n);
 }
-
+/** int 与 float 两个重载写法相同（不做舍入，理由同 abs / Min / Max） */
 function clamp(v: number, low: number, high: number): number {
   if (v > high) return high;
   return v > low ? v : low;
 }
-
-/** float lerp(float src, float dst, float alpha) */
+/** float lerp(float src, float dst, float alpha) { return src + (dst - src) * alpha; } */
 function lerp(src: number, dst: number, alpha: number): number {
-  return src + (dst - src) * alpha;
+  const s = f(src);
+  return f(s + f(f(f(dst) - s) * f(alpha)));
 }
-
-/** int lerp(int src, int dst, float alpha)：src + (int)((dst - src) * alpha) */
+/** int lerp(int src, int dst, float alpha)：src + (int)((dst - src) * alpha)（int 乘 float 得 float） */
 function lerpInt(src: number, dst: number, alpha: number): number {
-  return (src + Math.trunc((dst - src) * alpha)) | 0;
+  return (src + f2i(f(f((dst - src) | 0) * f(alpha)))) | 0;
 }
-
 /**
- * @param value 原始带符号值
- * @param w     用来“按绝对值减小” value 的量（C++ 形参名是 with，JS 里是保留字）
- * @param min   最小值
+ * float absDecrease(float value, float with, float min)
+ * @param w C++ 形参名是 with（JS 保留字）
  */
 function absDecrease(value: number, w: number, min: number): number {
-  if (value > 0) return Math.max(min, value - w);
-  return Math.min(value + w, -min);
+  const v = f(value);
+  const ww = f(w);
+  const m = f(min);
+  if (v > 0) return Max(m, f(v - ww));
+  return Min(f(v + ww), -m);
 }
-
+/** float absMax(float a, float b) */
 function absMax(a: number, b: number): number {
-  return Math.max(Math.abs(a), Math.abs(b));
+  let x = f(a);
+  let y = f(b);
+  if (x < 0) x = -x;
+  if (y < 0) y = -y;
+  return x > y ? x : y;
 }
-
+/** float absMaxSigned(float a, float b) { return abs(a) > abs(b) ? a : b; } */
 function absMaxSigned(a: number, b: number): number {
-  return Math.abs(a) > Math.abs(b) ? a : b;
+  const x = f(a);
+  const y = f(b);
+  return abs(x) > abs(y) ? x : y;
 }
 
 export const Mth = Object.freeze({
@@ -141,13 +174,12 @@ export const Mth = Object.freeze({
   cos,
   invSqrt,
   intFloorDiv,
-  // 放宽
-  sqrt: Math.sqrt,
-  atan: Math.atan,
-  atan2: Math.atan2,
-  abs: Math.abs,
-  Min: Math.min,
-  Max: Math.max,
+  sqrt,
+  atan,
+  atan2,
+  abs,
+  Min,
+  Max,
   floor,
   random,
   clamp,
