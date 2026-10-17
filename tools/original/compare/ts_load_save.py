@@ -1,7 +1,8 @@
-"""把一个原版格式的存档文件夹装进 TS 的虚拟文件系统并进入，等区块建好后截图。用法：python3 ts_load_save.py <存档文件夹> <世界 id> <截图.png> [等待秒数]"""
+"""把一个原版格式的存档文件夹装进 TS 的虚拟文件系统并进入，等区块建好后截图。用法：python3 ts_load_save.py <存档文件夹> <世界 id> <截图.png> [等待秒数] [补跑刻数]"""
 import base64, os, sys, time
 from playwright.sync_api import sync_playwright
 src, wid, shot = sys.argv[1], sys.argv[2], sys.argv[3]; wait = float(sys.argv[4]) if len(sys.argv) > 4 else 5
+TICKS = int(sys.argv[5]) if len(sys.argv) > 5 else 0  # 载入后先补跑的刻数：原版等 20 秒约 400 刻，光照更新在这些刻里做完
 exe = os.environ.get('PW_CHROMIUM', '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell')
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 files = {}
@@ -23,8 +24,9 @@ with sync_playwright() as p:
       const a = window.__app; a.options.set(8, 'Steve'); a.setScreen(null);
       a.selectLevel(wid, wid, W.LevelSettings.None()); }""", [ROOT, wid, files])
     page.wait_for_function('window.__app.level && window.__app.player', timeout=200000); time.sleep(wait)
+    page.evaluate("(n) => { const a = window.__app; for (let i = 0; i < n; ++i) a.tick(0, 0); }", TICKS)
     left = page.evaluate("""() => { const a = window.__app, lr = a.levelRenderer; a.setScreen(null);
-      for (let i = 0; i < 2000 && lr.dirtyChunks.length; ++i) lr.updateDirtyChunks(a.player, true); a.gui.tbr = 0;
+      /* 先把排队的光照更新做完（原版是逐刻慢慢做完再慢慢建区块），否则会把还没算完光照的区块建出来 */ for (let k = 0; k < 100000 && a.level.updateLights(); ++k); for (let i = 0; i < 2000 && lr.dirtyChunks.length; ++i) lr.updateDirtyChunks(a.player, true); a.gui.tbr = Math.min(1, Math.max(0, 1 - a.player.getBrightness(1)));  /* 暗角按帧收敛到 1-亮度（Gui::renderVignette），原版几十帧/秒时早已收敛 */
       const p = a.player; return [lr.dirtyChunks.length, p.x, p.y, p.z, p.yRot, p.xRot, a.level.getTime()]; }""")
     print('dirty 剩余 / 玩家 x y z / 偏航 俯仰 / 世界时间：', left)
     page.screenshot(path=shot, timeout=280000)

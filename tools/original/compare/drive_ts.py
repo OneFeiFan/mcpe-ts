@@ -41,8 +41,8 @@ with sync_playwright() as p:
             page.evaluate("([pitch, yawDelta]) => { const p = window.__app.player; p.xRot = p.xRotO = pitch; p.yRot = p.yRotO = p.yRot + yawDelta; }", [st[1], st[2] if len(st) > 2 else 0])
         elif k == 'settle':
             left = page.evaluate("""() => { const a = window.__app, lr = a.levelRenderer;
-              if (lr && a.player) for (let i = 0; i < 2000 && lr.dirtyChunks.length; ++i) lr.updateDirtyChunks(a.player, true);
-              a.gui.tbr = 0; return lr ? lr.dirtyChunks.length : -1; }""")
+              if (lr && a.player) /* 先把排队的光照更新做完（原版是逐刻慢慢做完再慢慢建区块），否则会把还没算完光照的区块建出来 */ for (let k = 0; k < 100000 && a.level.updateLights(); ++k); for (let i = 0; i < 2000 && lr.dirtyChunks.length; ++i) lr.updateDirtyChunks(a.player, true);
+              a.gui.tbr = Math.min(1, Math.max(0, 1 - a.player.getBrightness(1)));  /* 暗角按帧收敛到 1-亮度（Gui::renderVignette），原版几十帧/秒时早已收敛 */ return lr ? lr.dirtyChunks.length : -1; }""")
             print('settled, dirty left =', left)
         elif k == 'shot':
             page.screenshot(path=f'{out}/{st[1]}.png', timeout=280000)

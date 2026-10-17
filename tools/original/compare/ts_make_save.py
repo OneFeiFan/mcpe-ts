@@ -41,19 +41,26 @@ SCENES = {
       L.setTileAndData(X + 1, y, z + 2, T.sign.id, 4);
       const te = L.getTileEntity(X + 1, y, z + 2); if (te) { te.messages[0] = 'Plants'; }
       L.setTileAndData(X + 2, y, z - 3, T.bed.id, 1); L.setTileAndData(X + 3, y, z - 3, T.bed.id, 9);""", 1000),
-  # 夜里的光：水、岩浆、萤石、火把、玻璃；世界时间设到午夜（这一版一天 19200 刻）
+  # 夜里的光：水、岩浆、萤石、火把、玻璃；世界时间设到午夜（这一版一天 19200 刻）。
+  # 必须是生存模式：DimensionFactory::createDefaultDimension 只给生存模式昼夜（NormalDayCycleDimension），创造模式的 Dimension 恒为白天
+  'mobs': ("""const T = W.Tile; const X = x + 4;
+      for (let dz = -5; dz <= 5; ++dz) for (let dx = -1; dx < 4; ++dx) { L.setTile(X + dx, y - 1, z + dz, T.grass.id); L.setTile(X + dx, y + 2, z + dz, T.glass.id); }
+      for (let dz = -5; dz <= 5; ++dz) for (let dy = 0; dy < 2; ++dy) { L.setTile(X + 4, y + dy, z + dz, T.glass.id); L.setTile(X - 1, y + dy, z + dz, T.glass.id); }
+      for (let dx = -1; dx < 4; ++dx) for (let dy = 0; dy < 2; ++dy) { L.setTile(X + dx, y + dy, z - 6, T.glass.id); L.setTile(X + dx, y + dy, z + 6, T.glass.id); }
+      const kinds = [W.MobTypes.Pig, W.MobTypes.Cow, W.MobTypes.Sheep, W.MobTypes.Chicken, W.MobTypes.Zombie, W.MobTypes.Skeleton, W.MobTypes.Creeper, W.MobTypes.Spider];
+      kinds.forEach((k, i) => { const m = W.MobFactory.CreateMob(k, L); m.moveTo(X + 1.5 + (i % 2), y, z - 4.5 + i * 1.2, 270, 0); L.addEntity(m); });""", 4800, 'Survival'),
   'night': ("""const T = W.Tile; const X = x + 4;
       for (let dz = -4; dz <= 4; ++dz) for (let dx = 0; dx < 4; ++dx) L.setTile(X + dx, y - 1, z + dz, T.stoneBrick.id);
       L.setTile(X + 1, y, z - 3, T.calmWater.id);
       L.setTile(X + 1, y, z + 3, T.calmLava.id);
       L.setTile(X + 2, y, z, T.lightGem.id);
       L.setTileAndData(X, y, z - 1, T.torch.id, 5); L.setTileAndData(X, y, z + 1, T.torch.id, 5);
-      L.setTile(X + 3, y, z, T.glass.id); L.setTile(X + 3, y + 1, z, T.glass.id);""", 14400),
+      L.setTile(X + 3, y, z, T.glass.id); L.setTile(X + 3, y + 1, z, T.glass.id);""", 14400, 'Survival'),
 }
 from playwright.sync_api import sync_playwright
 out = sys.argv[1]; os.makedirs(out, exist_ok=True)
 SCENE = sys.argv[2] if len(sys.argv) > 2 else 'basic'
-BUILD, TIME = SCENES[SCENE]
+BUILD, TIME, MODE = (SCENES[SCENE] + ('Creative',))[:3]
 exe = os.environ.get('PW_CHROMIUM', '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell')
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 with sync_playwright() as p:
@@ -61,9 +68,9 @@ with sync_playwright() as p:
     page = b.new_page(viewport={'width': 854, 'height': 480}); page.set_default_timeout(280000)
     logs = []; page.on('console', lambda m: logs.append(m.text))
     page.goto(os.environ.get('TS_URL', 'http://127.0.0.1:5173/')); page.wait_for_function('window.__app && window.__app.screen', timeout=90000); time.sleep(3)
-    page.evaluate("""async (root) => { const W = await import('/@fs' + root + '/packages/world/src/index.ts');
+    page.evaluate("""async ([root, mode]) => { const W = await import('/@fs' + root + '/packages/world/src/index.ts');
       const a = window.__app; a.options.set(8, 'Steve'); a.setScreen(null);
-      a.selectLevel('tsworld', 'TS World', new W.LevelSettings(123, W.GameType.Creative)); }""", ROOT)
+      a.selectLevel('tsworld', 'TS World', new W.LevelSettings(123, W.GameType[mode])); }""", [ROOT, MODE])
     page.wait_for_function('window.__app.level && window.__app.player', timeout=200000); time.sleep(3)
     info = page.evaluate(("""async (root) => { const W = await import('/@fs' + root + '/packages/world/src/index.ts');
       const a = window.__app, L = a.level, p = a.player;

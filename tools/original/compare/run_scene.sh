@@ -9,6 +9,6 @@ rm -rf "$WORK/games" "$WORK/options.txt"; mkdir -p "$WORK/games/com.mojang/minec
 cp -r "$OUT/save" "$WORK/games/com.mojang/minecraftWorlds/tsworld"; rm -f "$WORK/games/com.mojang/minecraftWorlds/tsworld/made.json"
 xvfb-run -a -s "-screen 0 1280x800x24" python3 "$HERE/drive_original.py" "$HERE/steps-load-first-world.json" "$OUT/orig" > /dev/null 2>&1
 cp "$OUT/orig/l1_loaded.png" "$OUT/orig/$SCENE.png" 2>/dev/null
-python3 "$HERE/ts_load_save.py" "$OUT/save" tsworld "$OUT/ts/$SCENE.png" 3 > "$OUT/load.log" 2>&1
+python3 "$HERE/ts_load_save.py" "$OUT/save" tsworld "$OUT/ts/$SCENE.png" 3 400 > "$OUT/load.log" 2>&1
 mkdir -p "$OUT/o" "$OUT/t"; cp "$OUT/orig/$SCENE.png" "$OUT/o/" 2>/dev/null; cp "$OUT/ts/$SCENE.png" "$OUT/t/" 2>/dev/null
 python3 "$HERE/cmp.py" "$OUT/o" "$OUT/t" "$OUT/cmp"
