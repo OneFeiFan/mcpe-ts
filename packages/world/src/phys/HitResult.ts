@@ -1,6 +1,9 @@
 // 1:1 移植自 src/world/phys/HitResult.h 与 HitResult.cpp
+// R10：C++ 的 distanceTo 返回的是距离平方（名字与语义不符），这里叫 distanceToSqr。
 import { Vec3 } from './Vec3';
 import type { Entity } from '../entity/Entity';
+
+const f = Math.fround;
 
 export const enum HitResultType {
   TILE = 0,
@@ -34,6 +37,8 @@ export class HitResult {
     arg4?: Vec3,
   ) {
     // 先完整初始化对象字段，保证对象 shape 稳定。
+    // C++ 的默认构造只初始化 type / entity / indirectHit；x / y / z / f 是未初始化内存
+    // （读它们是 UB），按方案统一取 0。
     this.type = HitResultType.NO_HIT;
     this.x = 0;
     this.y = 0;
@@ -68,6 +73,7 @@ export class HitResult {
       }
 
       this.type = HitResultType.TILE;
+      // C++ 的 x / y / z / f 是 int；调用方（Tile::clip 的 xt/yt/zt、AABB.clip 的 0/face）都是整数。
       this.x = arg0;
       this.y = arg1;
       this.z = arg2;
@@ -80,12 +86,13 @@ export class HitResult {
     }
 
     // HitResult(Entity*)
-    // Entity 目前是前向声明接口（FORWARD-DECL），不能 instanceof；前面的分支已排除 HitResult / number，
-    // 剩下的对象参数就是实体。移植真正的 Entity 类后可改回 instanceof。
+    // ADAPTED(ESM): Entity 用类型导入——值导入会形成 Entity → Level → HitResult 的模块循环。
+    // 前面的分支已排除 HitResult / number，剩下的对象参数就是实体，按字段读取 x / y / z。
     if (arg0 !== undefined && typeof arg0 === 'object') {
       this.type = HitResultType.ENTITY;
       this.entity = arg0;
-      this.pos.set(arg0.x, arg0.y, arg0.z);
+      // C++：pos(entity->x, entity->y, entity->z) —— 走 Vec3 构造函数，-0 会变成 +0。
+      this.pos = new Vec3(arg0.x, arg0.y, arg0.z);
       this.indirectHit = false;
       return;
     }
@@ -93,12 +100,14 @@ export class HitResult {
     throw new TypeError('Invalid HitResult constructor arguments');
   }
 
+  /** C++ `float distanceTo(Entity*)`：名字是 distanceTo，返回的却是距离平方。 */
   public distanceToSqr(entity: Entity): number {
-    const xd = this.pos.x - entity.x;
-    const yd = this.pos.y - entity.y;
-    const zd = this.pos.z - entity.z;
+    const xd = f(this.pos.x - entity.x);
+    const yd = f(this.pos.y - entity.y);
+    const zd = f(this.pos.z - entity.z);
 
-    return xd * xd + yd * yd + zd * zd;
+    // C++：`xd * xd + yd * yd + zd * zd`，从左到右、每一步都是 float。
+    return f(f(f(xd * xd) + f(yd * yd)) + f(zd * zd));
   }
 
   public isHit(): boolean {

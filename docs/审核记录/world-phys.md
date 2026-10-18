@@ -33,3 +33,35 @@
 ## Throwable::shoot、Arrow、HangingEntity
 
 **已修 W5**：同一类错误——**加法的结合顺序**。C++ 的 `a + b + c` 从左到右算（先 `a + b`），float 下与 `a + (b + c)` 可能差末位。`Throwable::shoot` 的长度与随机散布、`Arrow` 的三处速度长度、`HangingEntity` 的两处判断以前写成右结合，已改正；`Throwable::shoot` 的形参也补上先转 float。全仓库已没有这种写法。
+
+## HitResult（src/world/phys/HitResult.h / .cpp ↔ packages/world/src/phys/HitResult.ts）
+
+| 函数                                                     | 结论                                                                                                                                  |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `HitResult()`                                            | 一致（C++ 只初始化 type / entity / indirectHit；x / y / z / f 未初始化，按方案取 0，已在代码里注明）                                  |
+| `HitResult(int x, int y, int z, int f, const Vec3& pos)` | 一致（pos 按值拷贝；x / y / z / f 的调用方都是 int：Tile::clip 的 xt/yt/zt、AABB.clip 的 0/face）                                     |
+| `HitResult(Entity* entity)`                              | **已修 W6**：pos 以前用 `set()`，C++ 走 `Vec3(x, y, z)` 构造函数（-0 → +0）；已改为 `new Vec3(...)`；注释补上 ADAPTED(ESM) 的真实原因 |
+| `HitResult(const HitResult& hr)`                         | 一致（C++ 隐式拷贝构造是逐成员拷贝；`pos.set()` 等价，-0 原样保留）                                                                   |
+| `distanceTo(Entity*)`（TS：`distanceToSqr`）             | **已修 W7**：每一步 float 舍入；R10 改名写进了文件头                                                                                  |
+| `isHit()`                                                | 一致（`type != NO_HIT`）                                                                                                              |
+
+**W6**：`HitResult(Entity*)` 在 C++ 里的初始化列表是 `pos(entity->x, entity->y, entity->z)`，
+调用的是 `Vec3(float, float, float)`——这个构造函数会把 -0 归一化成 +0；TS 以前用 `pos.set()`，
+-0 会留下来。只有坐标恰好是 -0 时才可观察（`Object.is`、除法、文字输出），但审核目标是逐位一致，
+已改为 `new Vec3(...)`。反过来，tile 构造（`pos(pos)`）和拷贝构造（`pos(hr.pos)`）在 C++ 里走
+隐式拷贝构造，不归一化；TS 的 `set()` 与之一致。新增的对照测试防止以后把两种语义“统一”掉。
+
+**W7**：C++ `distanceTo` 的 `xd * xd + yd * yd + zd * zd` 每一步都是 float；TS 以前整段 double。
+已改为 `f(this.pos.x - entity.x)` 起步、`f(f(f(xd * xd) + f(yd * yd)) + f(zd * zd))`。用
+pos=(1e8,1,1)、实体在原点可以区分：double 得 1e16，float 得 f(1e16) = 10000000272564224。
+这个函数在 C++ 里没有调用点（`Mob.cpp:841` 的 `distanceToSqr` 是 Entity 的），TS 里也没有；
+仍然按原样移植并修正。
+
+**其它**：`distanceTo` 的名字与返回值不符（返回距离平方），TS 按 R10 改名 `distanceToSqr`；
+默认构造的未初始化字段、int 字段由调用方保证、Entity 的类型导入（避免
+`Entity → Level → HitResult` 的 ESM 循环，补了 `ADAPTED(ESM)`）都已注明。
+
+**验证**：`tests/unit/world/hitresult.test.ts` 4 条；两处修复的用例在修复前都失败
+（W6 的 -0、W7 的 1e16 vs 10000000272564224）。`pnpm check`：类型 ✓ 22.5s、
+测试 127 文件 / 1378 条 ✓、台账 151 ✓（150 + 新增 1 条 `ADAPTED(ESM)`）；
+`npx prettier --check` 通过。
