@@ -64,3 +64,53 @@ f 链，并在提交说明里写明。
   的 1e16、`push` 的 0.05f、`resetPos` 的 1e8 + 1 等）。
 - `pnpm check`：类型 ✓ 27.6s、测试 **128 文件 / 1386 条** ✓、台账 **151** ✓。
 - `npx prettier --check` 通过。
+
+## 第 2 组：tick / 伤害 / 移动 / 可见性 / 存档 / 掉落物（W9）
+
+| 函数                                                                                                                                   | 结论                                                                                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `move(float, float, float)`                                                                                                            | 已修 W3（见 [world-phys.md](world-phys.md)）                                                                                                                   |
+| `makeStuckInWeb()`                                                                                                                     | 一致                                                                                                                                                           |
+| `isUnderLiquid(const Material*)`                                                                                                       | **已修 W9**：`yp = y + getHeadHeight()`、`hh = getHeight - 1/9f`、`h = yt + 1 - hh` 按 float；`(float)Mth::floor(yp)` 的转换也补上                             |
+| `getBrightness(float a)`                                                                                                               | **已修 W9**：`hh = (y1 - y0) * 0.66f`、`y - heightOffset + hh` 按 float；形参 `a` 在 C++ 里也没用                                                              |
+| `tick()`                                                                                                                               | 一致（只调 `baseTick`）                                                                                                                                        |
+| `setOnFire(int)`                                                                                                                       | 一致（int × 20）                                                                                                                                               |
+| `baseTick()`                                                                                                                           | **已修 W9**：落水音效的 `sqrt(...) * 0.2f`、pitch 的 `1 + (r1 - r2) * 0.4f`、气泡坐标/速度、循环上界 `1 + bbWidth * 20` 全部按 float；`onFire` 的 int 逻辑一致 |
+| `outOfWorld()`                                                                                                                         | 一致                                                                                                                                                           |
+| `checkFallDamage(float, bool)`                                                                                                         | **已修 W9**：形参 `ya` 先转 float；`y - 0.2f - heightOffset` 分步；`fallDistance -= ya` 按 float                                                               |
+| `causeFallDamage(float)`                                                                                                               | 一致（空实现）                                                                                                                                                 |
+| `getHeadHeight()`                                                                                                                      | 一致（返回 0）                                                                                                                                                 |
+| `moveRelative(float, float, float)`                                                                                                    | **已修 W9**：`sqrt(xa² + za²)`、除法、`yRot * Mth::PI / 180` 的两个 float 步骤、`sin/cos` 的 `(float)` 强转、`xd/zd` 累加全部按 float                          |
+| `setLevel(Level*)`                                                                                                                     | 一致                                                                                                                                                           |
+| `playerTouch(Player*)`                                                                                                                 | 一致（空实现）                                                                                                                                                 |
+| `hurt(Entity*, int)`                                                                                                                   | 一致（`markHurt()` + 返回 false）                                                                                                                              |
+| `isAlive()`                                                                                                                            | 一致（`!removed`）                                                                                                                                             |
+| `shouldRender(Vec3&)`                                                                                                                  | **已修 W9**：三个差值与平方和按 float                                                                                                                          |
+| `shouldRenderAtSqrDistance(float)`                                                                                                     | **已修 W9**：形参先转 float；`size *= 64.0f * viewScale` 与 `distance < size²` 按 float                                                                        |
+| `lavaHurt()`                                                                                                                           | 一致（int：伤害 4、`30 * TicksPerSecond`）                                                                                                                     |
+| `burn(int)`                                                                                                                            | 一致                                                                                                                                                           |
+| `save(CompoundTag*)`                                                                                                                   | 一致                                                                                                                                                           |
+| `saveWithoutId(CompoundTag*)`                                                                                                          | 一致（`(short) onFire` 的截断由 NBT 的 ShortTag 负责，N1 已审）                                                                                                |
+| `load(CompoundTag*)`                                                                                                                   | **已修 W9**：`padding = bbWidth * 0.5f + 0.001f`、clamp 上下界、`fmod(..., 360.0f)` 的结果按 float                                                             |
+| `spawnAtLocation`（3 个重载）                                                                                                          | **已修 W9**：`y + yOffs` 按 float；C++ 里的 `delete itemInstance` 在 TS 由 GC 接管                                                                             |
+| `playStepSound(int, int, int, int)`                                                                                                    | **已修 W9**：`getVolume() * 0.25f` 按 float 写出（0.25 是 2 的幂，float 与 double 的结果逐位相同，这里只是把 C++ 语义写明）                                    |
+| `interact` / `interactPreventDefault` / `handleEntityEvent` / `isEntityType` / `getCreatureBaseType` / `queryEntityRenderer` / `isMob` | 一致                                                                                                                                                           |
+
+### W9 的验证
+
+`tests/unit/world/entity-audit.test.ts` 新增 7 条，修复前全部红：
+
+- `baseTick`：pitch 的 float 链；循环上界 `1 + 0.6f * 20` 在 float 下 ties-to-even 得 13（旧 double 写法跑 14 个气泡）；
+- `checkFallDamage`：`ya = -0.1f` 时 `fallDistance -= ya`，1e8 上加 0.1f 仍回到 1e8；
+- `moveRelative`：手算整条 float 链；
+- `shouldRender`：用 spy 断言传给 `shouldRenderAtSqrDistance` 的距离；
+- `shouldRenderAtSqrDistance`：在旧阈值（double）与新阈值（float）之间取一个数，两侧返回不同；
+- `load`：`xo/xOld` 直接保存 `xx`（随后的 `setPos` 会把 `x` 再舍入一次），所以用它们断言 padding 与 clamp 上下界；`yRot` 断言 `fmod` 的 float 结果；
+- `spawnAtLocation`：注册一个捕获参数的假 `ItemEntity` 构造器，断言 `y + 0.1f`。
+
+**两处无法用黑盒测试区分**：`getBrightness` 的 yTile 与 `checkFallDamage` 的 yt 都是 `Mth.floor` 的实参，而 `Mth.floor` 内部先做 `f(v)`，会把旧的 double 表达式先舍入再取整；`isUnderLiquid` 的 `yp` 只用于 `< h`，而 h 的 float 网格比 1/9 的差异粗。这些仍按 C++ 分步写出（严格性），测试不覆盖。
+
+- `pnpm check`：类型 ✓ 28.9s、测试 **128 文件 / 1393 条** ✓、台账 **151** ✓。
+- prettier ✓。
+
+至此 Entity 工作表 **80 行全部有结论**。

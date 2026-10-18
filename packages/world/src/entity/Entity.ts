@@ -261,14 +261,14 @@ export abstract class Entity {
 
   /** C++ Entity::isUnderLiquid(const Material*) */
   isUnderLiquid(material: Material): boolean {
-    const yp = this.y + this.getHeadHeight();
+    const yp = f(this.y + this.getHeadHeight());
     const xt = Mth.floor(this.x);
-    const yt = Mth.floor(Mth.floor(yp));
+    const yt = Mth.floor(f(Mth.floor(yp)));
     const zt = Mth.floor(this.z);
     const t = this.level.getTile(xt, yt, zt);
     if (t !== 0 && Tile.tiles[t]?.material === material) {
-      const hh = LiquidTile.getHeight(this.level.getData(xt, yt, zt)) - 1 / 9.0;
-      const h = yt + 1 - hh;
+      const hh = f(LiquidTile.getHeight(this.level.getData(xt, yt, zt)) - f(1 / 9));
+      const h = f(yt + 1 - hh);
       return yp < h;
     }
     return false;
@@ -527,26 +527,32 @@ export abstract class Entity {
 
     if (this.isInWater()) {
       if (!this.wasInWater && !this.firstTick) {
-        let speed =
-          Math.sqrt(this.xd * this.xd * 0.2 + this.yd * this.yd + this.zd * this.zd * 0.2) * 0.2;
+        // C++：`sqrt(xd*xd*0.2f + yd*yd + zd*zd*0.2f) * 0.2f` —— 内层逐项 float，
+        // ::sqrt 按 double 算，乘 0.2f 后存回 float。
+        const speedArg = f(
+          f(f(f(this.xd * this.xd) * f(0.2)) + f(this.yd * this.yd)) +
+            f(f(this.zd * this.zd) * f(0.2)),
+        );
+        let speed = f(Math.sqrt(speedArg) * f(0.2));
         if (speed > 1) speed = 1;
         this.level.playSound(
           this,
           'random.splash',
           speed,
-          1 + (Entity.sharedRandom.nextFloat() - Entity.sharedRandom.nextFloat()) * 0.4,
+          f(1 + f(f(Entity.sharedRandom.nextFloat() - Entity.sharedRandom.nextFloat()) * f(0.4))),
         );
-        const yt = Math.floor(this.bb.y0);
-        for (let i = 0; i < 1 + this.bbWidth * 20; i++) {
-          const xo = (Entity.sharedRandom.nextFloat() * 2 - 1) * this.bbWidth;
-          const zo = (Entity.sharedRandom.nextFloat() * 2 - 1) * this.bbWidth;
+        const yt = f(Math.floor(this.bb.y0));
+        const count = f(1 + f(this.bbWidth * 20));
+        for (let i = 0; i < count; i++) {
+          const xo = f(f(f(Entity.sharedRandom.nextFloat() * 2) - 1) * this.bbWidth);
+          const zo = f(f(f(Entity.sharedRandom.nextFloat() * 2) - 1) * this.bbWidth);
           this.level.addParticle(
             ParticleType.bubble,
-            this.x + xo,
-            yt + 1,
-            this.z + zo,
+            f(this.x + xo),
+            f(yt + 1),
+            f(this.z + zo),
             this.xd,
-            this.yd - Entity.sharedRandom.nextFloat() * 0.2,
+            f(this.yd - f(Entity.sharedRandom.nextFloat() * f(0.2))),
             this.zd,
           );
         }
@@ -617,8 +623,8 @@ export abstract class Entity {
   }
   getBrightness(_a: number): number {
     const xTile = Mth.floor(this.x);
-    const hh = (this.bb.y1 - this.bb.y0) * 0.66;
-    const yTile = Mth.floor(this.y - this.heightOffset + hh);
+    const hh = f(f(this.bb.y1 - this.bb.y0) * f(0.66));
+    const yTile = Mth.floor(f(f(this.y - this.heightOffset) + hh));
     const zTile = Mth.floor(this.z);
     if (
       this.level.hasChunksAt(
@@ -770,16 +776,16 @@ export abstract class Entity {
     let yy = pos.getFloat(1);
     let zz = pos.getFloat(2);
 
-    const padding = this.bbWidth * 0.5 + 0.001;
-    xx = Mth.clamp(xx, padding, LevelConstants.LEVEL_WIDTH - padding);
-    zz = Mth.clamp(zz, padding, LevelConstants.LEVEL_DEPTH - padding);
+    const padding = f(f(this.bbWidth * f(0.5)) + f(0.001));
+    xx = Mth.clamp(xx, padding, f(f(LevelConstants.LEVEL_WIDTH) - padding));
+    zz = Mth.clamp(zz, padding, f(f(LevelConstants.LEVEL_DEPTH) - padding));
 
     this.xo = this.xOld = this.x = xx;
     this.yo = this.yOld = this.y = yy;
     this.zo = this.zOld = this.z = zz;
 
-    this.yRotO = this.yRot = fmod(rotation.getFloat(0), 360.0);
-    this.xRotO = this.xRot = fmod(rotation.getFloat(1), 360.0);
+    this.yRotO = this.yRot = f(fmod(rotation.getFloat(0), f(360)));
+    this.xRotO = this.xRot = f(fmod(rotation.getFloat(1), f(360)));
 
     this.fallDistance = tag.getFloat('FallDistance');
     this.onFire = tag.getShort('Fire');
@@ -813,7 +819,8 @@ export abstract class Entity {
       yOffs = b;
     }
 
-    const ie = new ItemEntityClass!(this.level, this.x, this.y + yOffs, this.z, itemInstance);
+    yOffs = f(yOffs);
+    const ie = new ItemEntityClass!(this.level, this.x, f(this.y + yOffs), this.z, itemInstance);
     ie.throwTime = 10;
     this.level.addEntity(ie);
     return ie;
@@ -869,16 +876,17 @@ export abstract class Entity {
 
   shouldRender(c: Vec3): boolean {
     if (this.invisible) return false;
-    const xd = this.x - c.x;
-    const yd = this.y - c.y;
-    const zd = this.z - c.z;
-    return this.shouldRenderAtSqrDistance(xd * xd + yd * yd + zd * zd);
+    const xd = f(this.x - c.x);
+    const yd = f(this.y - c.y);
+    const zd = f(this.z - c.z);
+    return this.shouldRenderAtSqrDistance(f(f(f(xd * xd) + f(yd * yd)) + f(zd * zd)));
   }
 
   shouldRenderAtSqrDistance(distance: number): boolean {
+    distance = f(distance);
     let size = this.bb.getSize();
-    size *= 64.0 * this.viewScale;
-    return distance < size * size;
+    size = f(size * f(64 * this.viewScale));
+    return distance < f(size * size);
   }
 
   // ---- 空实现 ----
@@ -901,24 +909,25 @@ export abstract class Entity {
       this.level.playSound(
         this,
         soundType.getStepSound(),
-        soundType.getVolume() * 0.25,
+        f(soundType.getVolume() * f(0.25)),
         soundType.getPitch(),
       ); // was * 0.15f
     } else if (!Tile.tiles[t]!.material.isLiquid()) {
       this.level.playSound(
         this,
         soundType.getStepSound(),
-        soundType.getVolume() * 0.25,
+        f(soundType.getVolume() * f(0.25)),
         soundType.getPitch(),
       );
     }
   }
   checkFallDamage(ya: number, onGround: boolean): void {
+    ya = f(ya);
     if (onGround) {
       if (this.fallDistance > 0) {
         if (this.isMob()) {
           const xt = Mth.floor(this.x);
-          const yt = Mth.floor(this.y - 0.2 - this.heightOffset);
+          const yt = Mth.floor(f(f(this.y - f(0.2)) - this.heightOffset));
           const zt = Mth.floor(this.z);
           let t = this.level.getTile(xt, yt, zt);
           if (t === 0 && this.level.getTile(xt, yt - 1, zt) === Tile.fence.id) {
@@ -932,7 +941,7 @@ export abstract class Entity {
         this.fallDistance = 0;
       }
     } else {
-      if (ya < 0) this.fallDistance -= ya;
+      if (ya < 0) this.fallDistance = f(this.fallDistance - ya);
     }
   }
 
@@ -953,18 +962,22 @@ export abstract class Entity {
   }
 
   moveRelative(xa: number, za: number, speed: number): void {
-    let dist = Math.sqrt(xa * xa + za * za);
-    if (dist < 0.01) return;
+    xa = f(xa);
+    za = f(za);
+    speed = f(speed);
+    let dist = f(Math.sqrt(f(f(xa * xa) + f(za * za))));
+    if (dist < f(0.01)) return;
     if (dist < 1) dist = 1;
-    dist = speed / dist;
-    xa *= dist;
-    za *= dist;
+    dist = f(speed / dist);
+    xa = f(xa * dist);
+    za = f(za * dist);
 
-    const sin_ = Math.sin((this.yRot * Mth.PI) / 180);
-    const cos_ = Math.cos((this.yRot * Mth.PI) / 180);
+    // `yRot * Mth::PI / 180` 是两个 float 步骤，(float)sin/cos 再舍入一次。
+    const sin_ = f(Math.sin(f(f(this.yRot * Mth.PI) / 180)));
+    const cos_ = f(Math.cos(f(f(this.yRot * Mth.PI) / 180)));
 
-    this.xd += xa * cos_ - za * sin_;
-    this.zd += za * cos_ + xa * sin_;
+    this.xd = f(this.xd + f(f(xa * cos_) - f(za * sin_)));
+    this.zd = f(this.zd + f(f(za * cos_) + f(xa * sin_)));
   }
 
   intersects(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): boolean {
