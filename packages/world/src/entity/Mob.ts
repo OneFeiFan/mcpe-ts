@@ -396,9 +396,9 @@ export abstract class Mob extends Entity {
 
   getVoicePitch(): number {
     if (this.isBaby()) {
-      return (this.random.nextFloat() - this.random.nextFloat()) * 0.2 + 1.5;
+      return f(f(f(this.random.nextFloat() - this.random.nextFloat()) * f(0.2)) + 1.5);
     }
-    return (this.random.nextFloat() - this.random.nextFloat()) * 0.2 + 1.0;
+    return f(f(f(this.random.nextFloat() - this.random.nextFloat()) * f(0.2)) + 1.0);
   }
 
   playAmbientSound(): void {
@@ -421,11 +421,11 @@ export abstract class Mob extends Entity {
     xRot: number,
     steps: number,
   ): void {
-    this.lx = x;
-    this.ly = y + this.heightOffset;
-    this.lz = z;
-    this.lyr = yRot;
-    this.lxr = xRot;
+    this.lx = f(x);
+    this.ly = f(y + this.heightOffset);
+    this.lz = f(z);
+    this.lyr = f(yRot);
+    this.lxr = f(xRot);
 
     this.lSteps = steps;
   }
@@ -465,16 +465,16 @@ export abstract class Mob extends Entity {
     }
 
     if (this.lSteps > 0) {
-      let xt = this.x + (this.lx - this.x) / this.lSteps;
-      let yt = this.y + (this.ly - this.y) / this.lSteps;
-      let zt = this.z + (this.lz - this.z) / this.lSteps;
+      let xt = f(this.x + f(f(this.lx - this.x) / this.lSteps));
+      let yt = f(this.y + f(f(this.ly - this.y) / this.lSteps));
+      let zt = f(this.z + f(f(this.lz - this.z) / this.lSteps));
 
-      let yrd = this.lyr - this.yRot;
-      while (yrd < -180) yrd += 360;
-      while (yrd >= 180) yrd -= 360;
+      let yrd = f(this.lyr - this.yRot);
+      while (yrd < -180) yrd = f(yrd + 360);
+      while (yrd >= 180) yrd = f(yrd - 360);
 
-      this.yRot += yrd / this.lSteps;
-      this.xRot += (this.lxr - this.xRot) / this.lSteps;
+      this.yRot = f(this.yRot + f(yrd / this.lSteps));
+      this.xRot = f(this.xRot + f(f(this.lxr - this.xRot) / this.lSteps));
 
       this.lSteps--;
       this.setPos(xt, yt, zt);
@@ -485,21 +485,21 @@ export abstract class Mob extends Entity {
 
     this.updateWalkAnim();
 
-    let xd = this.x - this.xo;
-    let zd = this.z - this.zo;
+    let xd = f(this.x - this.xo);
+    let zd = f(this.z - this.zo);
 
-    let sideDist = Mth.sqrt(xd * xd + zd * zd);
+    let sideDist = Mth.sqrt(f(f(xd * xd) + f(zd * zd)));
 
     let yBodyRotT = this.yBodyRot;
 
     let walkSpeed = 0;
     this.oRun = this.run;
     let tRun = 0;
-    if (sideDist <= 0.05) {
+    if (sideDist <= f(0.05)) {
     } else {
       tRun = 1;
-      walkSpeed = sideDist * 3;
-      yBodyRotT = Mth.atan2(zd, xd) * Mth.RADDEG - 90;
+      walkSpeed = f(sideDist * 3);
+      yBodyRotT = f(f(Mth.atan2(zd, xd) * Mth.RADDEG) - 90);
     }
     if (this.attackAnim > 0) {
       yBodyRotT = this.yRot;
@@ -507,36 +507,36 @@ export abstract class Mob extends Entity {
     if (!this.onGround) {
       tRun = 0;
     }
-    this.run = this.run + (tRun - this.run) * 0.3;
+    this.run = f(this.run + f(f(tRun - this.run) * f(0.3)));
 
-    let yBodyRotD = yBodyRotT - this.yBodyRot;
-    while (yBodyRotD < -180) yBodyRotD += 360;
-    while (yBodyRotD >= 180) yBodyRotD -= 360;
-    this.yBodyRot += yBodyRotD * 0.3;
+    let yBodyRotD = f(yBodyRotT - this.yBodyRot);
+    while (yBodyRotD < -180) yBodyRotD = f(yBodyRotD + 360);
+    while (yBodyRotD >= 180) yBodyRotD = f(yBodyRotD - 360);
+    this.yBodyRot = f(this.yBodyRot + f(yBodyRotD * f(0.3)));
 
-    let headDiff = this.yRot - this.yBodyRot;
-    while (headDiff < -180) headDiff += 360;
-    while (headDiff >= 180) headDiff -= 360;
+    let headDiff = f(this.yRot - this.yBodyRot);
+    while (headDiff < -180) headDiff = f(headDiff + 360);
+    while (headDiff >= 180) headDiff = f(headDiff - 360);
     let behind = headDiff < -90 || headDiff >= 90;
     if (headDiff < -75) headDiff = -75;
     if (headDiff >= 75) headDiff = +75;
-    this.yBodyRot = this.yRot - headDiff;
-    if (headDiff * headDiff > 50 * 50) {
-      this.yBodyRot += headDiff * 0.2;
+    this.yBodyRot = f(this.yRot - headDiff);
+    if (f(headDiff * headDiff) > 50 * 50) {
+      this.yBodyRot = f(this.yBodyRot + f(headDiff * f(0.2)));
     }
 
     if (behind) {
       walkSpeed *= -1;
     }
-    while (this.yRot - this.yRotO < -180) this.yRotO -= 360;
-    while (this.yRot - this.yRotO >= 180) this.yRotO += 360;
+    while (f(this.yRot - this.yRotO) < -180) this.yRotO = f(this.yRotO - 360);
+    while (f(this.yRot - this.yRotO) >= 180) this.yRotO = f(this.yRotO + 360);
 
-    while (this.yBodyRot - this.yBodyRotO < -180) this.yBodyRotO -= 360;
-    while (this.yBodyRot - this.yBodyRotO >= 180) this.yBodyRotO += 360;
+    while (f(this.yBodyRot - this.yBodyRotO) < -180) this.yBodyRotO = f(this.yBodyRotO - 360);
+    while (f(this.yBodyRot - this.yBodyRotO) >= 180) this.yBodyRotO = f(this.yBodyRotO + 360);
 
-    while (this.xRot - this.xRotO < -180) this.xRotO -= 360;
-    while (this.xRot - this.xRotO >= 180) this.xRotO += 360;
-    this.animStep += walkSpeed;
+    while (f(this.xRot - this.xRotO) < -180) this.xRotO = f(this.xRotO - 360);
+    while (f(this.xRot - this.xRotO) >= 180) this.xRotO = f(this.xRotO + 360);
+    this.animStep = f(this.animStep + walkSpeed);
 
     let dxCape = this.x - this.xCape;
     let dyCape = this.y - this.yCape;
@@ -578,14 +578,14 @@ export abstract class Mob extends Entity {
       if (this.airSupply === -20) {
         this.airSupply = 0;
         for (let i = 0; i < 8; i++) {
-          let xo = this.random.nextFloat() - this.random.nextFloat();
-          let yo = this.random.nextFloat() - this.random.nextFloat();
-          let zo = this.random.nextFloat() - this.random.nextFloat();
+          let xo = f(this.random.nextFloat() - this.random.nextFloat());
+          let yo = f(this.random.nextFloat() - this.random.nextFloat());
+          let zo = f(this.random.nextFloat() - this.random.nextFloat());
           this.level.addParticle(
             'bubble',
-            this.x + xo,
-            this.y + yo,
-            this.z + zo,
+            f(this.x + xo),
+            f(this.y + yo),
+            f(this.z + zo),
             this.xd,
             this.yd,
             this.zd,
@@ -608,17 +608,23 @@ export abstract class Mob extends Entity {
         this.beforeRemove();
         this.remove();
         for (let i = 0; i < 20; i++) {
-          let xa =
-            (2.0 * this.random.nextFloat() - 1.0) * (2.0 * this.random.nextFloat() - 1.0) * 0.02;
-          let ya =
-            (2.0 * this.random.nextFloat() - 1.0) * (2.0 * this.random.nextFloat() - 1.0) * 0.02;
-          let za =
-            (2.0 * this.random.nextFloat() - 1.0) * (2.0 * this.random.nextFloat() - 1.0) * 0.02;
+          let xa = f(
+            f(f(f(2 * this.random.nextFloat()) - 1) * f(f(2 * this.random.nextFloat()) - 1)) *
+              f(0.02),
+          );
+          let ya = f(
+            f(f(f(2 * this.random.nextFloat()) - 1) * f(f(2 * this.random.nextFloat()) - 1)) *
+              f(0.02),
+          );
+          let za = f(
+            f(f(f(2 * this.random.nextFloat()) - 1) * f(f(2 * this.random.nextFloat()) - 1)) *
+              f(0.02),
+          );
           this.level.addParticle(
             'explode',
-            this.x + this.random.nextFloat() * this.bbWidth * 2 - this.bbWidth,
-            this.y + this.random.nextFloat() * this.bbHeight,
-            this.z + this.random.nextFloat() * this.bbWidth * 2 - this.bbWidth,
+            f(f(this.x + f(f(this.random.nextFloat() * this.bbWidth) * 2)) - this.bbWidth),
+            f(this.y + f(this.random.nextFloat() * this.bbHeight)),
+            f(f(this.z + f(f(this.random.nextFloat() * this.bbWidth) * 2)) - this.bbWidth),
             xa,
             ya,
             za,
@@ -639,11 +645,11 @@ export abstract class Mob extends Entity {
       if (this.autoSendPosRot) {
         if (
           this.autoSendPosRot &&
-          (Math.abs(this.x - this.sentX) > 0.1 ||
-            Math.abs(this.y - this.sentY) > 0.05 ||
-            Math.abs(this.z - this.sentZ) > 0.1 ||
-            Math.abs(this.sentRotX - this.xRot) > 1 ||
-            Math.abs(this.sentRotY - this.yRot) > 1)
+          (Math.abs(f(this.x - this.sentX)) > f(0.1) ||
+            Math.abs(f(this.y - this.sentY)) > f(0.05) ||
+            Math.abs(f(this.z - this.sentZ)) > f(0.1) ||
+            Math.abs(f(this.sentRotX - this.xRot)) > 1 ||
+            Math.abs(f(this.sentRotY - this.yRot)) > 1)
         ) {
           // DEFERRED(Network): MoveEntityPacket_PosRot packet(this); level->raknetInstance->send(packet);
           this.sentX = this.x;
@@ -654,12 +660,12 @@ export abstract class Mob extends Entity {
         }
       }
 
-      let ddx = Math.abs(this.xd - this.sentXd);
-      let ddy = Math.abs(this.yd - this.sentYd);
-      let ddz = Math.abs(this.zd - this.sentZd);
-      let max = 0.02;
-      let diff = ddx * ddx + ddy * ddy + ddz * ddz;
-      if (diff > max * max || (diff > 0 && this.xd === 0 && this.yd === 0 && this.zd === 0)) {
+      let ddx = Math.abs(f(this.xd - this.sentXd));
+      let ddy = Math.abs(f(this.yd - this.sentYd));
+      let ddz = Math.abs(f(this.zd - this.sentZd));
+      let max = f(0.02);
+      let diff = f(f(f(ddx * ddx) + f(ddy * ddy)) + f(ddz * ddz));
+      if (diff > f(max * max) || (diff > 0 && this.xd === 0 && this.yd === 0 && this.zd === 0)) {
         this.sentXd = this.xd;
         this.sentYd = this.yd;
         this.sentZd = this.zd;
@@ -848,12 +854,12 @@ export abstract class Mob extends Entity {
 
   updateWalkAnim(): void {
     this.walkAnimSpeedO = this.walkAnimSpeed;
-    let xxd = this.x - this.xo;
-    let zzd = this.z - this.zo;
-    let wst = Mth.sqrt(xxd * xxd + zzd * zzd) * 4;
+    let xxd = f(this.x - this.xo);
+    let zzd = f(this.z - this.zo);
+    let wst = f(Mth.sqrt(f(f(xxd * xxd) + f(zzd * zzd))) * 4);
     if (wst > 1) wst = 1;
-    this.walkAnimSpeed += (wst - this.walkAnimSpeed) * 0.4;
-    this.walkAnimPos += this.walkAnimSpeed;
+    this.walkAnimSpeed = f(this.walkAnimSpeed + f(f(wst - this.walkAnimSpeed) * f(0.4)));
+    this.walkAnimPos = f(this.walkAnimPos + this.walkAnimSpeed);
   }
 
   aiStep(): void {
@@ -883,22 +889,22 @@ export abstract class Mob extends Entity {
 
     if (this.jumping) {
       if (inWater) {
-        this.yd += 0.04;
+        this.yd = f(this.yd + f(0.04));
       } else if (inLava) {
-        this.yd += 0.04;
+        this.yd = f(this.yd + f(0.04));
       } else if (this.onGround) {
         this.jumpFromGround();
       }
     }
 
-    this.xxa *= 0.98;
-    this.yya *= 0.98;
-    this.yRotA *= 0.9;
+    this.xxa = f(this.xxa * f(0.98));
+    this.yya = f(this.yya * f(0.98));
+    this.yRotA = f(this.yRotA * f(0.9));
 
     let normalSpeed = this.walkingSpeed;
     let normalAirControllSpeed = this.flyingSpeed;
-    this.walkingSpeed *= this.getWalkingSpeedModifier();
-    this.flyingSpeed *= this.getWalkingSpeedModifier();
+    this.walkingSpeed = f(this.walkingSpeed * this.getWalkingSpeedModifier());
+    this.flyingSpeed = f(this.flyingSpeed * this.getWalkingSpeedModifier());
     this.travel(this.xxa, this.yya);
     this.walkingSpeed = normalSpeed;
     this.flyingSpeed = normalAirControllSpeed;
@@ -1097,7 +1103,7 @@ export abstract class Mob extends Entity {
   }
 
   protected jumpFromGround(): void {
-    this.yd = 0.42;
+    this.yd = f(0.42);
   }
 
   protected updateAi(): void {

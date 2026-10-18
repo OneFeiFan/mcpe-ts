@@ -23,12 +23,54 @@ inline getter/setter（工作表第 1、2、33、34、40、41、66/67、87–101
 | `setxxa(float)` / `setyya(float)`           | **已修 W12**：形参先转 float（C++ 在调用边界就舍入）                                                                                                                                                                                                                                                                                                                                                                                         |
 | `getCapeX/Y/Z()`、`getCapePrevX/Y/Z()`      | 一致（C++ double 字段 → TS number）                                                                                                                                                                                                                                                                                                                                                                                                          |
 
-剩余 80 行（tick/baseTick、AI、travel、伤害、交互、渲染相关等）留给第 2–5 组。
+剩余 62 行（travel、伤害、交互、渲染相关等）留给第 3–5 组。
+
+# 第 2 组（W13：tick / baseTick / AI 调度）
+
+## 结论表
+
+| 函数                                 | 结论                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getVoicePitch()`                    | **已修 W13**：`(rand - rand) * 0.2f + 1.0f/1.5f` 按 float 分步舍入（含幼年体分支）                                                                                                                                                                                                                                                                                                      |
+| `getAmbientSoundInterval()`          | 一致（`8 * TicksPerSecond`）                                                                                                                                                                                                                                                                                                                                                            |
+| `playAmbientSound()`                 | 一致（NULL 时不播）                                                                                                                                                                                                                                                                                                                                                                     |
+| `baseTick()`                         | **已修 W13**：水下气泡的 `xo/yo/zo` 与三个坐标、死亡爆炸的 `xa/ya/za` 与粒子坐标、位置同步的 `0.1f/0.05f` 阈值、速度同步的 `max=0.02f` 与 `diff` 全部按 float 分步。其余（计时器、ONFIRE、环境音、hurt 调用顺序、`deathTime > 20`）一致                                                                                                                                                 |
+| `spawnAnim()`                        | 一致（C++ 函数体整体被注释，空实现）                                                                                                                                                                                                                                                                                                                                                    |
+| `lerpTo(...)`                        | **已修 W13**：`lx/ly/lz/lyr/lxr` 五个赋值先转 float（`ly` 的 `y + heightOffset` 也先算再舍入）                                                                                                                                                                                                                                                                                          |
+| `superTick()`                        | 一致（纯委托 `super.tick()`）                                                                                                                                                                                                                                                                                                                                                           |
+| `tick()`                             | **已修 W13**：lSteps 插值的 `xt/yt/zt`、`yrd` 归一化与 `yRot/xRot` 增量、`xd/zd`、`sideDist` 与 0.05f 比较、`walkSpeed = sideDist*3`、`yBodyRotT = atan2*RADDEG - 90`、`run` 的 0.3f、`yBodyRot(D)`、`headDiff` 及其平方比较/0.2f 修正、O 字段归一化的 float 差值、`animStep` 累加都逐步舍入；cape 的插值保持 double（C++ 是 double）。arrow 计数、`aiStep/updateWalkAnim` 调用顺序一致 |
+| `setSize(float, float)`              | 一致（纯委托，C++ 也是空壳）                                                                                                                                                                                                                                                                                                                                                            |
+| `getSoundVolume()`                   | 一致（返回 1）                                                                                                                                                                                                                                                                                                                                                                          |
+| `getAmbientSound()`                  | 一致（NULL）                                                                                                                                                                                                                                                                                                                                                                            |
+| `getHurtSound()` / `getDeathSound()` | 一致（都返回 `"random.hurt"`）                                                                                                                                                                                                                                                                                                                                                          |
+| `updateWalkAnim()`                   | **已修 W13**：`xxd/zzd`、`wst = sqrt(...)*4`、`walkAnimSpeed += (wst-speed)*0.4f`、`walkAnimPos += speed` 全部按 float                                                                                                                                                                                                                                                                  |
+| `aiStep()`                           | **已修 W13**：水中/岩浆的 `yd += 0.04f`、`xxa/yya *= 0.98f`、`yRotA *= 0.9f`、`walkingSpeed/flyingSpeed *= getWalkingSpeedModifier()` 按 float；AI 分派、travel 前后恢复、push 循环一致                                                                                                                                                                                                 |
+| `updateAi()`                         | 一致（G16-2 已按 float 修过，本轮复核无新增）                                                                                                                                                                                                                                                                                                                                           |
+| `newServerAiStep()`                  | 一致（checkDespawn/sensing/每 5 tick 选择器/navigation/controls 顺序与条件）                                                                                                                                                                                                                                                                                                            |
+| `isImmobile()`                       | 一致（`hasDied()`）                                                                                                                                                                                                                                                                                                                                                                     |
+| `jumpFromGround()`                   | **已修 W13**：`yd = 0.42f`                                                                                                                                                                                                                                                                                                                                                              |
+| `removeWhenFarAway()`                | 一致（true）                                                                                                                                                                                                                                                                                                                                                                            |
+| `getMaxHeadXRot()`                   | 一致（10）                                                                                                                                                                                                                                                                                                                                                                              |
+
+## W13 的测试
+
+`tests/unit/world/mob-audit-2.test.ts` 10 条，修复前 10 条全红：
+
+1. `tick` 的 lSteps 插值/朝向（隔离 baseTick/aiStep/updateWalkAnim，截获 `setPos/setRot` 实参）。
+2. `tick` 的 `run/animStep/yBodyRot`。
+3. `updateWalkAnim`。
+4. `aiStep` 的加速度、输入衰减、速度倍率（截获 travel 时的速度）。
+5. `lerpTo`。
+6. `jumpFromGround`。
+7. `getVoicePitch`（含幼年体）。
+8. `baseTick` 气泡坐标（假 Level 捕获 `addParticle`）。
+9. `baseTick` 死亡粒子坐标与初速。
+10. `baseTick` 位置同步阈值：`abs(x - sentX)` 恰好等于 `0.1f` 时不发送。
 
 ## 验证
 
-- `tests/unit/world/mob-audit.test.ts` 2 条，修复前全红（0.7 存成 double；构造期子类 `setPos`
-  被调用了 1 次）。
-- `pnpm check`：类型 ✓ 25.2s、测试 **131 文件 / 1399 条** ✓、台账 **153** ✓。
-- 台账 152 → 153：本轮补了 `OMIT(Mob): ~Mob()`。
+- `pnpm check`：类型 ✓、测试 **132 文件 / 1409 条** ✓、台账 **153** ✓。
+- 台账无变化：本组没有新增/删除 DEFERRED/OMIT/ADAPTED 注释。
+- 首次全量跑 `tests/unit/client/tallgrass-offset.test.ts` 超时（既有的并发抖动，单跑约 2s），
+  重跑通过；未改该测试。
 - prettier ✓。
