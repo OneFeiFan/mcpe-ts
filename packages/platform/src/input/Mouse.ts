@@ -1,3 +1,4 @@
+// 1:1 移植自 src/platform/input/Mouse.h 与 Mouse.cpp
 //
 // MouseAction
 //
@@ -28,10 +29,11 @@ export class MouseAction {
     dy: number = 0,
     pointerId: number = 0,
   ) {
-    this.action = actionButtonId;
-    this.data = buttonData;
-    this.x = x;
-    this.y = y;
+    // C++ 的字段类型：action / data / pointerId 是 char，x / y / dx / dy 是 short（审核：按类型截断）
+    this.action = (actionButtonId << 24) >> 24;
+    this.data = (buttonData << 24) >> 24;
+    this.x = (x << 16) >> 16;
+    this.y = (y << 16) >> 16;
 
     // 模拟 C++ 构造函数的重载逻辑
     // 如果传入了 5 个参数，代表调用的是 MouseAction(action, data, x, y, pointerId)
@@ -69,7 +71,8 @@ export class MouseDevice {
 
   // 使用 Uint8Array 替代 char _buttonStates[MAX_NUM_BUTTONS]
   // 默认初始化为 0，省去了 C++ 构造函数中的 for 循环初始化
-  private _buttonStates: Uint8Array = new Uint8Array(MouseDevice.MAX_NUM_BUTTONS);
+  /** C++：char _buttonStates[4]（有符号；滚轮的 buttonData 可能是负数）。审核：以前是 Uint8Array，-1 会变成 255 */
+  private _buttonStates: Int8Array = new Int8Array(MouseDevice.MAX_NUM_BUTTONS);
 
   private _inputs: MouseAction[] = [];
   private _firstMovementType: number;

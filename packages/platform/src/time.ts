@@ -5,12 +5,19 @@ import { LOGI } from './log.js';
 // Windows 用 QueryPerformanceCounter。这里用单调的 performance.now()，同样以模块加载时刻为 0。
 const T0 = performance.now();
 
+const f = Math.fround;
+
+/**
+ * C++ 返回 float（Linux 版：`(float)(now.tv_sec - _t_start) + now.tv_usec / 1000000.0f`）。
+ * 审核：以前返回 double。改成 float 后，长时间运行时的计时粒度与原版相同（运行 1 小时后约 0.24 毫秒，1 天后约 8 毫秒）。
+ */
 export function getTimeS(): number {
-  return (performance.now() - T0) / 1000.0;
+  return f((performance.now() - T0) / 1000.0);
 }
 
+/** C++：(int)(getTimeS() * 1000.0f)——float 乘法再截断 */
 export function getTimeMs(): number {
-  return Math.trunc(getTimeS() * 1000.0);
+  return Math.trunc(f(getTimeS() * 1000.0));
 }
 
 /// Returns a platform dependent time in seconds
@@ -49,9 +56,9 @@ export class Stopwatch {
   /** Returns the total number of seconds and stops the clock */
   public stop(): number {
     if (this._st === -1) return 0;
-    this._last = getTimeS() - this._st;
+    this._last = f(getTimeS() - this._st);
     if (this._last > this._max) this._max = this._last;
-    this._tt += this._last;
+    this._tt = f(this._tt + this._last);
     this._st = -1;
     ++this._count;
     return this._tt;
@@ -61,9 +68,9 @@ export class Stopwatch {
   public stopContinue(): number {
     if (this._st === -1) return 0;
     const now = getTimeS();
-    this._last = now - this._st;
+    this._last = f(now - this._st);
     if (this._last > this._max) this._max = this._last;
-    this._tt += this._last;
+    this._tt = f(this._tt + this._last);
     this._st = now;
     ++this._count;
     return this._tt;
@@ -155,9 +162,10 @@ export class StopwatchHandler {
     this._map.clear();
   }
 
+  /** C++ 的 std::map 按键（字节序）有序遍历；JS Map 是插入顺序，这里先排序（审核） */
   public print(): void {
-    for (const [name, sw] of this._map) {
-      sw.print(name);
+    for (const name of [...this._map.keys()].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))) {
+      this._map.get(name)!.print(name);
     }
   }
 
@@ -172,7 +180,7 @@ export class StopwatchHandler {
 export class StopwatchNLast extends Stopwatch {
   private readonly n: number;
   private k: number;
-  private t: Float64Array; // 使用 TypedArray 提升内存和计算效率
+  private t: Float32Array; // C++：float* t
   private sum: number;
 
   public constructor(numMeasurements: number) {
@@ -180,7 +188,7 @@ export class StopwatchNLast extends Stopwatch {
     this.n = numMeasurements;
     this.k = 0;
     this.sum = 0;
-    this.t = new Float64Array(this.n);
+    this.t = new Float32Array(this.n);
   }
 
   public override stop(): number {
@@ -192,7 +200,7 @@ export class StopwatchNLast extends Stopwatch {
     this.t[this.k] = curr;
     if (++this.k >= this.n) this.k = 0;
 
-    this.sum += curr - toDelete;
+    this.sum = f(this.sum + f(curr - toDelete));
 
     return total;
   }

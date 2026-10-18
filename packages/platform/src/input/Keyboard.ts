@@ -84,7 +84,9 @@ export class Keyboard {
     this._textIndex = -1;
   }
 
+  /** C++ 的 keyCode 是 unsigned char：超过 255 的值按低 8 位存（审核） */
   public static feed(keyCode: number, state: number): void {
+    keyCode &= 0xff;
     this._inputs.push(new KeyboardAction(keyCode, state));
     this._states[keyCode] = state;
   }

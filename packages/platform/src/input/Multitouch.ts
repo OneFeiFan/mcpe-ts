@@ -1,4 +1,5 @@
-import { MouseAction, MouseDevice } from './Mouse'; // 请根据实际路径调整
+// 1:1 移植自 src/platform/input/Multitouch.h 与 Multitouch.cpp
+import { MouseAction, MouseDevice } from './Mouse';
 
 // 对应 C++ 中的 typedef MouseDevice TouchPointer;
 export type TouchPointer = MouseDevice;

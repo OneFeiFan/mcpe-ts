@@ -1,4 +1,5 @@
 // 1:1 移植自 src/nbt/FloatTag.h
+import { formatG } from '@mcpe/util';
 import { Tag, TAG_Float } from './Tag';
 import type { IDataInput, IDataOutput } from '@mcpe/util';
 
@@ -24,8 +25,8 @@ export class FloatTag extends Tag {
   }
 
   toString(): string {
-    // 与 DoubleTag 相同，若仅用于调试，用 String(this.data) 即可
-    return String(this.data);
+    // C++：ss << data（默认 6 位有效数字，%g）。审核：以前是 String(data)，会打印出 float 的全部 double 位数
+    return formatG(this.data);
   }
 
   copy(): Tag {
