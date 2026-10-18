@@ -141,11 +141,11 @@ export abstract class Mob extends Entity {
   }
 
   setxxa(xxa: number): void {
-    this.xxa = xxa;
+    this.xxa = f(xxa);
   }
 
   setyya(yya: number): void {
-    this.yya = yya;
+    this.yya = f(yya);
   }
 
   getCapeX(): number {
@@ -186,9 +186,9 @@ export abstract class Mob extends Entity {
     this.lookingAtId = 0;
     this.jumping = false;
     this.defaultLookAngle = 0.0;
-    this.runSpeed = 0.7;
-    this.walkingSpeed = 0.1;
-    this.flyingSpeed = 0.02;
+    this.runSpeed = f(0.7);
+    this.walkingSpeed = f(0.1);
+    this.flyingSpeed = f(0.02);
     this.run = 0;
     this.oRun = 0;
     this.animStep = 0;
@@ -236,12 +236,14 @@ export abstract class Mob extends Entity {
     this.blocksBuilding = true;
     this.ambientSoundTime = -level.random.nextInt(100);
 
-    this.rotA = (Mth.random() + 1) * 0.01;
-    this.setPos(this.x, this.y, this.z);
-    this.timeOffs = Mth.random() * 12398;
-    this.yRot = Mth.random() * Mth.PI * 2;
+    // C++：`rotA = (float)(Mth::random() + 1) * 0.01f;` 先舍入和、再舍入乘。
+    this.rotA = f(f(Mth.random() + 1) * f(0.01));
+    // C++ 构造期间调用虚函数 setPos 只会到 Mob 继承的 Entity 版本（子类重写不参与）。
+    Entity.prototype.setPos.call(this, this.x, this.y, this.z);
+    this.timeOffs = f(f(Mth.random()) * 12398);
+    this.yRot = f(f(Mth.random() * Mth.PI) * 2);
 
-    this.footSize = 0.5;
+    this.footSize = f(0.5);
 
     this.xCape = this.x;
     this.yCape = this.y;
@@ -252,6 +254,7 @@ export abstract class Mob extends Entity {
     this.zc = this.zCape;
   }
 
+  // OMIT(Mob): ~Mob()  Mob.cpp:97 —— 函数体只有一行被注释掉的 LOGI；JS 由 GC 接管。
   override _init(): void {
     this.yBodyRot = 0;
     this.yBodyRotO = 0;
