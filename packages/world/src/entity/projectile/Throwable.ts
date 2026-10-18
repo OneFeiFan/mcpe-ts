@@ -128,10 +128,14 @@ export abstract class Throwable extends Entity {
 
   /** C++ `void Throwable::shoot(float xd, float yd, float zd, float pow, float uncertainty)` */
   shoot(xd_: number, yd_: number, zd_: number, pow: number, uncertainty: number): void {
-    let xd = xd_;
-    let yd = yd_;
-    let zd = zd_;
-    const dist = f(Mth.sqrt(f(f(xd * xd) + f(f(yd * yd) + f(zd * zd)))));
+    // 审核：形参是 float，先转 float；C++ 的加法与乘法从左到右结合（xd*xd + yd*yd 先算），
+    // 以前写成 xd*xd + (yd*yd + zd*zd)、g * (0.0075 * uncertainty)，float 下结果可能差末位
+    let xd = f(xd_);
+    let yd = f(yd_);
+    let zd = f(zd_);
+    pow = f(pow);
+    uncertainty = f(uncertainty);
+    const dist = f(Mth.sqrt(f(f(f(xd * xd) + f(yd * yd)) + f(zd * zd))));
     if (dist >= f(0.001)) {
       xd = f(xd / dist);
       yd = f(yd / dist);
@@ -139,9 +143,9 @@ export abstract class Throwable extends Entity {
     } else {
       xd = yd = zd = 0;
     }
-    xd = f(xd + f(f(Entity.sharedRandom.nextGaussian()) * f(f(0.0075) * uncertainty)));
-    yd = f(yd + f(f(Entity.sharedRandom.nextGaussian()) * f(f(0.0075) * uncertainty)));
-    zd = f(zd + f(f(Entity.sharedRandom.nextGaussian()) * f(f(0.0075) * uncertainty)));
+    xd = f(xd + f(f(f(Entity.sharedRandom.nextGaussian()) * f(0.0075)) * uncertainty));
+    yd = f(yd + f(f(f(Entity.sharedRandom.nextGaussian()) * f(0.0075)) * uncertainty));
+    zd = f(zd + f(f(f(Entity.sharedRandom.nextGaussian()) * f(0.0075)) * uncertainty));
     xd = f(xd * pow);
     yd = f(yd * pow);
     zd = f(zd * pow);

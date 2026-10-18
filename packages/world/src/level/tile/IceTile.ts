@@ -10,7 +10,7 @@ export class IceTile extends Tile {
   /** C++ IceTile::IceTile(int id, int tex) */
   constructor(id: number, tex: number) {
     super(id, tex, Material.ice);
-    this.friction = 0.98;
+    this.friction = Math.fround(0.98); // C++：friction = 0.98f
     this.setTicking(true);
   }
 

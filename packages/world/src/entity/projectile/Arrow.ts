@@ -123,7 +123,7 @@ export class Arrow extends Entity {
     let xd = xd_;
     let yd = yd_;
     let zd = zd_;
-    const dist = f(Mth.sqrt(f(f(xd * xd) + f(f(yd * yd) + f(zd * zd)))));
+    const dist = f(Mth.sqrt(f(f(f(xd * xd) + f(yd * yd)) + f(zd * zd))));
     xd = f(xd / dist);
     yd = f(yd / dist);
     zd = f(zd / dist);
@@ -235,7 +235,7 @@ export class Arrow extends Entity {
     if (res.isHit()) {
       if (res.type === HitResultType.ENTITY) {
         const pow = f(
-          Mth.sqrt(f(f(this.xd * this.xd) + f(f(this.yd * this.yd) + f(this.zd * this.zd)))),
+          Mth.sqrt(f(f(f(this.xd * this.xd) + f(this.yd * this.yd)) + f(this.zd * this.zd))),
         );
         let dmg = Math.trunc(Math.ceil(f(pow * Arrow.ARROW_BASE_DAMAGE)));
         if (this.critArrow) dmg += Entity.sharedRandom.nextInt(Math.trunc(dmg / 2) + 2);
@@ -268,7 +268,7 @@ export class Arrow extends Entity {
         this.yd = f(res.pos.y - this.y);
         this.zd = f(res.pos.z - this.z);
         const dd = f(
-          Mth.sqrt(f(f(this.xd * this.xd) + f(f(this.yd * this.yd) + f(this.zd * this.zd)))),
+          Mth.sqrt(f(f(f(this.xd * this.xd) + f(this.yd * this.yd)) + f(this.zd * this.zd))),
         );
         this.x = f(this.x - f(f(this.xd / dd) * f(0.05)));
         this.y = f(this.y - f(f(this.yd / dd) * f(0.05)));

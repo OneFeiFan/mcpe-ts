@@ -195,7 +195,7 @@ export abstract class HangingEntity extends Entity {
     if (
       !this.level.isClientSide &&
       !this.removed &&
-      f(f(xa * xa) + f(f(ya * ya) + f(za * za))) > 0
+      f(f(f(xa * xa) + f(ya * ya)) + f(za * za)) > 0
     ) {
       this.dropItem();
       this.remove();
@@ -214,7 +214,7 @@ export abstract class HangingEntity extends Entity {
     if (
       !this.level.isClientSide &&
       !this.removed &&
-      f(f(xa * xa) + f(f(ya * ya) + f(za * za))) > 0
+      f(f(f(xa * xa) + f(ya * ya)) + f(za * za)) > 0
     ) {
       this.dropItem();
       this.remove();

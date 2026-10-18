@@ -10,7 +10,9 @@ import { Tile } from '../level/tile/Tile';
 import { EntityRendererId } from './EntityRendererId';
 import { SharedConstants } from '@mcpe/core';
 import { CompoundTag, ListTagFloatAdder } from '@mcpe/nbt';
-import { Random, Mth } from '@mcpe/util';
+import { Random, Mth, f2i } from '@mcpe/util';
+
+const f = Math.fround;
 import type { Player } from './player/Player';
 import { LevelConstants } from '../level/LevelConstants';
 import { LiquidTile } from '../level/tile/LiquidTile';
@@ -270,12 +272,20 @@ export abstract class Entity {
   // ---- move（核心物理）----
 
   /** C++ Entity::move(float, float, float) */
+  /**
+   * C++ `void Entity::move(float xa, float ya, float za)`。2026-10 审核后按 float 逐步运算（形参先转 float、每步 f()），
+   * 并修正潜行分支：C++ 在三个 while 循环里都会把 xaOrg / zaOrg 更新为收缩后的值（以前的注释说“C++ 没有重新赋值”是读错了），
+   * 漏掉这一步会让潜行走到方块边缘时被误判为水平碰撞、水平速度被清零。
+   */
   move(xa: number, ya: number, za: number): void {
+    xa = f(xa);
+    ya = f(ya);
+    za = f(za);
     if (this.noPhysics) {
       this.bb.move(xa, ya, za);
-      this.x = (this.bb.x0 + this.bb.x1) / 2.0;
-      this.y = this.bb.y0 + this.heightOffset - this.ySlideOffset;
-      this.z = (this.bb.z0 + this.bb.z1) / 2.0;
+      this.x = f(f(this.bb.x0 + this.bb.x1) / 2.0);
+      this.y = f(f(this.bb.y0 + this.heightOffset) - this.ySlideOffset);
+      this.z = f(f(this.bb.z0 + this.bb.z1) / 2.0);
       return;
     }
 
@@ -284,32 +294,34 @@ export abstract class Entity {
 
     if (this.isStuckInWeb) {
       this.isStuckInWeb = false;
-      xa *= 0.25;
-      ya *= 0.05;
-      za *= 0.25;
+      xa = f(xa * f(0.25));
+      ya = f(ya * f(0.05));
+      za = f(za * f(0.25));
       this.xd = 0;
       this.yd = 0;
       this.zd = 0;
     }
 
-    const xaOrg = xa;
+    let xaOrg = xa;
     const yaOrg = ya;
-    const zaOrg = za;
+    let zaOrg = za;
 
     const bbOrg = this.bb.copy();
     const sneaking = this.onGround && this.isSneaking();
 
     if (sneaking) {
-      const d = 0.05;
+      const d = f(0.05);
       while (xa !== 0 && this.level.getCubes(this, this.bb.cloneMove(xa, -1.0, 0)).length === 0) {
         if (xa < d && xa >= -d) xa = 0;
-        else if (xa > 0) xa -= d;
-        else xa += d;
+        else if (xa > 0) xa = f(xa - d);
+        else xa = f(xa + d);
+        xaOrg = xa;
       }
       while (za !== 0 && this.level.getCubes(this, this.bb.cloneMove(0, -1.0, za)).length === 0) {
         if (za < d && za >= -d) za = 0;
-        else if (za > 0) za -= d;
-        else za += d;
+        else if (za > 0) za = f(za - d);
+        else za = f(za + d);
+        zaOrg = za;
       }
       while (
         xa !== 0 &&
@@ -317,91 +329,82 @@ export abstract class Entity {
         this.level.getCubes(this, this.bb.cloneMove(xa, -1.0, za)).length === 0
       ) {
         if (xa < d && xa >= -d) xa = 0;
-        else if (xa > 0) xa -= d;
-        else xa += d;
+        else if (xa > 0) xa = f(xa - d);
+        else xa = f(xa + d);
         if (za < d && za >= -d) za = 0;
-        else if (za > 0) za -= d;
-        else za += d;
+        else if (za > 0) za = f(za - d);
+        else za = f(za + d);
+        xaOrg = xa;
+        zaOrg = za;
       }
     }
 
-    // 注意：原始 C++ 这里有一个 bug，xa/za 被潜行逻辑改了，但 xaOrg/zaOrg 没有被重新赋值
-    // 保守复刻：xaOrg/zaOrg 保持进入潜行逻辑前的值
     let aABBs = this.level.getCubes(this, this.bb.expand(xa, ya, za));
 
-    // Y 先
     for (let i = 0; i < aABBs.length; i++) ya = aABBs[i]!.clipYCollide(this.bb, ya);
     this.bb.move(0, ya, 0);
-
     if (!this.slide && yaOrg !== ya) {
       xa = ya = za = 0;
     }
 
     const og = this.onGround || (yaOrg !== ya && yaOrg < 0);
 
-    // X 次
     for (let i = 0; i < aABBs.length; i++) xa = aABBs[i]!.clipXCollide(this.bb, xa);
     this.bb.move(xa, 0, 0);
-
     if (!this.slide && xaOrg !== xa) {
       xa = ya = za = 0;
     }
 
-    // Z 后
     for (let i = 0; i < aABBs.length; i++) za = aABBs[i]!.clipZCollide(this.bb, za);
     this.bb.move(0, 0, za);
-
     if (!this.slide && zaOrg !== za) {
       xa = ya = za = 0;
     }
 
-    if (this.footSize > 0 && og && this.ySlideOffset < 0.05 && (xaOrg !== xa || zaOrg !== za)) {
+    if (this.footSize > 0 && og && this.ySlideOffset < f(0.05) && (xaOrg !== xa || zaOrg !== za)) {
       const xaN = xa;
       const yaN = ya;
       const zaN = za;
 
       xa = xaOrg;
-      ya = this.footSize;
+      ya = f(this.footSize);
       za = zaOrg;
 
       const normal = this.bb.copy();
-      this.bb.set(bbOrg.x0, bbOrg.y0, bbOrg.z0, bbOrg.x1, bbOrg.y1, bbOrg.z1);
+      this.bb.setFrom(bbOrg);
       aABBs = this.level.getCubes(this, this.bb.expand(xa, ya, za));
 
       for (let i = 0; i < aABBs.length; i++) ya = aABBs[i]!.clipYCollide(this.bb, ya);
       this.bb.move(0, ya, 0);
-
       if (!this.slide && yaOrg !== ya) {
         xa = ya = za = 0;
       }
 
       for (let i = 0; i < aABBs.length; i++) xa = aABBs[i]!.clipXCollide(this.bb, xa);
       this.bb.move(xa, 0, 0);
-
       if (!this.slide && xaOrg !== xa) {
         xa = ya = za = 0;
       }
 
       for (let i = 0; i < aABBs.length; i++) za = aABBs[i]!.clipZCollide(this.bb, za);
       this.bb.move(0, 0, za);
-
       if (!this.slide && zaOrg !== za) {
         xa = ya = za = 0;
       }
 
-      if (xaN * xaN + zaN * zaN >= xa * xa + za * za) {
+      if (f(f(xaN * xaN) + f(zaN * zaN)) >= f(f(xa * xa) + f(za * za))) {
         xa = xaN;
         ya = yaN;
         za = zaN;
-        this.bb.set(normal.x0, normal.y0, normal.z0, normal.x1, normal.y1, normal.z1);
+        this.bb.setFrom(normal);
       } else {
-        this.ySlideOffset += 0.5;
+        this.ySlideOffset = f(this.ySlideOffset + f(0.5));
       }
     }
 
-    this.x = (this.bb.x0 + this.bb.x1) / 2.0;
-    this.y = this.bb.y0 + this.heightOffset - this.ySlideOffset;
-    this.z = (this.bb.z0 + this.bb.z1) / 2.0;
+    this.x = f(f(this.bb.x0 + this.bb.x1) / 2.0);
+    this.y = f(f(this.bb.y0 + this.heightOffset) - this.ySlideOffset);
+    this.z = f(f(this.bb.z0 + this.bb.z1) / 2.0);
 
     this.horizontalCollision = xaOrg !== xa || zaOrg !== za;
     this.verticalCollision = yaOrg !== ya;
@@ -413,13 +416,13 @@ export abstract class Entity {
     if (yaOrg !== ya) this.yd = 0;
     if (zaOrg !== za) this.zd = 0;
 
-    const xm = this.x - xo;
-    const zm = this.z - zo;
+    const xm = f(this.x - xo);
+    const zm = f(this.z - zo);
 
     if (this.makeStepSound && !sneaking) {
-      this.walkDist += Mth.sqrt(xm * xm + zm * zm) * 0.6;
+      this.walkDist = f(this.walkDist + f(Mth.sqrt(f(f(xm * xm) + f(zm * zm))) * f(0.6)));
       const xt = Mth.floor(this.x);
-      const yt = Mth.floor(this.y - 0.2 - this.heightOffset);
+      const yt = Mth.floor(f(f(this.y - f(0.2)) - this.heightOffset));
       const zt = Mth.floor(this.z);
 
       let t = this.level.getTile(xt, yt, zt);
@@ -431,7 +434,7 @@ export abstract class Entity {
       }
 
       if (this.walkDist > this.nextStep && t > 0) {
-        this.nextStep = Math.floor(this.walkDist) + 1;
+        this.nextStep = f2i(this.walkDist) + 1;
         this.playStepSound(xt, yt, zt, t);
       }
     }
@@ -456,7 +459,7 @@ export abstract class Entity {
       }
     }
 
-    this.ySlideOffset *= 0.4;
+    this.ySlideOffset = f(this.ySlideOffset * f(0.4));
 
     const water = this.isInWater();
     if (this.level.containsFireTile(this.bb)) {

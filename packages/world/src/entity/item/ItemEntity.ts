@@ -11,6 +11,7 @@ import { Mth } from '@mcpe/util';
 import { EntityTypes } from '../EntityTypes';
 import { EntityRendererId } from '../EntityRendererId';
 
+const f = Math.fround;
 export class ItemEntity extends Entity {
   public static readonly LIFETIME: number = 5 * 60 * SharedConstants.TicksPerSecond;
   public item: ItemInstance;
@@ -67,41 +68,46 @@ export class ItemEntity extends Entity {
     this.yo = this.y;
     this.zo = this.z;
 
-    this.yd -= 0.04;
+    // 速度是 float（审核：以前按 double 算，与 C++ 差末位；G12-2 黄金样本现在逐位一致）
+    this.yd = f(this.yd - f(0.04));
 
     const fx = Mth.floor(this.x);
     const fy = Mth.floor(this.y);
     const fz = Mth.floor(this.z);
     if (this.level.getMaterial(fx, fy, fz) === Material.lava) {
-      this.yd = 0.2;
-      this.xd = (ItemEntity.sharedRandom.nextFloat() - ItemEntity.sharedRandom.nextFloat()) * 0.2;
-      this.zd = (ItemEntity.sharedRandom.nextFloat() - ItemEntity.sharedRandom.nextFloat()) * 0.2;
+      this.yd = f(0.2);
+      this.xd = f(
+        f(ItemEntity.sharedRandom.nextFloat() - ItemEntity.sharedRandom.nextFloat()) * f(0.2),
+      );
+      this.zd = f(
+        f(ItemEntity.sharedRandom.nextFloat() - ItemEntity.sharedRandom.nextFloat()) * f(0.2),
+      );
       this.level.playSound(
         this,
         'random.fizz',
         0.4,
-        2.0 + ItemEntity.sharedRandom.nextFloat() * 0.4,
+        f(2.0 + f(ItemEntity.sharedRandom.nextFloat() * f(0.4))),
       );
     }
 
     this.checkInTile(this.x, this.y, this.z);
     this.move(this.xd, this.yd, this.zd);
 
-    let friction = 0.98;
+    let friction = f(0.98);
     if (this.onGround) {
-      friction = 0.6 * 0.98;
+      friction = f(f(0.6) * f(0.98));
       const t = this.level.getTile(Mth.floor(this.x), Mth.floor(this.bb.y0) - 1, Mth.floor(this.z));
       if (t > 0) {
-        friction = Tile.tiles[t]!.friction * 0.98;
+        friction = f(Tile.tiles[t]!.friction * f(0.98));
       }
     }
 
-    this.xd *= friction;
-    this.yd *= 0.98;
-    this.zd *= friction;
+    this.xd = f(this.xd * friction);
+    this.yd = f(this.yd * f(0.98));
+    this.zd = f(this.zd * friction);
 
     if (this.onGround) {
-      this.yd *= -0.5;
+      this.yd = f(this.yd * -0.5);
     }
 
     this.tickCount++;

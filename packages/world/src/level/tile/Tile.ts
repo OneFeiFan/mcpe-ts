@@ -1008,7 +1008,7 @@ export class Tile {
   soundType: SoundType = Tile.SOUND_NORMAL;
   gravity = 1.0;
   readonly material: Material;
-  friction = 0.6;
+  friction = Math.fround(0.6); // C++：float friction = 0.6f（审核：float 字段）
   /** C++ 构造函数没有初始化这两个字段（未定义值）；这里取 0 */
   destroySpeed = 0;
   explosionResistance = 0;

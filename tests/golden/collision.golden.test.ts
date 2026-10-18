@@ -60,6 +60,11 @@ describe('G12-2 碰撞与运动轨迹', () => {
             `${c.name} 第 ${t} tick 的第 ${i} 个量（${v} 对 ${want[i]}）`,
           ).toBeLessThan(1e-4),
         );
+        got.forEach((v, i) =>
+          expect(Math.fround(v), `${c.name} 第 ${t} tick 的第 ${i} 个量（逐位）`).toBe(
+            Math.fround(want[i]!),
+          ),
+        );
         expect(
           [e.onGround ? 1 : 0, e.horizontalCollision ? 1 : 0],
           `${c.name} 第 ${t} tick 的标志`,
