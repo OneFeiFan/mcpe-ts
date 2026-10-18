@@ -11,6 +11,7 @@ Claude Code 每次启动都会读这个文件。**先读完它，再动手。**
   `D:/Work/mcpe-reimplementation/reference/minecraft-pe`，已写进 `.claude/settings.json` 的 `env`，不用手动设。
 - 移植规则：`docs/移植规范.md`（R1–R14、数值三档、台账标记、R10 重载命名、原版里容易被当成 bug 的事实）。
 - 当前进度与还没做的：`docs/状态与路线.md`。一次只做一个明确的小步骤。
+- **全量审核（进行中）**：严格按 `docs/全量审核方案.md` 执行，进度见 `docs/审核记录/待审清单.md`，单个文件用 `/audit-file <TS 文件>`。
 - 验证方法：`docs/验证方法.md`；实际踩过的坑（带来龙去脉）：`docs/经验教训.md`；里程碑与关键决定：`docs/历史.md`。
 
 ## 必须遵守（违反会被钩子拦下）
