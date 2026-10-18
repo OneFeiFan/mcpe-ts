@@ -44,11 +44,13 @@ export abstract class HangingEntity extends Entity {
   constructor(level: Level, xTile: number, yTile: number, zTile: number, dir: number);
   constructor(level: Level, xTile?: number, yTile?: number, zTile?: number, _dir?: number) {
     super(level);
-    // C++ 的初始化列表只存了 xTile/yTile/zTile；见文件头第 1 条，dir 随后被 init() 覆盖
+    // C++ 的初始化列表只存了 xTile/yTile/zTile；见文件头第 1 条，dir 随后被 init() 覆盖。
+    // ADAPTED(Cpp)：单参构造里这三个成员在 C++ 是未初始化的（UB），TS 取 0。
     this.xTile = xTile ?? 0;
     this.yTile = yTile ?? 0;
     this.zTile = zTile ?? 0;
-    this.init();
+    // C++ 的 init() 不是 virtual：构造期间的调用只到 HangingEntity 的版本。
+    HangingEntity.prototype.init.call(this);
   }
 
   /** C++ `void HangingEntity::setPosition(int x, int y, int z)` —— 注意不是 Entity 的 setPos */
@@ -69,13 +71,13 @@ export abstract class HangingEntity extends Entity {
   /** C++ `void HangingEntity::setDir(int dir)` */
   setDir(dir: number): void {
     this.dir = dir;
-    this.yRotO = this.yRot = dir * 90;
+    this.yRotO = this.yRot = f(dir * 90);
     let w = this.getWidth();
     let h = this.getHeight();
     let d = this.getWidth();
     if (dir === Direction.NORTH || dir === Direction.SOUTH) {
       d = f(2.0);
-      this.yRot = this.yRotO = Direction.DIRECTION_OPPOSITE[dir]! * 90;
+      this.yRot = this.yRotO = f(Direction.DIRECTION_OPPOSITE[dir]! * 90);
     } else {
       w = f(2.0);
     }
@@ -192,6 +194,9 @@ export abstract class HangingEntity extends Entity {
 
   /** C++ `void HangingEntity::move(float, float, float)` */
   override move(xa: number, ya: number, za: number): void {
+    xa = f(xa);
+    ya = f(ya);
+    za = f(za);
     if (
       !this.level.isClientSide &&
       !this.removed &&
@@ -206,11 +211,17 @@ export abstract class HangingEntity extends Entity {
   override push(e: Entity): void;
   override push(xa: number, ya: number, za: number): void;
   override push(a: number | Entity, b?: number, c?: number): void {
-    // C++ 只重写了三参那个；一参的 `push(Entity*)` 走不到这里（基类那两个重载在 JS 里是一条原型链）。
-    // 两个重载在 Entity 里本来是分开的（R10 情形 B），这里按同一套分派写。
-    const xa = typeof a === 'number' ? a : 0;
-    const ya = typeof a === 'number' ? b! : 0;
-    const za = typeof a === 'number' ? c! : 0;
+    // C++ 只重写了三参那个；一参的 push(Entity*) 仍是 Entity 的虚函数实现
+    // （它内部会再虚调用到三参 push，于是挂件照样会掉落）。
+    if (typeof a !== 'number') {
+      // 取 Entity 的一参重载（重载集的 Function.call 推断会选到三参那个）。
+      const basePush: (this: Entity, e: Entity) => void = Entity.prototype.push;
+      basePush.call(this, a);
+      return;
+    }
+    const xa = f(a);
+    const ya = f(b!);
+    const za = f(c!);
     if (
       !this.level.isClientSide &&
       !this.removed &&
