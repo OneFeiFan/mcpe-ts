@@ -20,6 +20,7 @@ Thumbs.db
 # AI 工作流
 tools/verify/out/
 .claude/.stop-attempts
+.claude/.stop-green
 .claude/settings.local.json
 # 代理的临时工作记录（planning-with-files 一类工具会在根目录建这三个文件；不是项目内容，项目文档在 docs/）
 task_plan.md
