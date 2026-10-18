@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { _mthRand, Mth } from '@mcpe/util';
+import { _mthRand, Mth, Random } from '@mcpe/util';
 import { Mob, type Level } from '@mcpe/world';
-import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 
 // 全量审核（第 2 批：world/entity/Mob 第 1 组）：W12 的“先红后绿”测试。
 //   - 构造函数里的 0.7f/0.1f/0.02f、rotA/timeOffs/yRot 三段公式、footSize 0.5f 都按 float。
@@ -9,6 +8,11 @@ import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 //   - setxxa/setyya 的 float 形参先转 float。
 
 const f = Math.fround;
+
+/** Mob 构造函数只用到 level.random；不需要真世界，省掉建平坦世界的开销。 */
+function makeLevel(): Level {
+  return { random: new Random(12345) } as unknown as Level;
+}
 
 class TestMob extends Mob {
   override getEntityTypeId(): number {
@@ -37,8 +41,7 @@ afterEach(() => {
 
 describe('Mob（全量审核 W12：第 1 组）', () => {
   it('W12：构造函数的 float 字段与 Mth.random 公式按 float', () => {
-    const level = createFlatLevel();
-    prepareLevel(level);
+    const level = makeLevel();
 
     const r = f(0.1);
     vi.spyOn(_mthRand, 'nextFloat').mockReturnValue(r);
@@ -54,8 +57,7 @@ describe('Mob（全量审核 W12：第 1 组）', () => {
   });
 
   it('W12：构造函数的 setPos 是静态调用；setxxa/setyya 按 float', () => {
-    const level = createFlatLevel();
-    prepareLevel(level);
+    const level = makeLevel();
 
     let calls = 0;
     class PosSpy extends TestMob {
