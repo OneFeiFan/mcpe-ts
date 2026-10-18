@@ -21,3 +21,4 @@
 | 1    | nbt、platform                | [nbt.md](nbt.md)、[platform.md](platform.md) | 完成   |
 | 2    | world/phys（含实体移动部分） | [world-phys.md](world-phys.md)               | 进行中 |
 | 2    | world/entity（Entity）       | [entity.md](entity.md)                       | 完成   |
+| 2    | world/entity（小文件组）     | [entity-misc.md](entity-misc.md)             | 完成   |

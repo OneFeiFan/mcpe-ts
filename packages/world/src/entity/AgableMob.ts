@@ -32,7 +32,8 @@ export abstract class AgableMob extends PathfinderMob {
     super(level);
     this.age = -1;
     this.entityData.defineByte(AgableMob.DATA_FLAGS_ID, 0);
-    this.setAge(0);
+    // C++ 的 setAge 不是 virtual：构造期间的调用只到 AgableMob 的版本，不派发到子类。
+    AgableMob.prototype.setAge.call(this, 0);
   }
 
   /** C++ `int AgableMob::getAge()` */

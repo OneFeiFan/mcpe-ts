@@ -1,4 +1,6 @@
 // 1:1 移植自 src/world/entity/EntityPos.h
+const f = Math.fround;
+
 export class EntityPos {
   public x: number;
   public y: number;
@@ -28,25 +30,25 @@ export class EntityPos {
     this.move = false;
 
     if (c !== undefined && d !== undefined && e !== undefined) {
-      // (x, y, z, yRot, xRot)
-      this.x = a;
-      this.y = b;
-      this.z = c;
-      this.yRot = d;
-      this.xRot = e;
+      // (x, y, z, yRot, xRot) —— C++ 五个字段都是 float，构造形参也是 float。
+      this.x = f(a);
+      this.y = f(b);
+      this.z = f(c);
+      this.yRot = f(d);
+      this.xRot = f(e);
       this.rot = true;
       this.move = true;
     } else if (c !== undefined) {
       // (x, y, z)
-      this.x = a;
-      this.y = b;
-      this.z = c;
+      this.x = f(a);
+      this.y = f(b);
+      this.z = f(c);
       this.move = true;
       this.rot = false;
     } else {
       // (yRot, xRot)
-      this.yRot = a;
-      this.xRot = b;
+      this.yRot = f(a);
+      this.xRot = f(b);
       this.rot = true;
       this.move = false;
     }
