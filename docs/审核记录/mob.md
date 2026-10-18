@@ -23,7 +23,7 @@ inline getter/setter（工作表第 1、2、33、34、40、41、66/67、87–101
 | `setxxa(float)` / `setyya(float)`           | **已修 W12**：形参先转 float（C++ 在调用边界就舍入）                                                                                                                                                                                                                                                                                                                                                                                         |
 | `getCapeX/Y/Z()`、`getCapePrevX/Y/Z()`      | 一致（C++ double 字段 → TS number）                                                                                                                                                                                                                                                                                                                                                                                                          |
 
-剩余 62 行（travel、伤害、交互、渲染相关等）留给第 3–5 组。
+剩余 30 行（lookAt/交互/渲染相关、getter/setter）留给第 4–5 组。
 
 # 第 2 组（W13：tick / baseTick / AI 调度）
 
@@ -73,4 +73,48 @@ inline getter/setter（工作表第 1、2、33、34、40、41、66/67、87–101
 - 台账无变化：本组没有新增/删除 DEFERRED/OMIT/ADAPTED 注释。
 - 首次全量跑 `tests/unit/client/tallgrass-offset.test.ts` 超时（既有的并发抖动，单跑约 2s），
   重跑通过；未改该测试。
+- prettier ✓。
+
+# 第 3 组（W14：移动 / 伤害 / 护甲）
+
+## 结论表
+
+| 函数                                                                              | 结论                                                                                                                                                                                                                                   |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getWalkingSpeedModifier()`                                                       | **已修 W14**：`float speed = 0.7f`（旧 TS 是 double 0.7）                                                                                                                                                                              |
+| `canSee(Entity*)`                                                                 | **已修 W14**：两个视点高度 `y + getHeadHeight()` 先按 float 相加再传给 `Vec3`（`Vec3` 构造自身也会舍入）                                                                                                                               |
+| `getTexture()` / `setTextureName()` / `getCapeTexture()` / `setCapeTextureName()` | 一致                                                                                                                                                                                                                                   |
+| `isPickable()` / `isPushable()`                                                   | 一致（`!removed`）                                                                                                                                                                                                                     |
+| `getHeadHeight()`                                                                 | **已修 W14**：`bbHeight * 0.85f` 按 float                                                                                                                                                                                              |
+| `isOnFire()`                                                                      | 一致（`onFire > 0                                                                                                                                                                                                                      |     | sharedFlag`） |
+| `heal(int)`                                                                       | **已修 W14**：`invulnerableTime = invulnerableDuration / 2` 是 C++ int 除法，TS 用 `Math.trunc`（旧实现会存 3.5）                                                                                                                      |
+| `hurt(Entity*, int)`                                                              | **已修 W14**：`xd/zd`、重随机循环的 `0.0001f/0.01f`、`hurtDir = (float)(atan2*RADDEG) - yRot`、无来源分支的 180f 都按 float。其余（`walkAnimSpeed=1.5f`、`invulnerableDuration/2.0f`、`lastHurt`、声音/死亡顺序）一致                  |
+| `actuallyHurt(int)`                                                               | 一致（`bypassArmor` 分支 + int 扣血）                                                                                                                                                                                                  |
+| `knockback(Entity*, int, float, float)`                                           | **已修 W14**：形参先转 float；`invSqrt` 的内层乘加、`pow=0.4f`、三轴减半、击退增量与 `yd` 上限都逐步 float                                                                                                                             |
+| `die(Entity*)`                                                                    | 一致（`deathScore`、非客户端、非幼年体掉落、DEATH 事件）                                                                                                                                                                               |
+| `dropDeathLoot()` / `getDeathLoot()`                                              | 一致（`nextInt(3)` 次、每次 1 个；基类返回 0）                                                                                                                                                                                         |
+| `causeFallDamage(float)`                                                          | **已修 W14**：形参先转 float；`ceil(distance - 3)`、落点 `y - 0.2f - heightOffset`、`0.5f/0.75f` 音量音高按 float                                                                                                                      |
+| `travel(float, float)`                                                            | **已修 W14**：形参转 float；水中/岩浆的 0.02f、0.8f/0.5f 阻尼、上浮判定的 `yd+0.6f-y+yo`、0.3f；地面摩擦 `0.6f*0.91f`、`friction2` 的六因子分子与三次分母、`walkingSpeed*friction2`、梯子 -0.15f/0.2f、末尾 0.08f/0.98f 全部逐步 float |
+| `onLadder()`                                                                      | 一致（两格梯子判定，`Mth.floor` 已含 float）                                                                                                                                                                                           |
+| `isShootable()`                                                                   | 一致（true）                                                                                                                                                                                                                           |
+| `animateHurt()`                                                                   | 一致（`hurtTime = hurtDuration = 10`、`hurtDir = 0`）                                                                                                                                                                                  |
+| `isAlive()`                                                                       | 一致（`!removed && health > 0`）                                                                                                                                                                                                       |
+| `isWaterMob()`                                                                    | 一致（false）                                                                                                                                                                                                                          |
+| `getDamageAfterArmorAbsorb(int)`                                                  | **已修 W14**：`v / 25` 是 C++ int 除法，TS 用 `Math.trunc`（旧实现返回 10.28）                                                                                                                                                         |
+| `getArmorValue()`                                                                 | 一致（C++ 函数体整段被注释，返回 0）                                                                                                                                                                                                   |
+| `hurtArmor(int)`                                                                  | 一致（空实现）                                                                                                                                                                                                                         |
+
+## W14 的测试
+
+`tests/unit/world/mob-audit-3.test.ts` 10 条，修复前 10 条全红：速度修正/头高、heal 与护甲吸收的整数除法、
+knockback、hurt 的 hurtDir、causeFallDamage 的 float 形参、travel 地面/水中、canSee 视点高度。
+
+另外更新了 `tests/unit/world/pathfindermob.test.ts` 的既有断言：原注释已注明它断的是
+“TS 裸字面量 0.7 的 double”，属于审核方案 §6 允许的“期望值来自 TS 而非 C++”情形；现改为 `f(0.7)`。
+
+## 验证
+
+- `pnpm check`：类型 ✓、测试 **133 文件 / 1419 条** ✓、台账 **153** ✓。
+- 台账无变化：本组没有新增/删除 DEFERRED/OMIT/ADAPTED 注释。
+- 全量跑再次遇到 `tallgrass-offset` 并发超时，重跑通过；未改该测试。
 - prettier ✓。

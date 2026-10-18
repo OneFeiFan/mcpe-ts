@@ -284,18 +284,21 @@ export abstract class Mob extends Entity {
   }
 
   knockback(source: Entity | null, dmg: number, xd: number, zd: number): void {
-    let dd = Mth.invSqrt(xd * xd + zd * zd);
-    let pow = 0.4;
+    xd = f(xd);
+    zd = f(zd);
 
-    this.xd *= 0.5;
-    this.yd *= 0.5;
-    this.zd *= 0.5;
+    let dd = Mth.invSqrt(f(f(xd * xd) + f(zd * zd)));
+    let pow = f(0.4);
 
-    this.xd -= xd * dd * pow;
-    this.yd += 0.4;
-    this.zd -= zd * dd * pow;
+    this.xd = f(this.xd * f(0.5));
+    this.yd = f(this.yd * f(0.5));
+    this.zd = f(this.zd * f(0.5));
 
-    if (this.yd > 0.4) this.yd = 0.4;
+    this.xd = f(this.xd - f(f(xd * dd) * pow));
+    this.yd = f(this.yd + f(0.4));
+    this.zd = f(this.zd - f(f(zd * dd) * pow));
+
+    if (this.yd > f(0.4)) this.yd = f(0.4);
   }
 
   die(source: Entity | null): void {
@@ -312,8 +315,8 @@ export abstract class Mob extends Entity {
   canSee(target: Entity): boolean {
     return !this.level
       .clip(
-        new Vec3(this.x, this.y + this.getHeadHeight(), this.z),
-        new Vec3(target.x, target.y + target.getHeadHeight(), target.z),
+        new Vec3(this.x, f(this.y + this.getHeadHeight()), this.z),
+        new Vec3(target.x, f(target.y + target.getHeadHeight()), target.z),
       )
       .isHit();
   }
@@ -391,7 +394,7 @@ export abstract class Mob extends Entity {
   }
 
   override getHeadHeight(): number {
-    return this.bbHeight * 0.85;
+    return f(this.bbHeight * f(0.85));
   }
 
   getVoicePitch(): number {
@@ -683,7 +686,8 @@ export abstract class Mob extends Entity {
 
     this.health += heal;
     if (this.health > 20) this.health = 20;
-    this.invulnerableTime = this.invulnerableDuration / 2;
+    // C++ 两边都是 int：invulnerableDuration / 2 是整数除法。
+    this.invulnerableTime = Math.trunc(this.invulnerableDuration / 2);
   }
 
   override hurt(source: Entity | null, dmg: number): boolean {
@@ -715,16 +719,16 @@ export abstract class Mob extends Entity {
       this.level.broadcastEntityEvent(this, EntityEvent.HURT);
       this.markHurt();
       if (source !== null) {
-        let xd = source.x - this.x;
-        let zd = source.z - this.z;
-        while (xd * xd + zd * zd < 0.0001) {
-          xd = (Mth.random() - Mth.random()) * 0.01;
-          zd = (Mth.random() - Mth.random()) * 0.01;
+        let xd = f(source.x - this.x);
+        let zd = f(source.z - this.z);
+        while (f(f(xd * xd) + f(zd * zd)) < f(0.0001)) {
+          xd = f(f(Mth.random() - Mth.random()) * f(0.01));
+          zd = f(f(Mth.random() - Mth.random()) * f(0.01));
         }
-        this.hurtDir = Math.atan2(zd, xd) * Mth.RADDEG - this.yRot;
+        this.hurtDir = f(f(Math.atan2(zd, xd) * Mth.RADDEG) - this.yRot);
         this.knockback(source, dmg, xd, zd);
       } else {
-        this.hurtDir = Math.trunc(Mth.random() * 2.0) * 180.0;
+        this.hurtDir = f(Math.trunc(Mth.random() * 2.0) * 180.0);
       }
     }
 
@@ -778,77 +782,97 @@ export abstract class Mob extends Entity {
   }
 
   travel(xa: number, ya: number): void {
+    xa = f(xa);
+    ya = f(ya);
+
     if (this.isInWater()) {
       let yo = this.y;
-      this.moveRelative(xa, ya, 0.02);
+      this.moveRelative(xa, ya, f(0.02));
       this.move(this.xd, this.yd, this.zd);
 
-      this.xd *= 0.8;
-      this.yd *= 0.8;
-      this.zd *= 0.8;
-      this.yd -= 0.02;
+      this.xd = f(this.xd * f(0.8));
+      this.yd = f(this.yd * f(0.8));
+      this.zd = f(this.zd * f(0.8));
+      this.yd = f(this.yd - f(0.02));
 
-      if (this.horizontalCollision && this.isFree(this.xd, this.yd + 0.6 - this.y + yo, this.zd)) {
-        this.yd = 0.3;
+      if (
+        this.horizontalCollision &&
+        this.isFree(this.xd, f(f(f(this.yd + f(0.6)) - this.y) + yo), this.zd)
+      ) {
+        this.yd = f(0.3);
       }
     } else if (this.isInLava()) {
       let yo = this.y;
-      this.moveRelative(xa, ya, 0.02);
+      this.moveRelative(xa, ya, f(0.02));
       this.move(this.xd, this.yd, this.zd);
-      this.xd *= 0.5;
-      this.yd *= 0.5;
-      this.zd *= 0.5;
-      this.yd -= 0.02;
+      this.xd = f(this.xd * f(0.5));
+      this.yd = f(this.yd * f(0.5));
+      this.zd = f(this.zd * f(0.5));
+      this.yd = f(this.yd - f(0.02));
 
-      if (this.horizontalCollision && this.isFree(this.xd, this.yd + 0.6 - this.y + yo, this.zd)) {
-        this.yd = 0.3;
+      if (
+        this.horizontalCollision &&
+        this.isFree(this.xd, f(f(f(this.yd + f(0.6)) - this.y) + yo), this.zd)
+      ) {
+        this.yd = f(0.3);
       }
     } else {
-      let friction = 0.91;
+      let friction = f(0.91);
       if (this.onGround) {
-        friction = 0.6 * 0.91;
+        friction = f(f(0.6) * f(0.91));
         let t = this.level.getTile(
           Mth.floor(this.x),
-          Mth.floor(this.bb.y0 - 0.5),
+          Mth.floor(f(this.bb.y0 - f(0.5))),
           Mth.floor(this.z),
         );
         if (t > 0) {
-          friction = Tile.tiles[t]!.friction * 0.91;
+          friction = f(Tile.tiles[t]!.friction * f(0.91));
         }
       }
 
-      let friction2 = (0.6 * 0.6 * 0.91 * 0.91 * 0.6 * 0.91) / (friction * friction * friction);
-      this.moveRelative(xa, ya, this.onGround ? this.walkingSpeed * friction2 : this.flyingSpeed);
+      // C++：0.6f*0.6f*0.91f*0.91f*0.6f*0.91f / (friction*friction*friction)，每步 float。
+      let num = f(f(0.6) * f(0.6));
+      num = f(num * f(0.91));
+      num = f(num * f(0.91));
+      num = f(num * f(0.6));
+      num = f(num * f(0.91));
+      const den = f(f(friction * friction) * friction);
+      const friction2 = f(num / den);
+      this.moveRelative(
+        xa,
+        ya,
+        this.onGround ? f(this.walkingSpeed * friction2) : this.flyingSpeed,
+      );
 
-      friction = 0.91;
+      friction = f(0.91);
       if (this.onGround) {
-        friction = 0.6 * 0.91;
+        friction = f(f(0.6) * f(0.91));
         let t = this.level.getTile(
           Mth.floor(this.x),
-          Mth.floor(this.bb.y0 - 0.5),
+          Mth.floor(f(this.bb.y0 - f(0.5))),
           Mth.floor(this.z),
         );
         if (t > 0) {
-          friction = Tile.tiles[t]!.friction * 0.91;
+          friction = f(Tile.tiles[t]!.friction * f(0.91));
         }
       }
 
       if (this.onLadder()) {
         this.fallDistance = 0;
-        if (this.yd < -0.15) this.yd = -0.15;
+        if (this.yd < f(-0.15)) this.yd = f(-0.15);
         if (this.isSneaking() && this.yd < 0) this.yd = 0;
       }
 
       this.move(this.xd, this.yd, this.zd);
 
       if (this.horizontalCollision && this.onLadder()) {
-        this.yd = 0.2;
+        this.yd = f(0.2);
       }
 
-      this.yd -= 0.08;
-      this.yd *= 0.98;
-      this.xd *= friction;
-      this.zd *= friction;
+      this.yd = f(this.yd - f(0.08));
+      this.yd = f(this.yd * f(0.98));
+      this.xd = f(this.xd * friction);
+      this.zd = f(this.zd * friction);
     }
   }
 
@@ -1052,16 +1076,17 @@ export abstract class Mob extends Entity {
   }
 
   protected override causeFallDamage(distance: number): void {
-    let dmg = Math.trunc(Math.ceil(distance - 3));
+    distance = f(distance);
+    let dmg = Math.trunc(Math.ceil(f(distance - 3)));
 
     if (dmg > 0) {
-      this.level.playSound(this, dmg > 4 ? 'damage.fallbig' : 'damage.fallsmall', 0.75, 1);
+      this.level.playSound(this, dmg > 4 ? 'damage.fallbig' : 'damage.fallsmall', f(0.75), 1);
 
       this.hurt(null, dmg);
 
       let t = this.level.getTile(
         Mth.floor(this.x),
-        Mth.floor(this.y - 0.2 - this.heightOffset),
+        Mth.floor(f(f(this.y - f(0.2)) - this.heightOffset)),
         Mth.floor(this.z),
       );
       if (t > 0) {
@@ -1069,8 +1094,8 @@ export abstract class Mob extends Entity {
         this.level.playSound(
           this,
           soundType.getStepSound(),
-          soundType.getVolume() * 0.5,
-          soundType.getPitch() * 0.75,
+          f(soundType.getVolume() * f(0.5)),
+          f(soundType.getPitch() * f(0.75)),
         );
       }
     }
@@ -1211,7 +1236,7 @@ export abstract class Mob extends Entity {
   }
 
   protected getWalkingSpeedModifier(): number {
-    let speed = 0.7;
+    let speed = f(0.7);
 
     return speed;
   }
@@ -1220,7 +1245,8 @@ export abstract class Mob extends Entity {
     let absorb = 25 - this.getArmorValue();
     let v = damage * absorb + this.dmgSpill;
     this.hurtArmor(damage);
-    damage = v / 25;
+    // C++ 两边都是 int：v / 25 是整数除法。
+    damage = Math.trunc(v / 25);
     this.dmgSpill = v % 25;
     return damage;
   }

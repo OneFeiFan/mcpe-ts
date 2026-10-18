@@ -157,16 +157,15 @@ describe('PathfinderMob（D10a）', () => {
     expect(m.targetId()).toBe(other.entityId);
   });
 
-  it('getWalkingSpeedModifier：平时是 Mob 的 0.7，fleeTime > 0 时乘 2', () => {
-    // ⚠ 这里断言的是 **0.7 / 1.4 的 double**，不是 `f(0.7)`：TS 的 `Mob.getWalkingSpeedModifier()`
-    // 现在返回的是裸字面量 `0.7`（Mob.ts:1199-1203），没包 fround —— 那是之前那一轮移植时就有的，
-    // 不在 D10a 的范围里，不"顺手"改它。等 Mob 那一轮回头补 fround 时这两条要一起改。
+  it('getWalkingSpeedModifier：平时是 Mob 的 0.7f，fleeTime > 0 时乘 2', () => {
+    // W14 把 Mob.getWalkingSpeedModifier() 的 0.7 补成了 0.7f；PathfinderMob 的 *2 在 float 里
+    // 可以精确表示（只是指数加一），所以期望值是 f(0.7) 的两倍。
     const m = makeMob();
-    expect(m.speedMod()).toBe(0.7);
+    expect(m.speedMod()).toBe(f(0.7));
     m.setFleeTime(1);
-    expect(m.speedMod()).toBe(0.7 * 2);
+    expect(m.speedMod()).toBe(f(0.7) * 2);
     m.setFleeTime(0);
-    expect(m.speedMod(), '归零就恢复').toBe(0.7);
+    expect(m.speedMod(), '归零就恢复').toBe(f(0.7));
   });
 
   it('canSpawn：站在草上方是 true（getWalkTargetValue 的基类实现返回 0，>= 0）', () => {
