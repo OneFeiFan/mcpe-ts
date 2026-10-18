@@ -15,8 +15,9 @@
 
 每个函数一个结论：**一致**、**怪癖保留**（原版的奇怪行为照抄）、**已修**（移植错误，编号写进提交说明）、**原版 bug**（登记，以后再定）、**ADAPTED**（有意偏离，理由在代码里）。
 
-| 批次 | 模块                         | 记录                                         | 状态   |
-| ---- | ---------------------------- | -------------------------------------------- | ------ |
-| 1    | util                         | [util.md](util.md)                           | 完成   |
-| 1    | nbt、platform                | [nbt.md](nbt.md)、[platform.md](platform.md) | 完成   |
-| 2    | world/phys（含实体移动部分） | [world-phys.md](world-phys.md)               | 进行中 |
+| 批次 | 模块                           | 记录                                         | 状态   |
+| ---- | ------------------------------ | -------------------------------------------- | ------ |
+| 1    | util                           | [util.md](util.md)                           | 完成   |
+| 1    | nbt、platform                  | [nbt.md](nbt.md)、[platform.md](platform.md) | 完成   |
+| 2    | world/phys（含实体移动部分）   | [world-phys.md](world-phys.md)               | 进行中 |
+| 2    | world/entity（Entity 第 1 组） | [entity.md](entity.md)                       | 进行中 |

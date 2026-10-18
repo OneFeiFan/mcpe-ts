@@ -254,12 +254,14 @@ describe('ParticleEngine.destroy / crack（E5）', () => {
       return bucket(e)[0]!;
     };
 
-    expect(crackWith(0).y, 'face 0 → 底面外侧').toBe(y + tile.yy0 - r);
-    expect(crackWith(1).y, 'face 1 → 顶面外侧').toBe(y + tile.yy1 + r);
-    expect(crackWith(2).z, 'face 2 → -z 面外侧').toBe(z + tile.zz0 - r);
-    expect(crackWith(3).z, 'face 3 → +z 面外侧').toBe(z + tile.zz1 + r);
-    expect(crackWith(4).x, 'face 4 → -x 面外侧').toBe(x + tile.xx0 - r);
-    expect(crackWith(5).x, 'face 5 → +x 面外侧').toBe(x + tile.xx1 + r);
+    // C++：`float yp = y + tile->yy0 - r;` —— 先加再减，两步 float；
+    // 以前这里的期望是按 TS 的 double 写法写的（审核 Entity.setPos 时暴露）。
+    expect(crackWith(0).y, 'face 0 → 底面外侧').toBe(f(f(y + tile.yy0) - r));
+    expect(crackWith(1).y, 'face 1 → 顶面外侧').toBe(f(f(y + tile.yy1) + r));
+    expect(crackWith(2).z, 'face 2 → -z 面外侧').toBe(f(f(z + tile.zz0) - r));
+    expect(crackWith(3).z, 'face 3 → +z 面外侧').toBe(f(f(z + tile.zz1) + r));
+    expect(crackWith(4).x, 'face 4 → -x 面外侧').toBe(f(f(x + tile.xx0) - r));
+    expect(crackWith(5).x, 'face 5 → +x 面外侧').toBe(f(f(x + tile.xx1) + r));
   });
 
   it('⚠ crack 末尾的 setPower(0.2f) 与 scale(0.6f) 真的生效', () => {

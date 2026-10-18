@@ -76,8 +76,8 @@ export abstract class Entity {
   public xRotO = 0;
   public bb: AABB;
   public heightOffset = 0 / 16.0;
-  public bbWidth = 0.6;
-  public bbHeight = 1.8;
+  public bbWidth = f(0.6);
+  public bbHeight = f(1.8);
   public walkDistO = 0;
   public walkDist = 0;
   public xOld = 0;
@@ -116,12 +116,13 @@ export abstract class Entity {
   protected isStuckInWeb = false;
 
   constructor(level: Level) {
-    // ADAPTED(Cpp)：C++ 在构造函数里调用虚函数时只会调到本类（Entity）的版本；JS 会派发到子类，所以显式调用 Entity.prototype 上的版本。
+    // ADAPTED(Cpp)：C++ 在基类构造期间调用虚函数只会调到本类（Entity）的版本；JS 会派发到子类，
+    // 所以 _init 与 setPos 都显式调用 Entity.prototype 上的版本（_init 本身不是 virtual，同样不派发）。
     this.level = level;
     this.bb = new AABB(0, 0, 0, 0, 0, 0);
     Entity.prototype._init.call(this);
     this.entityId = ++Entity.entityCounter;
-    this.setPos(0, 0, 0);
+    Entity.prototype.setPos.call(this, 0, 0, 0);
   }
 
   // ---- 抽象方法 ----
@@ -158,6 +159,7 @@ export abstract class Entity {
     return this.entityId;
   }
 
+  /** C++ `bool operator==(Entity&)` 的 R10 写法 */
   equals(rhs: Entity): boolean {
     return this.entityId === rhs.entityId;
   }
@@ -174,19 +176,17 @@ export abstract class Entity {
 
   /** C++ Entity::setPos(float, float, float) */
   setPos(x: number, y: number, z: number): void {
+    x = f(x);
+    y = f(y);
+    z = f(z);
     this.x = x;
     this.y = y;
     this.z = z;
-    const w = this.bbWidth / 2;
+    const w = f(this.bbWidth / 2);
     const h = this.bbHeight;
-    this.bb.set(
-      x - w,
-      y - this.heightOffset + this.ySlideOffset,
-      z - w,
-      x + w,
-      y - this.heightOffset + this.ySlideOffset + h,
-      z + w,
-    );
+    // C++：y - heightOffset + ySlideOffset 是两个 float 步骤；AABB.set 对每个参数只会再舍入一次（单步，等价）。
+    const y0 = f(f(y - this.heightOffset) + this.ySlideOffset);
+    this.bb.set(x - w, y0, z - w, x + w, y0 + h, z + w);
   }
 
   /** C++ Entity::setPos(EntityPos*) */
@@ -200,20 +200,25 @@ export abstract class Entity {
 
   /** C++ Entity::setSize(float, float) */
   protected setSize(w: number, h: number): void {
-    this.bbWidth = w;
-    this.bbHeight = h;
+    this.bbWidth = f(w);
+    this.bbHeight = f(h);
   }
 
   /** C++ Entity::setRot(float, float) */
   protected setRot(yRot: number, xRot: number): void {
-    this.yRot = this.yRotO = yRot;
-    this.xRot = this.xRotO = xRot;
+    this.yRot = this.yRotO = f(yRot);
+    this.xRot = this.xRotO = f(xRot);
   }
 
   /** C++ Entity::moveTo(float, float, float, float, float) */
   moveTo(x: number, y: number, z: number, yRot: number, xRot: number): void {
+    x = f(x);
+    y = f(y);
+    z = f(z);
+    yRot = f(yRot);
+    xRot = f(xRot);
     this.xOld = this.xo = this.x = x;
-    this.yOld = this.yo = this.y = y + this.heightOffset;
+    this.yOld = this.yo = this.y = f(y + this.heightOffset);
     this.zOld = this.zo = this.z = z;
     this.yRot = this.yRotO = yRot;
     this.xRot = this.xRotO = xRot;
@@ -482,21 +487,25 @@ export abstract class Entity {
   // ---- 旋转 ----
 
   turn(xo: number, yo: number): void {
+    xo = f(xo);
+    yo = f(yo);
     const xRotOld = this.xRot;
     const yRotOld = this.yRot;
 
-    this.yRot += xo * 0.15;
-    this.xRot -= yo * 0.15;
+    this.yRot = f(this.yRot + f(xo * f(0.15)));
+    this.xRot = f(this.xRot - f(yo * f(0.15)));
     if (this.xRot < -90) this.xRot = -90;
     if (this.xRot > 90) this.xRot = 90;
 
-    this.xRotO += this.xRot - xRotOld;
-    this.yRotO += this.yRot - yRotOld;
+    this.xRotO = f(this.xRotO + f(this.xRot - xRotOld));
+    this.yRotO = f(this.yRotO + f(this.yRot - yRotOld));
   }
 
   interpolateTurn(xo: number, yo: number): void {
-    this.yRot += xo * 0.15;
-    this.xRot -= yo * 0.15;
+    xo = f(xo);
+    yo = f(yo);
+    this.yRot = f(this.yRot + f(xo * f(0.15)));
+    this.xRot = f(this.xRot - f(yo * f(0.15)));
     if (this.xRot < -90) this.xRot = -90;
     if (this.xRot > 90) this.xRot = 90;
   }
@@ -590,7 +599,7 @@ export abstract class Entity {
     while (this.y > 0) {
       this.setPos(this.x, this.y, this.z);
       if (this.level.getCubes(this, this.bb).length === 0) break;
-      this.y += 1;
+      this.y = f(this.y + 1);
     }
     this.xd = this.yd = this.zd = 0;
     this.xRot = 0;
@@ -604,7 +613,7 @@ export abstract class Entity {
     return 0;
   }
   getShadowHeightOffs(): number {
-    return this.bbHeight / 2;
+    return f(this.bbHeight / 2);
   }
   getBrightness(_a: number): number {
     const xTile = Mth.floor(this.x);
@@ -633,15 +642,16 @@ export abstract class Entity {
   distanceTo(a: Entity | number, b?: number, c?: number): number {
     let xd: number, yd: number, zd: number;
     if (typeof a === 'number') {
-      xd = this.x - a;
-      yd = this.y - b!;
-      zd = this.z - c!;
+      xd = f(this.x - f(a));
+      yd = f(this.y - f(b!));
+      zd = f(this.z - f(c!));
     } else {
-      xd = this.x - a.x;
-      yd = this.y - a.y;
-      zd = this.z - a.z;
+      xd = f(this.x - a.x);
+      yd = f(this.y - a.y);
+      zd = f(this.z - a.z);
     }
-    return Math.sqrt(xd * xd + yd * yd + zd * zd);
+    // C++：xd*xd + yd*yd + zd*zd 从左到右逐步 float；C 库 sqrt 按 double 算，结果存回 float。
+    return f(Math.sqrt(f(f(f(xd * xd) + f(yd * yd)) + f(zd * zd))));
   }
 
   distanceToSqr(e: Entity): number;
@@ -649,15 +659,15 @@ export abstract class Entity {
   distanceToSqr(a: Entity | number, b?: number, c?: number): number {
     let xd: number, yd: number, zd: number;
     if (typeof a === 'number') {
-      xd = this.x - a;
-      yd = this.y - b!;
-      zd = this.z - c!;
+      xd = f(this.x - f(a));
+      yd = f(this.y - f(b!));
+      zd = f(this.z - f(c!));
     } else {
-      xd = this.x - a.x;
-      yd = this.y - a.y;
-      zd = this.z - a.z;
+      xd = f(this.x - a.x);
+      yd = f(this.y - a.y);
+      zd = f(this.z - a.z);
     }
-    return xd * xd + yd * yd + zd * zd;
+    return f(f(f(xd * xd) + f(yd * yd)) + f(zd * zd));
   }
 
   // ---- 推力 ----
@@ -666,32 +676,33 @@ export abstract class Entity {
   push(xa: number, ya: number, za: number): void;
   push(a: Entity | number, b?: number, c?: number): void {
     if (typeof a === 'number') {
-      this.xd += a;
-      this.yd += b!;
-      this.zd += c!;
+      this.xd = f(this.xd + f(a));
+      this.yd = f(this.yd + f(b!));
+      this.zd = f(this.zd + f(c!));
       return;
     }
 
     const e = a;
-    let xa = e.x - this.x;
-    let za = e.z - this.z;
+    let xa = f(e.x - this.x);
+    let za = f(e.z - this.z);
 
     let dd = Mth.absMax(xa, za);
-    if (dd >= 0.01) {
-      dd = Math.sqrt(dd);
-      xa /= dd;
-      za /= dd;
+    if (dd >= f(0.01)) {
+      dd = f(Math.sqrt(dd));
+      xa = f(xa / dd);
+      za = f(za / dd);
 
-      let pow = 1 / dd;
+      let pow = f(1 / dd);
       if (pow > 1) pow = 1;
-      xa *= pow;
-      za *= pow;
+      xa = f(xa * pow);
+      za = f(za * pow);
 
-      xa *= 0.05;
-      za *= 0.05;
+      xa = f(xa * f(0.05));
+      za = f(za * f(0.05));
 
-      xa *= 1 - this.pushthrough;
-      za *= 1 - this.pushthrough;
+      const k = f(1 - this.pushthrough);
+      xa = f(xa * k);
+      za = f(za * k);
 
       this.push(-xa, 0, -za);
       e.push(xa, 0, za);
@@ -847,7 +858,7 @@ export abstract class Entity {
     return 0;
   }
   getPickRadius(): number {
-    return 0.1;
+    return f(0.1);
   }
   getCreatureBaseType(): number {
     return 0;
@@ -936,9 +947,9 @@ export abstract class Entity {
   }
 
   lerpMotion(xd: number, yd: number, zd: number): void {
-    this.xd = xd;
-    this.yd = yd;
-    this.zd = zd;
+    this.xd = f(xd);
+    this.yd = f(yd);
+    this.zd = f(zd);
   }
 
   moveRelative(xa: number, za: number, speed: number): void {
@@ -957,7 +968,8 @@ export abstract class Entity {
   }
 
   intersects(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): boolean {
-    return this.bb.intersects(new AABB(x0, y0, z0, x1, y1, z1));
+    // C++ 的 6 参 intersects 重载：形参在调用处转 float（AABB.intersectsXYZ 已按此实现）。
+    return this.bb.intersectsXYZ(x0, y0, z0, x1, y1, z1);
   }
 
   getEntityData(): SynchedEntityData | null {

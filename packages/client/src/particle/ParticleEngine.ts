@@ -177,24 +177,25 @@ export class ParticleEngine {
     let xp = x + f(this.random.nextFloat() * f(tile.xx1 - tile.xx0 - f(r * 2))) + r + tile.xx0;
     let yp = y + f(this.random.nextFloat() * f(tile.yy1 - tile.yy0 - f(r * 2))) + r + tile.yy0;
     let zp = z + f(this.random.nextFloat() * f(tile.zz1 - tile.zz0 - f(r * 2))) + r + tile.zz0;
+    // C++：`float yp = y + tile->yy0 - r;` 是 (y + yy0) - r 两个 float 步骤。
     switch (face) {
       case 0:
-        yp = y + tile.yy0 - r;
+        yp = f(f(y + tile.yy0) - r);
         break;
       case 1:
-        yp = y + tile.yy1 + r;
+        yp = f(f(y + tile.yy1) + r);
         break;
       case 2:
-        zp = z + tile.zz0 - r;
+        zp = f(f(z + tile.zz0) - r);
         break;
       case 3:
-        zp = z + tile.zz1 + r;
+        zp = f(f(z + tile.zz1) + r);
         break;
       case 4:
-        xp = x + tile.xx0 - r;
+        xp = f(f(x + tile.xx0) - r);
         break;
       case 5:
-        xp = x + tile.xx1 + r;
+        xp = f(f(x + tile.xx1) + r);
         break;
     }
     this.add(
