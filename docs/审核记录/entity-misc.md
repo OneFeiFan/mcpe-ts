@@ -3,6 +3,30 @@
 AgableMob、EntityEvent、EntityFactory、EntityPos、EntityRendererId、EntityTypes（共约 336 行）。
 第 2 批的一部分；一次提交。工作表逐行结论如下。
 
+## 后续补充：MobCategory.ts（55 行，11 个函数）
+
+第 2 批续审，无代码修改。
+
+| 函数 / 成员                                | 结论                                                                                                                                          |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `initMobCategories()`                      | 一致（monster/creature 刷怪材质 air，waterCreature 为 water；调用时机仍由 `NinecraftApp::init` 保证）                                         |
+| 三个静态实例与 `values[]` / `numValues`    | 一致（`monster(10,20,false)`、`creature(10,15,true)`、`waterCreature(5,10,true)`；`numValues = values.length` 等价于 C++ 的 `sizeof/sizeof`） |
+| `getBaseClassId()`                         | 一致（`_baseClassId`，取自 `MobTypes::Base*`）                                                                                                |
+| `getMaxInstancesPerChunk()`                | 一致（`_max`）                                                                                                                                |
+| `getMaxInstancesPerLevel()`                | 一致（`_maxPerLevel`）                                                                                                                        |
+| `getSpawnPositionMaterial()`               | 一致（构造时 NULL → TS `null`；初始化后为 air/water）                                                                                         |
+| `isFriendly()`                             | 一致（`_isFriendly`）                                                                                                                         |
+| `setMaterial(const Material*)`             | 一致（私有，只被 `initMobCategories` 用非空材质调用；C++ 的 const 方法 + mutable 字段在 TS 里是普通私有字段）                                 |
+| （工作表第 7 行）`_isFriendly(isFriendly)` | 不是方法：这是 C++ 构造函数初始化列表的一项，已由 TS 构造函数的参数属性对应                                                                   |
+
+身份比较（C++ 比较实例地址）在 TS 里仍是对象身份比较，符合文件头注释。
+既有 `tests/unit/world/s4-batch.test.ts` 已覆盖 `values` 长度、刷怪材质、`isFriendly` 与
+`getMaxInstancesPerChunk`；其余 getter 是一行返回字段，无需新增测试。
+
+## 结论
+
+`MobCategory.ts` 审核完成：全部一致，无修改、无新增 DEFERRED/OMIT，台账不变。
+
 ## AgableMob.ts（7 行）
 
 | 函数                                   | 结论                                                                                                                                                                  |
