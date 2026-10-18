@@ -23,7 +23,7 @@ inline getter/setter（工作表第 1、2、33、34、40、41、66/67、87–101
 | `setxxa(float)` / `setyya(float)`           | **已修 W12**：形参先转 float（C++ 在调用边界就舍入）                                                                                                                                                                                                                                                                                                                                                                                         |
 | `getCapeX/Y/Z()`、`getCapePrevX/Y/Z()`      | 一致（C++ double 字段 → TS number）                                                                                                                                                                                                                                                                                                                                                                                                          |
 
-剩余 30 行（lookAt/交互/渲染相关、getter/setter）留给第 4–5 组。
+第 1–4 组已覆盖工作表的全部 101 行；Mob 审核完成（W12–W15）。
 
 # 第 2 组（W13：tick / baseTick / AI 调度）
 
@@ -117,4 +117,53 @@ knockback、hurt 的 hurtDir、causeFallDamage 的 float 形参、travel 地面/
 - `pnpm check`：类型 ✓、测试 **133 文件 / 1419 条** ✓、台账 **153** ✓。
 - 台账无变化：本组没有新增/删除 DEFERRED/OMIT/ADAPTED 注释。
 - 全量跑再次遇到 `tallgrass-offset` 并发超时，重跑通过；未改该测试。
+- prettier ✓。
+
+# 第 4 组（W15：视角 / 拾取 / 巡查 / getter）
+
+## 结论表
+
+| 函数                                                  | 结论                                                                                                                                                     |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lookAt(Entity*, float, float)`                       | **已修 W15**：形参转 float；`xd/zd`、`yd = (bb.y0+bb.y1)/2 - (y+headHeight)`、`sd`、`(float)(atan2*180/PI)-90` 与 `(float)(atan2*180/PI)` 全部逐步 float |
+| `isLookingAtAnEntity()`                               | 一致（`lookingAtId != 0`）                                                                                                                               |
+| `rotlerp(float, float, float)`                        | **已修 W15**：形参/差值/±360 归一化/返回都按 float                                                                                                       |
+| `beforeRemove()`                                      | 一致（空实现）                                                                                                                                           |
+| `canSpawn()`                                          | 一致（`isUnobstructed && getCubes==0 && !containsAnyLiquid`）                                                                                            |
+| `outOfWorld()`                                        | 一致（`hurt(4)` 后若血没变再 `actuallyHurt(4)`）                                                                                                         |
+| `getAttackAnim(float)`                                | **已修 W15**：`diff`、`+1`、`oAttackAnim + diff*a` 按 float                                                                                              |
+| `getPos(float)`                                       | **已修 W15**：`a==1` 直接返回；否则三轴 `xo + (x-xo)*a` 逐步 float                                                                                       |
+| `getLookAngle()`                                      | 一致（`getViewVector(1)`）                                                                                                                               |
+| `getViewVector(float)`                                | **已修 W15**：`a` 转 float；插值三轴逐步 float；`-yRot*DEGRAD-PI`、`-xRot*DEGRAD` 先按 float 算再交给查表 `Mth.cos/sin`                                  |
+| `pick(float, float)`                                  | **已修 W15**：`range/a` 转 float；终点 `from + view * range` 的乘、加分别 float                                                                          |
+| `getMaxSpawnClusterSize()`                            | 一致（4）                                                                                                                                                |
+| `interpolateOnly()`                                   | 一致（`level.isClientSide`）                                                                                                                             |
+| `handleEntityEvent(char)`                             | 一致（HURT/DEATH 分支与 `super` 委托；`1.5f` 可精确表示）                                                                                                |
+| `getMoveControl()` / `getJumpControl()`               | 一致（直接返回字段）                                                                                                                                     |
+| `setYya(float)`                                       | **已修 W15**：形参先转 float                                                                                                                             |
+| `getSpeed()`                                          | 一致                                                                                                                                                     |
+| `setSpeed(float)`                                     | **已修 W15**：形参转 float，同时写 `speed` 与 `yya`                                                                                                      |
+| `setJumping(bool)`                                    | 一致                                                                                                                                                     |
+| `useNewAi()`                                          | 一致（false）                                                                                                                                            |
+| `checkDespawn()`                                      | 一致（取最近玩家后转调）                                                                                                                                 |
+| `checkDespawn(Mob*)`                                  | **已修 W15**：`xd/yd/zd` 与距离平方 `sd` 按 float；96²/32² 阈值比较随之精确                                                                              |
+| `getSharedFlag(int)` / `setSharedFlag(int, bool)`     | 一致（SynchedEntityData 的 set/clear/get）                                                                                                               |
+| `updateAttackAnim()`                                  | 一致（`swingTime` 只有 0..7，`/8` 可被 float 精确表示，无舍入差异）                                                                                      |
+| `swing()`                                             | 一致（`!swinging                                                                                                                                         |     | swingTime>=3 |     | swingTime<0` 时置 -1） |
+| `isSneaking()` / `isSleeping()` / `setSneaking(bool)` | 一致（共享标志 / false / 设置标志）                                                                                                                      |
+
+## W15 的测试
+
+`tests/unit/world/mob-audit-4.test.ts` 8 条。用 `git stash` 临时撤掉 Mob.ts 的修复后 **8 条全红**，
+恢复修复后全绿。其中：
+
+- `pick` 选了一组能让“先乘后加”和“double 一次算完”结果不同的 range；
+- `checkDespawn` 用 `y = 1e-4` 让距离平方在 double 里略大于 96²/32²、在 float 里恰好等于阈值；
+- `getViewVector` 选了一组让 float 分步夹角与 double 夹角落在不同查表项的角度；
+- 测试文件里调用 `Mth.initMth()`（应用启动时会调，单测默认是零表）。
+
+## 验证
+
+- `pnpm check`：类型 ✓、测试 **134 文件 / 1427 条** ✓、台账 **153** ✓。
+- 台账无变化：本组没有新增/删除 DEFERRED/OMIT/ADAPTED 注释。
 - prettier ✓。

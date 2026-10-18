@@ -434,7 +434,7 @@ export abstract class Mob extends Entity {
   }
 
   setYya(yya: number): void {
-    this.yya = yya;
+    this.yya = f(yya);
   }
 
   getSpeed(): number {
@@ -442,6 +442,7 @@ export abstract class Mob extends Entity {
   }
 
   setSpeed(speed: number): void {
+    speed = f(speed);
     this.speed = speed;
     this.yya = speed;
   }
@@ -773,11 +774,13 @@ export abstract class Mob extends Entity {
   }
 
   pick(range: number, a: number): HitResult {
+    range = f(range);
+    a = f(a);
     let from = this.getPos(a);
     const v = this.getViewVector(a); // C++ 的 from + getViewVector(a) * range（Vec3 运算符）
     return this.level.clip(
       from,
-      new Vec3(from.x + v.x * range, from.y + v.y * range, from.z + v.z * range),
+      new Vec3(f(from.x + f(v.x * range)), f(from.y + f(v.y * range)), f(from.z + f(v.z * range))),
     );
   }
 
@@ -971,21 +974,24 @@ export abstract class Mob extends Entity {
   }
 
   lookAt(e: Entity, yMax: number, xMax: number): void {
-    let xd = e.x - this.x;
+    yMax = f(yMax);
+    xMax = f(xMax);
+
+    let xd = f(e.x - this.x);
     let yd: number;
-    let zd = e.z - this.z;
+    let zd = f(e.z - this.z);
 
     if (false) {
       let mob = e as Mob; // C++ (Mob*) e
-      yd = this.y + this.getHeadHeight() - (mob.y + mob.getHeadHeight());
+      yd = f(f(this.y + this.getHeadHeight()) - f(mob.y + mob.getHeadHeight()));
     } else {
-      yd = (e.bb.y0 + e.bb.y1) / 2 - (this.y + this.getHeadHeight());
+      yd = f(f(f(e.bb.y0 + e.bb.y1) / 2) - f(this.y + this.getHeadHeight()));
     }
 
-    let sd = Mth.sqrt(xd * xd + zd * zd);
+    let sd = Mth.sqrt(f(f(xd * xd) + f(zd * zd)));
 
-    let yRotD = (Math.atan2(zd, xd) * 180) / Mth.PI - 90;
-    let xRotD = (Math.atan2(yd, sd) * 180) / Mth.PI;
+    let yRotD = f(f((Math.atan2(zd, xd) * 180) / Mth.PI) - 90);
+    let xRotD = f((Math.atan2(yd, sd) * 180) / Mth.PI);
     this.xRot = -this.rotlerp(this.xRot, xRotD, xMax);
     this.yRot = this.rotlerp(this.yRot, yRotD, yMax);
   }
@@ -1005,18 +1011,20 @@ export abstract class Mob extends Entity {
   }
 
   getAttackAnim(a: number): number {
-    let diff = this.attackAnim - this.oAttackAnim;
-    if (diff < 0) diff += 1;
-    return this.oAttackAnim + diff * a;
+    a = f(a);
+    let diff = f(this.attackAnim - this.oAttackAnim);
+    if (diff < 0) diff = f(diff + 1);
+    return f(this.oAttackAnim + f(diff * a));
   }
 
   getPos(a: number): Vec3 {
+    a = f(a);
     if (a === 1) {
       return new Vec3(this.x, this.y, this.z);
     }
-    let x = this.xo + (this.x - this.xo) * a;
-    let y = this.yo + (this.y - this.yo) * a;
-    let z = this.zo + (this.z - this.zo) * a;
+    let x = f(this.xo + f(f(this.x - this.xo) * a));
+    let y = f(this.yo + f(f(this.y - this.yo) * a));
+    let z = f(this.zo + f(f(this.z - this.zo) * a));
 
     return new Vec3(x, y, z);
   }
@@ -1026,21 +1034,26 @@ export abstract class Mob extends Entity {
   }
 
   getViewVector(a: number): Vec3 {
+    a = f(a);
     if (a === 1) {
-      let yCos = Mth.cos(-this.yRot * Mth.DEGRAD - Mth.PI);
-      let ySin = Mth.sin(-this.yRot * Mth.DEGRAD - Mth.PI);
-      let xCos = -Mth.cos(-this.xRot * Mth.DEGRAD);
-      let xSin = Mth.sin(-this.xRot * Mth.DEGRAD);
+      const yArg = f(f(f(-this.yRot) * Mth.DEGRAD) - Mth.PI);
+      let yCos = Mth.cos(yArg);
+      let ySin = Mth.sin(yArg);
+      const xArg = f(f(-this.xRot) * Mth.DEGRAD);
+      let xCos = -Mth.cos(xArg);
+      let xSin = Mth.sin(xArg);
 
       return new Vec3(ySin * xCos, xSin, yCos * xCos);
     }
-    let xRot = this.xRotO + (this.xRot - this.xRotO) * a;
-    let yRot = this.yRotO + (this.yRot - this.yRotO) * a;
+    let xRot = f(this.xRotO + f(f(this.xRot - this.xRotO) * a));
+    let yRot = f(this.yRotO + f(f(this.yRot - this.yRotO) * a));
 
-    let yCos = Mth.cos(-yRot * Mth.DEGRAD - Mth.PI);
-    let ySin = Mth.sin(-yRot * Mth.DEGRAD - Mth.PI);
-    let xCos = -Mth.cos(-xRot * Mth.DEGRAD);
-    let xSin = Mth.sin(-xRot * Mth.DEGRAD);
+    const yArg = f(f(f(-yRot) * Mth.DEGRAD) - Mth.PI);
+    let yCos = Mth.cos(yArg);
+    let ySin = Mth.sin(yArg);
+    const xArg = f(f(-xRot) * Mth.DEGRAD);
+    let xCos = -Mth.cos(xArg);
+    let xSin = Mth.sin(xArg);
 
     return new Vec3(ySin * xCos, xSin, yCos * xCos);
   }
@@ -1281,10 +1294,10 @@ export abstract class Mob extends Entity {
   protected checkDespawnFrom(nearestBlocking: Mob | null): void {
     if (nearestBlocking !== null) {
       let removeIfFar = this.removeWhenFarAway();
-      let xd = nearestBlocking.x - this.x;
-      let yd = nearestBlocking.y - this.y;
-      let zd = nearestBlocking.z - this.z;
-      let sd = xd * xd + yd * yd + zd * zd;
+      let xd = f(nearestBlocking.x - this.x);
+      let yd = f(nearestBlocking.y - this.y);
+      let zd = f(nearestBlocking.z - this.z);
+      let sd = f(f(f(xd * xd) + f(yd * yd)) + f(zd * zd));
 
       if (removeIfFar && sd > 96 * 96) {
         this.remove();
@@ -1315,15 +1328,18 @@ export abstract class Mob extends Entity {
   }
 
   private rotlerp(a: number, b: number, max: number): number {
-    let diff = b - a;
-    while (diff < -180) diff += 360;
-    while (diff >= 180) diff -= 360;
+    a = f(a);
+    b = f(b);
+    max = f(max);
+    let diff = f(b - a);
+    while (diff < -180) diff = f(diff + 360);
+    while (diff >= 180) diff = f(diff - 360);
     if (diff > max) {
       diff = max;
     }
     if (diff < -max) {
       diff = -max;
     }
-    return a + diff;
+    return f(a + diff);
   }
 }
