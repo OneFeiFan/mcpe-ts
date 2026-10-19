@@ -69,3 +69,44 @@ C++ 只有头文件、没有 `.cpp`，两个方法都是内联实现。工作表
 
 `Inventory.ts` 审核完成：18 行工作表全部有结论。修复 1 个编号 W19（含三处：静态方法、两处 printf
 格式串）；新增 1 条 OMIT（空析构函数）；台账 157 → 158。新增审核测试 13 条。
+
+## InventorySlotManager（src/world/entity/player/InventorySlotManager.h ↔ packages/world/src/entity/player/InventorySlotManager.ts）
+
+C++ 头文件里只有一个空类：`class InventorySlotManager { };`，没有 `.cpp`。工作表 0 行。
+
+| 检查项 | 结论                                                                                                                                                                              |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 类体   | 一致：两侧都没有任何成员（用脚本逐行取类体，C++ / TS 均为空）                                                                                                                     |
+| 引用   | C++ 全源码 `grep InventorySlotManager` 只有头文件自身的 4 行（include guard 两行 + `class` 行 + `#endif`）—— 零引用；TS 侧只在 `packages/world/src/index.ts:182` 导出，没有使用点 |
+
+## 结论（InventorySlotManager）
+
+`InventorySlotManager.ts` 审核完成：空类与 C++ 一致，无代码修改、无新增台账条目。
+
+## OldInventory（src/world/entity/player/OldInventory.h ↔ packages/world/src/entity/player/OldInventory.ts）
+
+C++ 只有 `OldInventory.h`，**没有 `OldInventory.cpp`**；5 个成员函数只有声明没有定义；类名也叫
+`Inventory`，与正式的 `Inventory` 冲突。全源码 `grep OldInventory` 零结果，也没有任何文件包含这个头文件
+（是旧版本残留的死代码）。工作表把 5 个方法列进了“TS 里有、C++ 没有”，是因为 C++ 类名也叫
+`Inventory`、工作表按文件名匹配不到类；实际上两侧签名一一对应。
+
+| 函数 / 成员                                                                                                                              | 结论                                                                                                                                                                                                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 6 个 `static const int` 常量                                                                                                             | 一致：`POP_TIME_DURATION=5`、`MAX_SELECTION_SIZE=9`、`INVENTORY_ROWS=5`、`INVENTORY_COLS=9`、`INVENTORY_SIZE=COLS*ROWS`（=45）、`INVENTORY_SIZE_DEMO=18`，脚本逐项对比表达式也相同（TS 只是加了 `Inventory.` 前缀）                                 |
+| `int selected`                                                                                                                           | 一致：C++ 未初始化（构造函数无定义），按 R3 取 0，已在注释里注明                                                                                                                                                                                    |
+| `Player* player`                                                                                                                         | 一致：字段类型对应；C++ 构造函数无定义，TS 在构造函数里保存实参（这是 TS 侧唯一有函数体的成员，见下）                                                                                                                                               |
+| `int itemIds[MAX_SELECTION_SIZE]` / `int inventoryIds[INVENTORY_SIZE]`                                                                   | 一致：`Int32Array(9)` / `Int32Array(45)`，C++ 未初始化 → 按 R3 取 0                                                                                                                                                                                 |
+| `Inventory(Player*)`                                                                                                                     | 一致：C++ 只有声明没有定义；TS 保留字段赋值（与 C++ 头文件声明的唯一可对应行为）                                                                                                                                                                    |
+| `selectSlot(int)` / `getSelectedItemId()` / `getSelectionSlotItemId(int)` / `setSelectionSlotItemId(int,int)` / `getDestroySpeed(Tile*)` | **已修**：C++ 无 `.cpp`、这 5 个函数只有声明没有定义，没有可移植的实现。TS 以前写成 `throw new Error('... not yet ported')` 桩，违反 R3（“不写桩函数体”），且“not yet ported”会让人以为以后要移植。改为 5 行 `OMIT(Inventory): ...`，台账 158 → 163 |
+
+补充核对：
+
+- 旧头文件里的类名是 `Inventory`，与 `packages/world/src/entity/player/Inventory.ts` 的正式类同名；
+  TS 侧不在 `index.ts` 导出它（`index.ts:183` 有注释说明），与 C++ 全源码零引用的状态一致。
+- 这 5 个函数的签名在 TS 里删除后，没有调用点需要改（`grep` 全仓库只有它自己的定义）。
+- 字段与常量保留：它们是头文件里真实存在、能 1:1 对应的部分，将来若有人翻出旧 `.cpp` 可直接续写。
+
+## 结论（OldInventory）
+
+`OldInventory.ts` 审核完成：常量与字段一致；5 个只有声明没有定义的函数按 R3 改为 OMIT 标记，
+台账 158 → 163。无新增测试（没有可执行的行为可测，原有测试不受影响）。
