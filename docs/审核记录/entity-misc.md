@@ -202,3 +202,26 @@ W18：`32 + 1e-7` 的目标被清掉），修复后全绿。
 
 `PathfinderMob.ts` 审核完成：18 行全部有结论。修复 W17（三处 floor 的 float 分步）、W18（两处 float
 形参舍入）；注释修正 2 处；新增 `ADAPTED(Cpp)` 2 条、`OMIT(MobAI)` 1 条。台账 154 → 157（+3）。
+
+## 后续补充：SharedFlags.ts（23 行，工作表 0 个成员函数）
+
+第 2 批续审，无代码修改。C++ 只有 `SharedFlags.h`（纯常量类，无 `.cpp`、无成员函数）。
+
+| 项目                                                                                                              | 结论                                                                                                                                          |
+| ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enum SharedFlags`（FLAG_ONFIRE … FLAG_USINGITEM）                                                                | 一致：5 个值 0–4，顺序与数值逐项相同                                                                                                          |
+| `typedef char SharedFlagsInformationType`                                                                         | 一致：写成 `type SharedFlagsInformationType = number`；char 的符号语义由 `SynchedEntityData` 的类型码实现（该文件已审过）承担，此处无独立行为 |
+| `static const unsigned int DATA_SHARED_FLAGS_ID = 0`                                                              | 一致：`export const DATA_SHARED_FLAGS_ID = 0`；`Mob` 构造里 `defineByte(…, 0)` 与 C++ `define(…, (TypeChar) 0)` 对应                          |
+| `FLAG_RIDING` / `FLAG_SPRINTING` 零使用                                                                           | 一致：C++ 全源码里也只有定义、没有任何使用者；TS 同样只声明（C++ 的“声明了不用”怪癖原样）                                                     |
+| namespace 顶层的 5 个便捷 `const`（`FLAG_ONFIRE` 等）                                                             | NEW（无行为影响）：C++ 调用点写 `SharedFlagsInformation::FLAG_ONFIRE`，TS 的 enum 嵌在 namespace 里要多一层；这 5 个 const 让                 |
+| `Mob`/`Player` 里能写成 `SharedFlagsInformation.FLAG_ONFIRE`，与 C++ 字面对应。未被测试单独断言（值就是 enum 值） |
+
+`class SharedFlagsInformation` 本身在 TS 里写成 `export namespace`（C++ 的这个类只有静态成员，
+不能实例化，namespace 是 TS 里“静态成员集合”的惯用对应，与 `EntityTypes` 同款写法）。
+
+## 结论（SharedFlags）
+
+`SharedFlags.ts` 审核完成：全部一致，无修改、无新增 DEFERRED/OMIT，台账不变（157）。
+既有覆盖：`tests/unit/world/pathfindermob.test.ts` 用 `entityData.setFlag(14, 0)` 间接经过
+`DATA_SHARED_FLAGS_ID` 所在的 defineByte 体系；`chicken.test.ts` 断言 `isOnFire()`（FLAG_ONFIRE 的
+读路径）。常量表本身无逻辑，无需新增测试。
