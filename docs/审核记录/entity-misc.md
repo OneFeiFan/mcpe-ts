@@ -78,3 +78,25 @@ C++ 的 `delete e` 在 TS 里是置 null 由 GC 接管（无行为差异）。
 - 新增 `tests/unit/world/entity-misc-audit.test.ts` 2 条，修复前全部红（EntityPos 存 double；子类重写
   `setAge` 在构造期间被调用了 1 次）。
 - `pnpm check`：类型 ✓ 27.5s、测试 **129 文件 / 1395 条** ✓、台账 **151** ✓；prettier ✓。
+
+## 后续补充：MobFactory.ts（81 行，工作表 3 个成员函数）
+
+第 2 批续审，无代码修改。C++ 只有 `MobFactory.h`，三个函数都是头文件内联，没有 `.cpp`。
+
+| 函数 / 成员                                   | 结论                                                                                                                                                                                                                                                                                                                                                 |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CreateMob(int, Level*)`                      | 一致：9 个 case 与 `MobTypes` 数值（10/11/12/13/32/33/34/35/36）和 C++ 顺序完全相同；未识别类型打同一条 `LOGE`（`%d` → 模板字符串）后返回 null；`mob->health = mob->getMaxHealth()` 是虚调用，TS 动态派发一致                                                                                                                                        |
+| `clearStaticTestMobs()`                       | 一致：转调 `getStaticTestMob(0, NULL)`。C++ 只在 `Minecraft::~Minecraft` 里调用它，析构按 R3 不移植，所以 TS 没有调用点不是缺口                                                                                                                                                                                                                      |
+| `getStaticTestMob(int, Level*)`               | 一致：`wantClear`/`newLevel` 条件、先更新 `lastLevel` 再清空、清空后 `wantClear` 直接返回 null、命中缓存直接返回、未命中则 `CreateMob` 后插入；`std::map::insert` 不覆盖已有键，但此处刚 `find` 过、键必然不存在，`Map.set` 等价；`CreateMob` 返回 null 时 C++ 也把 null 存进 map 并在下次命中时返回 null，TS 的 `found !== undefined` 同样返回 null |
+| 两个 static 局部（`_mobs`、`lastLevel`）      | ADAPTED(Cpp)：模块级 `staticTestMobs`，文件头已注明；`std::map` 只做 find/insert/clear、不迭代，遍历顺序差异无影响                                                                                                                                                                                                                                   |
+| `//LOGI("Trying to create a mob with type…")` | 一致：C++ 里本来就是注释，TS 不输出                                                                                                                                                                                                                                                                                                                  |
+
+C++ 的 `delete it->second` 在 TS 里是 `Map.clear()`，由 GC 接管；被缓存的都是 MobSpawner 用来做
+`canSpawn` 测试的临时生物，没有加进世界，也没有析构副作用（`~Mob` 的函数体是注释掉的）。
+既有覆盖：`tests/unit/world/mobs.test.ts` 逐个验证 9 种生物的类、满血、实体类型与渲染器 id；
+`tests/unit/world/entity-factory.test.ts` 覆盖未知 id 走 MobFactory 返回 null；
+`tests/unit/world/mobspawner.test.ts` 使用 `getStaticTestMob` 并固定其随机种子。
+
+## 结论（MobFactory）
+
+`MobFactory.ts` 审核完成：全部一致，无修改、无新增 DEFERRED/OMIT，台账不变。
