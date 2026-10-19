@@ -24,3 +24,4 @@
 | 2    | world/entity（小文件组）      | [entity-misc.md](entity-misc.md)             | 完成            |
 | 2    | world/entity（HangingEntity） | [entity-hanging.md](entity-hanging.md)       | 完成            |
 | 2    | world/entity（Mob）           | [mob.md](mob.md)                             | 完成（W12–W15） |
+| 2    | world/entity/player           | [player.md](player.md)                       | 进行中          |
