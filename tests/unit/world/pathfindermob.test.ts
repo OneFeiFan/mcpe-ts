@@ -14,8 +14,9 @@ import { createFlatLevel, prepareLevel } from '../../helpers/headlessLevel';
 // 任务单 D10a：`PathfinderMob` + `AgableMob` —— `Chicken → Animal → AgableMob → PathfinderMob → Mob`
 // 这条链里 TS 一直缺的两级（D10 执行时才发现，D0 的估算漏了）。
 //
-// ⚠ 这个文件**不测 AI**（`updateAi` / `findRandomStrollLocation` 是整条 OMIT 的，见源码注释）。
-//   测的是"非 AI 的那半"：字段、canSpawn、攻击目标、速度修正、以及 age/同步标志。
+// ⚠ 这个文件测的是"非 AI 的那半"：字段、canSpawn、攻击目标、速度修正、以及 age/同步标志。
+//   旧 AI（`updateAi` / `findRandomStrollLocation`）已由任务单 H3 移植，行为见
+//   `tests/golden/mobai.golden.test.ts` 与 `pathfindermob-audit.test.ts`。
 
 const f = Math.fround;
 const X = 130;

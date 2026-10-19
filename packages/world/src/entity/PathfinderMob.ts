@@ -25,7 +25,8 @@ import { Mob } from './Mob';
 const f = Math.fround;
 
 export abstract class PathfinderMob extends Mob {
-  /** C++ `static const int MAX_TURN = 30;` —— 只被 OMIT 掉的 `updateAi` 用 */
+  /** C++ `static const int MAX_TURN = 30;`（声明在 `public:` 之前，是 private） */
+  // ADAPTED(Cpp)：C++ 里它是 private；TS 保持 public —— 既有测试断言它的值，改 private 就得删断言。
   static readonly MAX_TURN = 30;
   /** C++ `static const int CAN_OPEN_DOORS = 1;` */
   static readonly CAN_OPEN_DOORS = 1;
@@ -49,6 +50,7 @@ export abstract class PathfinderMob extends Mob {
   }
 
   // OMIT(MobAI): PathfinderMob::~PathfinderMob() { delete navigation; delete sensing; }  PathfinderMob.cpp:23（JS 没有析构）
+  // OMIT(MobAI): typedef struct AIData { AIData(): target(NULL) {} Mob* target; } AIData;  PathfinderMob.h:13（参考源码里除定义外零使用）
 
   /** C++ `bool PathfinderMob::canSpawn()` */
   override canSpawn(): boolean {
@@ -201,9 +203,11 @@ export abstract class PathfinderMob extends Mob {
     let zBest = -1;
     let best = -99999;
     for (let i = 0; i < 10; i++) {
-      const xt = Mth.floor(this.x + this.random.nextInt(13) - 6);
-      const yt = Mth.floor(this.y + this.random.nextInt(7) - 3);
-      const zt = Mth.floor(this.z + this.random.nextInt(13) - 6);
+      // C++：`Mth::floor(x + random.nextInt(13) - 6)` —— x 是 float 字段，int 先转 float，
+      // 加、减每一步都按 float 舍入，最后才 floor。
+      const xt = Mth.floor(f(f(this.x + this.random.nextInt(13)) - 6));
+      const yt = Mth.floor(f(f(this.y + this.random.nextInt(7)) - 3));
+      const zt = Mth.floor(f(f(this.z + this.random.nextInt(13)) - 6));
       const value = this.getWalkTargetValue(xt, yt, zt);
       if (value > best) {
         best = value;
@@ -224,6 +228,7 @@ export abstract class PathfinderMob extends Mob {
 
   /** C++ `void PathfinderMob::checkCantSeeTarget(Entity* target, float d)` */
   protected checkCantSeeTarget(_target: Entity, d: number): void {
+    d = f(d); // C++ 形参是 float
     if (d > 32) this.attackTargetId = 0;
   }
 
@@ -250,6 +255,9 @@ export abstract class PathfinderMob extends Mob {
   }
 
   /** C++ `PathNavigation* PathfinderMob::getNavigation()` */
+  // C++ 返回非空指针（构造函数里 new 过）；`Mob::_init` 不清 navigation（与 C++ 一致）。
+  // ADAPTED(Cpp)：TS 的字段类型是 `PathNavigation | null`（`Mob` 构造函数里先置 null），
+  // 这里返回该字段，与 C++ 一样不做空检查。
   getNavigation(): PathNavigation | null {
     return this.navigation;
   }
