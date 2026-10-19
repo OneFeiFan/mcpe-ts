@@ -100,3 +100,23 @@ C++ 的 `delete it->second` 在 TS 里是 `Map.clear()`，由 GC 接管；被缓
 ## 结论（MobFactory）
 
 `MobFactory.ts` 审核完成：全部一致，无修改、无新增 DEFERRED/OMIT，台账不变。
+
+## 后续补充：Motive.ts（113 行，工作表 3 个成员函数）
+
+第 2 批续审，无代码修改。C++ 的 29 个静态实例、28 项列表与顺序用脚本逐项比对过：
+
+| 函数 / 成员                                     | 结论                                                                                                                                                          |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 29 个静态实例                                   | 一致：名称、`w/h/uo/vo`（含 `n * 16` 展开值）、`isPublic` 全部逐项相同；声明顺序与 C++ 相同                                                                   |
+| `DefaultImage`                                  | 一致：C++ 是 `&Motive::Kebab` 的指针，TS 是同一个对象引用；TS 静态字段按源码顺序求值，排在 Kebab 之后，与 C++ 同翻译单元内的初始化顺序一致                    |
+| `getAllMotivesAsList()`                         | 一致：28 项、顺序逐项相同（`Aztec2` 在 `Alban` 前，`Aztec` 不在列表里）；C++ 每次调用新建 vector，TS 每次返回新数组                                           |
+| `getMotiveByName(const std::string&)`           | 一致：遍历列表按 `name` 相等返回；查不到返回 `DefaultImage`（`"Aztec"` 也会落到 Kebab，原样保留）；名字全是 ASCII，`std::string` 字节比较与 JS 字符串相等等价 |
+| `Motive(std::string, int, int, int, int, bool)` | 一致：五个字段按初始化列表顺序赋值；`isPublic` 默认参数 `true` 与 C++ 头文件默认值相同；C++ 的 `const` 成员对应 TS `readonly`                                 |
+| `MAX_MOTIVE_NAME_LENGTH = 13`                   | 一致；C++ 里除定义处外没有使用者，TS 同样只作为常量导出                                                                                                       |
+
+既有覆盖：`tests/unit/world/painting.test.ts` 断言 28 项列表的完整顺序、`Aztec` 不在列表且按名字查落到
+`DefaultImage`、四张 `isPublic=false` 的画、若干尺寸/贴图坐标与常量 13。
+
+## 结论（Motive）
+
+`Motive.ts` 审核完成：全部一致，无修改、无新增 DEFERRED/OMIT，台账不变。
