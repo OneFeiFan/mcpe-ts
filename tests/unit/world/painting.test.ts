@@ -156,7 +156,7 @@ describe('Painting（D7）', () => {
     buildWall();
     const p = new Painting(level, X, Y, Z, Direction.NORTH);
     expect(Motive.getAllMotivesAsList()).toContain(p.motive);
-    expect(p.motive.isPublic, '选出来的必须是可以随机到的那一档').toBe(true);
+    expect(p.motive!.isPublic, '选出来的必须是可以随机到的那一档').toBe(true);
     // 选完之后位置是按这张画的尺寸重算过的
     expect(p.dir).toBe(Direction.NORTH);
   });

@@ -38,7 +38,8 @@ export class PaintingRenderer extends EntityRenderer {
     glEnable(GL_RESCALE_NORMAL);
     this.bindTexture('art/kz.png');
     const painting = e as Painting;
-    const motive = painting.motive;
+    // C++ 直接解引用 painting->motive；能画出来的画必然已经设过 motive。
+    const motive = painting.motive!;
     const s = 1.0 / 16.0;
     glScalef(s, s, s);
     this.renderPainting(painting, motive.w, motive.h, motive.uo, motive.vo, a);

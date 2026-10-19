@@ -120,3 +120,37 @@ C++ 的 `delete it->second` 在 TS 里是 `Map.clear()`，由 GC 接管；被缓
 ## 结论（Motive）
 
 `Motive.ts` 审核完成：全部一致，无修改、无新增 DEFERRED/OMIT，台账不变。
+
+## 后续补充：Painting.ts（111 行，工作表 11 个成员函数）
+
+第 2 批续审。对照 C++ `Painting.h`（26 行）与 `Painting.cpp`（77 行）。C++ 的三个构造函数与 TS 合并
+成一个带重载签名的构造函数，分支逐句对应。
+
+| 函数 / 成员                                  | 结论                                                                                                                                                                                                                                                                             |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Painting(Level*)`                           | 一致：只设 `entityRendererId = ER_PAINTING_RENDERER`；C++ 不初始化 `motive`（UB），TS 见下一条                                                                                                                                                                                   |
+| `Painting(Level*, xTile, yTile, zTile, dir)` | 一致：转调 `super(level, xTile, yTile, zTile, dir)`，随后只设 `entityRendererId`；**不调 `setDir`**（C++ 也不调），`dir` 被基类 `init()` 覆盖成 0 的怪癖由 HangingEntity 保留                                                                                                    |
+| `Painting(Level*, x, y, z, dir, motiveName)` | 一致：先 `getMotiveByName(motiveName)` 再 `setDir(dir)`，最后 `entityRendererId`；顺序与 C++ 相同                                                                                                                                                                                |
+| `motive` 字段                                | **已修 W16**：C++ `const Motive* motive;` 在单参构造里未初始化（UB）。按 PITFALLS #20 改为 `Motive \| null = null` 并标 ADAPTED(Cpp)（台账 +1）；这样 `addAdditonalSaveData` 里照抄的 `motive != NULL` 守卫才真正生效（旧实现是 `undefined`，守卫放行后读 `.name` 抛 TypeError） |
+| `setRandomMotive(int dir)`                   | 一致：遍历 `getAllMotivesAsList()`、跳过 `!isPublic`、逐个赋值后 `setDir` + `survives()` 收集；非空则 `Entity.sharedRandom.nextInt(length)` 取一个再 `setDir`，否则 `DefaultImage`；随机源是 `Entity.sharedRandom` 而不是 `level.random`                                         |
+| `getWidth()` / `getHeight()`                 | 一致：返回 `motive.w` / `motive.h`。TS 加了 `!`（C++ 直接解引用，未设置时同样是 UB），调用点都在 `setRandomMotive`/`setDir` 之后                                                                                                                                                 |
+| `dropItem()`                                 | 一致：`getGameType() != Creative` 时 `spawnAtLocation(Item.painting.id, 1)`                                                                                                                                                                                                      |
+| `getEntityTypeId() const`                    | 一致：`EntityTypes.IdPainting`（83）                                                                                                                                                                                                                                             |
+| `isPickable()`                               | 一致：true                                                                                                                                                                                                                                                                       |
+| `addAdditonalSaveData(CompoundTag*)`         | **已修 W16（可见性）**：C++ 在 `public:` 段，TS 原为 `protected override`，按 `docs/移植规范.md` 第 147 行改为 `public override`；函数体一致（先判 `motive != null` 写 `"Motive"`，再 `super`）                                                                                  |
+| `readAdditionalSaveData(CompoundTag*)`       | **已修 W16（可见性）**：同上改为 `public override`；函数体一致（先 `getString("Motive")` → `getMotiveByName`，再 `super`）                                                                                                                                                       |
+
+### W16 的测试
+
+`tests/unit/world/painting-audit.test.ts` 2 条，修复前全红（`undefined !== null`；`save()` 抛
+`TypeError: Cannot read properties of undefined (reading 'name')`），修复后全绿。另因字段类型改为可空，
+`PaintingRenderer.render` 与既有 `painting.test.ts` 第 159 行补了 `!`（C++ 在这两处也是直接解引用），
+断言语义未变。
+
+`packages/client/src/renderer/entity/PaintingRenderer.ts` 只改了那一处 `!`，属本文件审核带出的连带修改；
+它的 2 个函数仍按 `待审清单` 留待第 6 批（client/renderer）审核。
+
+## 结论（Painting）
+
+`Painting.ts` 审核完成：11 行结论全部一致，除 W16 两处修复（`motive` 初值、存档方法可见性）外无其他改动。
+台账 153 → 154（新增 `ADAPTED(Cpp)` 1 条）。

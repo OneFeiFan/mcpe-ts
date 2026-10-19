@@ -27,7 +27,9 @@ import type { Level } from '../level/Level';
 
 export class Painting extends HangingEntity {
   /** C++ `const Motive* motive;` */
-  public motive!: Motive;
+  // ADAPTED(Cpp)：C++ 的单参构造不初始化它（UB，PITFALLS #20），TS 取 null；
+  // 这样 `addAdditonalSaveData` 里照抄的 `motive != NULL` 守卫才有意义。
+  public motive: Motive | null = null;
 
   /** C++ `Painting(Level*)` */
   constructor(level: Level);
@@ -70,12 +72,13 @@ export class Painting extends HangingEntity {
 
   /** C++ `int Painting::getWidth()` */
   override getWidth(): number {
-    return this.motive.w;
+    // C++ 直接解引用 motive（未设置时是 UB）；实际调用点都发生在 setRandomMotive/setDir 之后。
+    return this.motive!.w;
   }
 
   /** C++ `int Painting::getHeight()` */
   override getHeight(): number {
-    return this.motive.h;
+    return this.motive!.h;
   }
 
   /** C++ `void Painting::dropItem()` */
@@ -94,16 +97,16 @@ export class Painting extends HangingEntity {
     return true;
   }
 
-  /** C++ `void Painting::addAdditonalSaveData(CompoundTag*)` —— 注意拼写 */
-  protected override addAdditonalSaveData(tag: CompoundTag): void {
+  /** C++ `void Painting::addAdditonalSaveData(CompoundTag*)` —— 注意拼写；C++ 头文件里是 public */
+  public override addAdditonalSaveData(tag: CompoundTag): void {
     if (this.motive !== null) {
       tag.putString('Motive', this.motive.name);
     }
     super.addAdditonalSaveData(tag);
   }
 
-  /** C++ `void Painting::readAdditionalSaveData(CompoundTag*)` */
-  protected override readAdditionalSaveData(tag: CompoundTag): void {
+  /** C++ `void Painting::readAdditionalSaveData(CompoundTag*)`；C++ 头文件里是 public */
+  public override readAdditionalSaveData(tag: CompoundTag): void {
     const motiveName = tag.getString('Motive');
     this.motive = Motive.getMotiveByName(motiveName);
     super.readAdditionalSaveData(tag);
