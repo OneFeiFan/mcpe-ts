@@ -35,6 +35,8 @@ export class Inventory extends FillingContainer {
     this.compressLinkedSlotList(0);
   }
 
+  // OMIT(Inventory): Inventory::~Inventory() {}  Inventory.cpp:23（空析构函数，R3 不移植）
+
   override clearInventoryWithDefault(): void {
     this.clearInventory();
     this.setupDefault();
@@ -48,7 +50,8 @@ export class Inventory extends FillingContainer {
     return this.getLinked(this.selected);
   }
 
-  getSelectionSize(): number {
+  /** C++ `static int Inventory::getSelectionSize()` */
+  static getSelectionSize(): number {
     return Inventory.MAX_SELECTION_SIZE;
   }
 
@@ -64,7 +67,10 @@ export class Inventory extends FillingContainer {
     return this.linkEmptySlot(inventorySlot);
   }
 
-  /** C++ 的 removeItem(const ItemInstance* samePtr)：与 FillingContainer::removeItem(slot, count) 不同的重载（R10 情形 B） */
+  /**
+   * C++ 的 removeItem(const ItemInstance* samePtr)：与 FillingContainer::removeItem(slot, count) 不同的重载（R10 情形 B）。
+   * C++ 的调用者：ArmorScreen（已接线）、ServerSideNetworkHandler.cpp:942/966（网络，DEFERRED(Network)）。
+   */
   removeItemInstance(samePtr: ItemInstance): boolean {
     for (let i = Inventory.MAX_SELECTION_SIZE; i < Math.trunc(this.items.length); ++i) {
       if (this.items[i] === samePtr) {
@@ -102,7 +108,7 @@ export class Inventory extends FillingContainer {
     if (item && item.id >= 256) {
       return Item.items[item.id]!.getDestroySpeed(null, tile);
     }
-    return 1.0;
+    return 1.0; // C++ 是 `1.0f`：f(1.0) === 1，结果相同
   }
 
   canDestroy(tile: Tile): boolean {
@@ -114,17 +120,14 @@ export class Inventory extends FillingContainer {
   }
 
   print(): void {
-    LOGI("%s's Inventory:\n", this.player.name);
+    // C++ 的 LOGI 是 printf 宏；TS 的 LOGI 直接把参数交给 console，所以格式串要自己拼。
+    LOGI(`${this.player.name}'s Inventory:\n`);
 
     for (let i = 0; i < this.numTotalSlots; i++) {
       let item = this.getItem(i);
       if (item)
         LOGI(
-          '\t %i: %s (%i) %s\n',
-          i,
-          item.getName(),
-          item.count,
-          this.player.inventory.getLinked(i) ? '(Linked)' : '',
+          `\t ${i}: ${item.getName()} (${item.count}) ${this.player.inventory.getLinked(i) ? '(Linked)' : ''}\n`,
         );
     }
   }
@@ -257,7 +260,8 @@ export class Inventory extends FillingContainer {
       let item = this.items[i];
 
       if (i < Inventory.MAX_SELECTION_SIZE) {
-        if (item) LOGE('Error: Should not have this.items on slot %i\n', i);
+        // C++ 是 `LOGE("Error: Should not have items on slot %i\n", i)`（printf 宏）
+        if (item) LOGE(`Error: Should not have items on slot ${i}\n`);
 
         this.items[i] = null;
         continue;
