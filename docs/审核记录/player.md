@@ -110,3 +110,110 @@ C++ 只有 `OldInventory.h`，**没有 `OldInventory.cpp`**；5 个成员函数�
 
 `OldInventory.ts` 审核完成：常量与字段一致；5 个只有声明没有定义的函数按 R3 改为 OMIT 标记，
 台账 158 → 163。无新增测试（没有可执行的行为可测，原有测试不受影响）。
+
+## Player（src/world/entity/player/Player.h / .cpp ↔ packages/world/src/entity/player/Player.ts）
+
+工作表 79 行全部有结论。C++ 的 `Player.cpp` 用 `clean.py` 展开网页版构建后逐函数对照；
+`DEMO_MODE` / `RPI` / `WIN32` 分支都不存在。
+
+| # | 函数 | 结论 |
+| --- | --- | --- |
+| 1 | `Player(Level*, bool)` | 一致。成员初始化列表顺序与 C++ 声明顺序相同；`_init()` 写成 `Player.prototype._init.call(this)`，因为 C++ 构造期调虚函数只会调到本类版本（ADAPTED(Cpp)，已有注释） |
+| 2 | `~Player()` | **OMIT**（新增）：函数体只有 `delete inventory;`，JS 由 GC 接管 |
+| 3 | `isSleeping()` | 一致 |
+| 4 | `startSleepInBed` | **已修 W20**：`heightOffset = 0.2f`、`xo/zo`、`y + 15.0f/16.0f`、`x + 0.5f` 等全部按 float 分步 |
+| 5 | `stopSleepInBed` | **已修 W20**：`Pos standUp = bedPosition` 是值拷贝（TS 以前是引用，`findStandUpPosition` 写输出参数会把 `this.bedPosition` 一起改掉）；`standUp.x + 0.5f`、`standUp.y + heightOffset + 0.1f` 按 float 分步 |
+| 6 | `getSleepTimer()` | 一致 |
+| 7 | `setAllPlayersSleeping()` | 一致 |
+| 8 | `setBedOffset(int)` | **已修 W20**：四个分支的 `±1.8f` 用 `f()` |
+| 9 | `isSleepingLongEnough()` | 一致 |
+| 10 | `getSleepRotation()` | 一致：四方向 90 / 0 / 270 / 180 |
+| 11 | `checkBed()` | 一致 |
+| 12 | `tick()` | 一致：睡眠状态机、火方块 `hurt(NULL, 1)`、`onFire = 20 * 15`、`foodData.tick(this)` 都在 |
+| 13 | `getMaxHealth()` | 一致 |
+| 14 | `isUsingItem()` | 一致 |
+| 15 | `getUseItem()` | 一致：返回成员引用（C++ 返回 `&useItem`） |
+| 16 | `spawnEatParticles` | **已修 W20**：粒子/声音参数全部按 float 分步。最后一句 `playSound(this, "random.eat", .5f + .5f * random.nextInt(2), (random.nextFloat() - random.nextFloat()) * 0.2f + 1.0f)` 两个实参都取随机数，C++ 求值顺序未指定 → **DEFERRED(待确认)**，暂按从左到右（与 Entity/Mob/ItemEntity 的先例一致） |
+| 17 | `startUsingItem` | 一致：`instance == useItem` 是 `operator==`（比内容）→ `equals`；`useItem = instance` 是复制 → `new ItemInstance(instance)` |
+| 18 | `stopUsingItem()` | 一致 |
+| 19 | `releaseUsingItem()` | 一致 |
+| 20 | `completeUsingItem()` | 一致：`*selected = useItem` 用 `init(id, count, aux)` 按值赋值 |
+| 21 | `getUseItemDuration()` | 一致 |
+| 22 | `getTicksUsingItem()` | 一致 |
+| 23 | `travel(float, float)` | **已修 W20**：`flyingSpeed = 0.05f`、`yd = ydo * 0.6f`；`ydo` 在 `super.travel` 之前取值（C++ 原顺序） |
+| 24 | `isImmobile()` | 一致（protected） |
+| 25 | `closeContainer()` | 一致（protected） |
+| 26 | `resetPos(bool)` | **已修 W20**：`heightOffset = f(1.62)` |
+| 27 | `updateAi()` | 一致（protected） |
+| 28 | `getItemInHandIcon` | **已修 W20**：`(2 * MAX_DRAW_DURATION) / 3` 两边都是 int → `Math.trunc(40 / 3) = 13`（以前算成 13.33，`ticksHeld = 13` 会误进 7 档） |
+| 29 | `aiStep()` | **已修 W20**：`tBob` / `tTilt` / `bob` / `tilt` 每一步 `f()` |
+| 30 | `touch(Entity*)` | 一致（private） |
+| 31 | `getScore()` | 一致 |
+| 32 | `die(Entity*)` | **已修 W20**：`yd = f(0.1)`、`heightOffset = f(0.1)`、`angle` / `xd` / `zd` 按 float 分步 |
+| 33 | `reset()` | 一致：`Player.prototype._init.call(this)`（C++ 的 `_init` 不是 virtual，不能派发到子类） |
+| 34 | `_init()` | 一致 |
+| 35 | `getWalkingSpeedModifier()` | 一致 |
+| 36 | `awardKillScore` | 一致 |
+| 37 | `isShootable()` | 一致 |
+| 38 | `isCreativeModeAllowed()` | 一致 |
+| 39 | `drop(ItemInstance*, bool)` | **已修 W20**：初始 y、两个分支的 `pow` / `dir` / `xd` / `yd` / `zd` 全部按 float 分步；`throwTime = 40`；`(random.nextFloat() - random.nextFloat())` 的求值顺序按先例从左到右 |
+| 40 | `getDestroySpeed(Tile*)` | 一致 |
+| 41 | `canDestroy(Tile*)` | 一致 |
+| 42 | `readAdditionalSaveData` | **已修 W20**：`SleepTimer` 按 short 语义 `(v << 16) >> 16`。**ADAPTED(Cpp)**：C++ 的 `Mob.h:104-105` 把该虚函数重新声明成 public、`Player.h:109` 又收窄回 protected；TS 不允许子类把 public 收窄成 protected（TS2415），只能保持 public |
+| 43 | `addAdditonalSaveData` | **已修 W20**：`SleepTimer` 写回前同样按 short 截断。**ADAPTED(Cpp)**：同 #42 的可见性 |
+| 44 | `startCrafting` | 一致（空函数） |
+| 45 | `startStonecutting` | 一致（空函数） |
+| 46 | `openFurnace` | 一致（空函数） |
+| 47 | `take` | 一致（空函数） |
+| 48 | `getHeadHeight()` | **已修 W20**：返回 `f(0.12)`（以前是 double `0.12`） |
+| 49 | `setDefaultHeadHeight()` | **已修 W20**：`f(1.62)` |
+| 50 | `isHurt()` | 一致 |
+| 51 | `hurt(Entity*, int)` | **已修 W20**：EASY `dmg / 3 + 1`、HARD `dmg * 3 / 2` 是整数运算（`Math.trunc`）；PEACEFUL 归零、`dmg == 0` 返回 false 一致 |
+| 52 | `interact(Entity*)` | 一致，R10 改名 `interactWith`（与 `Entity::interact(Player*)` 区分），已登记 |
+| 53 | `attack(Entity*)` | 一致：`instabuild != true` 才 `hurtEnemy` |
+| 54 | `respawn()` | 一致（空函数） |
+| 55 | static `animateRespawn(Player*, Level*)` | **ADAPTED(Cpp)**：R10 改名 `animateRespawnFor`，可见性保持 C++ 的 protected static（测试里用 `@ts-expect-error` 钉住） |
+| 56 | `animateRespawn()` | 一致（空函数） |
+| 57 | `getCarriedItem()` | 一致 |
+| 58 | `remove()` | 一致：先 `invisible = true` 再 `super.remove()` |
+| 59 | `isInWall()` | 一致 |
+| 60 | `hasResource(int)` | 一致 |
+| 61 | `displayClientMessage` | 一致（空函数，由子类重写） |
+| 62 | `getRespawnPosition()` | **已修 W20**：C++ 按值返回 `Pos`，改为 `clone()`（以前返回内部对象，调用方改返回值会改到成员） |
+| 63 | `setRespawnPosition` | 一致：`y < 0` 清 `playerHasRespawnPosition`，并复制实参 |
+| 64 | `isPlayer()` | 一致 |
+| 65 | static `isPlayer(Entity*)` | 一致：`e && e->isPlayer()` |
+| 66 | static `asPlayer(Entity*)` | 一致 |
+| 67 | `openContainer` | 一致（空函数） |
+| 68 | `tileEntityDestroyed` | 一致 |
+| 69 | `canUseCarriedItemWhileMoving` | 一致：弓或食物 |
+| 70 | `handleEntityEvent(char)` | 一致：`USE_ITEM_COMPLETE` → `completeUsingItem`，否则交父类 |
+| 71 | `getSelectedItem()` | 一致 |
+| 72 | `hasRespawnPosition()` | 一致 |
+| 73 | `openTextEdit` | 一致（空函数） |
+| 74 | `getArmor(int)` | 一致：越界或空槽返回 NULL |
+| 75 | `setArmor(int, const ItemInstance*)` | 一致：NULL → `setNull()`，否则 `armor[slot] = *item` 复制 |
+| 76 | `hurtArmor(int)` | **已修 W20**：`dmg / 4` 是整数除法（以前把小数写进 `auxValue`） |
+| 77 | `getArmorTypeHash()` | 一致：四个 id 按 0/8/16/24 位移相加 |
+| 78 | `getArmorValue()` | 一致：只累加 `isArmorItem` 的 `defense` |
+| 79 | `getEntityTypeId()` | 一致：返回 0 |
+
+补充核对：
+
+- `saveArmor` / `loadArmor` 两个文件内 static 函数一致（`ListTag` 4 项、`Mth::Min(4, size)`、只读 `TAG_Compound`）。
+- `tick()` 里 `sleepCounter++` 后 `> SLEEP_DURATION` 才夹到 100；`else if` 分支 `>= SLEEP_DURATION + WAKE_UP_DURATION` 归零——与 C++ 一致。
+- `stopSleepInBed` 的 `if (true || saveRespawnPoint)` 原样保留（原版永远为真）。
+- `readAdditionalSaveData` 的键、`contains` 的五个条件、`else` 分支重置 `bedPosition = (0,0,0)`、末尾 `playerHasRespawnPosition = respawnPosition.y >= 0` 均一致。
+
+**W20 验证**：新增 `tests/unit/world/player-audit.test.ts`（24 条）。撤掉 11 处修复后重跑，
+9 条变红（整数除法、`standUp` 值拷贝、`getHeadHeight`、`getRespawnPosition`、`getItemInHandIcon`、
+float 分步各条）；恢复后 24 条全绿。`pnpm check` 全绿（138 文件 / 1468 条测试），prettier 通过。
+
+**台账 163 → 167**：+1 OMIT（`~Player()`）、+2 ADAPTED（两个 NBT 方法的可见性）、
++1 DEFERRED(待确认)（`spawnEatParticles` 的实参求值顺序）。
+
+## 结论（Player）
+
+`Player.ts` 审核完成：79 行工作表全部有结论。修复 8 类问题，统一编号 W20（整数除法 ×3、
+值语义 ×2、float 分步 ×3 组）；新增 1 条 OMIT、2 条 ADAPTED、1 条 DEFERRED(待确认)，
+台账 163 → 167。新增审核测试 24 条。

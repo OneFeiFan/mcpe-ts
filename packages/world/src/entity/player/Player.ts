@@ -35,6 +35,8 @@ import { Direction } from '../../Direction';
 import type { ChestTileEntity } from '../../level/tile/entity/ChestTileEntity';
 import type { FurnaceTileEntity } from '../../level/tile/entity/FurnaceTileEntity';
 
+const f = Math.fround;
+
 /** Player.cpp 的文件内静态函数 saveArmor */
 function saveArmor(armor: ItemInstance[]): ListTag {
   const listTag = new ListTag();
@@ -73,8 +75,8 @@ export abstract class Player extends Mob {
   static readonly MAX_NAME_LENGTH = 16;
   protected static readonly NUM_ARMOR = 4;
   static readonly MAX_HEALTH = 20;
-  static readonly DEFAULT_WALK_SPEED = 0.1; // Player.cpp：const float
-  static readonly DEFAULT_FLY_SPEED = 0.02;
+  static readonly DEFAULT_WALK_SPEED = f(0.1); // Player.cpp:20 const float Player::DEFAULT_WALK_SPEED = 0.1f
+  static readonly DEFAULT_FLY_SPEED = f(0.02); // Player.cpp:21 const float Player::DEFAULT_FLY_SPEED = 0.02f
   static readonly SLEEP_DURATION = 100;
   static readonly WAKE_UP_DURATION = 10;
   inventory!: Inventory;
@@ -132,7 +134,7 @@ export abstract class Player extends Mob {
     this.autoSendPosRot = false;
     this.inventory = new Inventory(this, isCreative);
 
-    this.heightOffset = 1.62;
+    this.heightOffset = f(1.62);
 
     let spawnPos = level.getSharedSpawnPos();
     this.moveTo(spawnPos.x + 0.5, spawnPos.y + 1, spawnPos.z + 0.5, 0, 0);
@@ -147,6 +149,7 @@ export abstract class Player extends Mob {
     this.entityData.definePos(Player.DATA_BED_POSITION_ID, new Pos());
   }
 
+  // OMIT(Player): ~Player()  Player.cpp:69 —— 函数体只有 `delete inventory;`，JS 由 GC 接管。
   override _init(): void {
     this.oBob = this.bob = 0;
     this.swinging = false;
@@ -228,13 +231,13 @@ export abstract class Player extends Mob {
 
     this.oBob = this.bob;
 
-    let tBob = Mth.sqrt(this.xd * this.xd + this.zd * this.zd);
-    let tTilt = Mth.atan(-this.yd * 0.2) * 15;
-    if (tBob > 0.1) tBob = 0.1;
+    let tBob = Mth.sqrt(f(f(this.xd * this.xd) + f(this.zd * this.zd)));
+    let tTilt = f(Mth.atan(f(-this.yd * f(0.2))) * f(15));
+    if (tBob > f(0.1)) tBob = f(0.1);
     if (!this.onGround || this.hasDied()) tBob = 0;
     if (this.onGround || this.hasDied()) tTilt = 0;
-    this.bob += (tBob - this.bob) * 0.4;
-    this.tilt += (tTilt - this.tilt) * 0.8;
+    this.bob = f(this.bob + f(f(tBob - this.bob) * f(0.4)));
+    this.tilt = f(this.tilt + f(f(tTilt - this.tilt) * f(0.8)));
 
     if (this.health > 0) {
       let entities = this.level.getEntities(this, this.bb.grow(1, 0, 1));
@@ -251,9 +254,9 @@ export abstract class Player extends Mob {
     if (this.abilities.flying) {
       let ydo = this.yd;
       let ofs = this.flyingSpeed;
-      this.flyingSpeed = 0.05;
+      this.flyingSpeed = f(0.05);
       super.travel(xa, ya);
-      this.yd = ydo * 0.6;
+      this.yd = f(ydo * f(0.6));
       this.flyingSpeed = ofs;
     } else {
       super.travel(xa, ya);
@@ -268,15 +271,16 @@ export abstract class Player extends Mob {
     super.die(source);
     this.setSize(0.2, 0.2);
     this.setPos(this.x, this.y, this.z);
-    this.yd = 0.1;
+    this.yd = f(0.1);
 
     if (source !== null) {
-      this.xd = -Mth.cos(((this.hurtDir + this.yRot) * Mth.PI) / 180) * 0.1;
-      this.zd = -Mth.sin(((this.hurtDir + this.yRot) * Mth.PI) / 180) * 0.1;
+      const angle = f(f(f(this.hurtDir + this.yRot) * Mth.PI) / f(180));
+      this.xd = f(-Mth.cos(angle) * f(0.1));
+      this.zd = f(-Mth.sin(angle) * f(0.1));
     } else {
       this.xd = this.zd = 0;
     }
-    this.heightOffset = 0.1;
+    this.heightOffset = f(0.1);
   }
 
   override remove(): void {
@@ -288,7 +292,7 @@ export abstract class Player extends Mob {
 
   override resetPos(clearMore: boolean): void {
     if (!this.isSleeping()) {
-      this.heightOffset = 1.62;
+      this.heightOffset = f(1.62);
       this.setSize(0.6, 1.8);
       super.resetPos(clearMore);
     }
@@ -302,7 +306,8 @@ export abstract class Player extends Mob {
   }
 
   getRespawnPosition(): Pos {
-    return this.respawnPosition;
+    // C++ 按值返回 Pos；返回内部对象的引用会让调用方改到成员。
+    return this.respawnPosition.clone();
   }
 
   setRespawnPosition(respawnPosition: Pos): void {
@@ -421,34 +426,38 @@ export abstract class Player extends Mob {
     let thrownItem = new ItemEntity(
       this.level,
       this.x,
-      this.y - 0.3 + this.getHeadHeight(),
+      f(f(this.y - f(0.3)) + this.getHeadHeight()),
       this.z,
       new ItemInstance(item),
     ); // *item（按值复制）
     // { delete item; item = NULL; }（交给垃圾回收）
     thrownItem.throwTime = 20 * 2;
 
-    let pow = 0.1;
+    let pow = f(0.1);
     if (randomly) {
-      let _pow = this.random.nextFloat() * 0.5;
-      let dir = this.random.nextFloat() * Mth.PI * 2;
-      thrownItem.xd = -Mth.sin(dir) * _pow;
-      thrownItem.zd = Mth.cos(dir) * _pow;
-      thrownItem.yd = 0.2;
+      let _pow = f(this.random.nextFloat() * f(0.5));
+      let dir = f(f(this.random.nextFloat() * Mth.PI) * f(2));
+      thrownItem.xd = f(-Mth.sin(dir) * _pow);
+      thrownItem.zd = f(Mth.cos(dir) * _pow);
+      thrownItem.yd = f(0.2);
     } else {
-      pow = 0.3;
-      thrownItem.xd =
-        -Mth.sin((this.yRot / 180) * Mth.PI) * Mth.cos((this.xRot / 180) * Mth.PI) * pow;
-      thrownItem.zd =
-        Mth.cos((this.yRot / 180) * Mth.PI) * Mth.cos((this.xRot / 180) * Mth.PI) * pow;
-      thrownItem.yd = -Mth.sin((this.xRot / 180) * Mth.PI) * pow + 0.1;
-      pow = 0.02;
+      pow = f(0.3);
+      // C++ 的 yRot / 180 是 float 除法；Mth::sin / cos 的实参本身会先转 float。
+      const yAngle = f(f(this.yRot / f(180)) * Mth.PI);
+      const xAngle = f(f(this.xRot / f(180)) * Mth.PI);
+      thrownItem.xd = f(f(-Mth.sin(yAngle) * Mth.cos(xAngle)) * pow);
+      thrownItem.zd = f(f(Mth.cos(yAngle) * Mth.cos(xAngle)) * pow);
+      thrownItem.yd = f(f(-Mth.sin(xAngle) * pow) + f(0.1));
+      pow = f(0.02);
 
-      let dir = this.random.nextFloat() * Mth.PI * 2;
-      pow *= this.random.nextFloat();
-      thrownItem.xd += Mth.cos(dir) * pow;
-      thrownItem.yd += (this.random.nextFloat() - this.random.nextFloat()) * 0.1;
-      thrownItem.zd += Mth.sin(dir) * pow;
+      let dir = f(f(this.random.nextFloat() * Mth.PI) * f(2));
+      pow = f(pow * this.random.nextFloat());
+      thrownItem.xd = f(thrownItem.xd + f(Mth.cos(dir) * pow));
+      // C++ 的 `(random.nextFloat() - random.nextFloat())` 两个实参的求值顺序未指定；沿用 Entity/Mob/ItemEntity 的先例按从左到右。
+      thrownItem.yd = f(
+        thrownItem.yd + f(f(this.random.nextFloat() - this.random.nextFloat()) * f(0.1)),
+      );
+      thrownItem.zd = f(thrownItem.zd + f(Mth.sin(dir) * pow));
     }
 
     this.level.addEntity(thrownItem);
@@ -489,8 +498,9 @@ export abstract class Player extends Mob {
       if (source.isMob() && this.level.adventureSettings.noMvP) return false;
 
       if (this.level.difficulty === Difficulty.PEACEFUL) dmg = 0;
-      else if (this.level.difficulty === Difficulty.EASY) dmg = dmg / 3 + 1;
-      else if (this.level.difficulty === Difficulty.HARD) dmg = (dmg * 3) / 2;
+      // C++ 的 dmg 是 int：dmg / 3、dmg * 3 / 2 都是整数运算
+      else if (this.level.difficulty === Difficulty.EASY) dmg = Math.trunc(dmg / 3) + 1;
+      else if (this.level.difficulty === Difficulty.HARD) dmg = Math.trunc((dmg * 3) / 2);
     }
 
     if (dmg === 0) return false;
@@ -499,7 +509,8 @@ export abstract class Player extends Mob {
   }
 
   override hurtArmor(dmg: number): void {
-    dmg = Mth.Max(1, dmg / 4);
+    // C++ 的 dmg 是 int：dmg / 4 是整数除法
+    dmg = Mth.Max(1, Math.trunc(dmg / 4));
 
     for (let i = 0; i < Player.NUM_ARMOR; i++) {
       let item = this.armor[i]!;
@@ -587,14 +598,14 @@ export abstract class Player extends Mob {
 
   displayClientMessage(messageId: string): void {}
 
-  static animateRespawnFor(_player: Player, _level: Level): void {
+  protected static animateRespawnFor(_player: Player, _level: Level): void {
     // C++ 的 static animateRespawn(Player*, Level*)（R10）
   }
 
   animateRespawn(): void {}
 
   override getHeadHeight(): number {
-    return 0.12;
+    return f(0.12); // Player.cpp:647 return 0.12f
   }
 
   override getItemInHandIcon(item: ItemInstance, layer: number): number {
@@ -604,7 +615,8 @@ export abstract class Player extends Mob {
       if (ticksHeld >= BowItem.MAX_DRAW_DURATION - 2) {
         return 5 + 8 * 16;
       }
-      if (ticksHeld > (2 * BowItem.MAX_DRAW_DURATION) / 3) {
+      // C++ 两边都是 int：(2 * MAX_DRAW_DURATION) / 3 = 40 / 3 = 13
+      if (ticksHeld > Math.trunc((2 * BowItem.MAX_DRAW_DURATION) / 3)) {
         return 5 + 7 * 16;
       }
       if (ticksHeld > 0) {
@@ -646,30 +658,30 @@ export abstract class Player extends Mob {
     }
 
     this.setSize(0.2, 0.2);
-    this.heightOffset = 0.2;
+    this.heightOffset = f(0.2);
     if (this.level.hasChunkAt(x, y, z)) {
       let data = this.level.getData(x, y, z);
       let direction = BedTile.getDirection(data);
-      let xo = 0.5,
-        zo = 0.5;
+      let xo = f(0.5),
+        zo = f(0.5);
       switch (direction) {
         case Direction.SOUTH:
-          zo = 0.9;
+          zo = f(0.9);
           break;
         case Direction.NORTH:
-          zo = 0.1;
+          zo = f(0.1);
           break;
         case Direction.WEST:
-          xo = 0.1;
+          xo = f(0.1);
           break;
         case Direction.EAST:
-          xo = 0.9;
+          xo = f(0.9);
           break;
       }
       this.setBedOffset(direction);
-      this.setPos(x + xo, y + 15.0 / 16.0, z + zo);
+      this.setPos(f(f(x) + xo), f(f(y) + f(15.0 / 16.0)), f(f(z) + zo));
     } else {
-      this.setPos(x + 0.5, y + 1.0 / 16.0, z + 0.5);
+      this.setPos(f(f(x) + f(0.5)), f(f(y) + f(1.0 / 16.0)), f(f(z) + f(0.5)));
     }
     this.playerIsSleeping = true;
     this.sleepCounter = 0;
@@ -691,7 +703,9 @@ export abstract class Player extends Mob {
     if (!this.isSleeping()) return;
     this.setSize(0.6, 1.8);
     this.setDefaultHeadHeight();
-    let standUp = this.bedPosition;
+    // C++: `Pos standUp = bedPosition;` 是值拷贝。以前这里直接引用 bedPosition，
+    // findStandUpPosition 通过输出参数改掉 standUp 时会把 this.bedPosition 一起改掉。
+    let standUp = this.bedPosition.clone();
     if (
       this.level.getTile(
         Math.trunc(this.bedPosition.x),
@@ -717,7 +731,11 @@ export abstract class Player extends Mob {
       if (!foundStandUpPosition) {
         standUp = new Pos(this.bedPosition.x, this.bedPosition.y, this.bedPosition.z);
       }
-      this.setPos(standUp.x + 0.5, standUp.y + this.heightOffset + 0.1, standUp.z + 0.5);
+      this.setPos(
+        f(standUp.x + f(0.5)),
+        f(f(f(standUp.y) + this.heightOffset) + f(0.1)),
+        f(standUp.z + f(0.5)),
+      );
     }
     this.playerIsSleeping = false;
     if (!this.level.isClientSide && updateLevelList) {
@@ -812,9 +830,11 @@ export abstract class Player extends Mob {
   }
 
   protected setDefaultHeadHeight(): void {
-    this.heightOffset = 1.62;
+    this.heightOffset = f(1.62);
   }
 
+  // ADAPTED(Cpp)：C++ 的 Mob.h:104-105 把这两个虚函数重新声明成 public，Player.h:109-110 又收窄回 protected
+  // （C++ 允许子类收窄可见性）。TS 不允许子类把 public 成员改成 protected（TS2415），只能保持 public。
   override readAdditionalSaveData(entityTag: CompoundTag): void {
     super.readAdditionalSaveData(entityTag);
 
@@ -836,7 +856,7 @@ export abstract class Player extends Mob {
       entityTag.contains('BedPositionZ')
     ) {
       this.playerIsSleeping = entityTag.getBoolean('Sleeping');
-      this.sleepCounter = entityTag.getShort('SleepTimer');
+      this.sleepCounter = (entityTag.getShort('SleepTimer') << 16) >> 16;
       this.bedPosition = new Pos(
         entityTag.getInt('BedPositionX'),
         entityTag.getInt('BedPositionY'),
@@ -870,6 +890,7 @@ export abstract class Player extends Mob {
     this.playerHasRespawnPosition = this.respawnPosition.y >= 0;
   }
 
+  // ADAPTED(Cpp)：同 readAdditionalSaveData —— Player.h:110 收窄成 protected，TS 只能保持 public。
   override addAdditonalSaveData(entityTag: CompoundTag): void {
     super.addAdditonalSaveData(entityTag);
 
@@ -883,7 +904,7 @@ export abstract class Player extends Mob {
     entityTag.putInt('Dimension', this.dimension);
 
     entityTag.putBoolean('Sleeping', this.isSleeping());
-    entityTag.putShort('SleepTimer', this.sleepCounter);
+    entityTag.putShort('SleepTimer', (this.sleepCounter << 16) >> 16);
     entityTag.putInt('BedPositionX', this.bedPosition.x);
     entityTag.putInt('BedPositionY', this.bedPosition.y);
     entityTag.putInt('BedPositionZ', this.bedPosition.z);
@@ -898,16 +919,16 @@ export abstract class Player extends Mob {
     this.bedOffsetZ = 0;
     switch (bedDirection) {
       case Direction.SOUTH:
-        this.bedOffsetZ = -1.8;
+        this.bedOffsetZ = f(-1.8);
         break;
       case Direction.NORTH:
-        this.bedOffsetZ = 1.8;
+        this.bedOffsetZ = f(1.8);
         break;
       case Direction.WEST:
-        this.bedOffsetX = 1.8;
+        this.bedOffsetX = f(1.8);
         break;
       case Direction.EAST:
-        this.bedOffsetX = -1.8;
+        this.bedOffsetX = f(-1.8);
         break;
     }
   }
@@ -920,38 +941,50 @@ export abstract class Player extends Mob {
 
   protected spawnEatParticles(useItem: ItemInstance, count: number): void {
     if (useItem.getUseAnimation() === UseAnim.drink) {
-      this.level.playSound(this, 'random.drink', 0.5, this.level.random.nextFloat() * 0.1 + 0.9);
+      this.level.playSound(
+        this,
+        'random.drink',
+        f(0.5),
+        f(f(this.level.random.nextFloat() * f(0.1)) + f(0.9)),
+      );
     } else if (useItem.getUseAnimation() === UseAnim.eat) {
       for (let i = 0; i < count; i++) {
-        let xx = (-this.xRot * Mth.PI) / 180;
-        let yy = (-this.yRot * Mth.PI) / 180;
-        let d = new Vec3((this.random.nextFloat() - 0.5) * 0.1, Mth.random() * 0.1 + 0.1, 0);
+        // C++: const float xx = -xRot * Mth::PI / 180;（左结合：((-xRot) * PI) / 180）
+        const xx = f(f(f(-this.xRot) * Mth.PI) / f(180));
+        const yy = f(f(f(-this.yRot) * Mth.PI) / f(180));
+        let d = new Vec3(
+          f(f(this.random.nextFloat() - f(0.5)) * f(0.1)),
+          f(f(Mth.random() * f(0.1)) + f(0.1)),
+          0,
+        );
         d.xRot(xx);
         d.yRot(yy);
         let p = new Vec3(
-          (this.random.nextFloat() - 0.5) * 0.3,
-          -this.random.nextFloat() * 0.6 - 0.3,
-          0.6,
+          f(f(this.random.nextFloat() - f(0.5)) * f(0.3)),
+          f(f(-this.random.nextFloat() * f(0.6)) - f(0.3)),
+          f(0.6),
         );
         p.xRot(xx);
         p.yRot(yy);
-        p = p.add(this.x, this.y + this.getHeadHeight(), this.z);
+        p = p.add(this.x, f(this.y + this.getHeadHeight()), this.z);
         this.level.addParticle(
           'iconcrack',
           p.x,
           p.y,
           p.z,
           d.x,
-          d.y + 0.05,
+          f(d.y + f(0.05)),
           d.z,
           useItem.getItem()!.id,
         );
       }
+      // DEFERRED(待确认): level->playSound(this, "random.eat", .5f + .5f * random.nextInt(2), (random.nextFloat() - random.nextFloat()) * 0.2f + 1.0f);
+      // C++ 一条语句里两个实参都取随机数，求值顺序未指定；用户不生成新黄金样本，先按从左到右（与 Entity/Mob/ItemEntity 的先例一致），待确认。
       this.level.playSound(
         this,
         'random.eat',
-        0.5 + 0.5 * this.random.nextInt(2),
-        (this.random.nextFloat() - this.random.nextFloat()) * 0.2 + 1.0,
+        f(f(0.5) + f(f(0.5) * this.random.nextInt(2))),
+        f(f(f(this.random.nextFloat() - this.random.nextFloat()) * f(0.2)) + f(1.0)),
       );
     }
   }
