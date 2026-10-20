@@ -48,11 +48,15 @@ export class FallingTile extends Entity {
 
     // C++ 的初始化列表先置 tile / data，再在函数体里调 init() —— 顺序照抄
     if (x !== undefined) {
+      // C++ 形参是 float（W24）：实参先舍入，下面的 setPos 与 xo/xOld 赋的都是舍入后的值
+      x = f(x);
+      y = f(y!);
+      z = f(z!);
       this.tile = tile!;
       this.data = data ?? 0;
       this.init();
       this.setPos(x, y!, z!);
-      // C++ 用的是**形参** x/y/z，不是 setPos 之后的成员 —— 这里两者相等，写法照抄
+      // C++ 用的是**形参** x/y/z（已经是 float），不是 setPos 之后的成员 —— 两者相等，写法照抄
       this.xo = this.xOld = x;
       this.yo = this.yOld = y!;
       this.zo = this.zOld = z!;
