@@ -394,3 +394,20 @@ TS 侧 DEFERRED(Network)），所以这些方法在 TS 里暂无调用点，按�
 - `onHit` 在 Snowball 是 public、在 ThrownEgg 是 protected，可见性不一致是原样。
 
 结论：`Snowball.ts` 审核完成，无修改、无新增 DEFERRED/OMIT；`pnpm check` 全绿（141 文件 / 1485 条），台账保持 168。
+
+## ThrownEgg（src/world/entity/projectile/ThrownEgg.h ↔ packages/world/src/entity/projectile/ThrownEgg.ts）
+
+纯头文件类，没有 .cpp；工作表 5 行全部有结论，全部一致，无代码修改。
+
+| #   | 函数                                                                                          | 结论                                                                                                                                                                                                                                                                                                                                                          |
+| --- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1–3 | `ThrownEgg(Level*)` / `ThrownEgg(Level*, Mob*)` / `ThrownEgg(Level*, float, float, float)`    | 一致：三个重载都只设 `entityRendererId = ER_THROWNEGG_RENDERER`；TS 的联合参数构造函数按 `undefined` / `typeof number` / Mob 分派到对应的 `super(...)`，顺序与 C++ 相同                                                                                                                                                                                        |
+| 4   | `getEntityTypeId()`                                                                           | 一致：`EntityTypes::IdThrownEgg`（virtual，TS override）                                                                                                                                                                                                                                                                                                       |
+| 5   | `onHit(const HitResult&)`                                                                     | 一致：`res.type == ENTITY` 时 `hurt(this, 0)`；服务端先 `Entity::sharedRandom.nextInt(8) == 0`，命中后再 `nextInt(32) == 0` 决定孵 1 只还是 4 只（两次取数顺序与短路行为相同）；每只 `new Chicken(level)` → `moveTo(x, y, z, yRot, 0)` → `addEntity`；之后固定 6 个 `snowballpoof` 粒子；仅服务端 `remove()`。**protected 可见性原样保留**（Snowball 那边是 public） |
+
+补充核对：
+
+- 随机源是 `Entity::sharedRandom`（静态），不是 `Mth::random` 也不是 `level->random`；TS 用 `Entity.sharedRandom`，一致。
+- `hurt(this, 0)` 伤害 0、不设 `inGround` —— 与 Snowball 相同的原样行为，文件头已注明。
+
+结论：`ThrownEgg.ts` 审核完成，无修改、无新增 DEFERRED/OMIT；`pnpm check` 全绿（141 文件 / 1485 条），台账保持 168。
