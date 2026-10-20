@@ -376,3 +376,21 @@ TS 侧 DEFERRED(Network)），所以这些方法在 TS 里暂无调用点，按�
 
 **W23 验证**：新增 `tests/unit/world/throwable-audit.test.ts`（3 条）。撤掉三处修复后 3 条全部变红；恢复后全绿。
 `pnpm check` 全绿（141 文件 / 1485 条），台账保持 168。
+
+## Snowball（src/world/entity/projectile/Snowball.h ↔ packages/world/src/entity/projectile/Snowball.ts）
+
+纯头文件类，没有 .cpp；工作表 5 行全部有结论，全部一致，无代码修改。
+
+| #   | 函数                                                                                          | 结论                                                                                                                                                                                                                                                                                                                         |
+| --- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1–3 | `Snowball(Level*)` / `Snowball(Level*, Mob*)` / `Snowball(Level*, float, float, float)`       | 一致：三个重载都只设 `entityRendererId = ER_SNOWBALL_RENDERER`；TS 用一个带联合参数的构造函数按 `undefined` / `typeof number` / Mob 分派到对应的 `super(...)` 重载，顺序（先 super、后设 rendererId）与 C++ 相同                                                                                                              |
+| 4   | `getEntityTypeId()`                                                                           | 一致：`EntityTypes::IdSnowball`（virtual，TS override）                                                                                                                                                                                                                                                                      |
+| 5   | `onHit(const HitResult&)`                                                                     | 一致：`res.type == ENTITY` 时 `res.entity->hurt(this, 0)`（伤害 0，原样）；固定 6 个 `snowballpoof` 粒子；仅服务端 `remove()`。**可见性 public 原样保留**（基类 `Throwable::onHit` 是 protected，C++ 允许子类放宽；ThrownEgg 仍是 protected）                                                                               |
+
+补充核对（怪癖保留，均已在文件头注明）：
+
+- `hurt(this, 0)` 伤害为 0：雪球打人不掉血，只触发 `Mob::hurt` 的击退；
+- `onHit` 不设 `inGround`：雪球碰到东西立刻 `remove()`，进不了 `Throwable` 的落地存活分支；
+- `onHit` 在 Snowball 是 public、在 ThrownEgg 是 protected，可见性不一致是原样。
+
+结论：`Snowball.ts` 审核完成，无修改、无新增 DEFERRED/OMIT；`pnpm check` 全绿（141 文件 / 1485 条），台账保持 168。
