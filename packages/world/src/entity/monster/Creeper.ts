@@ -1,7 +1,8 @@
 /**
  * 1:1 移植自 src/world/entity/monster/Creeper.h 与 Creeper.cpp（任务单 H8）。靠近目标 3 格内开始膨胀（已在膨胀时 7 格内继续），
  * 30 刻后以 2.4 的威力爆炸并移除自己；看不见目标或走远就慢慢缩回。同步数据 DATA_SWELL_DIR(16) 是膨胀方向（-1/1）。
- * 单机（服务端）时 tick 里“客户端按方向累加 swell”那一段不执行，swell 只在 checkHurtTarget / checkCantSeeTarget 里变。
+ * 单机（服务端）时 tick 里“客户端按方向累加 swell”那一段不执行；此时 tick 只在没有攻击目标时让 swell 递减，
+ * 膨胀与缩回主要由 checkHurtTarget / checkCantSeeTarget 驱动。
  */
 import { Item } from '../../item/Item';
 import type { Level } from '../../level/Level';
@@ -57,6 +58,7 @@ export class Creeper extends Monster {
   }
 
   getSwelling(a: number): number {
+    a = f(a); // C++ 形参是 float，入口先舍入
     return f(f(this.oldSwell + f((this.swell - this.oldSwell) * a)) / (Creeper.MAX_SWELL - 2));
   }
 
@@ -88,6 +90,7 @@ export class Creeper extends Monster {
   }
 
   protected override checkHurtTarget(_target: Entity, d: number): void {
+    d = f(d); // C++ 形参是 float，入口先舍入
     if (this.level.isClientSide) return;
     const swellDir = this.getSwellDir();
     if ((swellDir <= 0 && d < 3) || (swellDir > 0 && d < 7)) {
