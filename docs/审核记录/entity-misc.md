@@ -280,3 +280,35 @@ C++ 的 `std::map<int, DataItem*>`：`packDirty`/`packAll` 的输出顺序依赖
 TS 侧 DEFERRED(Network)），所以这些方法在 TS 里暂无调用点，按原样移植待接线。
 `DataItem`/`DataItem2` 合并为一个类是文件头注明的 ADAPTED：C++ 的 `DataItem2<T>` 只是给基类加了
 `T data` 与三个位方法，TS 单类带 `data: DataValue` 等价；`isDataEqual` 两侧都无调用点，原样保留。
+
+## ItemEntity（src/world/entity/item/ItemEntity.h / .cpp ↔ packages/world/src/entity/item/ItemEntity.ts）
+
+工作表 14 行全部有结论。`tick` 在 W4 已审过（float 运动链，G12-2 黄金样本逐位），本次补齐其余 13 行。
+
+| #   | 函数                                                                 | 结论                                                                                                                                                                                                                    |
+| --- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `ItemEntity(Level*, float x, float y, float z, const ItemInstance&)` | **已修 W21**：`bobOffs = (float)(Mth::random() * Mth::PI * 2)`、`heightOffset = bbHeight / 2.0f`、`yRot = (float)(Mth::random() * 360)`、`xd/zd = (float)(Mth::random() * 0.2f - 0.1f)` 全部按 float 分步；`yd = +0.2f` |
+| 2   | `ItemEntity(Level*)`                                                 | 一致：只做 `entityRendererId / setSize / heightOffset`，不 `setPos`、不设随机速度；`bobOffs` 同样消耗一次 `Mth::random()`（W21 一并按 float）                                                                           |
+| 3   | `~ItemEntity()`                                                      | **OMIT**（新增）：空析构函数，R3 不移植                                                                                                                                                                                 |
+| 4   | `tick()`                                                             | W4 已审（重力 / 岩浆 / 摩擦 / 反弹按 float）。本次补：岩浆分支的 `random.fizz` 音量 `0.4f`、音高 `2.0f + nextFloat * 0.4f` 按 float（W21）                                                                              |
+| 5   | `isInWater()`                                                        | 一致：`checkAndHandleWater(bb, Material::water, this)`                                                                                                                                                                  |
+| 6   | `hurt(Entity*, int)`                                                 | 一致：`markHurt()` → `health -= damage` → `<= 0` 则 `remove()`，恒返回 false                                                                                                                                            |
+| 7   | `playerTouch(Player*)`                                               | **已修 W21**：`random.pop` 的音量 `0.3f`、音高 `((a - b) * 0.7f + 1.0f) * 2.f` 按 float 分步；`throwTime == 0 && isAlive() && inventory->add(&item)` 的短路顺序一致                                                     |
+| 8   | `burn(int)`                                                          | 一致：转调 `hurt(NULL, dmg)`                                                                                                                                                                                            |
+| 9   | `checkInTile(float, float, float)`                                   | **已修 W21**：三个形参先转 float；`xd/yd/zd = x - xTile` 是 float 运算；`1 - x` 按 float；`speed = nextFloat() * 0.2f + 0.1f` 按 float。`south` 分支没有 `closest = 1 - zd` 是 C++ 原样（注释已说明）                   |
+| 10  | `addAdditonalSaveData`                                               | 一致：`(char) health` 的 8 位截断保留（大伤害后 health 可能 < -128）；`(short) age` 由 `ShortTag` 构造时截断；`putCompound("Item", item.save(...))`                                                                     |
+| 11  | `readAdditionalSaveData`                                             | 一致：`getShort("Health") & 0xff`、`getShort("Age")`、`getCompound("Item")` → `item.load`                                                                                                                               |
+| 12  | `isItemEntity()`                                                     | 一致：true                                                                                                                                                                                                              |
+| 13  | `getEntityTypeId()`                                                  | 一致：`EntityTypes.IdItemEntity`                                                                                                                                                                                        |
+| 14  | `getLifeTime()`                                                      | 一致：返回 `lifeTime`（初始 `5 * 60 * TicksPerSecond`）                                                                                                                                                                 |
+
+补充核对（怪癖保留）：
+
+- **`tickCount` 遮蔽**：`ItemEntity.h:44` 自己声明了一个 `int tickCount`，遮蔽 `Entity.h:183` 的同名字段。
+  C++ 的 `ItemEntity::tick` 里 `tickCount++` 改的是自己那个（**没有任何读取点**），`Entity::baseTick` 改的是基类那个。
+  TS 无法让两个字段并存，因此把被遮蔽的私有字段改名为 `itemTickCount`（R10），与 `Entity.tickCount` 完全独立。
+  这个字段在 C++ 里是死字段，但保留它才能让“两个计数器各自递增”的行为可测。
+- `checkInTile` 恒返回 false（C++ 也是），调用方不看返回值。
+
+**W21 验证**：新增 `tests/unit/world/itementity-audit.test.ts`（9 条）。撤掉 8 处修复后重跑，
+3 条变红（构造函数 float 分步 ×2、tickCount 遮蔽）；恢复后 9 条全绿。`pnpm check` 全绿，台账 167 → 168。
