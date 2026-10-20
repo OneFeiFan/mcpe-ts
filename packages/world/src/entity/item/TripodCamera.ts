@@ -30,14 +30,19 @@ export class TripodCamera extends Mob {
   /** C++ `TripodCamera(Level*, Player* owner, float x, float y, float z)` */
   constructor(level: Level, owner: Player, x: number, y: number, z: number) {
     super(level);
-    this.owner = owner;
+    // C++ 实际按成员声明顺序初始化：life → owner → activated（初始化列表写的是 owner 在前）
     this.life = 80;
+    this.owner = owner;
     this.activated = false;
 
+    // C++ 形参是 float（W26）：实参先舍入，后面的 setPos 与 xo/yo/zo 赋的都是舍入后的值
+    x = f(x);
+    y = f(y);
+    z = f(z);
     this.entityRendererId = EntityRendererId.ER_TRIPODCAMERA_RENDERER;
-    // C++ 的 `xRot = xRotO = owner->xRot;` 这种链式赋值照抄
-    this.xRot = this.xRotO = owner.xRot;
-    this.yRot = this.yRotO = owner.yRot;
+    // C++ 的 `xRot = xRotO = owner->xRot;` 这种链式赋值照抄（两边都是 float 字段，W26 补舍入）
+    this.xRot = this.xRotO = f(owner.xRot);
+    this.yRot = this.yRotO = f(owner.yRot);
     this.blocksBuilding = true;
     this.setSize(f(1.0), f(1.5));
     this.heightOffset = f(f(this.bbHeight / f(2.0)) - f(0.25));
