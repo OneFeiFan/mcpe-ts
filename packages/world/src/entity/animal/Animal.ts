@@ -5,12 +5,12 @@
  * "只在草地上生成"、以及"不被距离卸载"。
  *
  * 【ADAPTED(Cpp)：C++ 是双继承】`class Animal: public AgableMob, public Creature`，
- * 而 `Creature` 是个**空接口**（`class Creature {};`，整个头文件就这一行）。
+ * 而 `Creature` 是个**空基类**（`class Creature {};`，类体为空）。
  * JS 没有多继承、也没有空接口这回事，所以这里只继承 `AgableMob`。
  *
  * 【两处只写不读的字段/改写，照抄】
  *   1. `inLove` 是 private：构造时置 0、`hurt` 里清 0 —— 全参考源码里**一处读它都没有**
- *      （繁殖逻辑整块被 `//` 注释掉了，Animal.cpp:49-57）。照抄成私有字段，不删。
+ *      （繁殖逻辑整块被 `//` 注释掉了，Animal.cpp:46-82）。照抄成私有字段，不删。
  *   2. C++ 把 `getWalkTargetValue` 在 Animal 里收成了 `protected`；TS 不允许子类把基类的
  *      **public** 成员收窄，所以这里只能是 public（同 AgableMob 那两个 NBT 方法的理由）。
  *
@@ -72,8 +72,8 @@ export abstract class Animal extends AgableMob {
     return null;
   }
 
-  /** C++ `bool Animal::removeWhenFarAway()` */
-  protected override removeWhenFarAway(): boolean {
+  /** C++ `bool Animal::removeWhenFarAway()` —— C++ 在 public 段（基类 Mob 的是 protected），这里同样放宽 */
+  public override removeWhenFarAway(): boolean {
     return false;
   }
 
