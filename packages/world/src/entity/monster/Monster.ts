@@ -109,6 +109,7 @@ export abstract class Monster extends PathfinderMob {
   }
 
   protected override checkHurtTarget(target: Entity, distance: number): void {
+    distance = f(distance); // C++ 形参是 float，入口先舍入
     if (
       this.attackTime <= 0 &&
       distance < f(2.0) &&
@@ -120,6 +121,8 @@ export abstract class Monster extends PathfinderMob {
     }
   }
 
+  /** C++ `float Monster::getWalkTargetValue(int x, int y, int z)`（Monster.h 里在 protected 段） */
+  // ADAPTED(Cpp)：C++ 允许派生类把基类 public 的 virtual 收窄成 protected；TS 不允许，保持 public（同 Animal）。
   override getWalkTargetValue(x: number, y: number, z: number): number {
     return f(f(0.5) - this.level.getBrightness(x, y, z));
   }
