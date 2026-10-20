@@ -77,6 +77,7 @@ export class Sheep extends Animal {
   }
 
   getHeadEatPositionScale(a: number): number {
+    a = f(a); // C++ 形参是 float，入口先舍入
     const T = Sheep.EAT_ANIMATION_TICKS;
     if (this.eatAnimationTick <= 0) {
       return 0;
@@ -91,6 +92,7 @@ export class Sheep extends Animal {
   }
 
   getHeadEatAngleScale(a: number): number {
+    a = f(a); // C++ 形参是 float，入口先舍入
     const T = Sheep.EAT_ANIMATION_TICKS;
     if (this.eatAnimationTick > 4 && this.eatAnimationTick <= T - 4) {
       const scale = f(f(f(this.eatAnimationTick - 4) - a) / (T - 8));
@@ -111,6 +113,8 @@ export class Sheep extends Animal {
         for (let i = 0; i < count; i++) {
           const ie = this.spawnAtLocation(new ItemInstance(Tile.cloth.id, 1, this.getColor()), 1);
           ie.yd = f(ie.yd + f(this.random.nextFloat() * f(0.05)));
+          // DEFERRED(待确认): ie->xd += (random.nextFloat() - random.nextFloat()) * 0.1f;（下一行 zd 同款）
+          // C++ 里两个 nextFloat() 的求值顺序未指定；不生成新黄金样本，先按从左到右（与 Entity/Mob/ItemEntity/Player/Chicken 的先例一致），待确认。
           ie.xd = f(ie.xd + f(f(this.random.nextFloat() - this.random.nextFloat()) * f(0.1)));
           ie.zd = f(ie.zd + f(f(this.random.nextFloat() - this.random.nextFloat()) * f(0.1)));
         }
