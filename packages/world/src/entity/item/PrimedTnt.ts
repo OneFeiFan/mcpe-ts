@@ -44,6 +44,10 @@ export class PrimedTnt extends Entity {
       this.heightOffset = f(this.bbHeight / f(2.0));
     } else {
       // C++ `PrimedTnt(Level*, float, float, float)`
+      // 形参是 float（W25）：实参先舍入，后面的 setPos 与 xo/yo/zo 赋的都是舍入后的值
+      x = f(x);
+      y = f(y!);
+      z = f(z!);
       this.entityRendererId = EntityRendererId.ER_TNT_RENDERER;
       this.blocksBuilding = true;
       this.setSize(f(0.98), f(0.98));
