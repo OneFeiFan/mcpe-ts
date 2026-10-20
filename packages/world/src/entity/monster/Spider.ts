@@ -4,6 +4,7 @@
  *   - C++ 的 `bool makeStepSound()` 是一个**方法**，遮蔽了基类同名的**字段** `Entity::makeStepSound`；Entity 读的是字段，
  *     这个方法从来不会被调用（蜘蛛照样有脚步声）。TS 里方法与字段不能同名，命名为 makeStepSoundMethod 并照抄（R10）。
  *   - makeStuckInWeb 是空函数（蜘蛛不会被蜘蛛网减速）。
+ *   - `int fireCheckTick` 在 C++ 里声明并在构造函数里置 0，但 Spider 从不读取它（只有 Zombie / Skeleton 用同名成员）；原样保留。
  */
 import { Mth } from '@mcpe/util';
 import { Item } from '../../item/Item';
@@ -93,6 +94,7 @@ export class Spider extends Monster {
   }
 
   protected override checkHurtTarget(target: Entity, d: number): void {
+    d = f(d); // C++ 形参是 float，入口先舍入
     const br = this.getBrightness(1);
     if (br > f(0.5) && this.random.nextInt(100) === 0) {
       this.attackTargetId = 0;
