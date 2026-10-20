@@ -72,7 +72,8 @@ export class Cow extends Animal {
     }
   }
 
-  getBreedOffspring(_target: Animal): Animal {
+  /** C++ Cow.h：`protected`（无基类声明、全参考源码零调用方，照抄） */
+  protected getBreedOffspring(_target: Animal): Animal {
     return new Cow(this.level);
   }
 }
