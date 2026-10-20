@@ -38,7 +38,8 @@ export class PigZombie extends Zombie {
     this.attackDamage = 5;
   }
 
-  protected override useNewAi(): boolean {
+  /** C++ `bool PigZombie::useNewAi()` —— PigZombie.h 里在 public 段（基类 Mob/Zombie 的是 protected），这里同样放宽 */
+  public override useNewAi(): boolean {
     return false;
   }
 
@@ -46,6 +47,9 @@ export class PigZombie extends Zombie {
     if (this.stunedTime > 0) this.stunedTime--;
     if (this.playAngrySoundIn > 0) {
       if (--this.playAngrySoundIn === 0) {
+        // DEFERRED(待确认): level->playSound(x, y, z, "mob.zombiepig.zpigangry", getSoundVolume() * 2, ((random.nextFloat() - random.nextFloat()) * 0.2f + 1.0f) * 1.8f);
+        // ↑ 语句本身已移植；待确认的只是两个 nextFloat() 的求值顺序（C++ 里未指定）。
+        // 不生成新黄金样本，先按从左到右（与 Entity/Mob/ItemEntity/Player/Chicken 的先例一致），待确认。
         this.level.playSound(
           this.x,
           this.y,
@@ -158,7 +162,8 @@ export class PigZombie extends Zombie {
     return MobTypes.PigZombie;
   }
 
-  protected override getAttackTime(): number {
+  /** C++ `int PigZombie::getAttackTime()` —— PigZombie.h 里在 public 段（基类 Monster 的是 protected），这里同样放宽 */
+  public override getAttackTime(): number {
     return 40;
   }
 }
