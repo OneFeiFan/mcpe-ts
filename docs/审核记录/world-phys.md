@@ -65,3 +65,17 @@ pos=(1e8,1,1)、实体在原点可以区分：double 得 1e16，float 得 f(1e16
 （W6 的 -0、W7 的 1e16 vs 10000000272564224）。`pnpm check`：类型 ✓ 22.5s、
 测试 127 文件 / 1378 条 ✓、台账 151 ✓（150 + 新增 1 条 `ADAPTED(ESM)`）；
 `npx prettier --check` 通过。
+
+## IceTile（src/world/level/tile/IceTile.h ↔ packages/world/src/level/tile/IceTile.ts）
+
+IceTile 是头文件内联类（没有 .cpp）。工作表 4 行全部有结论；`friction = 0.98f` 已在 W4 按 float 字段处理，本次无代码修改。
+
+| #   | C++                                                                                                | 结论                                                                                                                                                                                          |
+| --- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `IceTile(int id, int tex) : super(id, tex, Material::ice)` + `friction = 0.98f; setTicking(true);` | 一致：TS 构造器同样 `super(id, tex, Material.ice)` → `friction = f(0.98)`（W4）→ `setTicking(true)`                                                                                           |
+| 2   | `playerDestroy(Level*, Player*, int, int, int, int)`                                               | 一致：`getMaterial(x, y - 1, z)` → `blocksMotion() \|\| isLiquid()`（短路顺序相同）→ `setTile(..., Tile::water->id)`；`below` 为 null 时 C++ 是 UB、TS 抛 TypeError，属语言差异，文件内已注明 |
+| 3   | `getResourceCount(Random*)`                                                                        | 一致：返回 0（不改随机数序列）                                                                                                                                                                |
+| 4   | `tick(Level*, int, int, int, Random*)`                                                             | 一致：`getBrightness(LightLayer::Block, x, y, z) > 11 - Tile::lightBlock[id]`（int 侧在比较时转 float）；命中后 `spawnResources(..., getData(...))` → `setTile(..., Tile::calmWater->id)`     |
+
+**验证**：无代码修改、无新增测试（`friction` 的 float 化随 W4 的 `Tile.friction` 一并核对过）；
+`pnpm check` 全绿，台账不变（168）。
