@@ -52,8 +52,8 @@ export class Pig extends Animal {
     return Item.porkChop_raw.id;
   }
 
-  /** C++ `Animal* Pig::getBreedOffspring(Animal*)`（与 Chicken 一样，全参考源码零调用方，照抄） */
-  getBreedOffspring(_target: Animal): Animal {
+  /** C++ Pig.h 把 `getBreedOffspring` 写在 protected 段（W30）；全参考源码零调用方，照抄 */
+  protected getBreedOffspring(_target: Animal): Animal {
     return new Pig(this.level);
   }
 
