@@ -61,8 +61,9 @@ export abstract class Throwable extends Entity {
       this.setSize(f(0.25), f(0.25));
       this.ownerId = mob.entityId;
       this.moveTo(mob.x, f(mob.y + mob.getHeadHeight()), mob.z, mob.yRot, mob.xRot);
-      const rcos = f(Mth.cos(f(f(mob.yRot / 180) * Mth.PI)));
-      const rsin = f(Mth.sin(f(f(mob.yRot / 180) * Mth.PI)));
+      // C++ 用的是 moveTo 之后自己的 yRot/xRot（已被 moveTo 舍入成 float）（W23）
+      const rcos = f(Mth.cos(f(f(this.yRot / 180) * Mth.PI)));
+      const rsin = f(Mth.sin(f(f(this.yRot / 180) * Mth.PI)));
       this.x = f(this.x - f(rcos * f(0.16)));
       this.y = f(this.y - f(0.1));
       this.z = f(this.z - f(rsin * f(0.16)));
@@ -71,9 +72,9 @@ export abstract class Throwable extends Entity {
       if (mob.isPlayer()) {
         this.shootVec(mob.aimDirection, this.getThrowPower(), 1);
       } else {
-        const xd = f(f(-rsin) * f(Mth.cos(f(f(mob.xRot / 180) * Mth.PI))));
-        const zd = f(rcos * f(Mth.cos(f(f(mob.xRot / 180) * Mth.PI))));
-        const yd = f(-Mth.sin(f(f(f(mob.xRot + this.getThrowUpAngleOffset()) / 180) * Mth.PI)));
+        const xd = f(f(-rsin) * f(Mth.cos(f(f(this.xRot / 180) * Mth.PI))));
+        const zd = f(rcos * f(Mth.cos(f(f(this.xRot / 180) * Mth.PI))));
+        const yd = f(-Mth.sin(f(f(f(this.xRot + this.getThrowUpAngleOffset()) / 180) * Mth.PI)));
         this.shoot(xd, yd, zd, this.getThrowPower(), 1);
       }
     }
@@ -160,6 +161,10 @@ export abstract class Throwable extends Entity {
 
   /** C++ `void Throwable::lerpMotion(float, float, float)` */
   override lerpMotion(xd: number, yd: number, zd: number): void {
+    // 形参是 float（W23）
+    xd = f(xd);
+    yd = f(yd);
+    zd = f(zd);
     this.xd = xd;
     this.yd = yd;
     this.zd = zd;
@@ -231,10 +236,10 @@ export abstract class Throwable extends Entity {
     const sd = f(Mth.sqrt(f(f(this.xd * this.xd) + f(this.zd * this.zd))));
     this.yRot = f(f(Mth.atan2(this.xd, this.zd) * 180) / Mth.PI);
     this.xRot = f(f(Mth.atan2(this.yd, sd) * 180) / Mth.PI);
-    while (this.xRot - this.xRotO < -180) this.xRotO -= 360;
-    while (this.xRot - this.xRotO >= 180) this.xRotO += 360;
-    while (this.yRot - this.yRotO < -180) this.yRotO -= 360;
-    while (this.yRot - this.yRotO >= 180) this.yRotO += 360;
+    while (this.xRot - this.xRotO < -180) this.xRotO = f(this.xRotO - 360);
+    while (this.xRot - this.xRotO >= 180) this.xRotO = f(this.xRotO + 360);
+    while (this.yRot - this.yRotO < -180) this.yRotO = f(this.yRotO - 360);
+    while (this.yRot - this.yRotO >= 180) this.yRotO = f(this.yRotO + 360);
     this.xRot = f(this.xRotO + f(f(this.xRot - this.xRotO) * f(0.2)));
     this.yRot = f(this.yRotO + f(f(this.yRot - this.yRotO) * f(0.2)));
     let inertia = f(0.99);
