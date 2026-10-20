@@ -312,3 +312,35 @@ TS 侧 DEFERRED(Network)），所以这些方法在 TS 里暂无调用点，按�
 
 **W21 验证**：新增 `tests/unit/world/itementity-audit.test.ts`（9 条）。撤掉 8 处修复后重跑，
 3 条变红（构造函数 float 分步 ×2、tickCount 遮蔽）；恢复后 9 条全绿。`pnpm check` 全绿，台账 167 → 168。
+
+## Arrow（src/world/entity/projectile/Arrow.h / .cpp ↔ packages/world/src/entity/projectile/Arrow.ts）
+
+工作表 13 行全部有结论。W5 已改过三处速度长度的结合顺序；本次补齐其余行，新增修复编号 W22。
+
+| #   | 函数                                       | 结论                                                                                                                                                                                                                                                                                                      |
+| --- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `Arrow(Level*)`                            | 一致：初始化 `playerArrow=false / ownerId=0` 后 `_init()`；`_init` 改名 `_initArrow` 是 R10（避免与 `Entity._init` 撞名，Throwable 同理）                                                                                                                                                                 |
+| 2   | `Arrow(Level*, float x, float y, float z)` | 一致：`_init()` → `setPos` → `heightOffset = 0`                                                                                                                                                                                                                                                           |
+| 3   | `Arrow(Level*, Mob*, float power)`         | **已修 W22**：形参 `power` 入口 `f()`；`cos/sin(yRot * DEGRAD)` 与 `xRot / 180 * PI` 改读 `moveTo` 之后的 `this.yRot/this.xRot`（C++ 读的是成员，已舍入成 float）；其余 float 分步原本正确                                                                                                                |
+| 4   | `_init()`                                  | 一致：渲染 id、`setSize(0.5f, 0.5f)`、各字段初值逐项相同                                                                                                                                                                                                                                                  |
+| 5   | `shoot(...)`                               | **已修 W22**：五个 float 形参入口 `f()`；朝向用 `f(Mth.atan2(...) * Mth.RADDEG)` —— 原写法照抄了 Throwable 的 `* 180 / Mth::PI`，但 Arrow.cpp 写的是 `std::atan2(...) * Mth::RADDEG`（实测 14007 个方向里 5276 个末位不同）；半径/三次 nextGaussian/乘 pow 的顺序与结合顺序一致                           |
+| 6   | `lerpMotion(float, float, float)`          | **已修 W22**：三个形参入口 `f()`；两处朝向同样改 RADDEG                                                                                                                                                                                                                                                   |
+| 7   | `tick()`                                   | **已修 W22**：开头与结尾共四处朝向改 RADDEG；`dmg = (int) std::ceil(...)` 改用 `f2i`（x86 越界/NaN 语义）；反弹分支 `yRot/yRotO += 180` 按 float 字段加法；四组 `±= 360` 回绕补 `f()`。其余（重力 0.05f、inertia 0.99f/0.80f、水中粒子、crit 粒子、`60 * TicksPerSecond` 判断、方块命中后的位置回退）一致 |
+| 8   | `addAdditonalSaveData(CompoundTag*)`       | 一致：`(short)` 三个坐标、`(char)` 转 byte、`inGround ? 1 : 0`、`player` 布尔                                                                                                                                                                                                                             |
+| 9   | `readAdditionalSaveData(CompoundTag*)`     | 一致：`inTile/inData/shake` 都带 `& 0xff`，`inGround = getByte == 1`，`getBoolean("player")`                                                                                                                                                                                                              |
+| 10  | `playerTouch(Player*)`                     | 一致：客户端直接返回；`inGround && playerArrow && shakeTime <= 0` 才捡；`random.pop` 音量 `0.2f`、音高 `((a-b)*0.7f+1.0f)*2.f` 按 float 分步（两个 nextFloat 的实参求值顺序 C++ 未规定，按先例左到右，见 W21 同类注释）                                                                                   |
+| 11  | `getShadowHeightOffs()`                    | 一致：返回 0                                                                                                                                                                                                                                                                                              |
+| 12  | `getEntityTypeId()`                        | 一致：`EntityTypes.IdArrow`                                                                                                                                                                                                                                                                               |
+| 13  | `getAuxData()`                             | 一致：返回 `ownerId`                                                                                                                                                                                                                                                                                      |
+
+补充核对：
+
+- **RADDEG 与 180/PI 不是同一个式子**：`Mth::RADDEG = f(180/f(PI))` 是一次乘常量；`(atan2 * 180) / PI` 是两次 float 舍入。
+  Arrow.cpp 全文用的是 `std::atan2(...) * Mth::RADDEG`，而 `Throwable.cpp` 用的是 `Mth::atan2(...) * 180 / Mth::PI` ——
+  两个文件确实不同，原 TS 把 Throwable 的式子抄了过来。本次 Arrow 按原文改回 RADDEG，Throwable 留待其审核时确认。
+- `tick` 开头的方块 AABB 判断里多一个 `if (tile)` 空保护，是 UB 保护（C++ 直接解引用 `Tile::tiles[t]`），文件内已有注释。
+- `shoot` 没有除零保护、`++life == 60 * TicksPerSecond`、重力写死 0.05f —— 都是与 Throwable 的差异，原样保留（文件头表格已列）。
+
+**W22 验证**：新增 `tests/unit/world/arrow-audit.test.ts`（5 条）。撤掉修复后 4 条变红
+（RADDEG、pow/uncertainty 入口、lerpMotion 入口、构造用 this.yRot）；恢复后 5 条全绿。
+`pnpm check` 全绿（140 文件 / 1482 条），台账保持 168（无新增标记）。

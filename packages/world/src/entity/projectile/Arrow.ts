@@ -21,7 +21,7 @@
  * 【三处 int 除法】`dmg / 2 + 2`、`(icon 没有)` —— 凡 `int / int` 都用 `Math.trunc`。
  */
 import { SharedConstants } from '@mcpe/core';
-import { Mth } from '@mcpe/util';
+import { Mth, f2i } from '@mcpe/util';
 import type { CompoundTag } from '@mcpe/nbt';
 import { Entity } from '../Entity';
 import { EntityRendererId } from '../EntityRendererId';
@@ -75,21 +75,23 @@ export class Arrow extends Entity {
     } else {
       // C++ `Arrow(Level*, Mob* mob, float power)` —— 构造初始化列表里先取 owner/player 再 _init()
       const mob = a;
-      const power = b!;
+      // 形参是 float（W22）
+      const power = f(b!);
       this.ownerId = mob.entityId;
       this.playerArrow = mob.isPlayer();
       this.moveTo(mob.x, f(mob.y + mob.getHeadHeight()), mob.z, mob.yRot, mob.xRot);
-      const dx = f(Mth.cos(f(mob.yRot * Mth.DEGRAD)));
-      const dz = f(Mth.sin(f(mob.yRot * Mth.DEGRAD)));
+      // C++ 用的是 moveTo 之后自己的 yRot/xRot（= mob 的，已被 moveTo 舍入成 float）
+      const dx = f(Mth.cos(f(this.yRot * Mth.DEGRAD)));
+      const dz = f(Mth.sin(f(this.yRot * Mth.DEGRAD)));
       this.x = f(this.x - f(dx * f(0.16)));
       this.y = f(this.y - f(0.1));
       this.z = f(this.z - f(dz * f(0.16)));
       this.setPos(this.x, this.y, this.z);
       this.heightOffset = 0;
-      const dxx = f(Mth.cos(f(f(mob.xRot / 180) * Mth.PI)));
+      const dxx = f(Mth.cos(f(f(this.xRot / 180) * Mth.PI)));
       const xd = f(f(-dz) * dxx);
       const zd = f(dx * dxx);
-      const yd = f(-Mth.sin(f(f(mob.xRot / 180) * Mth.PI)));
+      const yd = f(-Mth.sin(f(f(this.xRot / 180) * Mth.PI)));
       this.shoot(xd, yd, zd, f(power * f(1.5)), 1);
     }
   }
@@ -120,9 +122,12 @@ export class Arrow extends Entity {
    * 方向向量长度为 0 时这里直接除出 NaN/Inf。C++ 就是这样的。
    */
   shoot(xd_: number, yd_: number, zd_: number, pow: number, uncertainty: number): void {
-    let xd = xd_;
-    let yd = yd_;
-    let zd = zd_;
+    // 形参都是 float，入口先舍入（W22）
+    let xd = f(xd_);
+    let yd = f(yd_);
+    let zd = f(zd_);
+    pow = f(pow);
+    uncertainty = f(uncertainty);
     const dist = f(Mth.sqrt(f(f(f(xd * xd) + f(yd * yd)) + f(zd * zd))));
     xd = f(xd / dist);
     yd = f(yd / dist);
@@ -138,20 +143,25 @@ export class Arrow extends Entity {
     this.yd = yd;
     this.zd = zd;
     const sd = f(Mth.sqrt(f(f(xd * xd) + f(zd * zd))));
-    this.yRotO = this.yRot = f(f(Mth.atan2(xd, zd) * 180) / Mth.PI);
-    this.xRotO = this.xRot = f(f(Mth.atan2(yd, sd) * 180) / Mth.PI);
+    // C++ 是 `std::atan2(...) * Mth::RADDEG`（不是 `* 180 / Mth::PI`；两者末位不同，W22）
+    this.yRotO = this.yRot = f(Mth.atan2(xd, zd) * Mth.RADDEG);
+    this.xRotO = this.xRot = f(Mth.atan2(yd, sd) * Mth.RADDEG);
     this.life = 0;
   }
 
   /** C++ `void Arrow::lerpMotion(float xd, float yd, float zd)` */
   override lerpMotion(xd: number, yd: number, zd: number): void {
+    // 形参是 float（W22）
+    xd = f(xd);
+    yd = f(yd);
+    zd = f(zd);
     this.xd = xd;
     this.yd = yd;
     this.zd = zd;
     if (this.xRotO === 0 && this.yRotO === 0) {
       const sd = f(Mth.sqrt(f(f(xd * xd) + f(zd * zd))));
-      this.yRotO = this.yRot = f(f(Mth.atan2(xd, zd) * 180) / Mth.PI);
-      this.xRotO = this.xRot = f(f(Mth.atan2(yd, sd) * 180) / Mth.PI);
+      this.yRotO = this.yRot = f(Mth.atan2(xd, zd) * Mth.RADDEG);
+      this.xRotO = this.xRot = f(Mth.atan2(yd, sd) * Mth.RADDEG);
       this.moveTo(this.x, this.y, this.z, this.yRot, this.xRot);
       this.life = 0;
     }
@@ -162,8 +172,8 @@ export class Arrow extends Entity {
     super.tick();
     if (this.xRotO === 0 && this.yRotO === 0) {
       const sd = f(Mth.sqrt(f(f(this.xd * this.xd) + f(this.zd * this.zd))));
-      this.yRotO = this.yRot = f(f(Mth.atan2(this.xd, this.zd) * 180) / Mth.PI);
-      this.xRotO = this.xRot = f(f(Mth.atan2(this.yd, sd) * 180) / Mth.PI);
+      this.yRotO = this.yRot = f(Mth.atan2(this.xd, this.zd) * Mth.RADDEG);
+      this.xRotO = this.xRot = f(Mth.atan2(this.yd, sd) * Mth.RADDEG);
     }
     {
       // 自己是不是插在某个方块的碰撞盒里（这是 inGround 的主要来源）
@@ -237,7 +247,7 @@ export class Arrow extends Entity {
         const pow = f(
           Mth.sqrt(f(f(f(this.xd * this.xd) + f(this.yd * this.yd)) + f(this.zd * this.zd))),
         );
-        let dmg = Math.trunc(Math.ceil(f(pow * Arrow.ARROW_BASE_DAMAGE)));
+        let dmg = f2i(Math.ceil(f(pow * Arrow.ARROW_BASE_DAMAGE)));
         if (this.critArrow) dmg += Entity.sharedRandom.nextInt(Math.trunc(dmg / 2) + 2);
         if (res.entity!.hurt(this, dmg)) {
           if (res.entity!.isMob()) {
@@ -254,8 +264,8 @@ export class Arrow extends Entity {
           this.xd = f(this.xd * f(-0.1));
           this.yd = f(this.yd * f(-0.1));
           this.zd = f(this.zd * f(-0.1));
-          this.yRot += 180;
-          this.yRotO += 180;
+          this.yRot = f(this.yRot + 180);
+          this.yRotO = f(this.yRotO + 180);
           this.flightTime = 0;
         }
       } else {
@@ -301,12 +311,12 @@ export class Arrow extends Entity {
     this.y = f(this.y + this.yd);
     this.z = f(this.z + this.zd);
     const sd = f(Mth.sqrt(f(f(this.xd * this.xd) + f(this.zd * this.zd))));
-    this.yRot = f(f(Mth.atan2(this.xd, this.zd) * 180) / Mth.PI);
-    this.xRot = f(f(Mth.atan2(this.yd, sd) * 180) / Mth.PI);
-    while (this.xRot - this.xRotO < -180) this.xRotO -= 360;
-    while (this.xRot - this.xRotO >= 180) this.xRotO += 360;
-    while (this.yRot - this.yRotO < -180) this.yRotO -= 360;
-    while (this.yRot - this.yRotO >= 180) this.yRotO += 360;
+    this.yRot = f(Mth.atan2(this.xd, this.zd) * Mth.RADDEG);
+    this.xRot = f(Mth.atan2(this.yd, sd) * Mth.RADDEG);
+    while (this.xRot - this.xRotO < -180) this.xRotO = f(this.xRotO - 360);
+    while (this.xRot - this.xRotO >= 180) this.xRotO = f(this.xRotO + 360);
+    while (this.yRot - this.yRotO < -180) this.yRotO = f(this.yRotO - 360);
+    while (this.yRot - this.yRotO >= 180) this.yRotO = f(this.yRotO + 360);
     this.xRot = f(this.xRotO + f(f(this.xRot - this.xRotO) * f(0.2)));
     this.yRot = f(this.yRotO + f(f(this.yRot - this.yRotO) * f(0.2)));
     let inertia = f(0.99);
