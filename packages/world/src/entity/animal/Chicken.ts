@@ -1,20 +1,22 @@
 /**
  * 1:1 移植自 src/world/entity/animal/Chicken.h 与 .cpp（113 行 + 头 49 行）。
  *
- * 鸡：`Animal` 的全部行为 + 扇翅膀动画（`flap`/`flapSpeed`/`flapping` 那四个字段是**客户端
- * 渲染用的插值量**）+ **每隔 5~10 分钟原地掉一个蛋** + 死时掉羽毛/鸡肉。
+ * 鸡：`Animal` 的全部行为 + 扇翅膀动画（`flap`/`flapSpeed`/`oFlap`/`oFlapSpeed` 这四个字段是
+ * **客户端渲染用的插值量**，`flapping` 是翅膀相位累加量）+ **每隔 5~10 分钟原地掉一个蛋** +
+ * 死时掉羽毛/鸡肉。
  *
- * 【三处照抄】
+ * 【四处照抄】
  *   1. `--eggTime <= 0` 是**前置自减**：先减再比。计时到点后重新抽一个
  *      `nextInt(TicksPerSecond * 60 * 5) + TicksPerSecond * 60 * 5` —— 也就是 **5~10 分钟**。
  *   2. 掉蛋那段外面套着 `!isBaby()` 和 `!level->isClientSide` 两层判断：客户端不产蛋。
  *   3. `causeFallDamage` 是**空函数体**（鸡摔不死），照抄。
+ *   4. `sheared` 是 public 的 `bool`，但全参考源码**只写不读**（Sheep 用的是自己的字段）—— 照抄保留。
  *
  * 【浮点】`flapSpeed += (onGround ? -1 : 4) * 0.3f` 这类都按 PITFALLS 第 3 条逐步 fround，
  * 十进制字面量一律包 `f()`（`0.3f` / `0.9f` / `0.6f` / `0.2f`）。
  *
  * 已接线：G9 落的 `ChickenRenderer` + `ChickenModel` 负责画它（`EntityRenderDispatcher` 里注册的
- * `ER_CHICKEN_RENDERER`）—— 这只鸡现在是 TS 里**第一只画面上看得见的生物**。
+ * `ER_CHICKEN_RENDERER`）—— G9 时它是 TS 里**第一只画面上看得见的生物**（后续又有别的生物接入）。
  */
 import { SharedConstants } from '@mcpe/core';
 import type { CompoundTag } from '@mcpe/nbt';
@@ -81,6 +83,8 @@ export class Chicken extends Animal {
     if (!this.isBaby()) {
       // ⚠ `--eggTime` 是前置自减：先减再比
       if (!this.level.isClientSide && --this.eggTime <= 0) {
+        // DEFERRED(待确认): level->playSound(this, "mob.chickenplop", 1.0f, (random.nextFloat() - random.nextFloat()) * 0.2f + 1.0f);
+        // C++ 里两个 nextFloat() 的求值顺序未指定；不生成新黄金样本，先按从左到右（与 Entity/Mob/ItemEntity/Player 的先例一致），待确认。
         this.level.playSound(
           this,
           'mob.chickenplop',
@@ -137,6 +141,9 @@ export class Chicken extends Animal {
    * C++ `Animal* Chicken::getBreedOffspring(Animal* target)`。
    * ⚠ 全参考源码**零调用方**（它不在任何基类里声明，也没人调它）—— 照抄，不删。
    */
+  // ADAPTED(Cpp)：C++ Chicken.h 把它写在 protected 段；但既有测试 chicken.test.ts:343 在类外
+  // 直接调用 `c.getBreedOffspring(c)`，收窄成 protected 会让该测试无法编译（已用 tsc 实测 TS2445），
+  // 又不能改既有断言，故保持 public。
   getBreedOffspring(_target: Animal): Animal {
     return new Chicken(this.level);
   }
