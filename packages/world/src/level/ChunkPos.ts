@@ -1,5 +1,7 @@
 import type { Entity } from '../entity/Entity';
 
+const f = Math.fround;
+
 export class ChunkPos {
   // 对应 C++ 的 `const int x, z;`
   // TS 没有真正的 const 字段，readonly 是编译期最接近的表达。
@@ -73,18 +75,15 @@ export class ChunkPos {
    *   float zd = zPos - e->z;
    *   return xd * xd + zd * zd;
    *
-   * C++ 每一步都是 32 位 float；TS 的 number 是 64 位 double。
-   * 下面这个版本用 double 计算，数值更精确、性能更好，
-   * 绝大多数场景（比较距离、AABB 判定）结果一致。
-   *
-   * 若要位级对齐 C++ 的 float 行为，见下文「float 位级对齐版」。
+   * C++ 每一步都是 32 位 float；TS 的 number 是 64 位 double，
+   * 所以每一步都要过 f()：(float)(x * 16 + 8) 先取整，减法、乘法、加法各自舍入一次。
    */
   distanceToSqr(e: Entity): number {
-    const xPos = this.x * 16 + 8;
-    const zPos = this.z * 16 + 8;
-    const xd = xPos - e.x;
-    const zd = zPos - e.z;
-    return xd * xd + zd * zd;
+    const xPos = f(this.x * 16 + 8);
+    const zPos = f(this.z * 16 + 8);
+    const xd = f(xPos - e.x);
+    const zd = f(zPos - e.z);
+    return f(f(xd * xd) + f(zd * zd));
   }
 
   toString(): string {
