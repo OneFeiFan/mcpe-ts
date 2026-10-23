@@ -83,6 +83,25 @@ describe('Skeleton 审核（W38）', () => {
     expect(sk.x + f(v * bw * 2) - bw).not.toBe(expectedX);
   });
 
+  it('W38-4：朝向用 float atan2（Mth.atan2），不是 double atan2 再舍入', () => {
+    const sk = new ExposedSkeleton(level);
+    // 这对方向值能让 atan2f 与 double atan2 乘 RADDEG 后得到不同的 float（已用穷举脚本找到）
+    const xd = f(-8.878729820251465);
+    const zd = f(-9.973052978515625);
+    sk.moveTo(0, 64, 0, 0, 0);
+    const target = new Skeleton(level);
+    target.moveTo(xd, 64, zd, 0, 0);
+    level.addEntity(sk);
+    level.addEntity(target);
+    sk.attackTime = 1; // 跳过射箭分支，只看向
+
+    sk.hit(target, 1);
+
+    const raddeg = f(180 / f(Math.PI)); // Mth.RADDEG
+    expect(sk.yRot).toBe(f(f(f(Math.atan2(zd, xd)) * raddeg) - 90));
+    expect(sk.yRot).not.toBe(f(f(Math.atan2(zd, xd) * raddeg) - 90));
+  });
+
   it('W38：getUseDuration 按 C++ 收进 protected，返回值是 attackTime', () => {
     type SkeletonPublicKeys = keyof Skeleton;
     const isPublic: 'getUseDuration' extends SkeletonPublicKeys ? true : false = false;

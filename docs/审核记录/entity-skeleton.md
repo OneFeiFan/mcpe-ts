@@ -1,7 +1,7 @@
 # Skeleton（src/world/entity/monster/Skeleton.h / .cpp ↔ packages/world/src/entity/monster/Skeleton.ts）
 
 第 2 批（world/entity/monster）。工作表 12 行全部有结论。C++ `.h` 43 行 + `.cpp` 107 行，
-TS 审核前 141 行、审核后 144 行。新增编号 **W38**；新增 1 处 `DEFERRED(待确认)`。
+TS 审核前 141 行、审核后 145 行。新增编号 **W38**；新增 1 处 `DEFERRED(待确认)`。
 
 C++ 侧要点：
 
@@ -20,20 +20,20 @@ C++ 侧要点：
 
 ## 工作表结论
 
-| #   | C++ 函数                            | C++ 位置         | TS 方法           | TS 行 | 相似度 | 结论                                                                                                                        |
-| --- | ----------------------------------- | ---------------- | ----------------- | ----- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
-| 1   | `Skeleton(Level* level)`            | Skeleton.cpp:4   | `constructor`     | 23    | 0.48   | 一致：`bow(Item::bow, 1)` → `new ItemInstance(Item.bow, 1)`；`fireCheckTick = 0`；渲染器与贴图一致                          |
-| 2   | `getMaxHealth()`                    | Skeleton.cpp:13  | `getMaxHealth`    | 31    | 1.00   | 一致：10                                                                                                                    |
-| 3   | `aiStep()`                          | Skeleton.cpp:17  | `aiStep`          | 35    | 0.83   | **已修 W38-2**：粒子坐标改为按 C++ 左结合逐步舍入；其余条件、随机数顺序一致；多个 `nextFloat()` 求值顺序见 DEFERRED(待确认) |
-| 4   | `getDeathLoot()`                    | Skeleton.cpp:38  | `getDeathLoot`    | 79    | 1.00   | 一致：`Item.arrow.id`，`protected`                                                                                          |
-| 5   | `getCarriedItem()`                  | Skeleton.cpp:42  | `getCarriedItem`  | 83    | 0.91   | 一致：C++ 返回 `&bow`，TS 返回同一 `ItemInstance` 引用（共享语义相同），`public`                                            |
-| 6   | `getEntityTypeId()`                 | Skeleton.cpp:46  | `getEntityTypeId` | 87    | 1.00   | 一致：`MobTypes.Skeleton`                                                                                                   |
-| 7   | `getAmbientSound()`                 | Skeleton.cpp:50  | `getAmbientSound` | 91    | 1.00   | 一致：`mob.skeleton`，`protected`                                                                                           |
-| 8   | `getHurtSound()`                    | Skeleton.cpp:54  | `getHurtSound`    | 95    | 1.00   | 一致：`mob.skeletonhurt`，`protected`                                                                                       |
-| 9   | `getDeathSound()`                   | Skeleton.cpp:58  | `getDeathSound`   | 99    | 1.00   | 一致：`mob.skeletonhurt`（受伤与死亡同音），`protected`                                                                     |
-| 10  | `checkHurtTarget(Entity*, float d)` | Skeleton.cpp:62  | `checkHurtTarget` | 103   | 0.89   | **已修 W38-1**：float 形参入口补 `d = f(d)`；箭的构造、`yd`/`yo` 逐步舍入、音效、`shoot`、`yRot` 均一致                     |
-| 11  | `dropDeathLoot()`                   | Skeleton.cpp:87  | `dropDeathLoot`   | 126   | 1.00   | 一致：两次 `nextInt(3)`，先箭后骨头，各 1 个，`protected`                                                                   |
-| 12  | `getUseDuration()`                  | Skeleton.cpp:100 | `getUseDuration`  | 138   | 1.00   | **已修 W38-3**：C++ 在 `protected` 段，TS 原为 public，已收回；返回 `attackTime`                                            |
+| #   | C++ 函数                            | C++ 位置         | TS 方法           | TS 行 | 相似度 | 结论                                                                                                                                         |
+| --- | ----------------------------------- | ---------------- | ----------------- | ----- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `Skeleton(Level* level)`            | Skeleton.cpp:4   | `constructor`     | 23    | 0.48   | 一致：`bow(Item::bow, 1)` → `new ItemInstance(Item.bow, 1)`；`fireCheckTick = 0`；渲染器与贴图一致                                           |
+| 2   | `getMaxHealth()`                    | Skeleton.cpp:13  | `getMaxHealth`    | 31    | 1.00   | 一致：10                                                                                                                                     |
+| 3   | `aiStep()`                          | Skeleton.cpp:17  | `aiStep`          | 35    | 0.83   | **已修 W38-2**：粒子坐标改为按 C++ 左结合逐步舍入；其余条件、随机数顺序一致；多个 `nextFloat()` 求值顺序见 DEFERRED(待确认)                  |
+| 4   | `getDeathLoot()`                    | Skeleton.cpp:38  | `getDeathLoot`    | 79    | 1.00   | 一致：`Item.arrow.id`，`protected`                                                                                                           |
+| 5   | `getCarriedItem()`                  | Skeleton.cpp:42  | `getCarriedItem`  | 83    | 0.91   | 一致：C++ 返回 `&bow`，TS 返回同一 `ItemInstance` 引用（共享语义相同），`public`                                                             |
+| 6   | `getEntityTypeId()`                 | Skeleton.cpp:46  | `getEntityTypeId` | 87    | 1.00   | 一致：`MobTypes.Skeleton`                                                                                                                    |
+| 7   | `getAmbientSound()`                 | Skeleton.cpp:50  | `getAmbientSound` | 91    | 1.00   | 一致：`mob.skeleton`，`protected`                                                                                                            |
+| 8   | `getHurtSound()`                    | Skeleton.cpp:54  | `getHurtSound`    | 95    | 1.00   | 一致：`mob.skeletonhurt`，`protected`                                                                                                        |
+| 9   | `getDeathSound()`                   | Skeleton.cpp:58  | `getDeathSound`   | 99    | 1.00   | 一致：`mob.skeletonhurt`（受伤与死亡同音），`protected`                                                                                      |
+| 10  | `checkHurtTarget(Entity*, float d)` | Skeleton.cpp:62  | `checkHurtTarget` | 103   | 0.89   | **已修 W38-1、W38-4**：float 形参入口补 `d = f(d)`；朝向改用 `Mth.atan2`（float atan2f）；箭的构造、`yd`/`yo` 逐步舍入、音效、`shoot` 均一致 |
+| 11  | `dropDeathLoot()`                   | Skeleton.cpp:87  | `dropDeathLoot`   | 126   | 1.00   | 一致：两次 `nextInt(3)`，先箭后骨头，各 1 个，`protected`                                                                                    |
+| 12  | `getUseDuration()`                  | Skeleton.cpp:100 | `getUseDuration`  | 138   | 1.00   | **已修 W38-3**：C++ 在 `protected` 段，TS 原为 public，已收回；返回 `attackTime`                                                             |
 
 C++ 有、TS 没有的方法：无。TS 有、C++ 没有的方法：无。
 
@@ -65,6 +65,18 @@ C++ `Skeleton.h:37` 在 `protected` 段；TS 原为 public。全参考源码与 
   （`'getUseDuration' extends keyof Skeleton` 为真）。
 - 绿：`git stash pop` 恢复修复后，vitest 3/3 通过、tsc 0 错误。
 
+**W38-4 朝向用的是 double `Math.atan2`，与 C++17 的 float 重载不一致（清单第 9 条）。**
+C++ `(float)(std::atan2(zd, xd) * Mth::RADDEG) - 90` 里 `std::atan2(float, float)` 在 C++17 解析到
+float 重载（atan2f），乘 float 的 `RADDEG` 后逐步舍入。TS 原写 `Math.atan2`（double），只在乘完后
+舍入一次；与 W22 Arrow 的先例（`f(Mth.atan2(...) * Mth.RADDEG)`）不一致。
+修复：改为 `f(f(Mth.atan2(zd, xd) * Mth.RADDEG) - 90)`，并改正文件头“std::atan2 是 double”的错误说明。
+
+先红后绿（把 `Skeleton.ts` stash 回上一提交、保留新测试）：
+
+- 红：`pnpm exec vitest run tests/unit/world/skeleton-audit.test.ts` 退出码 1，
+  `expected -221.67776489257812 to be -221.6777801513672`（方向 `xd=-8.878729820251465`、`zd=-9.973052978515625`）。
+- 绿：恢复后 4/4 通过。
+
 ## DEFERRED(待确认)：多个 `nextFloat()` 的求值顺序
 
 `aiStep` 里每个粒子的 `xa/ya/za` 各含两个 `nextFloat()`，`addParticle` 的三个坐标又各含一个；
@@ -80,7 +92,7 @@ Player/Chicken W28）取从左到右，在循环上方标 `// DEFERRED(待确认
   粒子坐标见 W38-2；`yd`、`yo`、`yd + yo`、`1 / (nextFloat()*0.4f + 0.8f)`、`1.60f` 均一致。
 - 第 8 条：`Mth.floor(x/y/z)`、`Mth.sqrt`、`Mth.RADDEG` 与 C++ 同名；无整数除法
   （`1 / (...)` 的分母是 float，C++ 里 `1` 提升为 float）。
-- 第 9–12 条：`std::atan2` → `Math.atan2`，乘积先转 float 再减 90（`yRot` 是 float），一致；
+- 第 9–12 条：`std::atan2` → `Mth.atan2`（float atan2f，W38-4），乘积与减 90 逐步 `f()`；
   无 long、无字符串格式化。
 - 第 13–18 条：`getMaxHealth` / `aiStep` / `getEntityTypeId` 等 override 关系正确；
   `getUseDuration` 在基类没有对应声明，故不加 `override`；无重载、默认参数、字段遮蔽；
@@ -97,7 +109,7 @@ Player/Chicken W28）取从左到右，在循环上方标 `// DEFERRED(待确认
 
 ## 验证
 
-- `pnpm exec vitest run tests/unit/world/skeleton-audit.test.ts`：退出码 0，3/3 通过。
+- `pnpm exec vitest run tests/unit/world/skeleton-audit.test.ts`：退出码 0，4/4 通过。
 - `npx tsc -p packages/world --noEmit`：退出码 0，0 错误。
 - `npx tsc -p tests/tsconfig.json --noEmit`：退出码 0，0 错误（红态见上）。
 - `npx prettier --check`（三个文件）：通过。

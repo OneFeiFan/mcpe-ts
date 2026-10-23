@@ -1,7 +1,8 @@
 /**
  * 1:1 移植自 src/world/entity/monster/Skeleton.h 与 Skeleton.cpp（任务单 H8）。白天露天着火；10 格内拉弓射箭（每 3 秒一支），射击时原地不动、面向目标。
  * 手里的弓是按值成员 `ItemInstance bow(Item::bow, 1)`，getCarriedItem 返回它的地址。
- * 朝向：`(float)(std::atan2(zd, xd) * Mth::RADDEG) - 90`——这里用的是 std::atan2（double），乘 float 的 RADDEG 后转 float。
+ * 朝向：`(float)(std::atan2(zd, xd) * Mth::RADDEG) - 90`——C++17 的 `std::atan2(float, float)` 是 float
+ * 重载（等价 atan2f），乘 float 的 RADDEG 后逐步舍入；TS 用 `Mth.atan2` 并在每一步套 `f()`（W38-4）。
  */
 import { SharedConstants } from '@mcpe/core';
 import { Mth } from '@mcpe/util';
@@ -121,7 +122,7 @@ export class Skeleton extends Monster {
         arrow.shoot(xd, f(yd + yo), zd, f(1.6), 32);
         this.attackTime = SharedConstants.TicksPerSecond * 3;
       }
-      this.yRot = f(f(Math.atan2(zd, xd) * Mth.RADDEG) - 90);
+      this.yRot = f(f(Mth.atan2(zd, xd) * Mth.RADDEG) - 90);
       this.holdGround = true;
     }
   }
