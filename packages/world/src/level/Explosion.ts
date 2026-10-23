@@ -1,5 +1,5 @@
 /**
- * 1:1 移植自 src/world/level/Explosion.h 与 Explosion.cpp（202 行 + 头 23 行）。
+ * 1:1 移植自 src/world/level/Explosion.h 与 Explosion.cpp（164 行 + 头 38 行）。
  *
  * 一次爆炸：`explode()` 从爆炸中心朝 16×16×16 立方体的**表面**（`i != 0 && i != 15`
  * 三面都成立的格子直接跳过）射出 16³-14³ = 1352 条射线，每条按 0.3 格一步往前走，
@@ -13,13 +13,17 @@
  *   2. `r += r;` 之后又把 `r = org;` 还原回去。中间那段（算 AABB、给实体推力）用的是
  *      **翻倍**的半径，伤害公式 `(pow*pow+pow)/2*8*r+1` 里那个 r 也是翻倍的。
  *
+ * 【float 边界】C++ 的 `float` 形参/返回值在 TS 里都是 `number`（double）：
+ * 构造函数入口、`getSeenPercent` 与 `getExplosionResistance` 的返回值都要用 `f()` 收一次；
+ * `(int)` 用 `f2i`（NaN / 越界 → INT_MIN），不能用 `Math.trunc`。
+ *
  * 【粒子/声音】`level->addParticle` / `level->playSound` 在 TS 的 `Level` 里**是真实现**
  * （转发给 listener），客户端的播放端（ParticleEngine / SoundEngine）没移植 —— 那是另一批，
  * 所以这里照常调用，不是 DEFERRED。
  *
  * 【网络】`ExplodePacket` 那句照例 DEFERRED(Network)。
  */
-import { Mth, Random } from '@mcpe/util';
+import { f2i, Mth, Random } from '@mcpe/util';
 import { AABB } from '../phys/AABB';
 import { Vec3 } from '../phys/Vec3';
 import type { Entity } from '../entity/Entity';
@@ -83,10 +87,11 @@ export class Explosion {
   constructor(level: Level, source: Entity | null, x: number, y: number, z: number, r: number) {
     this.level = level;
     this.source = source;
-    this.x = x;
-    this.y = y;
-    this.z = z;
-    this.r = r;
+    // C++ 形参是 float，进构造函数时已经是 float；TS 的 number 是 double，入口收一次
+    this.x = f(x);
+    this.y = f(y);
+    this.z = f(z);
+    this.r = f(r);
     this.fire = false;
   }
 
@@ -126,9 +131,10 @@ export class Explosion {
             const zt = Mth.floor(zp);
             const t = this.level.getTile(xt, yt, zt);
             if (t > 0) {
+              // C++ 的 getExplosionResistance 返回 float；TS 返回 double，在调用点收一次
               remainingPower = f(
                 remainingPower -
-                  f(f(Tile.tiles[t]!.getExplosionResistance(this.source) + f(0.3)) * stepSize),
+                  f(f(f(Tile.tiles[t]!.getExplosionResistance(this.source)) + f(0.3)) * stepSize),
               );
             }
             if (remainingPower > 0) {
@@ -161,10 +167,11 @@ export class Explosion {
         xa = f(xa * ida);
         ya = f(ya * ida);
         za = f(za * ida);
-        const sp = this.level.getSeenPercent(center, e.bb);
+        // C++ 的 getSeenPercent 返回 float；TS 返回 double，在调用点收一次
+        const sp = f(this.level.getSeenPercent(center, e.bb));
         const pow = f(f(1 - dist) * sp);
-        // C++ 的 `(int)` 是向零截断
-        e.hurt(this.source, Math.trunc(f(f(f(f(f(pow * pow) + pow) / 2) * 8) * this.r) + 1));
+        // C++ 的 `(int)` 是向零截断；NaN / 越界按 x86 cvttss2si 落到 INT_MIN
+        e.hurt(this.source, f2i(f(f(f(f(f(f(pow * pow) + pow) / 2) * 8) * this.r) + 1)));
         const push = pow;
         e.xd = f(e.xd + f(xa * push));
         e.yd = f(e.yd + f(ya * push));
@@ -191,7 +198,8 @@ export class Explosion {
 
   /** C++ `void Explosion::finalizeExplosion()` */
   finalizeExplosion(): void {
-    // C++ 原句：level->playSound(x, y, z, "random.explode", 4, (1 + (level->random.nextFloat() - level->random.nextFloat()) * 0.2f) * 0.7f);
+    // DEFERRED(待确认): level->playSound(x, y, z, "random.explode", 4, (1 + (level->random.nextFloat() - level->random.nextFloat()) * 0.2f) * 0.7f);
+    // C++ 没有规定同一个表达式里两个函数调用的先后顺序；TS 按从左到右调用（与 Chicken/PigZombie/Sheep/Skeleton 的先例一致）。
     // ⚠ 那两次 nextFloat() **必须照调** —— 它们消耗的是 level->random，而下面放粒子用的
     //   也是同一个 level->random，跳过就把随机流错位了。
     //   TS 的 Level.playSound 是真实现（转发给 listener），只是客户端没接 SoundEngine，
