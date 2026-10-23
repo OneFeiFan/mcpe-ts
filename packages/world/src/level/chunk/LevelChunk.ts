@@ -11,12 +11,13 @@
  * 实体的 6 个方法在 S12 阶段 A 补上；方块实体的 7 个方法在 S11 阶段 A 补上。
  * entityBlocks：S12 阶段 A 起由 addEntity / removeEntity 维护。
  *
- * 【C++ 的未初始化字段】loaded、minHeight 在 C++ 构造函数里没有初始化，这里取 false、0。
- * LevelChunk.ChunkBlockCount 是 C++ 的未初始化静态变量（值为 0），创建区块前要先设成 32768
+ * 【C++ 的未初始化字段】构造 1 的 blocks / blocksLength 与两个构造函数的 loaded / minHeight 在 C++ 里没有初始化，
+ * 这里取 null / 0 / false / 0（读未初始化值是未定义行为）。
+ * LevelChunk.ChunkBlockCount 是 C++ 的零初始化静态变量（值为 0），创建区块前要先设成 32768
  * （NinecraftApp::init 里是 LevelChunk::ChunkBlockCount = LEVEL_HEIGHT * CHUNK_COLUMNS）。
  */
 import { TileEntity } from '../tile/entity/TileEntity';
-import { LOGE, LOGW } from '@mcpe/platform';
+import { LOGE, LOGI, LOGW } from '@mcpe/platform';
 import { Mth, Random } from '@mcpe/util';
 import type { AABB } from '../../phys/AABB';
 import type { Entity } from '../../entity/Entity';
@@ -28,6 +29,9 @@ import { Tile } from '../tile/Tile';
 import { TilePos } from '../TilePos';
 import { DataLayer } from './DataLayer';
 
+// ADAPTED(Cpp): C++ 未初始化 blocks / blocksLength（构造 1）与 loaded / minHeight（两个构造函数）；
+// TS 取 null / 0 / false / 0，避免读未初始化内存。
+// OMIT(LevelChunk): ~LevelChunk()  LevelChunk.cpp:42 —— 函数体只有一行被注释掉的 //delete blocks;，JS 由 GC 接管（R3）。
 export class LevelChunk {
   static touchedSky = false;
   static ChunkBlockCount = 0;
@@ -59,8 +63,11 @@ export class LevelChunk {
     { length: LevelChunk.EntityBlocksArraySize },
     () => [],
   );
-  /** TEMap = std::map<TilePos, TileEntity*>：按 TilePos::operator<（比较 hashCode）判等与排序，所以用 hashCode 作键 */
-  tileEntities = new Map<number, TileEntity>();
+  /**
+   * TEMap = std::map<TilePos, TileEntity*>：按 TilePos::operator<（比较 hashCode）判等与排序，所以用 hashCode 作键。
+   * C++ 里在 protected 段；外部只能通过 getTileEntityMap() 读取。
+   */
+  protected tileEntities = new Map<number, TileEntity>();
 
   constructor(level: Level, x: number, z: number);
   /** blocks 可以为 null：C++ 的 unsigned char* 允许 NULL，ChunkCache 就是这样创建 EmptyLevelChunk 的 */
@@ -292,6 +299,7 @@ export class LevelChunk {
   }
 
   setBlocks(newBlocks: Uint8Array, sub: number): void {
+    LOGI('LevelChunk::setBlocks\n');
     const blocks = this.blocks!;
     for (let i = 0; i < 128 * 16 * 4; i++) {
       blocks[sub * 128 * 16 * 4 + i] = newBlocks[i]!;
@@ -431,6 +439,7 @@ export class LevelChunk {
 
   unload(): void {
     this.loaded = false;
+    // C++ 里把方块实体、实体从 level 移除的代码被注释掉了
   }
 
   markUnsaved(): void {
@@ -515,7 +524,7 @@ export class LevelChunk {
       tileEntity = cit;
     }
     if (tileEntity !== null && tileEntity.isRemoved()) {
-      // C++ 在 cit 指向 end() 时也会 erase(cit)（未定义行为）；这里只在找到时删除
+      // ADAPTED(Safety): C++ 在 cit 指向 end() 时也会 erase(cit)（未定义行为）；这里只在找到时删除
       if (cit !== undefined) this.tileEntities.delete(pos);
       return null;
     }
@@ -545,7 +554,7 @@ export class LevelChunk {
     const t = this.getTile(x, y, z);
     if (t === 0 || !Tile.isEntityTile[t]) {
       LOGW(
-        `Attempted to place a tile entity where there was no entity tile! ${tileEntity.x}, ${tileEntity.y}, ${tileEntity.z}`,
+        `Attempted to place a tile entity where there was no entity tile! ${tileEntity.x}, ${tileEntity.y}, ${tileEntity.z}\n`,
       );
       return;
     }
@@ -636,7 +645,8 @@ export class LevelChunk {
     return false;
   }
 
-  /** C++ 返回 const TEMap&（按键有序）；这里按键排序后返回，迭代顺序与 std::map 相同 */
+  // ADAPTED(Cpp): C++ 返回 const TEMap&（按 hashCode 有序的活引用）；JS Map 没有只读引用，
+  // 这里返回按 hashCode 排序的新 Map。
   getTileEntityMap(): ReadonlyMap<number, TileEntity> {
     return new Map([...this.tileEntities.entries()].sort((a, b) => a[0] - b[0]));
   }
