@@ -1,8 +1,9 @@
 /**
  * 1:1 移植自 src/world/entity/monster/Zombie.h 与 Zombie.cpp（任务单 H7）。白天在露天会着火；死亡有 1/4 概率掉羽毛（原文如此）。
  * 新 AI：构造函数里建立 targetSelector（受伤反击、最近的玩家）、goalSelector（近战、闲逛）、moveControl、jumpControl（任务单 H11）。
- *   `useNewAi()` 返回 `_useNewAi`，只有 `setUseNewAi` 能改，而唯一的调用点
- *   `Level::setZombieAi` 在 Level.cpp:1429 被注释掉——正常游戏中恒为 false，走旧 AI。
+ *   `useNewAi()` 返回 `_useNewAi`，只有 `setUseNewAi` 能改。能让它为真的唯一调用点
+ *   `Level::setZombieAi` 在 Level.cpp:1429 被注释掉；此外 `tickEntities` 每刻还会对僵尸调用
+ *   `setUseNewAi(false)`（Level.cpp:1388）——所以正常游戏中恒为 false，走旧 AI。
  */
 import { Item } from '../../item/Item';
 import type { Level } from '../../level/Level';
@@ -43,6 +44,8 @@ export class Zombie extends Monster {
     this.jumpControl = new JumpControl(this);
   }
 
+  // OMIT(Zombie): ~Zombie()  Zombie.cpp:41 —— 函数体只 delete 四个 AI 组件；JS 由 GC 接管（R3）。
+
   override getMaxHealth(): number {
     return 12;
   }
@@ -74,11 +77,15 @@ export class Zombie extends Monster {
                   f(f(2.0 * this.random.nextFloat()) - 1.0),
               ) * f(0.02),
             );
+            // DEFERRED(待确认): level->addParticle(PARTICLETYPE(explode), x + random.nextFloat() * bbWidth * 2 - bbWidth, y + random.nextFloat() * bbHeight, z + random.nextFloat() * bbWidth * 2 - bbWidth, xa, ya, za);
+            // ↑ 语句本身已移植；待确认的只是这条语句（以及上面 xa/ya/za 三行）里多个 nextFloat() 的
+            //   求值顺序（C++ 未指定，GCC 常从右往左）。不生成新黄金样本，先按从左到右
+            //   （与 Entity/Mob/ItemEntity/Player/Chicken 的先例一致），待确认。
             this.level.addParticle(
               'explode',
-              this.x + f(this.random.nextFloat() * this.bbWidth * 2) - this.bbWidth,
-              this.y + f(this.random.nextFloat() * this.bbHeight),
-              this.z + f(this.random.nextFloat() * this.bbWidth * 2) - this.bbWidth,
+              f(f(this.x + f(f(this.random.nextFloat() * this.bbWidth) * 2)) - this.bbWidth),
+              f(this.y + f(this.random.nextFloat() * this.bbHeight)),
+              f(f(this.z + f(f(this.random.nextFloat() * this.bbWidth) * 2)) - this.bbWidth),
               xa,
               ya,
               za,
@@ -99,6 +106,8 @@ export class Zombie extends Monster {
     this._useNewAi = use;
   }
 
+  /** C++ `Zombie.h:29` 把它写在 protected 段（基类 Mob.h:92 是 public）；TS 不能收窄 public 的重写，保持 public。 */
+  // ADAPTED(Cpp)：C++ 允许派生类把基类 public 的 virtual 收窄成 protected；TS 不允许（TS2415），保持 public。
   override getArmorValue(): number {
     let armor = super.getArmorValue() + 2;
     if (armor > 20) armor = 20;
