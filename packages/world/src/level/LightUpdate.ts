@@ -22,6 +22,7 @@ export class LightUpdate {
   y1: number;
   z1: number;
 
+  // ADAPTED(Cpp)：C++ 的两个拷贝构造（const LightUpdate* 与 const LightUpdate&）合并成这一个重载
   constructor(t: LightUpdate);
   constructor(
     layer: LightLayer,
@@ -143,6 +144,7 @@ export class LightUpdate {
               level.updateLightIfOtherThan(layer, x - 1, y, z, t);
               level.updateLightIfOtherThan(layer, x, y - 1, z, t);
               level.updateLightIfOtherThan(layer, x, y, z - 1, t);
+              // 怪癖保留：C++ 写的是 x+1 >= x1 等（循环里 x <= x1，所以恒成立），三个方向照抄。
               if (x + 1 >= this.x1) level.updateLightIfOtherThan(layer, x + 1, y, z, t);
               if (y + 1 >= this.y1) level.updateLightIfOtherThan(layer, x, y + 1, z, t);
               if (z + 1 >= this.z1) level.updateLightIfOtherThan(layer, x, y, z + 1, t);

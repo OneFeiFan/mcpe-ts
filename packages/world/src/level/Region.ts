@@ -11,7 +11,8 @@ export class Region implements LevelSource {
   private xc1: number;
   private zc1: number;
   private chunks: (LevelChunk | null)[];
-  /** 构造时缓存的两个方块 id（getRawBrightness 的热路径里每次都要比较） */
+  // ADAPTED(Cpp)（性能任务 P3）：C++ 在 getRawBrightness 里每次读 Tile::stoneSlabHalf->id /
+  // Tile::farmland->id，这里构造时缓存——Region 都在 initTiles 之后才创建，id 不会变。
   private slabId: number;
   private farmlandId: number;
   private level: Level;
@@ -38,7 +39,8 @@ export class Region implements LevelSource {
     this.size_x = xc2 - this.xc1 + 1;
     this.size_z = zc2 - this.zc1 + 1;
 
-    // 审核 P3：C++ 的 LevelChunk*** chunks（二维）在这里压成一维数组，下标 xc * size_z + zc；取值热路径少一层间接
+    // ADAPTED(Cpp)（性能任务 P3）：C++ 的 LevelChunk*** chunks（二维）在这里压成一维数组，
+    // 下标 xc * size_z + zc；取值热路径少一层间接。
     this.chunks = new Array<LevelChunk | null>(this.size_x * this.size_z).fill(null);
     for (let xc = this.xc1; xc <= xc2; xc++) {
       for (let zc = this.zc1; zc <= zc2; zc++) {
@@ -49,7 +51,7 @@ export class Region implements LevelSource {
     this.farmlandId = Tile.farmland.id;
   }
 
-  // C++ ~Region() 释放 chunks[i] 和 chunks，TS 里 GC 负责，省略。
+  // OMIT(Cpp): ~Region()  Region.cpp:29 —— C++ 释放 chunks[i] 与 chunks，TS 由 GC 接管（R3）。
 
   getTile(x: number, y: number, z: number): number {
     if (y < 0) return 0;
@@ -69,11 +71,10 @@ export class Region implements LevelSource {
   }
 
   isEmptyTile(x: number, y: number, z: number): boolean {
-    // return this.getTile(x, y, z) === 0; //@todo?
     return Tile.tiles[this.getTile(x, y, z)] === null;
   }
 
-  // getTileEntity 原代码被注释，保留注释
+  // C++ Region.cpp:58-63 的 getTileEntity 整段被注释，未复制。
 
   getBrightness(x: number, y: number, z: number): number {
     return this.level.dimension.brightnessRamp[this.getRawBrightness(x, y, z)]!;
@@ -84,6 +85,7 @@ export class Region implements LevelSource {
   getRawBrightness(x: number, y: number, z: number, propagate?: boolean): number {
     if (propagate === undefined) propagate = true;
 
+    // 怪癖保留：C++ 这里 x 用 >=、z 用 >（不对称），照抄。
     if (
       x < -Level.MAX_LEVEL_SIZE ||
       z < -Level.MAX_LEVEL_SIZE ||
