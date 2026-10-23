@@ -41,6 +41,8 @@ export class Skeleton extends Monster {
           f(this.random.nextFloat() * f(3.5)) < f(br - f(0.4))
         ) {
           for (let i = 0; i < 5; ++i) {
+            // DEFERRED(待确认): xa/ya/za 与 addParticle 坐标里的多个 random.nextFloat() 求值顺序 C++ 未指定；
+            // 不生成新黄金样本，先按从左到右（与 Entity/Mob/ItemEntity/Player/Chicken 的先例一致），待确认。
             const xa = f(
               f(
                 f(f(2.0 * this.random.nextFloat()) - 1.0) *
@@ -61,9 +63,9 @@ export class Skeleton extends Monster {
             );
             this.level.addParticle(
               'explode',
-              this.x + f(this.random.nextFloat() * this.bbWidth * 2) - this.bbWidth,
-              this.y + f(this.random.nextFloat() * this.bbHeight),
-              this.z + f(this.random.nextFloat() * this.bbWidth * 2) - this.bbWidth,
+              f(f(this.x + f(f(this.random.nextFloat() * this.bbWidth) * 2)) - this.bbWidth),
+              f(this.y + f(this.random.nextFloat() * this.bbHeight)),
+              f(f(this.z + f(f(this.random.nextFloat() * this.bbWidth) * 2)) - this.bbWidth),
               xa,
               ya,
               za,
@@ -101,6 +103,7 @@ export class Skeleton extends Monster {
   }
 
   protected override checkHurtTarget(target: Entity, d: number): void {
+    d = f(d); // C++ 形参是 float，入口先舍入
     if (d < 10) {
       const xd = f(target.x - this.x);
       const zd = f(target.z - this.z);
@@ -134,8 +137,8 @@ export class Skeleton extends Monster {
     }
   }
 
-  /** C++ `virtual int Skeleton::getUseDuration()`（只在 Skeleton 里声明） */
-  getUseDuration(): number {
+  /** C++ `virtual int Skeleton::getUseDuration()`（只在 Skeleton 里声明，Skeleton.h 的 protected 段） */
+  protected getUseDuration(): number {
     return this.attackTime;
   }
 }
