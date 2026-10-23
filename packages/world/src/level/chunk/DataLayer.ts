@@ -2,6 +2,7 @@
 export class DataLayer {
   data: Uint8Array | null;
   length: number;
+  /** C++ 的默认构造与 (data, length) 构造都不初始化 slotMax（未初始化成员）；按规范取 0。 */
   slotMax = 0;
 
   constructor();
@@ -18,9 +19,11 @@ export class DataLayer {
       this.slotMax = this.length;
     } else {
       this.length = b! >> 1;
-      this.data = a;
+      this.data = a; // C++ 直接保存指针（不复制）
     }
   }
+
+  // OMIT(DataLayer): ~DataLayer() { delete[] data; }  src/world/level/chunk/DataLayer.h:28 —— 内存由 GC 接管（R3）。
 
   get(x: number, y: number, z: number): number;
   get(pos: number): number;

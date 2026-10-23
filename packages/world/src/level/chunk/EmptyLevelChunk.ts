@@ -2,10 +2,10 @@
  * 1:1 移植自 src/world/level/chunk/EmptyLevelChunk.h（S4）：世界范围之外的占位区块。
  * ChunkCache 对超出 0..15 的区块坐标返回它：读到的方块全是 invisible_bedrock（95），写入一律忽略。
  *
- * 【OMIT 跟着基类走】LevelChunk 里 OMIT 了实体相关的方法，这里对它们的重写也一并 OMIT（手册 R3：
- *   virtual 函数在整条继承链上一起 OMIT）。否则 `override` 找不到基类方法，noImplicitOverride 下编译报错；
- *   去掉 override 硬写进来，又会变成一个通过 LevelChunk 类型永远调不到的孤立方法。移植实体时两边一起恢复。
- * 【C++ 里本来就注释掉的】方块实体的 4 个重写、getEntitiesOfClass、countEntities、shouldSave（EmptyLevelChunk.h:72-108），不移植。
+ * 【实体方法】S12 起 LevelChunk 的 addEntity / removeEntity / getEntities 已移植；本类按 C++ 全部重写为空实现。
+ * 【C++ 里本来就注释掉的】方块实体的 4 个重写（EmptyLevelChunk.h:115-131）、
+ *   getEntitiesOfClass / countEntities / shouldSave（EmptyLevelChunk.h:148-160），不移植。
+ *   getTile 里注释掉的旧分支（EmptyLevelChunk.h:56-64）也不复制。
  */
 import type { Entity } from '../../entity/Entity';
 import type { AABB } from '../../phys/AABB';
