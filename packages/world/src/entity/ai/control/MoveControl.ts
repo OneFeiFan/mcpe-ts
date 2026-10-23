@@ -1,7 +1,9 @@
 /**
  * 1:1 移植自 src/world/entity/ai/control/MoveControl.h 与 MoveControl.cpp（任务单 H11）：新 AI 的移动控制。
  * 每刻：先把 yya 清零；有目标点时朝它转（每刻最多 30°）、按给定速度走；目标在上方且水平距离不到 1 格就跳。
- * 朝向：`(float)(std::atan2(zd, xd) * 180 / Mth::PI) - 90`（std::atan2 是 double）。
+ * 朝向：`(float)(std::atan2(zd, xd) * 180 / Mth::PI) - 90`。C++17 的 `std::atan2(float, float)`
+ * 是 float 重载（等价 atan2f），`* 180`、`/ Mth::PI`、`- 90` 都在 float 里逐步舍入；TS 用 `Mth.atan2`
+ * 并在每一步套 `f()`（W43）。
  */
 import { Mth } from '@mcpe/util';
 import type { Mob } from '../../Mob';
@@ -57,7 +59,8 @@ export class MoveControl extends Control {
     const yd = f(this.wantedY - yFloor);
     const dd = f(f(f(xd * xd) + f(yd * yd)) + f(zd * zd));
     if (dd < MoveControl.MIN_SPEED_SQR) return;
-    const yRotD = f(f((Math.atan2(zd, xd) * 180) / Mth.PI) - 90);
+    // C++ 每一步都是 float：atan2f → ×180f → ÷Mth::PI → −90（W43，不能整段用 double 只舍入一次）
+    const yRotD = f(f(f(Mth.atan2(zd, xd) * 180) / Mth.PI) - 90);
     mob.yRot = this.rotlerp(mob.yRot, yRotD, MoveControl.MAX_TURN);
     mob.setSpeed(this.speed);
     if (yd > 0 && f(f(xd * xd) + f(zd * zd)) < 1) (mob.getJumpControl() as JumpControl).jump();
