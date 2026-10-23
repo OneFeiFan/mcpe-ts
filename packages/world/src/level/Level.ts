@@ -2,9 +2,9 @@
  * 1:1 移植自 src/world/level/Level.h 与 Level.cpp（S5）。替换原来的 FORWARD-DECL(Level)。
  *
  * 【PORT-CUT】
- *  - _init：new PathFinder()（任务单 H2 起恢复）
- *  - tick：MobSpawner（任务单 H9 起恢复）；三处 SetTimePacket 发送与实体数据同步循环 → DEFERRED(Network)
- * 【OMIT】实体、玩家、寻路、爆炸、刷怪相关的 32 个函数（见各处标记）；方块实体的 4 个函数在 S11 阶段 A 补上。析构函数不移植（R3）。
+ *  - _init：new PathFinder()（任务单 H2 已恢复）
+ *  - tick：MobSpawner（任务单 H9 已恢复）；三处 SetTimePacket 发送与实体数据同步循环 → DEFERRED(Network)
+ * 【OMIT】析构函数不移植（R3）。实体、玩家、寻路、爆炸、刷怪与方块实体的函数均已移植。
  *   C++ 里 addEntities、ensureAdded、removeAllPendingEntityRemovals 整段在注释里，awakenAllPlayers 只有声明没有定义，都不算。
  *
  * 【C++ 的重载】hasChunksAt、getBrightness、playSound 写成一个方法，按参数个数或第一个参数的类型分派；
@@ -130,7 +130,7 @@ export class Level implements LevelSource {
   random = new Random(1);
   ops = new Set<string>();
   bannedPlayers = new Set<string>();
-  /** 只被已 OMIT 的 getCubes 使用 */
+  /** C++ getCubes 返回的共享 AABB 列表（`std::vector<AABB>&`）；实体碰撞盒那段在 C++ 里被注释掉了 */
   boxes: AABB[] = [];
 
   // ---------------------------------------------------------------- protected
@@ -170,7 +170,7 @@ export class Level implements LevelSource {
     this._init(levelName, settings, generatorVersion, fixedDimension);
   }
 
-  // 析构函数 ~Level 不移植（R3）
+  // OMIT(Level): ~Level()  Level.cpp:61 —— 只做 delete 与日志（R3：JS 由 GC 接管，析构函数不移植）
 
   _init(
     levelName: string,
@@ -397,7 +397,7 @@ export class Level implements LevelSource {
     return this._tickNextTickSet.size() !== 0;
   }
 
-  loadPlayer(player: Player | null, doAddPlayer = true): void {
+  loadPlayer(player: Player | null, doAddPlayer: boolean): void {
     if (player) {
       const loadedPlayerTag = this.levelData.getLoadedPlayerTag();
       if (loadedPlayerTag !== null) {
@@ -460,14 +460,15 @@ export class Level implements LevelSource {
   /**
    * Sets the initial spawn, created this method so we could do a special
    * location for the demo version.
-   * 注意：random.nextInt(32) - random.nextInt(32) 两个操作数的求值顺序在 C++ 里是未指定的；这里按从左到右。
    * 只有第一个出生点不合法时才会走到循环里（demo 的平台上第一次就合法）。
+   * 两个 random.nextInt(...) 的求值顺序见循环上方的 DEFERRED(待确认)。
    */
   setInitialSpawn(): void {
     this.isFindingSpawn = true;
     let xSpawn = ((LevelConstants.CHUNK_CACHE_WIDTH * LevelConstants.CHUNK_WIDTH) / 2) | 0;
     const ySpawn = 64;
     let zSpawn = ((LevelConstants.CHUNK_CACHE_WIDTH * LevelConstants.CHUNK_DEPTH) / 2) | 0;
+    // DEFERRED(待确认): xSpawn += random.nextInt(32) - random.nextInt(32); C++ 未规定两个操作数的求值顺序，按项目先例取从左到右。
     while (!this.dimension.isValidSpawn(xSpawn, zSpawn)) {
       xSpawn += this.random.nextInt(32) - this.random.nextInt(32);
       zSpawn += this.random.nextInt(32) - this.random.nextInt(32);
@@ -486,6 +487,7 @@ export class Level implements LevelSource {
     }
     let xSpawn = this.levelData.getXSpawn();
     let zSpawn = this.levelData.getZSpawn();
+    // DEFERRED(待确认): xSpawn += random.nextInt(8) - random.nextInt(8); C++ 未规定两个操作数的求值顺序，按项目先例取从左到右。
     while (
       this.getTopTile(xSpawn, zSpawn) === 0 ||
       this.getTopTile(xSpawn, zSpawn) === Tile.invisible_bedrock.id
@@ -1007,13 +1009,13 @@ export class Level implements LevelSource {
     return this.entityIdLookup.get(entityId) ?? null;
   }
 
-  entityAdded(e: Entity): void {
+  protected entityAdded(e: Entity): void {
     for (let i = 0; i < this._listeners.length; i++) {
       this._listeners[i]!.entityAdded(e);
     }
   }
 
-  entityRemoved(e: Entity): void {
+  protected entityRemoved(e: Entity): void {
     for (let j = 0; j < this._listeners.length; j++) {
       this._listeners[j]!.entityRemoved(e);
     }
@@ -1054,7 +1056,7 @@ export class Level implements LevelSource {
 
   removeListener(listener: LevelListener): void {
     const it = this._listeners.indexOf(listener);
-    // C++ 在找不到时对 end() 调用 erase，是未定义行为；这里找不到就什么都不做
+    // ADAPTED(Safety): C++ 在找不到时对 end() 调用 erase，是未定义行为（libstdc++ 会误删最后一个元素）；这里找不到就什么都不做
     if (it >= 0) this._listeners.splice(it, 1);
   }
 
@@ -1268,6 +1270,7 @@ export class Level implements LevelSource {
     for (let i = this._pendingPlayerRemovals.length - 1; i >= 0; --i) {
       const pr = this._pendingPlayerRemovals[i]!;
       if (--pr.ticks <= 0) {
+        // ADAPTED(Log): C++ 是 LOGI("deleting: %p\n", pr.e)，网页版没有可打印的指针，打印 player
         LOGI('deleting: player');
         this._pendingPlayerRemovals.splice(i, 1);
       }
@@ -1330,7 +1333,7 @@ export class Level implements LevelSource {
    *   NumSmartZombiesPerPlayer 是 0——即便被调用，也只有“没有僵尸”时进入第一个分支，第二段循环一次都不执行。
    *   std::nth_element + DistanceEntitySorter（按到玩家的距离）在这里用一次排序代替：j < 0 的循环不读结果，等价。
    */
-  setZombieAi(
+  protected setZombieAi(
     zombies: {
       setUseNewAi(use: boolean): void;
       distanceToSqr(e: Entity): number;
@@ -1710,6 +1713,7 @@ export class Level implements LevelSource {
   animateTick(xt: number, yt: number, zt: number): void {
     const r = 16;
     const animateRandom = new Random(); // 每次调用新建，按时间播种
+    // DEFERRED(待确认): xt + random.nextInt(r) - random.nextInt(r); C++ 未规定两个操作数的求值顺序，按项目先例取从左到右。
     for (let i = 0; i < 100; i++) {
       const x = xt + this.random.nextInt(r) - this.random.nextInt(r);
       const y = yt + this.random.nextInt(r) - this.random.nextInt(r);
