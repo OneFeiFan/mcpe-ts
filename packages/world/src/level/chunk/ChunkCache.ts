@@ -43,8 +43,8 @@ export class ChunkCache extends ChunkSource {
     LOGI('Chunks allocated.');
   }
 
-  // C++ ~ChunkCache 会 delete source / emptyChunk / chunks[i]。
-  // TS 里 GC 负责回收；如果调用方需要在丢弃前做清理，请显式调用 storage 的关闭方法。
+  // OMIT(ChunkCache): ~ChunkCache()  src/world/level/chunk/ChunkCache.h:33 —— delete source / emptyChunk /
+  // chunks[i]（含 deleteBlockData）；JS 由 GC 接管（R3）。
 
   fits(x: number, z: number): boolean {
     const W = LevelConstants.CHUNK_CACHE_WIDTH;
@@ -199,7 +199,8 @@ export class ChunkCache extends ChunkSource {
     }
   }
 
-  // C++ 里 save 被注释掉，保留注释
+  // C++: bool save(bool force, ProgressListener*) 整段被注释（ChunkCache.h:155-187），
+  // 私有 save(LevelChunk*) 仍然有效；被注释的代码不复制。
 
   override tick(): boolean {
     if (this.storage !== null) this.storage.tick();
