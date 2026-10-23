@@ -19,6 +19,8 @@ class InternalGoal {
 export class GoalSelector {
   private goals: InternalGoal[] = [];
 
+  // OMIT(GoalSelector): ~GoalSelector()  GoalSelector.h:25 —— 循环 delete goals[i].goal；JS 由 GC 接管（R3）。
+
   addGoal(prio: number, goal: Goal): void {
     this.goals.push(new InternalGoal(prio, goal));
   }

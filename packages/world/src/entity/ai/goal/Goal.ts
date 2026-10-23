@@ -2,6 +2,8 @@
 export abstract class Goal {
   private _requiredControlFlags = 0;
 
+  // OMIT(Goal): ~Goal() {}  Goal.h:12 —— 空析构函数，R3 不移植。
+
   abstract canUse(): boolean;
 
   canContinueToUse(): boolean {
