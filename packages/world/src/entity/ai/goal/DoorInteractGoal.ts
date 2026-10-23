@@ -1,5 +1,6 @@
 /**
- * 1:1 移植自 src/world/entity/ai/goal/DoorInteractGoal.h（任务单 H11）：撞墙时看路径前两个路点或脚下有没有木门；穿过门（方向反转）就结束。
+ * 1:1 移植自 src/world/entity/ai/goal/DoorInteractGoal.h（任务单 H11）：撞墙时从路径起点到当前节点后一个
+ * （共 min(index + 2, size) 个）路点里找木门，找不到再查 floor(mob.y + 1) 那一格；穿过门（方向反转）就结束。
  * 这一版里没有任何生物添加这个 goal（BreakDoorGoal 也没有），照抄。
  */
 import { Mth } from '@mcpe/util';
@@ -11,6 +12,9 @@ import { Goal } from './Goal';
 const f = Math.fround;
 
 export class DoorInteractGoal extends Goal {
+  // ADAPTED(Safety)：C++ 构造函数只初始化 mob，doorX/doorY/doorZ、doorTile、passed、
+  // doorOpenDirX/Z 都未初始化（读它们是未定义行为）。这里按规则取 0 / null / false；
+  // 正常流程在 canUse（doorX/Y/Z、doorTile）与 start（passed、doorOpenDirX/Z）里先赋值。
   protected mob: Monster;
   protected doorX = 0;
   protected doorY = 0;
