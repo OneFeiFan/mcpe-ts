@@ -9,6 +9,7 @@ const f = Math.fround;
 
 export class RandomStrollGoal extends Goal {
   private mob: PathfinderMob;
+  // C++ 的三个 float 字段没有初始化（读到它们是未定义行为）；这里取 0。
   private wantedX = 0;
   private wantedY = 0;
   private wantedZ = 0;
@@ -24,6 +25,7 @@ export class RandomStrollGoal extends Goal {
   canUse(): boolean {
     if (this.mob.getNoActionTime() >= SharedConstants.TicksPerSecond * 5) return false;
     if (this.mob.random.nextInt(120) !== 0) return false;
+    // C++ 是 `Vec3 pos; RandomPos::getPos(pos, …)` 的引用输出参数；TS 改为返回 Vec3 或 null（见 RandomPos.ts）。
     const pos = RandomPos.getPos(this.mob, 10, 7);
     if (!pos) return false;
     this.wantedX = pos.x;

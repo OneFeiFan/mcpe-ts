@@ -18,6 +18,7 @@ const f = Math.fround;
 export class MeleeAttackGoal extends Goal {
   private level: Level;
   private mob: Monster;
+  // C++ 的 target 没有初始化（读到它是未定义行为）；这里取 null。
   private target: Mob | null = null;
   private attackTime = 0;
   private speed: number;
@@ -45,6 +46,7 @@ export class MeleeAttackGoal extends Goal {
     if (bestTarget === null) return false;
     if (this.attackType !== 0 && !this.mob.isPlayer()) return false;
     this.target = bestTarget;
+    // C++ 会先 LOGI 并 delete 旧 path；JS 交给 GC。
     this.path = this.nav().createPathToMob(this.target);
     return this.path !== null;
   }
@@ -79,4 +81,6 @@ export class MeleeAttackGoal extends Goal {
     this.attackTime = 20;
     this.mob.doHurtTarget(target);
   }
+
+  // OMIT(MeleeAttackGoal): ~MeleeAttackGoal() { if (path) { LOGI(...); delete path; } }  MeleeAttackGoal.h:28-33 —— JS 由 GC 接管（R3）。
 }
