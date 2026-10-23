@@ -8,7 +8,10 @@
  * R10：createPath(x, y, z) / createPath(Mob*) → createPathToPos / createPathToMob；
  *   moveTo(x, y, z, speed) / moveTo(Mob*, speed) / moveTo(Path*, speed, owner) → moveToPos / moveToMob / moveToPath。
  */
-import { Mth } from '@mcpe/util';
+
+// ADAPTED(Cpp): C++ 的路径所有权（deletePath / deletePathIfNeeded / 析构里的 delete）在 JS 里没有意义：
+//   放弃路径只把 path 置空；`refPath` 声明了但从未使用；deletePathIfNeeded 里用 %p 打指针的 LOGI 无法在网页版复现，均不移植（PathNavigation.h:143-146、329-337）。
+import { f2i, Mth } from '@mcpe/util';
 import type { Level } from '../../level/Level';
 import { Material } from '../../level/material/Material';
 import { Path } from '../../level/pathfinder/Path';
@@ -20,6 +23,7 @@ import type { MoveControl } from './control/MoveControl';
 const f = Math.fround;
 
 export class PathNavigation {
+  // OMIT(Cpp): ~PathNavigation()  PathNavigation.h:35（只调用 deletePathIfNeeded；JS 由 GC 回收）
   private mob: Mob;
   private level: Level;
   private path: Path | null = null;
@@ -45,11 +49,12 @@ export class PathNavigation {
   createPathToPos(x: number, y: number, z: number): Path | null {
     if (!this.canUpdatePath()) return null;
     const p = new Path();
+    // C++ 形参是 float：x/z 由 Mth.floor 内部先 f()，y 要先舍入成 float 再 (int) 截断。
     this.level.findPathToTile(
       p,
       this.mob,
       Mth.floor(x),
-      Math.trunc(y),
+      f2i(f(y)),
       Mth.floor(z),
       this.maxDist,
       this.canOpenDoors,
@@ -132,7 +137,7 @@ export class PathNavigation {
     const path = this.path!;
     let firstElevation = path.getSize();
     for (let i = path.getIndex(); i < path.getSize(); ++i)
-      if (path.get(i).y !== Math.trunc(mobPos.y)) {
+      if (path.get(i).y !== f2i(mobPos.y)) {
         firstElevation = i;
         break;
       }
@@ -143,8 +148,8 @@ export class PathNavigation {
         path.setIndex(i + 1);
       }
     }
-    const sx = Math.trunc(Math.ceil(this.mob.bbWidth));
-    const sy = Math.trunc(this.mob.bbHeight) + 1;
+    const sx = f2i(Math.ceil(this.mob.bbWidth));
+    const sy = f2i(this.mob.bbHeight) + 1;
     const sz = sx;
     for (let i = firstElevation - 1; i >= path.getIndex(); --i) {
       if (this.canMoveDirectly(mobPos, path.getPos(this.mob, i), sx, sy, sz)) {
@@ -168,14 +173,14 @@ export class PathNavigation {
 
   private getSurfaceY(): number {
     const mob = this.mob;
-    if (!mob.isInWater()) return Math.trunc(mob.bb.y0 + 0.5);
-    let surface = Math.trunc(mob.bb.y0);
+    if (!mob.isInWater()) return f2i(mob.bb.y0 + 0.5);
+    let surface = f2i(mob.bb.y0);
     let tileId = this.level.getTile(Mth.floor(mob.x), surface, Mth.floor(mob.z));
     let steps = 0;
     while (tileId === Tile.water.id || tileId === Tile.calmWater.id) {
       ++surface;
       tileId = this.level.getTile(Mth.floor(mob.x), surface, Mth.floor(mob.z));
-      if (++steps > 16) return Math.trunc(mob.bb.y0);
+      if (++steps > 16) return f2i(mob.bb.y0);
     }
     return surface;
   }
@@ -190,8 +195,7 @@ export class PathNavigation {
 
   private trimPathFromSun(): void {
     const mob = this.mob;
-    if (this.level.canSeeSky(Mth.floor(mob.x), Math.trunc(mob.bb.y0 + 0.5), Mth.floor(mob.z)))
-      return;
+    if (this.level.canSeeSky(Mth.floor(mob.x), f2i(mob.bb.y0 + 0.5), Mth.floor(mob.z))) return;
     const path = this.path!;
     for (let i = 0; i < path.getSize(); ++i) {
       const n = path.get(i);
@@ -220,9 +224,7 @@ export class PathNavigation {
     dirZ = f(dirZ * nf);
     sx += 2;
     sz += 2;
-    if (
-      !this.canWalkOn(gridPosX, Math.trunc(startPos.y), gridPosZ, sx, sy, sz, startPos, dirX, dirZ)
-    )
+    if (!this.canWalkOn(gridPosX, f2i(startPos.y), gridPosZ, sx, sy, sz, startPos, dirX, dirZ))
       return false;
     sx -= 2;
     sz -= 2;
@@ -250,19 +252,7 @@ export class PathNavigation {
         gridPosZ += stepZ;
         currentDirZ = gridGoalZ - gridPosZ;
       }
-      if (
-        !this.canWalkOn(
-          gridPosX,
-          Math.trunc(startPos.y),
-          gridPosZ,
-          sx,
-          sy,
-          sz,
-          startPos,
-          dirX,
-          dirZ,
-        )
-      )
+      if (!this.canWalkOn(gridPosX, f2i(startPos.y), gridPosZ, sx, sy, sz, startPos, dirX, dirZ))
         return false;
     }
     return true;
