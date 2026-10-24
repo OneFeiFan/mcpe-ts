@@ -23,6 +23,7 @@ import { Biome } from './Biome';
 const f = Math.fround;
 
 export class BiomeSource {
+  // OMIT(BiomeSource): ~BiomeSource() { delete temperatureMap; … }  BiomeSource.cpp:49 —— JS 由 GC 接管（R3）
   static readonly zoom = f(2 * 1);
   static readonly tempScale = f(BiomeSource.zoom / 80.0);
   static readonly downfallScale = f(BiomeSource.zoom / 40.0);
