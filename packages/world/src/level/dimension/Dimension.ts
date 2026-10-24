@@ -26,16 +26,19 @@ import { Tile } from '../tile/Tile';
 const f = Math.fround;
 
 export class Dimension {
+  // OMIT(Dimension): ~Dimension() { delete biomeSource; }  Dimension.cpp:23 —— JS 由 GC 接管（R3）
   static readonly NORMAL = 0;
   static readonly NORMAL_DAYCYCLE = 10;
 
-  level!: Level;
+  level!: Level; // C++ 的 Level* level 也不在初始化列表里，init() 之前不读
   biomeSource: BiomeSource = null!; // C++ 初值 NULL，init() 之后才有
   foggy = false;
   ultraWarm = false;
   hasCeiling = false;
-  readonly brightnessRamp = new Float32Array(16); // [Level::MAX_BRIGHTNESS + 1]
+  readonly brightnessRamp = new Float32Array(16); // [Level::MAX_BRIGHTNESS + 1]；C++ 未初始化，init() 会填满
   id = 0;
+  // ADAPTED(Safety): C++ Dimension.h:54 的 FogType 没有初始化（运行时由 Minecraft.cpp:1481 赋值）；
+  // 取 0 = 默认的 PE 雾色，避免读到未定义值。
   FogType = 0; // lets us choose between what fog we want ig
   protected fogColor = 0x80daff; // long
   protected readonly sunriseCol = new Float32Array(4);
@@ -88,16 +91,17 @@ export class Dimension {
 
   /** @return C++ 返回成员数组 sunriseCol（复用），不在日出日落时返回 null */
   getSunriseColor(td: number, _a: number): Float32Array | null {
-    const span = 0.4;
-    const tt = Mth.cos(td * Mth.PI * 2) - 0.0;
+    td = f(td); // C++ 形参是 float，入口先舍入
+    const span = f(0.4);
+    const tt = f(Mth.cos(f(f(td * Mth.PI) * 2)) - 0.0);
     const mid = -0.0;
-    if (tt >= mid - span && tt <= mid + span) {
-      const aa = ((tt - mid) / span) * 0.5 + 0.5;
-      let mix = 1 - (1 - Mth.sin(aa * Mth.PI)) * 0.99;
-      mix = mix * mix;
-      this.sunriseCol[0] = aa * 0.3 + 0.7;
-      this.sunriseCol[1] = aa * aa * 0.7 + 0.2;
-      this.sunriseCol[2] = aa * aa * 0.0 + 0.2;
+    if (tt >= f(mid - span) && tt <= f(mid + span)) {
+      const aa = f(f(f(f(tt - mid) / span) * f(0.5)) + f(0.5));
+      let mix = f(1 - f(f(1 - Mth.sin(f(aa * Mth.PI))) * f(0.99)));
+      mix = f(mix * mix);
+      this.sunriseCol[0] = f(f(aa * f(0.3)) + f(0.7));
+      this.sunriseCol[1] = f(f(f(aa * aa) * f(0.7)) + f(0.2));
+      this.sunriseCol[2] = f(f(f(aa * aa) * 0.0) + f(0.2));
       this.sunriseCol[3] = mix;
       return this.sunriseCol;
     }
@@ -105,8 +109,9 @@ export class Dimension {
   }
 
   getFogColor(td: number, _a: number): Vec3 {
+    td = f(td); // C++ 形参是 float，入口先舍入
     this.selectFogColor();
-    let br = Mth.cos(td * Mth.PI * 2) * 2 + 0.5;
+    let br = f(f(Mth.cos(f(f(td * Mth.PI) * 2)) * 2) + f(0.5));
     if (br < 0.0) br = 0.0;
     if (br > 1.0) br = 1.0;
     return this.fogVec(br);
@@ -130,6 +135,7 @@ export class Dimension {
   }
 
   /** Dimension.cpp 与 NormalDayCycleDimension.h 里完全相同的一段：按 FogType 选雾色 */
+  // ADAPTED(Cpp): 把两份重复的雾色计算拆成 selectFogColor/fogVec 两个 helper，行为与原句逐步一致。
   protected selectFogColor(): void {
     if (this.FogType === 1) {
       this.fogColor = 0xc0d8ff; // 1 returns java beta styled fog color.
@@ -142,12 +148,15 @@ export class Dimension {
 
   /** 两份 getFogColor 里完全相同的后半段 */
   protected fogVec(br: number): Vec3 {
-    let r = ((this.fogColor >> 16) & 0xff) / 255.0;
-    let g = ((this.fogColor >> 8) & 0xff) / 255.0;
-    let b = (this.fogColor & 0xff) / 255.0;
-    r *= br * 0.94 + 0.06;
-    g *= br * 0.94 + 0.06;
-    b *= br * 0.91 + 0.09;
+    let r = f(((this.fogColor >> 16) & 0xff) / 255.0);
+    let g = f(((this.fogColor >> 8) & 0xff) / 255.0);
+    let b = f((this.fogColor & 0xff) / 255.0);
+    const rf = f(f(br * f(0.94)) + f(0.06));
+    const gf = f(f(br * f(0.94)) + f(0.06));
+    const bf = f(f(br * f(0.91)) + f(0.09));
+    r = f(r * rf);
+    g = f(g * gf);
+    b = f(b * bf);
     return new Vec3(r, g, b);
   }
 }
@@ -155,18 +164,22 @@ export class Dimension {
 /** 1:1 移植自 src/world/level/dimension/NormalDayCycleDimension.h（生存模式用的有昼夜的主世界） */
 export class NormalDayCycleDimension extends Dimension {
   override getTimeOfDay(time: number, a: number): number {
+    a = f(a); // C++ 形参是 float，入口先舍入
     const dayStep = (time % Level.TICKS_PER_DAY) | 0; // (int) (time % Level::TICKS_PER_DAY)
     let td = f(f(f(dayStep + a) / Level.TICKS_PER_DAY) - f(0.25));
     if (td < 0) td = f(td + 1);
     if (td > 1) td = f(td - 1);
     const tdo = td;
-    td = f(1 - (Math.cos(f(td * Mth.PI)) + 1) * 0.5); // C 库 cos，不是 Mth::cos
+    // C 库 cos（C++17 对 float 实参选 float 重载 → cosf）；Math.cos 后按 float 收口
+    td = f(1 - f(f(f(Math.cos(f(td * Mth.PI))) + 1) * f(0.5)));
     return f(tdo + f(f(td - tdo) / 3));
   }
 
   override getFogColor(td: number, _a: number): Vec3 {
+    td = f(td); // C++ 形参是 float，入口先舍入
     this.selectFogColor();
-    let br = Math.cos(td * Mth.PI * 2) * 2 + 0.5; // C 库 cos，不是 Mth::cos
+    // C 库 cos（cosf），与基类的查表 Mth.cos 不同
+    let br = f(f(f(Math.cos(f(f(td * Mth.PI) * 2))) * 2) + f(0.5));
     if (br < 0) br = 0;
     if (br > 1) br = 1;
     return this.fogVec(br);
