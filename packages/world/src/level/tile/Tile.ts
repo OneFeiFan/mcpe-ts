@@ -3,7 +3,7 @@
  *
  * 【注册表】initTiles 由 TileInclude.ts 注入子类构造器调用（与 MaterialInclude 同一模式，手册 R7）：
  *   本文件只 `import type` 自身之外的方块类型，不 import 任何子类文件，避免 ES 模块循环依赖。
- *   C++ 的 89 条方块赋值中注册 88 条（S3 的 27 条 + S11 的 48 条 + S12 的 13 条）；NetherReactor 一条在 S12 阶段 C 后半补上，标 DEFERRED(Tile)；
+ *   C++ 的 89 条方块赋值全部注册（S3 的 27 条 + S11 的 48 条 + S12 的 13 条 + NetherReactor 1 条）；
  *   8 条特殊 TileItem 全部注册。
  *   未注册的静态字段是“访问即报错”的哨兵（见 Unregistered.ts），相当于 C++ 的 NULL，但报错信息写明是哪个字段。
  *   与手册初版相比多注册了 topSnow：本文件的 shouldRenderFace 会直接读 topSnow.id，不注册就会空指针。
@@ -215,6 +215,7 @@ const STONE_BRICK_TEXTURE_COUNT = 3;
 
 type SoundTypeT = SoundType;
 
+// OMIT(Tile): virtual ~Tile() {}  Tile.h:214 —— 空析构；delete 由 GC 接管（R3）
 export class Tile {
   private static readonly TILE_DESCRIPTION_PREFIX = 'tile.';
 
@@ -986,6 +987,7 @@ export class Tile {
     }
   }
 
+  // OMIT(Tile): delete Tile::tiles[i];  Tile.cpp:535 —— delete 由 GC 接管（R3）
   static teardownTiles(): void {
     for (let i = 0; i < 256; ++i) if (Tile.tiles[i]) Tile.tiles[i] = null;
   }
