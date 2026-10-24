@@ -26,6 +26,9 @@ const f = Math.fround;
 /** PathFinder.h 的 static int __created、__maxCreated */
 const stats = { created: 0, maxCreated: 0 };
 const MAX_NODES = 2048;
+// OMIT(PathFinder): class FreeCache { ... }  PathFinder.h:5-32 —— 全库没有任何地方实例化，纯死代码
+// OMIT(PathFinder): static Stopwatch w; w.start(); w.stop();  PathFinder.h:60,102 —— 只做计时，不影响寻路结果
+// OMIT(PathFinder): Node _nodes[MAX_NODES]; std::vector<Node*> _pending;  PathFinder.h:282-283 —— JS 每次新建节点，结果相同（GC 接管）
 
 export class PathFinder {
   static readonly TYPE_FENCE = 1;
@@ -63,7 +66,8 @@ export class PathFinder {
     z: number,
     maxDist: number,
   ): boolean {
-    return this.findPathToPoint(path, from, f(x + 0.5), f(y + 0.5), f(z + 0.5), maxDist);
+    // C++ 先做 int→float 转换再加 0.5f；坐标很大时与 f(x + 0.5) 的舍入结果不同
+    return this.findPathToPoint(path, from, f(f(x) + 0.5), f(f(y) + 0.5), f(f(z) + 0.5), maxDist);
   }
 
   private findPathToPoint(
@@ -74,6 +78,11 @@ export class PathFinder {
     zt: number,
     maxDist: number,
   ): boolean {
+    // C++ 形参全是 float，入口先舍入；maxDist 会直接参与邻居距离的严格小于比较
+    xt = f(xt);
+    yt = f(yt);
+    zt = f(zt);
+    maxDist = f(maxDist);
     const level = this.level!;
     this.nodes.clear();
     this._nodeIndex = 0;

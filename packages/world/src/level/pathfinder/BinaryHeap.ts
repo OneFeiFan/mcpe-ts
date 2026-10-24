@@ -8,6 +8,8 @@ import type { Node } from './Node';
 
 const f = Math.fround;
 const FLT_MAX = 3.4028234663852886e38;
+// OMIT(BinaryHeap): ~BinaryHeap() { delete[] _heap; }  BinaryHeap.h:72 —— JS 数组由 GC 接管（R3）
+// OMIT(BinaryHeap): _heap = new Node*[_maxSize]; 扩容时 new/delete 整块搬移  BinaryHeap.h:70,82-86 —— JS 数组自动扩容
 
 export class BinaryHeap {
   private _heap: (Node | null)[] = [];

@@ -10,6 +10,7 @@ import type { Node } from './Node';
 
 const f = Math.fround;
 let p = 0;
+// OMIT(Path): ~Path() { destroy(); }  Path.cpp:41 —— 逐个 delete 节点由 GC 接管（R3）；destroy() 本身已移植
 
 export class Path {
   id: number;
