@@ -45,6 +45,8 @@ export class Material {
   public static cake: Material;
   public static web: Material;
 
+  // OMIT(Material): teardownMaterials() { SAFEDEL(air); … }  Material.cpp:71 —— JS 由 GC 接管（R3）
+  // OMIT(Material): virtual ~Material() {}  Material.h:83 —— 空析构函数，R3 不移植
   public static initMaterials(c: MaterialClasses) {
     Material.air = new c.GasMaterial();
     Material.dirt = new Material();
