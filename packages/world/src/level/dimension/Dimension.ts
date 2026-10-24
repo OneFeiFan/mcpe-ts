@@ -170,16 +170,17 @@ export class NormalDayCycleDimension extends Dimension {
     if (td < 0) td = f(td + 1);
     if (td > 1) td = f(td - 1);
     const tdo = td;
-    // C 库 cos（C++17 对 float 实参选 float 重载 → cosf）；Math.cos 后按 float 收口
-    td = f(1 - f(f(f(Math.cos(f(td * Mth.PI))) + 1) * f(0.5)));
+    // C 库 cos：未加 std:: 的 cos 在全局命名空间里只有 ::cos(double)（<cmath> 的 float 重载在 std:: 里），
+    // 实参按 float 算好后提升为 double，整个表达式在 double 里算完再赋回 float。s4 黄金样本逐位验证。
+    td = f(1 - (Math.cos(f(td * Mth.PI)) + 1) * f(0.5));
     return f(tdo + f(f(td - tdo) / 3));
   }
 
   override getFogColor(td: number, _a: number): Vec3 {
     td = f(td); // C++ 形参是 float，入口先舍入
     this.selectFogColor();
-    // C 库 cos（cosf），与基类的查表 Mth.cos 不同
-    let br = f(f(f(Math.cos(f(f(td * Mth.PI) * 2))) * 2) + f(0.5));
+    // C 库 cos（::cos(double)，说明见 getTimeOfDay）：实参按 float 算，结果在 double 里乘加后赋回 float
+    let br = f(Math.cos(f(f(td * Mth.PI) * 2)) * 2 + f(0.5));
     if (br < 0) br = 0;
     if (br > 1) br = 1;
     return this.fogVec(br);

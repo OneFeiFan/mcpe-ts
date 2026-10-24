@@ -13,7 +13,8 @@ import { initTestTiles } from '../../helpers/initTestTiles';
 // 全量审核 W77–W79（packages/world/src/level/dimension）：
 //   W77 Dimension：getSunriseColor / getFogColor 的 float 形参入口与每一步 float 运算；
 //   W78 FlatDimension：NEW，无 C++ 对应，只重写 createRandomLevelSource；
-//   W79 NormalDayCycleDimension：getTimeOfDay / getFogColor 的 float 逐步舍入（C 库 cos，非查表 Mth.cos）。
+//   W79 NormalDayCycleDimension：getTimeOfDay / getFogColor 的 float 逐步舍入
+//       （C 库 ::cos(double)，不是查表 Mth.cos；s4 黄金样本逐位验证）。
 
 const f = Math.fround;
 
@@ -88,27 +89,27 @@ describe('Dimension 审核（W77–W79）', () => {
     expect(d.isNaturalDimension()).toBe(false);
   });
 
-  it('W79-1：NormalDayCycleDimension.getFogColor 用 C 库 cos 并按 float 逐步舍入', () => {
+  it('W79-1：NormalDayCycleDimension.getFogColor 用 C 库 ::cos(double)，结果赋回 float', () => {
     const d = new NormalDayCycleDimension();
-    const td = 0.7229182442020647;
+    const td = 0.20995034;
     expect(f(td)).not.toBe(td);
 
     const v = d.getFogColor(td, 0);
-    const br = f(f(f(Math.cos(f(f(f(td) * Mth.PI) * 2))) * 2) + f(0.5));
+    const br = f(Math.cos(f(f(f(td) * Mth.PI) * 2)) * 2 + f(0.5));
     const rf = f(f(br * f(0.94)) + f(0.06));
     const r0 = f(((0x80daff >> 16) & 0xff) / 255.0);
     expect(v.x).toBe(f(r0 * rf));
 
-    // 旧写法（double）在这组输入下 x 分量不同
-    const brOld = Math.cos(td * Mth.PI * 2) * 2 + 0.5;
-    const rOld = (((0x80daff >> 16) & 0xff) / 255.0) * (brOld * 0.94 + 0.06);
-    expect(f(rOld)).not.toBe(v.x);
+    // 上一版误按 cosf（每一步都收口成 float）；这组输入下 x 分量与它不同
+    const brCosf = f(f(f(Math.cos(f(f(f(td) * Mth.PI) * 2))) * 2) + f(0.5));
+    const rfCosf = f(f(brCosf * f(0.94)) + f(0.06));
+    expect(f(r0 * rfCosf)).not.toBe(v.x);
   });
 
-  it('W79-2：NormalDayCycleDimension.getTimeOfDay 的 float 形参入口与每一步运算都舍入', () => {
+  it('W79-2：NormalDayCycleDimension.getTimeOfDay 的 float 形参入口与逐步舍入', () => {
     const d = new NormalDayCycleDimension();
-    const time = 18960;
-    const a = 0.5673457776636437;
+    const time = 0;
+    const a = 0.46;
     expect(f(a)).not.toBe(a);
 
     const af = f(a);
@@ -117,18 +118,19 @@ describe('Dimension 审核（W77–W79）', () => {
     if (td < 0) td = f(td + 1);
     if (td > 1) td = f(td - 1);
     const tdo = td;
-    td = f(1 - f(f(f(Math.cos(f(td * Mth.PI))) + 1) * f(0.5)));
+    // ::cos(double)：实参先算成 float，cos 与乘加在 double 里，最后赋回 float
+    td = f(1 - (Math.cos(f(td * Mth.PI)) + 1) * f(0.5));
     const expected = f(tdo + f(f(td - tdo) / 3));
 
     expect(d.getTimeOfDay(time, a)).toBe(expected);
 
-    // 旧写法（入口不舍入、cos 之后也不逐步舍入）在这组输入下结果不同
+    // 上一版误按 cosf 逐步舍入；这组输入下结果不同
     const dayStepOld = (time % Level.TICKS_PER_DAY) | 0;
     let tdOld = f(f(f(dayStepOld + a) / Level.TICKS_PER_DAY) - f(0.25));
     if (tdOld < 0) tdOld = f(tdOld + 1);
     if (tdOld > 1) tdOld = f(tdOld - 1);
     const tdoOld = tdOld;
-    tdOld = f(1 - (Math.cos(f(tdOld * Mth.PI)) + 1) * 0.5);
+    tdOld = f(1 - f(f(f(Math.cos(f(tdOld * Mth.PI))) + 1) * f(0.5)));
     expect(f(tdoOld + f(f(tdOld - tdoOld) / 3))).not.toBe(expected);
   });
 });

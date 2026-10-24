@@ -2,7 +2,8 @@
 
 第 2 批（world/level/dimension）。工作表 14（Dimension）+ 0（FlatDimension）+ 2（NormalDayCycleDimension）行全部有结论。
 C++ `Dimension.h` 67 行 + `Dimension.cpp` 161 行 + `NormalDayCycleDimension.h` 54 行；TS 审核前
-`Dimension.ts` 191 行、审核后 204 行，`FlatDimension.ts` 11 行，`NormalDayCycleDimension.ts` 3 行（转出口）。
+`Dimension.ts` 191 行、审核后 205 行（W79 补正 +1 行注释），`FlatDimension.ts` 11 行，
+`NormalDayCycleDimension.ts` 3 行（转出口）。
 新增编号 **W77–W79**；新增 1 处 `ADAPTED(Safety)`、1 处 `ADAPTED(Cpp)`、1 处 `OMIT`。
 
 C++ 侧要点：
@@ -17,8 +18,9 @@ C++ 侧要点：
   `updateLightRamp`。`init(Level*)` 是 public、`init()` 是 protected，C++ 的重载在 TS 里按
   R10 拆成 `init` / `initDimension`（文件头已说明）。
 - 原版怪癖：`FogType` 未初始化；`getSunriseColor` 返回成员数组 `sunriseCol` 的指针（复用同一块内存）；
-  基类 `getFogColor` 用查表的 `Mth::cos`，而 `NormalDayCycleDimension::getFogColor` 用 C 库 `cos`
-  （`<cmath>` 经 `Vec3.h` 传递进来，C++17 对 float 实参选 float 重载 → `cosf`），两者结果不同。
+  基类 `getFogColor` 用查表的 `Mth::cos`，而 `NormalDayCycleDimension` 的两个方法用的是**未加 `std::` 的 `cos`**：
+  `<cmath>` 只把 float 重载放进 `std::`，全局命名空间里只有 `<math.h>` 的 `::cos(double)`。所以实参先按 float
+  算好，再提升为 double，乘加都在 double 里完成，最后赋回 float —— s4 黄金样本的 52 组 timeOfDay 逐位证明了这一点。
 - `NormalDayCycleDimension.h` 的两个方法全是内联；`FlatDimension` 在参考 C++ 里**不存在**（TS 的 NEW）。
 
 ## 工作表结论
@@ -68,22 +70,31 @@ C++ 形参是 `float td`，入口先转 float；`span`、`tt`、`mid ± span`、
 基类继续用查表的 `Mth.cos`（与 C++ 一致）。
 
 **W79-1 `NormalDayCycleDimension.getFogColor` 用 double `Math.cos` 且没有逐步舍入（清单第 2、3–7、9 条）。**
-C++ 这里用的是 C 库 `cos`（`<cmath>` 的 float 重载，等价 `cosf`），不是 `Mth::cos` 查表。
-修复：入口 `td = f(td)`；`Math.cos` 的实参按 `f(f(td * PI) * 2)` 算，结果 `f()` 收口，
-再按 `* 2`、`+ 0.5f` 逐步舍入；颜色分量走修好的 `fogVec`。
+C++ 的 `cos` 是全局命名空间的 `::cos(double)`（`<cmath>` 只把 float 重载放进 `std::`），不是 `Mth::cos`
+查表，也不是 `cosf`。修复：入口 `td = f(td)`；`Math.cos` 的实参按 `f(f(td * PI) * 2)` 算成 float；
+cos 的 double 结果直接参与 `* 2 + 0.5f`，只在赋回 `br` 时 `f()` 一次；颜色分量走修好的 `fogVec`。
+**补正**：上一版误判成 `cosf`、把每一步都收口成 float，s4 黄金样本的 timeOfDay 因此失败；
+本版按 `::cos(double)` 修正，黄金样本 52/52 通过。
 
 **W79-2 `NormalDayCycleDimension.getTimeOfDay` 入口未舍入、`cos` 之后未逐步舍入（清单第 2、3–7、9 条）。**
 修复：`a = f(a)`；`td = 1 - (cos(td * PI) + 1) * 0.5f` 改成
-`f(1 - f(f(f(Math.cos(f(td * Mth.PI))) + 1) * f(0.5)))`；其余步骤原本已逐步舍入。
+`f(1 - (Math.cos(f(td * Mth.PI)) + 1) * f(0.5))` —— `::cos(double)` 的结果与 `+ 1`、`* 0.5f`
+都在 double 里算，只在赋回 `td` 时舍入一次；其余步骤原本已逐步舍入。
 
 先红后绿（`git stash push -- packages/world/src/level/dimension/Dimension.ts`，保留新测试）：
 
-- 红：`pnpm exec vitest run tests/unit/world/dimension-audit.test.ts` 退出码 1，4 failed | 1 passed：
+- 第一轮（W77 + W79 初版）：`pnpm exec vitest run tests/unit/world/dimension-audit.test.ts` 退出码 1，4 failed | 1 passed：
   - W77-1：`expected [ 0.8473395109176636, …(3) ] to deeply equal [ 0.8473395109176636, …(3) ]`（第 2、4 个分量不同）；
   - W77-2：`expected [ 0.3951924741268158, …(2) ] to deeply equal [ 0.3951924741268158, …(2) ]`（y、z 不同）；
   - W79-1：`expected 0.10623575001955032 to be 0.10623598098754883`；
   - W79-2：`expected 0.7714978456497192 to be 0.7714977860450745`。
-- 绿：`git stash pop` 后 5/5 通过。
+- 补正（本提交）：把 Dimension.ts 退回上一版（cosf 写法），跑
+  `pnpm exec vitest run tests/unit/world/dimension-audit.test.ts tests/golden/s4.golden.test.ts`
+  退出码 1，3 failed | 8 passed：
+  - s4 黄金样本：`expected [ 0, 1048576000, 1061738250 ] to be undefined`（52 组里第一组不一致）；
+  - W79-1：`expected 0.5010095238685608 to be 0.5010095834732056`；
+  - W79-2：`expected 0.7845426201820374 to be 0.7845426797866821`。
+- 绿：`git stash pop` 后 dimension 5/5、s4 黄金样本 6/6 通过。
 
 ## ADAPTED / OMIT
 
@@ -103,10 +114,11 @@ C++ 这里用的是 C 库 `cos`（`<cmath>` 的 float 重载，等价 `cosf`）�
   TS 用 number；`fogColor` 是 long，但取值都 < 2^31，位运算语义相同。
 - 第 3–7 条：`updateLightRamp` 原本已逐步 `f()`；`getSunriseColor` / `getFogColor` /
   `NormalDayCycleDimension` 两方法见 W77/W79。`cos` 的实参也按 C++ 的左结合先算成 float 再传。
-- 第 8 条：`Mth.cos` / `Mth.sin` 是查表版（与 C++ 同名）；`Math.cos` 用于 C 库 `cos` 的地方，
-  结果 `f()` 收口；`i / 16` 在 C++ 里是 `i / (float)16`，TS 已 `f()`。
-- 第 9–12 条：`Math.cos`（double）与 C++ `cosf` 的差异是项目既定约定（`LargeCaveFeature` 等同一写法），
-  已在文件头与注释说明；无 long 运算、无字符串格式化。
+- 第 8 条：`Mth.cos` / `Mth.sin` 是查表版（与 C++ 同名）；`Math.cos` 用于 `::cos(double)` 的地方，
+  实参先 `f()`、结果按 C++ 的 double 表达式算完再赋回 float（W79 补正）；`i / 16` 在 C++ 里是
+  `i / (float)16`，TS 已 `f()`。
+- 第 9–12 条：W79 的 `cos` 与 C++ 的 `::cos(double)` 同语义（不是 `cosf`，已由 s4 黄金样本证明）；
+  无 long 运算、无字符串格式化。
 - 第 13–18 条：override 关系正确（`getTimeOfDay` / `getFogColor`）；`init` / `initDimension` 是
   R10 改名；无重载、默认参数、字段遮蔽；构造函数体内无虚调用。
 - 第 19 条：字段初始化顺序无歧义；`FogType` 的未初始化差异见 ADAPTED(Safety)。
@@ -121,9 +133,10 @@ C++ 这里用的是 C 库 `cos`（`<cmath>` 的 float 重载，等价 `cosf`）�
 
 ## 验证
 
-- `pnpm exec vitest run tests/unit/world/dimension-audit.test.ts`：5/5 通过（红态见上）。
+- `pnpm exec vitest run tests/unit/world/dimension-audit.test.ts tests/golden/s4.golden.test.ts`：
+  dimension 5/5、s4 黄金样本 6/6 通过（红态见上）。
 - `pnpm exec vitest run tests/unit/world/dimension.test.ts`：既有 5 条全部通过。
 - `npx tsc -p packages/world --noEmit`：0 错误。
 - `npx tsc -p tests/tsconfig.json --noEmit`：0 错误。
 - `npx prettier --check`（`Dimension.ts`、`dimension-audit.test.ts`）：通过。
-- `pnpm ledger`：212 → 215 条（+1 `OMIT`、+1 `ADAPTED(Safety)`、+1 `ADAPTED(Cpp)`）。
+- `pnpm ledger`：212 → 215 条（+1 `OMIT`、+1 `ADAPTED(Safety)`、+1 `ADAPTED(Cpp)`）；W79 补正没有新增标记。
