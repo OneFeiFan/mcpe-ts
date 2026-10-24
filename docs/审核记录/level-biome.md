@@ -1,10 +1,13 @@
-# BiomeSource 与五个子群系（src/world/level/biome/ ↔ packages/world/src/level/biome/）
+# Biome 模块（src/world/level/biome/ ↔ packages/world/src/level/biome/）
 
-第 2 批（world/level/biome，W82–W87）。六个文件的工作表（10 + 0 + 1 + 1 + 0 + 1 行）全部有结论。
-C++ `BiomeSource.h` 62 行 + `BiomeSource.cpp` 178 行 + `FlatBiome.h` 11 行 + `ForestBiome.h` 25 行 +
-`RainforestBiome.h` 22 行 + `SwampBiome.h` 11 行 + `TaigaBiome.h` 22 行。TS 行数：`BiomeSource.ts` 238
-（审核前 237，+1 条 OMIT）、`FlatBiome.ts` 8、`ForestBiome.ts` 23、`RainforestBiome.ts` 19、
-`SwampBiome.ts` 8、`TaigaBiome.ts` 20。新增编号 **W82–W87**；新增 1 处 `OMIT`，无运行时修改。
+第 2 批（world/level/biome，W80–W87）。八个文件的工作表全部有结论：`Biome` 23 行、`BiomeInclude` 0 行、
+`BiomeSource` 10 行、五个子群系 0 + 1 + 1 + 0 + 1 行。
+C++ `Biome.h` 103 行 + `Biome.cpp` 256 行 + `BiomeInclude.h` 11 行 + `BiomeSource.h` 62 行 +
+`BiomeSource.cpp` 178 行 + `FlatBiome.h` 11 行 + `ForestBiome.h` 25 行 + `RainforestBiome.h` 22 行 +
+`SwampBiome.h` 11 行 + `TaigaBiome.h` 22 行。TS 行数：`Biome.ts` 319（审核前 316）、`BiomeInclude.ts` 16、
+`BiomeSource.ts` 238（审核前 237，+1 条 OMIT）、`FlatBiome.ts` 8、`ForestBiome.ts` 23、
+`RainforestBiome.ts` 19、`SwampBiome.ts` 8、`TaigaBiome.ts` 20。
+新增编号 **W80–W87**；新增 2 处 `ADAPTED(Safety)`、1 处 `OMIT`；1 处运行时修复（W80-1）。
 
 C++ 侧要点：
 
@@ -95,3 +98,120 @@ TS 里有、C++ 没有的方法：无（`getBiome` 的 ChunkPos 重载对应 C++
 - `npx tsc -p tests/tsconfig.json --noEmit`：0 错误。
 - `npx prettier --check packages/world/src/level/biome/BiomeSource.ts tests/unit/world/biome-source-audit.test.ts`：通过。
 - `pnpm ledger`：217 → 218 条（+1 `OMIT`）。
+
+## Biome 核心（W80）与 BiomeInclude（W81）
+
+### C++ 侧要点
+
+- `Biome` 的构造函数是 `protected`；初始化列表只有 `topMaterial`（`Tile::grass->id`）、
+  `material`（`Tile::dirt->id`）、`leafColor(0x4EE031)`。构造函数体按顺序填 4 个友军、4 个敌人，
+  再重算 `defaultTotalEnemyWeight`（30）与 `defaultTotalFriendlyWeight`（40）。
+- `color`、`temperature`、`downfall` **没有初始化**；其中 `temperature` / `downfall` 在参考 C++ 里
+  从未被赋值，`getTemperature` / `getDownfall` 读到的是未定义值。
+- `map` 是 `private static Biome* map[64*64]`，静态存储期零初始化（全 NULL），由 `recalc()` 填满。
+- `MobSpawnerData` 有两个构造函数：无参版 `{}` 不给三个 int 赋值（未定义值），
+  `randomWeight` 由 `WeighedRandomItem()` 设为 -128；四参版逐个赋值。
+- 原版怪癖：`setSnowCovered()` 是空操作；`desert` 的 `clearMobs(true, true, false)` 清掉友军与水生物、
+  **保留敌人**；`iceDesert` 的 `clearMobs(true, false, false)` 只清友军；`getTreeFeature` 的
+  `nextInt(10)` 分支体是空的（BasicTree 被注释掉），但随机数照样消耗。
+- `recalc()` 末尾把 `desert` / `iceDesert` 的 `topMaterial` 与 `material` 都改成 `(char) Tile::sand->id`。
+- `BiomeInclude.h` 只有 include（参考 C++ 里没有可移植的代码）；`Biome.cpp` 直接 include 全部子类再 `new`。
+
+### 工作表结论（Biome，23 行）
+
+| #   | C++ 函数 / 成员                | C++ 位置          | TS 方法 / 字段        | TS 行 | 相似度 | 结论                                                                                     |
+| --- | ------------------------------ | ----------------- | --------------------- | ----- | ------ | ---------------------------------------------------------------------------------------- |
+| 1   | `Biome()`                      | Biome.cpp:34      | `constructor`         | 98    | 0.69   | 一致：三项初始化 + 怪物表 + 两个总权重；未初始化字段见 ADAPTED(Safety)                    |
+| 2   | `setName`                      | Biome.cpp:68      | `setName`             | 115   | 1.00   | 一致：赋值并返回 `this`，protected                                                       |
+| 3   | `setLeafColor`                 | Biome.cpp:74      | `setLeafColor`        | 120   | 1.00   | 一致                                                                                     |
+| 4   | `setColor`                     | Biome.cpp:80      | `setColor`            | 125   | 1.00   | 一致                                                                                     |
+| 5   | `setSnowCovered`               | Biome.cpp:86      | `setSnowCovered`      | 130   | 1.00   | 一致：空操作，返回 `this`（原版怪癖保留）                                                |
+| 6   | `clearMobs`                    | Biome.cpp:91      | `clearMobs`           | 134   | 0.74   | 一致：默认参数 true/true/true；原地清空，数组引用不变                                    |
+| 7   | `recalc`                       | Biome.cpp:101     | `recalc`              | 141   | 0.86   | 一致：64×64、`a/63`/`b/63` 逐步 `f()`；沙漠/冰原换 sand；`(char)` 用 24 位移位            |
+| 8   | `initBiomes`                   | Biome.cpp:114     | `initBiomes`          | 152   | 0.84   | 一致：11 个群系的顺序、颜色、名字、叶色、`clearMobs` 组合逐个相同                        |
+| 9   | `teardownBiomes`               | Biome.cpp:130     | `teardownBiomes`      | 189   | 0.07   | 一致（ESM）：C++ `delete` + 置 NULL，TS 复位成 `unregistered` 哨兵                       |
+| 10  | `getTreeFeature`               | Biome.cpp:144     | `getTreeFeature`      | 207   | 1.00   | 一致：`nextInt(10)` 空分支照旧消耗随机数                                                  |
+| 11  | `getGrassFeature`              | Biome.cpp:151     | `getGrassFeature`     | 215   | 1.00   | 一致：`Tile.tallgrass.id` + `TallGrass.TALL_GRASS`                                       |
+| 12  | `getBiome`                     | Biome.cpp:158     | `getBiome`            | 219   | 0.82   | 一致：形参入口 `f()`，`f2i` 截断，`a + b*64`                                              |
+| 13  | `_getBiome`                    | Biome.cpp:168     | `_getBiome`           | 225   | 0.90   | 一致：`downfall *= temperature`；10 个 float 常量比较，分支顺序相同                      |
+| 14  | `adjustScale`                  | Biome.cpp:202     | `adjustScale`         | 259   | 1.00   | **已修 W80-1**：形参入口 `f()`（原来原样返回 double）                                     |
+| 15  | `adjustDepth`                  | Biome.cpp:207     | `adjustDepth`         | 264   | 1.00   | **已修 W80-1**：同上                                                                     |
+| 16  | `getSkyColor`                  | Biome.cpp:212     | `getSkyColor`         | 269   | 0.76   | 一致：`temp/3`、clamp、hue/sat 全部逐步 `f()`，`Color.getHSBColor` 内部再收口             |
+| 17  | `getDownfall`                  | Biome.cpp:221     | `getDownfall`         | 288   | 1.00   | 一致：返回字段；C++ 从未赋值，见 ADAPTED(Safety)                                          |
+| 18  | `getTemperature`               | Biome.cpp:227     | `getTemperature`      | 292   | 1.00   | 一致：同上                                                                               |
+| 19  | `getGrassColor`                | Biome.cpp:233     | `getGrassColor`       | 282   | 1.00   | 一致：`Mth.clamp(..., 0, 1)` + `GrassColor.get`                                           |
+| 20  | `getMobs`                      | Biome.cpp:241     | `getMobs`             | 296   | 0.92   | 一致：对象身份比较；未知类别 `LOGE` + `_emptyMobList`                                     |
+| 21  | `getCreatureProbability`       | Biome.cpp:254     | `getCreatureProbability` | 304 | 0.83   | 一致：`f(0.08)`                                                                          |
+| 22  | `MobSpawnerData()`             | Biome.h:37        | `constructor`（无参重载） | 36 | —      | 一致：TS 合并成一个构造；三个 int 取 0 见 ADAPTED(Safety)，`randomWeight` 为 -128        |
+| 23  | `maxCount`（字段）             | Biome.h:44        | `maxCount`            | 33    | —      | 一致：工作表把字段当成了函数；TS 有同名字段                                              |
+
+TS 里有、C++ 没有的方法：`_mapForTest`（`ADAPTED(Test)`，只给黄金样本读 private 的 `map`）。
+
+### BiomeInclude（W81）
+
+工作表 0 行：参考 C++ 的 `BiomeInclude.h` 只有 include，没有可移植的代码。TS 是 `ADAPTED(ESM)`：
+`Biome.cpp` 直接 include 全部子类再在 `initBiomes()` 里 `new`，ES 模块里这样做会形成基类/子类循环（TDZ），
+所以由 `BiomeInclude.ts` 集中 import 子类并通过 `BiomeClasses` 注入（与 `TileInclude`、`MaterialInclude`
+同一模式）。五个子类与 C++ 的 include 列表完全相同，调用顺序照 `NinecraftApp::init`：`initTiles` 之后。
+
+### 修复
+
+**W80-1 `adjustScale` / `adjustDepth` 没有对 float 形参做入口舍入（清单第 2 条）。**
+C++ 两个方法的形参都是 `float`，即使函数体原样返回，调用方传入的 double 也会先被舍入成 float；
+TS 原来直接返回 double。修复：`scale = f(scale)` / `depth = f(depth)`。
+当前 TS 里还没有调用方（C++ 也只有声明/定义），所以这是为后续世界生成准备的严格对齐。
+
+先红后绿（`git stash push -- packages/world/src/level/biome/Biome.ts`，保留新测试）：
+
+- 红：`pnpm exec vitest run tests/unit/world/biome-audit.test.ts` 退出码 1，1 failed | 7 passed：
+  `AssertionError: expected 0.1 to be 0.10000000149011612`（W80-1）。
+- 绿：`git stash pop` 后 8/8 通过；`tests/golden/s4.golden.test.ts` 6/6 通过（Biome 的 64×64 选择表）。
+
+另外做了两处文档修正（无运行时影响）：
+
+- 删掉文件头里过时的 `【DEFERRED】recalc ... sand 未注册`：`Tile.sand` 已注册，`recalc` 的两行早就在执行；
+- 删掉“getTreeFeature / getGrassFeature 在后续步骤移植”的过时说明（两者已实现）。
+
+### ADAPTED / OMIT
+
+- **`ADAPTED(Safety)`**：`Biome` 的 `color` / `temperature` / `downfall` 在 C++ 里未初始化
+  （`temperature` / `downfall` 从未被赋值，读到的是未定义值）；TS 取 0。
+- **`ADAPTED(Safety)`**：`MobSpawnerData()` 无参构造在 C++ 里不给三个 int 赋值；TS 取 0
+  （`randomWeight` 仍按基类默认值 -128）。
+- **`ADAPTED(Test)`**：`_mapForTest()` 只给黄金样本读取 private 的 `map`。
+- **`ADAPTED(ESM)`**：`BiomeInclude.ts` 的子类注入（见上）。
+- **`OMIT(Biome)`**：`virtual ~Biome() {}` 是空析构函数，R3 不移植（基类析构为空，TS 由 GC 接管；
+  工作表第 22/23 行是字段误报，不涉及）。
+- 未加标记的差异：`Biome.map` 在 C++ 里是零初始化的静态数组（全 NULL），TS 是稀疏 `new Array(64*64)`；
+  两者都在 `initBiomes()` 的 `recalc()` 之后才被读取，玩法路径不可观察。
+
+### 35 条清单核对要点
+
+- 第 1–2 条：`adjustScale` / `adjustDepth` 见 W80-1；`getBiome` / `_getBiome` / `getSkyColor` 的
+  float 形参入口均已 `f()`；无未初始化读取（见 ADAPTED(Safety)）。
+- 第 3–7 条：`recalc` 的 `a/63`、`_getBiome` 的 `downfall *= temperature`、`getSkyColor` 的
+  `224/360`、`temp*0.05`、`temp*0.1` 全部逐步 `f()`；比较用 float 常量（0.10f、0.20f、0.95f…）。
+- 第 8 条：无整数除法；`a / 63` 在 C++ 里是 int/float，TS 已 `f()`。
+- 第 9–12 条：`(char) Tile::sand->id` 用 `(x << 24) >> 24`；无 long、无字符串格式化。
+- 第 13–18 条：虚函数关系正确（`getTreeFeature` / `getGrassFeature` / `adjustScale` / `adjustDepth` /
+  `getSkyColor` / `getGrassColor` / `getDownfall` / `getTemperature` / `getMobs` /
+  `getCreatureProbability`）；无重载（`MobSpawnerData` 的两个构造合并为可选参数）、无默认参数差异
+  （`clearMobs` 三个 true）、无字段遮蔽；构造函数体内无虚调用。
+- 第 19 条：构造函数初始化顺序无依赖；`color` / `temperature` / `downfall` 见 ADAPTED(Safety)。
+- 第 20 条：可见性与 `Biome.h` 一致：构造函数与五个 setter / `clearMobs` / 三个怪物表 /
+  `_emptyMobList` 为 protected，其余 public；`map` 为 private（`_mapForTest` 例外）。
+- 第 21–25 条：`getMobs` 返回成员数组引用（对应 C++ 的 `MobList&`）；`clearMobs` 原地清空；
+  无排序/哈希。
+- 第 26–29 条：`getTreeFeature` 的空分支照旧消耗 `nextInt(10)`；`getMobs` 的分支顺序与 C++ 相同。
+- 第 30–33 条：`setName` 的字符串、`LOGE('Unknown MobCategory!')` 一致；无 char/bool 转换。
+- 第 34 条：新增 2 处 `ADAPTED(Safety)`；`ADAPTED(Test)` / `ADAPTED(ESM)` 是既有标记。
+- 第 35 条：文件头已删除两处过时说明（sand 的 DEFERRED、地物“后续移植”）。
+
+### 验证
+
+- `pnpm exec vitest run tests/unit/world/biome-audit.test.ts`：8/8 通过（红态见上）。
+- `pnpm exec vitest run tests/golden/s4.golden.test.ts`：6/6 通过。
+- `npx tsc -p packages/world --noEmit`：0 错误。
+- `npx tsc -p tests/tsconfig.json --noEmit`：0 错误。
+- `npx prettier --check packages/world/src/level/biome/Biome.ts tests/unit/world/biome-audit.test.ts`：通过。
+- `pnpm ledger`：218 → 220 条（+2 `ADAPTED(Safety)`）。

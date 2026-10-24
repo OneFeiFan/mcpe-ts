@@ -7,8 +7,7 @@
  *   按 C++ 的 float 语义逐位计算：参数与中间结果 fround，比较用 float 常量（例如 0.95f 比 0.95 略小，
  *   直接和 double 比较会在边界上选错群系）。天空颜色、草色只影响画面，按 JS 数值计算。
  *
- * getTreeFeature、getGrassFeature 与子类的重写在“地物生成”这一步移植。
- * 【DEFERRED】recalc 里把沙漠、冰原的地表换成沙子的两行：sand 未注册。移植 HeavyTile（沙子）时恢复。
+ * getTreeFeature / getGrassFeature 与子类的重写已移植（地物生成本身仍在后续步骤）。
  */
 import type { Random } from '@mcpe/util';
 import { TallGrass } from '../tile/TallGrass';
@@ -33,6 +32,7 @@ export class MobSpawnerData extends WeighedRandomItem {
 
   constructor();
   constructor(mobClassId: number, probabilityWeight: number, minCount: number, maxCount: number);
+  // ADAPTED(Safety): C++ 的无参构造不给 mobClassId / minCount / maxCount 赋值（未定义值）；TS 取 0。
   constructor(
     mobClassId?: number,
     probabilityWeight?: number,
@@ -82,7 +82,8 @@ export class Biome {
   private static map: Biome[] = new Array<Biome>(64 * 64);
 
   name = '';
-  /** C++ 没有初始化 color、temperature、downfall（未定义值）；这里取 0 */
+  // ADAPTED(Safety): C++ 没有初始化 color、temperature、downfall（读未定义值）；TS 取 0。
+  // temperature / downfall 在参考 C++ 里从未被赋值，getTemperature / getDownfall 读到的就是未定义值。
   color = 0;
   topMaterial: number; // char
   material: number; // char
@@ -256,10 +257,12 @@ export class Biome {
   }
 
   adjustScale(scale: number): number {
+    scale = f(scale); // C++ 形参是 float，入口先舍入
     return scale;
   }
 
   adjustDepth(depth: number): number {
+    depth = f(depth); // C++ 形参是 float，入口先舍入
     return depth;
   }
 
